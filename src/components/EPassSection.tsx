@@ -181,96 +181,61 @@ const EPassSection = () => {
           transition={{ duration: 0.6, delay: 0.6 }}
           className="mt-20"
         >
-          {/* Cards Container - Vertical Stack */}
-          <div className="flex flex-col items-center gap-6 mb-12" style={{ perspective: "1000px" }}>
-            {/* E-Pass Light Card */}
+          {/* Cards Container - Circular Row Layout */}
+          <div 
+            className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-0 mb-12" 
+            style={{ perspective: "1500px" }}
+          >
+            {/* E-Pass Light Card - Left */}
             <motion.div
-              initial={{ opacity: 0, y: 60, rotateX: -15 }}
-              animate={isInView ? { opacity: 1, y: 0, rotateX: 0 } : {}}
-              transition={{ duration: 0.7, delay: 0.7, type: "spring", stiffness: 80 }}
+              initial={{ opacity: 0, x: -100, rotateY: 45, scale: 0.8 }}
+              animate={isInView ? { opacity: 1, x: 0, rotateY: 15, scale: 0.9 } : {}}
+              transition={{ duration: 0.8, delay: 0.9, type: "spring", stiffness: 60 }}
               whileHover={{ 
-                scale: 1.05, 
+                scale: 0.95, 
                 rotateY: 5, 
-                rotateX: -5,
-                boxShadow: "0 25px 50px -12px rgba(62, 255, 85, 0.3)"
+                y: -10,
+                boxShadow: "0 25px 50px -12px rgba(243, 239, 245, 0.4)"
               }}
-              className="w-72 h-44 md:w-96 md:h-52 rounded-2xl cursor-pointer transition-shadow duration-300"
+              className="w-64 h-40 md:w-72 md:h-44 rounded-2xl cursor-pointer transition-all duration-300 md:-mr-8 z-10"
               style={{ 
                 transformStyle: "preserve-3d",
-                background: "linear-gradient(135deg, #3EFF55 0%, #2ed84a 50%, #25c040 100%)",
-                boxShadow: "0 20px 40px -15px rgba(62, 255, 85, 0.4)"
+                background: "linear-gradient(135deg, #F3EFF5 0%, #e8e4ea 50%, #ddd8df 100%)",
+                boxShadow: "0 20px 40px -15px rgba(0, 0, 0, 0.2)"
               }}
             >
-              <div className="absolute inset-0 p-6 flex flex-col justify-between">
+              <div className="absolute inset-0 p-5 flex flex-col justify-between rounded-2xl border border-black/5">
                 <div className="flex justify-between items-start">
-                  <span className="text-lg font-bold text-[#08150D]">WJ VISION</span>
-                  <span className="text-xs font-semibold text-[#08150D]/80 bg-white/30 px-2 py-1 rounded-full">E-PASS LIGHT</span>
+                  <span className="text-base font-bold text-[#08150D]">WJ VISION</span>
+                  <span className="text-[10px] font-semibold text-[#08150D]/70 bg-black/5 px-2 py-1 rounded-full">E-PASS LIGHT</span>
                 </div>
                 <div className="flex justify-between items-end">
                   <div>
-                    <p className="text-[10px] text-[#08150D]/60">Member</p>
-                    <p className="text-sm font-medium text-[#08150D]">Essential</p>
+                    <p className="text-[9px] text-[#08150D]/50">Member</p>
+                    <p className="text-xs font-medium text-[#08150D]">Essential</p>
                   </div>
-                  <div className="w-12 h-12 rounded-xl border-2 border-[#08150D]/20 flex items-center justify-center bg-white/20">
-                    <div className="w-7 h-7 bg-[#08150D]/20 rounded-lg" />
+                  <div className="w-10 h-10 rounded-lg border border-[#08150D]/10 flex items-center justify-center bg-white/50">
+                    <div className="w-6 h-6 bg-[#08150D]/10 rounded" />
                   </div>
                 </div>
               </div>
             </motion.div>
 
-            {/* E-Pass Plus Card */}
+            {/* E-Pass Black Card - Center (Main) */}
             <motion.div
-              initial={{ opacity: 0, y: 60, rotateX: -15 }}
-              animate={isInView ? { opacity: 1, y: 0, rotateX: 0 } : {}}
-              transition={{ duration: 0.7, delay: 0.9, type: "spring", stiffness: 80 }}
+              initial={{ opacity: 0, y: 80, scale: 0.7 }}
+              animate={isInView ? { opacity: 1, y: 0, scale: 1 } : {}}
+              transition={{ duration: 0.8, delay: 0.7, type: "spring", stiffness: 60 }}
               whileHover={{ 
-                scale: 1.05, 
-                rotateY: 5, 
-                rotateX: -5,
-                boxShadow: "0 25px 50px -12px rgba(5, 140, 66, 0.5)"
+                scale: 1.08, 
+                y: -15,
+                boxShadow: "0 35px 60px -15px rgba(8, 21, 13, 0.6)"
               }}
-              className="w-72 h-44 md:w-96 md:h-52 rounded-2xl cursor-pointer transition-shadow duration-300"
-              style={{ 
-                transformStyle: "preserve-3d",
-                background: "linear-gradient(135deg, #058C42 0%, #047a3a 50%, #036830 100%)",
-                boxShadow: "0 20px 40px -15px rgba(5, 140, 66, 0.5)"
-              }}
-            >
-              <div className="absolute inset-0 p-6 flex flex-col justify-between">
-                <div className="flex justify-between items-start">
-                  <span className="text-lg font-bold text-white">WJ VISION</span>
-                  <span className="text-xs font-semibold text-white/90 bg-white/20 px-2 py-1 rounded-full">E-PASS PLUS</span>
-                </div>
-                <div className="flex justify-between items-end">
-                  <div>
-                    <p className="text-[10px] text-white/60">Member</p>
-                    <p className="text-sm font-medium text-white">Premium</p>
-                  </div>
-                  <div className="w-12 h-12 rounded-xl border-2 border-white/30 flex items-center justify-center bg-white/10">
-                    <div className="w-7 h-7 bg-white/30 rounded-lg" />
-                  </div>
-                </div>
-              </div>
-              {/* Glow Effect */}
-              <div className="absolute -inset-3 bg-[#058C42]/20 rounded-3xl blur-2xl -z-10" />
-            </motion.div>
-
-            {/* E-Pass Black Card */}
-            <motion.div
-              initial={{ opacity: 0, y: 60, rotateX: -15 }}
-              animate={isInView ? { opacity: 1, y: 0, rotateX: 0 } : {}}
-              transition={{ duration: 0.7, delay: 1.1, type: "spring", stiffness: 80 }}
-              whileHover={{ 
-                scale: 1.05, 
-                rotateY: 5, 
-                rotateX: -5,
-                boxShadow: "0 25px 50px -12px rgba(8, 21, 13, 0.7)"
-              }}
-              className="w-72 h-44 md:w-96 md:h-52 rounded-2xl cursor-pointer transition-shadow duration-300"
+              className="w-72 h-44 md:w-80 md:h-52 rounded-2xl cursor-pointer transition-all duration-300 z-20"
               style={{ 
                 transformStyle: "preserve-3d",
                 background: "linear-gradient(135deg, #0f2518 0%, #08150D 50%, #050d08 100%)",
-                boxShadow: "0 20px 40px -15px rgba(8, 21, 13, 0.8)"
+                boxShadow: "0 25px 50px -15px rgba(8, 21, 13, 0.7)"
               }}
             >
               <div className="absolute inset-0 p-6 flex flex-col justify-between border border-white/10 rounded-2xl">
@@ -285,6 +250,43 @@ const EPassSection = () => {
                   </div>
                   <div className="w-12 h-12 rounded-xl border-2 border-white/20 flex items-center justify-center bg-white/5">
                     <div className="w-7 h-7 bg-white/20 rounded-lg" />
+                  </div>
+                </div>
+              </div>
+              {/* Glow Effect */}
+              <div className="absolute -inset-4 bg-wj-green/10 rounded-3xl blur-2xl -z-10" />
+            </motion.div>
+
+            {/* E-Pass Plus Card - Right */}
+            <motion.div
+              initial={{ opacity: 0, x: 100, rotateY: -45, scale: 0.8 }}
+              animate={isInView ? { opacity: 1, x: 0, rotateY: -15, scale: 0.9 } : {}}
+              transition={{ duration: 0.8, delay: 1.1, type: "spring", stiffness: 60 }}
+              whileHover={{ 
+                scale: 0.95, 
+                rotateY: -5, 
+                y: -10,
+                boxShadow: "0 25px 50px -12px rgba(5, 140, 66, 0.5)"
+              }}
+              className="w-64 h-40 md:w-72 md:h-44 rounded-2xl cursor-pointer transition-all duration-300 md:-ml-8 z-10"
+              style={{ 
+                transformStyle: "preserve-3d",
+                background: "linear-gradient(135deg, #058C42 0%, #047a3a 50%, #036830 100%)",
+                boxShadow: "0 20px 40px -15px rgba(5, 140, 66, 0.5)"
+              }}
+            >
+              <div className="absolute inset-0 p-5 flex flex-col justify-between rounded-2xl">
+                <div className="flex justify-between items-start">
+                  <span className="text-base font-bold text-white">WJ VISION</span>
+                  <span className="text-[10px] font-semibold text-white/90 bg-white/20 px-2 py-1 rounded-full">E-PASS PLUS</span>
+                </div>
+                <div className="flex justify-between items-end">
+                  <div>
+                    <p className="text-[9px] text-white/60">Member</p>
+                    <p className="text-xs font-medium text-white">Premium</p>
+                  </div>
+                  <div className="w-10 h-10 rounded-lg border border-white/30 flex items-center justify-center bg-white/10">
+                    <div className="w-6 h-6 bg-white/30 rounded" />
                   </div>
                 </div>
               </div>
