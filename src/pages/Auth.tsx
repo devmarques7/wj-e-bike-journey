@@ -308,29 +308,47 @@ const Auth = () => {
       </div>
 
       {/* Right Panel - Visual */}
-      <div className="hidden lg:flex flex-1 relative bg-secondary overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-wj-forest via-secondary to-wj-deep" />
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full bg-wj-green/30 blur-3xl" />
-          <div className="absolute bottom-1/4 left-1/4 w-64 h-64 rounded-full bg-wj-green/20 blur-2xl" />
-        </div>
-        
-        <div className="relative z-10 flex items-center justify-center w-full p-12">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-center"
+      <div className="hidden lg:flex flex-1 relative bg-secondary p-6">
+        {/* Inner container with video background */}
+        <div className="relative w-full h-full rounded-3xl overflow-hidden">
+          {/* Video Background */}
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
           >
-            <h2 className="text-display-lg font-light text-white/90 mb-4">
-              Your E-Bike
-              <br />
-              <span className="text-wj-green">Journey</span>
-            </h2>
-            <p className="text-white/60 max-w-md mx-auto">
-              Track maintenance, book services, and unlock exclusive member benefits
-            </p>
-          </motion.div>
+            <source src="/videos/auth-background.mp4" type="video/mp4" />
+          </video>
+          
+          {/* Overlay gradient */}
+          <div className="absolute inset-0 bg-gradient-to-br from-wj-forest/60 via-secondary/40 to-wj-deep/70" />
+          
+          {/* Decorative blurs */}
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full bg-wj-green/30 blur-3xl" />
+            <div className="absolute bottom-1/4 left-1/4 w-64 h-64 rounded-full bg-wj-green/20 blur-2xl" />
+          </div>
+          
+          {/* Content */}
+          <div className="relative z-10 flex items-center justify-center w-full h-full p-12">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="text-center"
+            >
+              <h2 className="text-display-lg font-light text-white/90 mb-4">
+                Your E-Bike
+                <br />
+                <span className="text-wj-green">Journey</span>
+              </h2>
+              <p className="text-white/60 max-w-md mx-auto">
+                Track maintenance, book services, and unlock exclusive member benefits
+              </p>
+            </motion.div>
+          </div>
         </div>
       </div>
     </div>
