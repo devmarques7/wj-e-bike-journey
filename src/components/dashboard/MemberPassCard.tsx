@@ -78,16 +78,19 @@ export default function MemberPassCard({ bikeId, bikeName, purchaseDate }: Membe
       style={{ perspective: "1000px" }}
       onClick={() => setIsFlipped(!isFlipped)}
     >
-      <motion.div
+      <div
         className="relative w-full h-full"
-        animate={{ rotateY: isFlipped ? 180 : 0 }}
-        transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
         style={{ transformStyle: "preserve-3d" }}
       >
         {/* Front of Card - Credit Card Style */}
-        <div 
+        <motion.div 
           className="absolute inset-0 rounded-2xl overflow-hidden border border-border/50 shadow-2xl"
-          style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
+          animate={{ 
+            rotateY: isFlipped ? 180 : 0,
+            opacity: isFlipped ? 0 : 1
+          }}
+          transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
+          style={{ backfaceVisibility: "hidden" }}
         >
           {/* Video Background */}
           <video
@@ -156,16 +159,17 @@ export default function MemberPassCard({ bikeId, bikeName, purchaseDate }: Membe
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Back of Card - Minimal with Video Background */}
-        <div
+        <motion.div
           className="absolute inset-0 rounded-2xl overflow-hidden border border-border/50 shadow-2xl"
-          style={{ 
-            transform: "rotateY(180deg)", 
-            backfaceVisibility: "hidden", 
-            WebkitBackfaceVisibility: "hidden" 
+          animate={{ 
+            rotateY: isFlipped ? 0 : -180,
+            opacity: isFlipped ? 1 : 0
           }}
+          transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
+          style={{ backfaceVisibility: "hidden" }}
         >
           {/* Video Background */}
           <video
@@ -183,8 +187,8 @@ export default function MemberPassCard({ bikeId, bikeName, purchaseDate }: Membe
           <div className="relative z-10 h-full w-full flex items-end justify-center pb-8">
             <p className="text-xs text-white/60 tracking-widest uppercase">Scan QR Code</p>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
     </motion.div>
   );
 }
