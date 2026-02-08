@@ -29,15 +29,15 @@ const ModelShowcaseSection = ({
   const [currentSlide, setCurrentSlide] = useState(0);
   const sectionRef = useRef<HTMLElement>(null);
   
-  // Track scroll progress within this section
+  // Track scroll progress - starts when section enters viewport, ends when it leaves
   const { scrollYProgress } = useScroll({
     target: sectionRef,
-    offset: ["start start", "end start"],
+    offset: ["start end", "end start"],
   });
   
-  // Animation: shrink on enter (0 to 0.15), stay shrunk (0.15 to 0.7), expand on exit (0.7 to 0.85)
-  const borderRadius = useTransform(scrollYProgress, [0, 0.15, 0.7, 0.85], [0, 24, 24, 0]);
-  const widthPercent = useTransform(scrollYProgress, [0, 0.15, 0.7, 0.85], ["90%", "75%", "75%", "90%"]);
+  // Animation: start expanded (95%), shrink to 85% as section centers, expand back as it exits
+  const borderRadius = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 24, 24, 0]);
+  const widthPercent = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], ["95%", "85%", "85%", "95%"]);
 
   useEffect(() => {
     const interval = setInterval(() => {
