@@ -47,7 +47,7 @@ About
 
 Configure Yours
             </span>
-              <span className="text-wj-green">- Bike</span>
+              <span className="text-wj-green"> VISION</span>
             </span>
           </Link>
 
