@@ -156,31 +156,37 @@ export default function ServiceCalendarCompact() {
     if (diff < -1) normalizedDiff = diff + 3;
     
     if (normalizedDiff === 0) {
-      // Center card
+      // Center card - prominent and in front
       return {
         x: 0,
+        y: 0,
         rotateY: 0,
-        scale: 1,
-        z: 20,
+        scale: 1.1,
+        z: 100,
         opacity: 1,
+        translateZ: 80,
       };
     } else if (normalizedDiff === -1 || (activeCardIndex === 0 && cardIndex === 2)) {
-      // Left card
+      // Left card - pushed back
       return {
-        x: -80,
-        rotateY: 35,
-        scale: 0.75,
+        x: -100,
+        y: 20,
+        rotateY: 45,
+        scale: 0.7,
         z: 10,
-        opacity: 0.8,
+        opacity: 0.6,
+        translateZ: -60,
       };
     } else {
-      // Right card
+      // Right card - pushed back
       return {
-        x: 80,
-        rotateY: -35,
-        scale: 0.75,
+        x: 100,
+        y: 20,
+        rotateY: -45,
+        scale: 0.7,
         z: 10,
-        opacity: 0.8,
+        opacity: 0.6,
+        translateZ: -60,
       };
     }
   };
@@ -356,12 +362,12 @@ export default function ServiceCalendarCompact() {
 
           {/* 3D Carousel Container */}
           <div 
-            className="relative flex items-center justify-center py-8 px-4 min-h-[320px] sm:min-h-[380px]" 
-            style={{ perspective: "1200px" }}
+            className="relative flex items-center justify-center py-10 px-4 min-h-[360px] sm:min-h-[420px]" 
+            style={{ perspective: "1000px" }}
           >
             {/* Cards Container */}
             <div 
-              className="relative w-full max-w-md flex items-center justify-center"
+              className="relative w-full max-w-lg flex items-center justify-center h-72"
               style={{ transformStyle: "preserve-3d" }}
             >
               {cardOrder.map((tier, index) => {
@@ -375,27 +381,30 @@ export default function ServiceCalendarCompact() {
                     initial={false}
                     animate={{
                       x: transform.x,
+                      y: transform.y,
                       rotateY: transform.rotateY,
                       scale: transform.scale,
                       opacity: transform.opacity,
                       zIndex: transform.z,
+                      translateZ: transform.translateZ,
                     }}
                     transition={{ 
-                      duration: 0.6, 
+                      duration: 0.7, 
                       type: "spring", 
-                      stiffness: 80,
-                      damping: 15
+                      stiffness: 60,
+                      damping: 14
                     }}
                     onClick={() => handleCardClick(tier)}
                     className={cn(
-                      "absolute w-32 h-48 sm:w-40 sm:h-60 md:w-44 md:h-64 rounded-2xl cursor-pointer group overflow-hidden",
-                      isCenter && selectedPlan === tier && "ring-2 ring-wj-green ring-offset-2 ring-offset-background"
+                      "absolute w-32 h-52 sm:w-40 sm:h-64 md:w-44 md:h-72 rounded-2xl cursor-pointer group overflow-hidden",
+                      isCenter && "ring-2 ring-wj-green/50 ring-offset-4 ring-offset-background"
                     )}
                     style={{ 
                       transformStyle: "preserve-3d",
                       boxShadow: isCenter 
-                        ? "0 25px 50px -15px rgba(0, 0, 0, 0.6)" 
-                        : "0 15px 30px -10px rgba(0, 0, 0, 0.3)",
+                        ? "0 35px 60px -20px rgba(0, 0, 0, 0.7), 0 20px 40px -15px rgba(5, 140, 66, 0.3)" 
+                        : "0 10px 25px -10px rgba(0, 0, 0, 0.4)",
+                      filter: isCenter ? "none" : "brightness(0.7)",
                     }}
                   >
                     {/* Animated Border for Black Card */}
