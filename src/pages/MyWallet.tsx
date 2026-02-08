@@ -4,8 +4,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import DashboardHeader from "@/components/dashboard/DashboardHeader";
-import MobileFooterNav from "@/components/dashboard/MobileFooterNav";
+import DashboardLayout from "@/components/dashboard/DashboardLayout";
 
 // Privileges by tier
 const tierPrivileges = {
@@ -83,29 +82,29 @@ export default function MyWallet() {
   const nextTierData = nextTier ? tierPrivileges[nextTier] : null;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Desktop Header */}
-      <div className="hidden lg:block">
-        <DashboardHeader />
-      </div>
-
-      {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border/50">
-        <div className="flex items-center justify-between px-4 py-3">
-          <Link to="/dashboard" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="h-5 w-5" />
+    <DashboardLayout>
+      <div className="p-4 lg:p-6 max-w-7xl mx-auto space-y-6">
+        {/* Back Button - Desktop */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="hidden lg:block"
+        >
+          <Link to="/dashboard" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Dashboard</span>
           </Link>
-          <span className="text-lg font-bold tracking-wider">
-            <span className="text-foreground">My</span>
-            <span className="text-wj-green"> Wallet</span>
-          </span>
-          <div className="w-5" />
-        </div>
-      </div>
+        </motion.div>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto pt-16 lg:pt-0 pb-24 lg:pb-8">
-        <div className="p-4 lg:p-6 max-w-7xl mx-auto space-y-6">
+        {/* Header Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-1"
+        >
+          <h1 className="text-2xl lg:text-3xl font-bold text-foreground tracking-tight">My Wallet</h1>
+          <p className="text-muted-foreground text-sm">Manage your membership and track your rewards</p>
+        </motion.div>
           {/* Back Button - Desktop */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -365,12 +364,6 @@ export default function MyWallet() {
             </div>
           </motion.div>
         </div>
-      </main>
-
-      {/* Mobile Footer Navigation */}
-      <div className="lg:hidden">
-        <MobileFooterNav />
-      </div>
-    </div>
-  );
-}
+      </DashboardLayout>
+    );
+  }
