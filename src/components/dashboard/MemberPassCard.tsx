@@ -118,14 +118,10 @@ export default function MemberPassCard({ bikeId, bikeName, purchaseDate }: Membe
               </div>
             </div>
 
-            {/* Chip */}
+            {/* Chip - Container with border and inner element */}
             <div className="flex items-center gap-3 sm:gap-4 my-2 sm:my-4">
-              <div className="w-10 h-7 sm:w-12 sm:h-9 lg:w-14 lg:h-10 rounded-md bg-gradient-to-br from-amber-300 via-amber-400 to-amber-500 shadow-lg">
-                <div className="w-full h-full grid grid-cols-3 gap-0.5 p-0.5 sm:p-1">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="bg-amber-600/30 rounded-sm" />
-                  ))}
-                </div>
+              <div className="w-10 h-10 sm:w-11 sm:h-11 lg:w-12 lg:h-12 rounded-lg border border-white/20 flex items-center justify-center bg-white/5">
+                <div className="w-6 h-6 sm:w-7 sm:h-7 bg-white/10 rounded-lg" />
               </div>
             </div>
 
