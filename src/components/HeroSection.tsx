@@ -12,31 +12,21 @@ const HeroSection = () => {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Video Background Placeholder */}
+      {/* Video Background */}
       <div className="absolute inset-0 z-0">
         {/* Gradient overlay for better text readability */}
         <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/40 to-background z-10" />
         
-        {/* Placeholder with animated gradient - replace with video */}
-        <div className="absolute inset-0 bg-gradient-to-br from-wj-deep via-wj-forest to-wj-deep">
-          {/* Animated ambient light effect */}
-          <motion.div
-            className="absolute inset-0 opacity-30"
-            animate={{
-              background: [
-                "radial-gradient(circle at 20% 50%, hsl(var(--wj-green) / 0.3) 0%, transparent 50%)",
-                "radial-gradient(circle at 80% 50%, hsl(var(--wj-green) / 0.3) 0%, transparent 50%)",
-                "radial-gradient(circle at 50% 80%, hsl(var(--wj-green) / 0.3) 0%, transparent 50%)",
-                "radial-gradient(circle at 20% 50%, hsl(var(--wj-green) / 0.3) 0%, transparent 50%)",
-              ],
-            }}
-            transition={{
-              duration: 10,
-              repeat: Infinity,
-              ease: "linear",
-            }}
-          />
-        </div>
+        {/* Video Background */}
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+        >
+          <source src="/videos/hero-background.mp4" type="video/mp4" />
+        </video>
       </div>
 
       {/* Content */}
