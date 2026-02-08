@@ -144,7 +144,7 @@ export default function ServiceCountdown() {
       </video>
 
       {/* Layer 2: Dark gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/40" />
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
 
       {/* Layer 3: Bike Image - Full width, aligned left, bottom */}
       <div className="absolute bottom-0 left-0 w-full h-[75%] pointer-events-none">
@@ -154,6 +154,9 @@ export default function ServiceCountdown() {
           className="w-full h-full object-contain object-left-bottom"
         />
       </div>
+
+      {/* Layer 4: Left side gradient for content readability */}
+      <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent pointer-events-none" />
 
       {/* Content Layer */}
       <div className="relative z-10 h-full p-6 flex flex-col justify-between">
@@ -167,10 +170,10 @@ export default function ServiceCountdown() {
           </div>
         </div>
 
-        {/* Countdown Timer - Centered & Minimal */}
-        <div className="flex-1 flex flex-col items-center justify-center">
-          <div className="text-center mb-6">
-            <div className="flex items-baseline justify-center gap-1">
+        {/* Countdown Timer - Left aligned, top positioned */}
+        <div className="flex-1 flex flex-col items-start justify-start pt-2">
+          <div className="text-left mb-6">
+            <div className="flex items-baseline justify-start gap-1">
               <span className={cn("text-5xl font-bold tracking-tight", getStatusColor())}>
                 {countdown.days}
               </span>
