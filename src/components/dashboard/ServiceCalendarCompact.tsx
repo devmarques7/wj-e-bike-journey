@@ -64,43 +64,31 @@ const membershipPlans = [
     tier: "light" as MemberTier,
     name: "E-Pass Light",
     label: "Essential",
-    price: "Free",
+    monthlyPrice: 0,
+    annualPrice: 0,
     description: "Basic coverage for casual riders",
     features: ["Basic support", "Standard warranty", "Community access"],
     videoSrc: "/videos/member-pass-light-bg.mp4",
-    style: {
-      background: "linear-gradient(135deg, #F3EFF5 0%, #e8e4ea 50%, #ddd8df 100%)",
-      textColor: "#08150D",
-      shadow: "0 20px 40px -15px rgba(0, 0, 0, 0.2)",
-    },
   },
   {
     tier: "black" as MemberTier,
     name: "E-Pass Black",
     label: "Elite",
-    price: "€19.99/mo",
+    monthlyPrice: 24.99,
+    annualPrice: 199.99, // ~33% discount
     description: "VIP treatment for dedicated riders",
     features: ["24/7 VIP support", "Lifetime warranty", "Free services", "Valet pick-up", "Priority scheduling"],
     videoSrc: "/videos/member-pass-bg.mp4",
-    style: {
-      background: "linear-gradient(135deg, #0a0a0a 0%, #020202 50%, #000000 100%)",
-      textColor: "#ffffff",
-      shadow: "0 25px 50px -15px rgba(0, 0, 0, 0.8)",
-    },
   },
   {
     tier: "plus" as MemberTier,
     name: "E-Pass Plus",
     label: "Premium",
-    price: "€9.99/mo",
+    monthlyPrice: 12.99,
+    annualPrice: 99.99, // ~36% discount
     description: "Enhanced benefits for regular riders",
     features: ["Priority support", "Extended warranty", "Service discounts", "Calendar booking"],
     videoSrc: "/videos/member-pass-plus-bg.mp4",
-    style: {
-      background: "linear-gradient(135deg, #058C42 0%, #047a3a 50%, #036830 100%)",
-      textColor: "#ffffff",
-      shadow: "0 20px 40px -15px rgba(5, 140, 66, 0.5)",
-    },
   },
 ];
 
@@ -490,15 +478,13 @@ export default function ServiceCalendarCompact() {
                             "text-lg sm:text-xl font-bold mt-1",
                             tier === "light" ? "text-zinc-900" : "text-white"
                           )}>
-                            {plan.price.includes("€") ? (
-                              <>
-                                {plan.price.split("/")[0]}
-                                <span className="text-[10px] sm:text-xs font-normal opacity-70">
-                                  /{plan.price.split("/")[1]}
-                                </span>
-                              </>
+                            {plan.monthlyPrice === 0 ? (
+                              "Free"
                             ) : (
-                              plan.price
+                              <>
+                                €{(plan.annualPrice / 12).toFixed(0)}
+                                <span className="text-[10px] sm:text-xs font-normal opacity-70">/mo</span>
+                              </>
                             )}
                           </p>
                         </div>
@@ -518,6 +504,14 @@ export default function ServiceCalendarCompact() {
             }
           `}</style>
 
+          {/* Current Plan Badge */}
+          <div className="flex justify-center -mt-4 mb-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/60 border border-border/40">
+              <span className="text-xs text-muted-foreground">Current Plan:</span>
+              <span className="text-xs font-semibold text-foreground capitalize">{userTier}</span>
+            </div>
+          </div>
+
           {/* Plan Details - Shows when card is selected and centered */}
           <AnimatePresence mode="wait">
             {selectedPlan && (
@@ -527,36 +521,96 @@ export default function ServiceCalendarCompact() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -20, scale: 0.95 }}
                 transition={{ duration: 0.4, type: "spring", stiffness: 100 }}
-                className="mx-4 p-4 sm:p-5 rounded-2xl bg-muted/40 border border-border/40 backdrop-blur-sm"
+                className="mx-4 rounded-2xl bg-muted/30 border border-border/30 backdrop-blur-sm overflow-hidden"
               >
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h4 className="font-bold text-lg text-foreground">
-                      {membershipPlans.find(p => p.tier === selectedPlan)?.name}
-                    </h4>
-                    <p className="text-sm text-muted-foreground">
-                      {membershipPlans.find(p => p.tier === selectedPlan)?.description}
-                    </p>
-                  </div>
-                  <span className="text-wj-green font-bold text-xl">
-                    {membershipPlans.find(p => p.tier === selectedPlan)?.price}
-                  </span>
-                </div>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {membershipPlans.find(p => p.tier === selectedPlan)?.features.map((feature, i) => (
-                    <motion.div 
-                      key={i} 
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      className="flex items-center gap-2 text-sm"
-                    >
-                      <CheckCircle2 className="h-4 w-4 text-wj-green flex-shrink-0" />
-                      <span className="text-muted-foreground">{feature}</span>
-                    </motion.div>
-                  ))}
-                </div>
+                {(() => {
+                  const plan = membershipPlans.find(p => p.tier === selectedPlan);
+                  if (!plan) return null;
+                  
+                  const monthlyFromAnnual = plan.annualPrice > 0 ? (plan.annualPrice / 12) : 0;
+                  const savingsPercent = plan.monthlyPrice > 0 
+                    ? Math.round(((plan.monthlyPrice * 12 - plan.annualPrice) / (plan.monthlyPrice * 12)) * 100)
+                    : 0;
+                  const isCurrentPlan = userTier === selectedPlan;
+                  
+                  return (
+                    <div className="p-5">
+                      {/* Header */}
+                      <div className="flex items-start justify-between mb-5">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-xl text-foreground">
+                              {plan.name}
+                            </h4>
+                            {isCurrentPlan && (
+                              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-wj-green/20 text-wj-green border border-wj-green/30">
+                                Current
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {plan.description}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Pricing Section */}
+                      {plan.monthlyPrice > 0 ? (
+                        <div className="mb-5 p-4 rounded-xl bg-background/50 border border-border/30">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="flex items-baseline gap-1">
+                                <span className="text-3xl font-bold text-foreground">
+                                  €{monthlyFromAnnual.toFixed(0)}
+                                </span>
+                                <span className="text-sm text-muted-foreground">/month</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Billed annually at €{plan.annualPrice.toFixed(0)}/year
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-wj-green/10 border border-wj-green/20">
+                                <span className="text-xs font-semibold text-wj-green">Save {savingsPercent}%</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-1.5 line-through">
+                                €{plan.monthlyPrice.toFixed(2)}/mo monthly
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mb-5 p-4 rounded-xl bg-background/50 border border-border/30">
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-3xl font-bold text-foreground">Free</span>
+                            <span className="text-sm text-muted-foreground">forever</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Included with your bike purchase
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Features Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        {plan.features.map((feature, i) => (
+                          <motion.div 
+                            key={i} 
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.04 }}
+                            className="flex items-center gap-2.5 text-sm"
+                          >
+                            <div className="flex-shrink-0 w-5 h-5 rounded-full bg-wj-green/10 flex items-center justify-center">
+                              <CheckCircle2 className="h-3 w-3 text-wj-green" />
+                            </div>
+                            <span className="text-foreground/80">{feature}</span>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
               </motion.div>
             )}
           </AnimatePresence>
@@ -570,17 +624,22 @@ export default function ServiceCalendarCompact() {
                 setSelectedPlan(null);
                 setActiveCardIndex(1);
               }}
+              className="text-muted-foreground"
             >
               Maybe Later
             </Button>
             
-            {selectedPlan && selectedPlan !== "light" ? (
+            {selectedPlan && selectedPlan !== "light" && selectedPlan !== userTier ? (
               <Link to="/membership-plans">
                 <Button className="bg-wj-green hover:bg-wj-green-dark text-white">
-                  Upgrade to {membershipPlans.find(p => p.tier === selectedPlan)?.name}
+                  Upgrade Now
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </Link>
+            ) : selectedPlan === userTier ? (
+              <Button disabled className="opacity-50">
+                Current Plan
+              </Button>
             ) : (
               <Button disabled className="opacity-50">
                 Select a Plan
