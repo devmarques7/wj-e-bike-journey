@@ -1,9 +1,10 @@
 import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion, useInView } from "framer-motion";
-import { Eye, ShoppingBag, Package } from "lucide-react";
+import { Eye, ShoppingBag, Package, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Accessory } from "@/data/accessories";
+import { useCart } from "@/contexts/CartContext";
 
 interface AccessoryCardProps {
   accessory: Accessory;
@@ -13,8 +14,21 @@ interface AccessoryCardProps {
 const AccessoryCard = ({ accessory, index }: AccessoryCardProps) => {
   const [selectedColor, setSelectedColor] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [justAdded, setJustAdded] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(cardRef, { once: true, margin: "-50px" });
+  const { addItem } = useCart();
+
+  const handleAddToCart = () => {
+    addItem({
+      id: accessory.id,
+      name: accessory.name,
+      price: accessory.price,
+      color: accessory.colors[selectedColor].name,
+    });
+    setJustAdded(true);
+    setTimeout(() => setJustAdded(false), 1500);
+  };
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("nl-NL", {
@@ -88,9 +102,25 @@ const AccessoryCard = ({ accessory, index }: AccessoryCardProps) => {
             </Button>
             <Button
               size="sm"
-              className="gradient-wj text-white hover:opacity-90"
+              onClick={handleAddToCart}
+              className={`transition-all duration-300 ${
+                justAdded 
+                  ? "bg-wj-green text-white" 
+                  : "gradient-wj text-white hover:opacity-90"
+              }`}
             >
-              <ShoppingBag className="h-4 w-4" />
+              <motion.div
+                key={justAdded ? "check" : "bag"}
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                {justAdded ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  <ShoppingBag className="h-4 w-4" />
+                )}
+              </motion.div>
             </Button>
           </motion.div>
         </div>
