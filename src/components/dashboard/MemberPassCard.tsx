@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Crown, Sparkles, Star, Wifi } from "lucide-react";
 import { useAuth, MemberTier } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import qrCodeOverlay from "@/assets/qr-code-overlay.png";
 
 interface MemberPassCardProps {
   bikeId?: string;
@@ -182,10 +183,19 @@ export default function MemberPassCard({ bikeId, bikeName, purchaseDate }: Membe
           >
             <source src="/videos/member-pass-back-bg.mp4" type="video/mp4" />
           </video>
-          <div className="absolute inset-0 bg-black/50" />
+          <div className="absolute inset-0 bg-black/40" />
 
-          {/* Only Footer Text */}
-          <div className="relative z-10 h-full w-full flex items-end justify-center pb-6 sm:pb-8">
+          {/* QR Code Overlay - Image Layer on Top */}
+          <div className="absolute inset-0 flex items-center justify-center z-10">
+            <img 
+              src={qrCodeOverlay} 
+              alt="QR Code" 
+              className="w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 object-contain"
+            />
+          </div>
+
+          {/* Footer Text */}
+          <div className="relative z-20 h-full w-full flex items-end justify-center pb-4 sm:pb-6">
             <p className="text-[10px] sm:text-xs text-white/60 tracking-widest uppercase">Scan QR Code</p>
           </div>
         </motion.div>
