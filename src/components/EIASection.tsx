@@ -85,8 +85,14 @@ const EIASection = () => {
           <source src="/videos/eia-background.mp4" type="video/mp4" />
         </video>
         {/* Overlay for readability */}
-        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-background/70 backdrop-blur-[2px]" />
       </div>
+
+      {/* Top gradient for smooth transition from previous section */}
+      <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-background to-transparent z-[2] pointer-events-none" />
+
+      {/* Bottom gradient for smooth transition to next section */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent z-[2] pointer-events-none" />
 
       {/* Minimal glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-wj-green/5 rounded-full blur-[100px] z-[1]" />
