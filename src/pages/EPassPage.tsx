@@ -74,15 +74,15 @@ export default function EPassPage() {
               </div>
             )}
 
-            {/* 10-Column Grid: BikeShowcase (6) + MemberPassCard (4) */}
+            {/* 12-Column Grid: BikeShowcase (8) + MemberPassCard (4) */}
             <div className="grid grid-cols-12 gap-4 lg:gap-6">
-              {/* Bike Showcase - 6 columns */}
-              <div className="col-span-12 lg:col-span-6">
+              {/* Bike Showcase - 8 columns */}
+              <div className="col-span-12 lg:col-span-8">
                 <BikeShowcase />
               </div>
 
-              {/* Member Pass Card - 4 columns (using 6 on 12-grid = 4 on 10-grid equivalent) */}
-              <div className="col-span-12 lg:col-span-6 xl:col-span-4">
+              {/* Member Pass Card - 4 columns */}
+              <div className="col-span-12 lg:col-span-4 h-full">
                 <MemberPassCard
                   bikeId={bike.bikeId}
                   bikeName={bike.bikeName}
