@@ -149,8 +149,11 @@ export default function BikeShowcase() {
       className="relative h-full min-h-[400px] rounded-3xl overflow-hidden"
     >
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4">
-        <span className="text-sm font-medium text-foreground/80">My Bike</span>
+      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4 pb-0">
+        <div className="space-y-0.5">
+          <h2 className="text-lg font-semibold text-foreground tracking-tight">My Bike</h2>
+          <p className="text-[11px] text-muted-foreground/70 font-light">Your ride at a glance</p>
+        </div>
         <div className="p-2 rounded-full bg-background/20 backdrop-blur-sm">
           <Bike className="h-4 w-4 text-wj-green" />
         </div>
