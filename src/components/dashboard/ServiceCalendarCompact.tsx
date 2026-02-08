@@ -293,23 +293,23 @@ export default function ServiceCalendarCompact() {
 
           {/* Cards Container - Arc Layout like EPassSection */}
           <div 
-            className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-0 py-8" 
+            className="flex flex-row items-center justify-center gap-0 py-4 px-2" 
             style={{ perspective: "1500px" }}
           >
             {/* E-Pass Light Card - Left */}
             <motion.div
               initial={{ opacity: 0, y: 100, scale: 0.7 }}
-              animate={{ opacity: 1, y: 0, rotateY: 15, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, rotateY: 15, scale: 0.85 }}
               transition={{ duration: 0.9, delay: 0.3, type: "spring", stiffness: 50 }}
               whileHover={{ 
-                scale: 0.95, 
+                scale: 0.9, 
                 rotateY: 5, 
-                y: -15,
+                y: -10,
                 transition: { duration: 0.3 }
               }}
               onClick={() => setSelectedPlan("light")}
               className={cn(
-                "w-56 h-36 md:w-64 md:h-40 rounded-2xl cursor-pointer md:-mr-6 z-10 group relative overflow-hidden",
+                "w-28 h-44 sm:w-32 sm:h-48 md:w-36 md:h-56 rounded-xl cursor-pointer -mr-3 sm:-mr-4 z-10 group relative overflow-hidden flex-shrink-0",
                 selectedPlan === "light" && "ring-2 ring-wj-green ring-offset-2 ring-offset-background"
               )}
               style={{ 
@@ -329,29 +329,29 @@ export default function ServiceCalendarCompact() {
               </video>
               
               {/* Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
               
               {/* Selected Indicator */}
               {selectedPlan === "light" && (
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="absolute -top-2 -right-2 w-6 h-6 bg-wj-green rounded-full flex items-center justify-center z-30"
+                  className="absolute top-1 right-1 w-5 h-5 bg-wj-green rounded-full flex items-center justify-center z-30"
                 >
-                  <CheckCircle2 className="h-4 w-4 text-white" />
+                  <CheckCircle2 className="h-3 w-3 text-white" />
                 </motion.div>
               )}
               
               {/* Card Content */}
-              <div className="absolute inset-0 p-5 flex flex-col justify-between rounded-2xl border border-black/5 group-hover:border-black/15 transition-colors duration-300">
-                <div className="flex justify-between items-start">
-                  <span className="text-sm font-bold text-white drop-shadow-md">WJ VISION</span>
-                  <span className="text-[10px] font-semibold text-white/90 bg-black/20 backdrop-blur-sm px-2 py-1 rounded-full">E-PASS LIGHT</span>
+              <div className="absolute inset-0 p-3 sm:p-4 flex flex-col justify-between rounded-xl border border-white/10 group-hover:border-white/20 transition-colors duration-300">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] sm:text-xs font-bold text-white drop-shadow-md">WJ VISION</span>
+                  <span className="text-[8px] sm:text-[9px] font-semibold text-white/90 bg-black/30 backdrop-blur-sm px-1.5 py-0.5 rounded-full w-fit">LIGHT</span>
                 </div>
                 <div className="flex flex-col">
-                  <p className="text-[9px] text-white/70">Member</p>
-                  <p className="text-sm font-medium text-white">Essential</p>
-                  <p className="text-lg font-bold text-white mt-1">Free</p>
+                  <p className="text-[8px] sm:text-[9px] text-white/70">Member</p>
+                  <p className="text-xs sm:text-sm font-medium text-white">Essential</p>
+                  <p className="text-sm sm:text-base font-bold text-white mt-1">Free</p>
                 </div>
               </div>
             </motion.div>
@@ -363,14 +363,14 @@ export default function ServiceCalendarCompact() {
               transition={{ duration: 1, delay: 0.1, type: "spring", stiffness: 45 }}
               whileHover={{ 
                 scale: 1.05, 
-                y: -15,
-                rotateX: 5,
-                rotateY: -3,
+                y: -10,
+                rotateX: 3,
+                rotateY: -2,
                 transition: { duration: 0.8, ease: "easeOut" }
               }}
               onClick={() => setSelectedPlan("black")}
               className={cn(
-                "relative w-64 h-44 md:w-72 md:h-52 rounded-2xl cursor-pointer z-20 group overflow-hidden",
+                "relative w-32 h-52 sm:w-36 sm:h-56 md:w-44 md:h-64 rounded-xl cursor-pointer z-20 group overflow-hidden flex-shrink-0",
                 selectedPlan === "black" && "ring-2 ring-wj-green ring-offset-2 ring-offset-background"
               )}
               style={{ 
@@ -380,7 +380,7 @@ export default function ServiceCalendarCompact() {
             >
               {/* Animated Subtle Border */}
               <div 
-                className="absolute -inset-[1px] rounded-2xl opacity-40 group-hover:opacity-60 transition-opacity duration-700"
+                className="absolute -inset-[1px] rounded-xl opacity-40 group-hover:opacity-60 transition-opacity duration-700"
                 style={{
                   background: "linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.4), rgba(0,0,0,0.2), rgba(255,255,255,0.3), rgba(0,0,0,0.1), rgba(255,255,255,0.2))",
                   backgroundSize: "400% 100%",
@@ -389,7 +389,7 @@ export default function ServiceCalendarCompact() {
               />
               
               {/* Card Content Container */}
-              <div className="absolute inset-[1px] rounded-2xl overflow-hidden">
+              <div className="absolute inset-[1px] rounded-xl overflow-hidden">
                 {/* Video Background */}
                 <video
                   autoPlay
@@ -402,51 +402,51 @@ export default function ServiceCalendarCompact() {
                 </video>
                 
                 {/* Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/20" />
                 
                 {/* Selected Indicator */}
                 {selectedPlan === "black" && (
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="absolute -top-1 -right-1 w-6 h-6 bg-wj-green rounded-full flex items-center justify-center z-30"
+                    className="absolute top-1 right-1 w-5 h-5 bg-wj-green rounded-full flex items-center justify-center z-30"
                   >
-                    <CheckCircle2 className="h-4 w-4 text-white" />
+                    <CheckCircle2 className="h-3 w-3 text-white" />
                   </motion.div>
                 )}
                 
                 {/* Card Content */}
-                <div className="absolute inset-0 p-6 flex flex-col justify-between rounded-2xl">
-                  <div className="flex justify-between items-start">
-                    <span className="text-lg font-bold text-white">WJ VISION</span>
-                    <span className="text-xs font-semibold text-white/80 bg-white/10 backdrop-blur-sm px-2 py-1 rounded-full border border-white/10">E-PASS BLACK</span>
+                <div className="absolute inset-0 p-3 sm:p-4 flex flex-col justify-between rounded-xl">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs sm:text-sm font-bold text-white">WJ VISION</span>
+                    <span className="text-[8px] sm:text-[9px] font-semibold text-white/80 bg-white/10 backdrop-blur-sm px-1.5 py-0.5 rounded-full border border-white/10 w-fit">BLACK</span>
                   </div>
                   <div className="flex flex-col">
-                    <p className="text-[10px] text-white/50">Member</p>
-                    <p className="text-sm font-medium text-white">Elite</p>
-                    <p className="text-xl font-bold text-white mt-1">€19.99<span className="text-sm font-normal opacity-70">/mo</span></p>
+                    <p className="text-[8px] sm:text-[9px] text-white/50">Member</p>
+                    <p className="text-xs sm:text-sm font-medium text-white">Elite</p>
+                    <p className="text-base sm:text-lg font-bold text-white mt-1">€19.99<span className="text-[10px] sm:text-xs font-normal opacity-70">/mo</span></p>
                   </div>
                 </div>
               </div>
               
               {/* Subtle Glow Effect */}
-              <div className="absolute -inset-6 bg-white/5 rounded-3xl blur-2xl -z-10 group-hover:bg-white/10 transition-colors duration-700" />
+              <div className="absolute -inset-4 bg-white/5 rounded-2xl blur-xl -z-10 group-hover:bg-white/10 transition-colors duration-700" />
             </motion.div>
 
             {/* E-Pass Plus Card - Right */}
             <motion.div
               initial={{ opacity: 0, y: 100, scale: 0.7 }}
-              animate={{ opacity: 1, y: 0, rotateY: -15, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, rotateY: -15, scale: 0.85 }}
               transition={{ duration: 0.9, delay: 0.5, type: "spring", stiffness: 50 }}
               whileHover={{ 
-                scale: 0.95, 
+                scale: 0.9, 
                 rotateY: -5, 
-                y: -15,
+                y: -10,
                 transition: { duration: 0.3 }
               }}
               onClick={() => setSelectedPlan("plus")}
               className={cn(
-                "w-56 h-36 md:w-64 md:h-40 rounded-2xl cursor-pointer md:-ml-6 z-10 group relative overflow-hidden",
+                "w-28 h-44 sm:w-32 sm:h-48 md:w-36 md:h-56 rounded-xl cursor-pointer -ml-3 sm:-ml-4 z-10 group relative overflow-hidden flex-shrink-0",
                 selectedPlan === "plus" && "ring-2 ring-wj-green ring-offset-2 ring-offset-background"
               )}
               style={{ 
@@ -466,29 +466,29 @@ export default function ServiceCalendarCompact() {
               </video>
               
               {/* Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
               
               {/* Selected Indicator */}
               {selectedPlan === "plus" && (
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="absolute -top-2 -right-2 w-6 h-6 bg-wj-green rounded-full flex items-center justify-center z-30"
+                  className="absolute top-1 right-1 w-5 h-5 bg-wj-green rounded-full flex items-center justify-center z-30"
                 >
-                  <CheckCircle2 className="h-4 w-4 text-white" />
+                  <CheckCircle2 className="h-3 w-3 text-white" />
                 </motion.div>
               )}
               
               {/* Card Content */}
-              <div className="absolute inset-0 p-5 flex flex-col justify-between rounded-2xl border border-white/10 group-hover:border-white/30 transition-colors duration-300">
-                <div className="flex justify-between items-start">
-                  <span className="text-sm font-bold text-white">WJ VISION</span>
-                  <span className="text-[10px] font-semibold text-white/90 bg-white/20 backdrop-blur-sm px-2 py-1 rounded-full">E-PASS PLUS</span>
+              <div className="absolute inset-0 p-3 sm:p-4 flex flex-col justify-between rounded-xl border border-white/10 group-hover:border-white/30 transition-colors duration-300">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] sm:text-xs font-bold text-white">WJ VISION</span>
+                  <span className="text-[8px] sm:text-[9px] font-semibold text-white/90 bg-white/20 backdrop-blur-sm px-1.5 py-0.5 rounded-full w-fit">PLUS</span>
                 </div>
                 <div className="flex flex-col">
-                  <p className="text-[9px] text-white/60">Member</p>
-                  <p className="text-sm font-medium text-white">Premium</p>
-                  <p className="text-lg font-bold text-white mt-1">€9.99<span className="text-xs font-normal opacity-70">/mo</span></p>
+                  <p className="text-[8px] sm:text-[9px] text-white/60">Member</p>
+                  <p className="text-xs sm:text-sm font-medium text-white">Premium</p>
+                  <p className="text-sm sm:text-base font-bold text-white mt-1">€9.99<span className="text-[10px] sm:text-xs font-normal opacity-70">/mo</span></p>
                 </div>
               </div>
             </motion.div>
