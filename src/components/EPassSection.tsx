@@ -77,34 +77,37 @@ const EPassSection = () => {
               </div>
             </motion.div>
 
-            {/* E-Pass Black Card - Center (Main) with Golden Animated Border */}
+            {/* E-Pass Black Card - Center (Main) with Animated Border */}
             <motion.div
               initial={{ opacity: 0, y: 120, scale: 0.6 }}
               animate={isInView ? { opacity: 1, y: 0, scale: 1 } : {}}
               transition={{ duration: 1, delay: 0.5, type: "spring", stiffness: 45 }}
               whileHover={{ 
-                scale: 1.08, 
-                y: -20,
-                transition: { duration: 0.3 }
+                scale: 1.05, 
+                y: -15,
+                rotateX: 5,
+                rotateY: -3,
+                transition: { duration: 0.8, ease: "easeOut" }
               }}
               className="relative w-72 h-44 md:w-80 md:h-52 rounded-2xl cursor-pointer z-20 group"
               style={{ 
                 transformStyle: "preserve-3d",
+                perspective: "1000px",
               }}
             >
-              {/* Animated Golden Border */}
+              {/* Animated Subtle Border */}
               <div 
-                className="absolute -inset-[2px] rounded-2xl opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+                className="absolute -inset-[1px] rounded-2xl opacity-40 group-hover:opacity-60 transition-opacity duration-700"
                 style={{
-                  background: "linear-gradient(90deg, #FFD700, #FFA500, #FF8C00, #FFD700, #FFA500)",
-                  backgroundSize: "300% 100%",
-                  animation: "borderGlow 3s linear infinite",
+                  background: "linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.4), rgba(0,0,0,0.2), rgba(255,255,255,0.3), rgba(0,0,0,0.1), rgba(255,255,255,0.2))",
+                  backgroundSize: "400% 100%",
+                  animation: "borderGlow 8s linear infinite",
                 }}
               />
               
               {/* Card Content */}
               <div 
-                className="absolute inset-[2px] rounded-2xl"
+                className="absolute inset-[1px] rounded-2xl"
                 style={{ 
                   background: "linear-gradient(135deg, #0a0a0a 0%, #020202 50%, #000000 100%)",
                   boxShadow: "0 25px 50px -15px rgba(0, 0, 0, 0.8)"
@@ -113,22 +116,22 @@ const EPassSection = () => {
                 <div className="absolute inset-0 p-6 flex flex-col justify-between rounded-2xl">
                   <div className="flex justify-between items-start">
                     <span className="text-lg font-bold text-white">WJ VISION</span>
-                    <span className="text-xs font-semibold text-amber-400/90 bg-amber-400/10 px-2 py-1 rounded-full border border-amber-400/20">E-PASS BLACK</span>
+                    <span className="text-xs font-semibold text-white/80 bg-white/5 px-2 py-1 rounded-full border border-white/10">E-PASS BLACK</span>
                   </div>
                   <div className="flex justify-between items-end">
                     <div>
                       <p className="text-[10px] text-white/50">Member</p>
                       <p className="text-sm font-medium text-white">Elite</p>
                     </div>
-                    <div className="w-12 h-12 rounded-xl border-2 border-amber-400/30 flex items-center justify-center bg-amber-400/5">
-                      <div className="w-7 h-7 bg-amber-400/20 rounded-lg" />
+                    <div className="w-12 h-12 rounded-xl border border-white/20 flex items-center justify-center bg-white/5">
+                      <div className="w-7 h-7 bg-white/10 rounded-lg" />
                     </div>
                   </div>
                 </div>
               </div>
               
-              {/* Glow Effect */}
-              <div className="absolute -inset-6 bg-amber-400/10 rounded-3xl blur-2xl -z-10 group-hover:bg-amber-400/20 transition-colors duration-500" />
+              {/* Subtle Glow Effect */}
+              <div className="absolute -inset-6 bg-white/5 rounded-3xl blur-2xl -z-10 group-hover:bg-white/10 transition-colors duration-700" />
             </motion.div>
 
             {/* E-Pass Plus Card - Right */}
