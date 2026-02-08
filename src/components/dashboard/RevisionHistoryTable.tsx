@@ -347,92 +347,96 @@ export default function RevisionHistoryTable() {
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 overflow-hidden flex">
-              {/* Chat Sidebar - Collapsible */}
-              <AnimatePresence mode="wait">
-                {chatOpen && (
-                  <motion.div
-                    initial={{ width: 0, opacity: 0 }}
-                    animate={{ width: "100%", opacity: 1 }}
-                    exit={{ width: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="border-r border-border/50 flex flex-col h-full lg:max-w-[280px] w-full"
-                  >
-                    <div className="p-3 border-b border-border/50 flex items-center justify-between">
-                      <h4 className="text-xs font-medium text-foreground flex items-center gap-1.5">
-                        <MessageCircle className="h-3.5 w-3.5 text-wj-green" /> 
-                        Chat
-                      </h4>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-6 w-6"
-                        onClick={() => setChatOpen(false)}
-                      >
-                        <PanelLeftClose className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                    <ScrollArea className="flex-1 p-3">
-                      <div className="space-y-2">
-                        {/* Auto status messages */}
-                        {selectedRevision?.progress.map((step, i) => (
-                          <div key={`status-${i}`} className="flex gap-2">
-                            <div className="w-6 h-6 rounded-full bg-muted/50 flex items-center justify-center shrink-0">
-                              <Clock className="h-3 w-3 text-muted-foreground" />
-                            </div>
-                            <div className="flex-1">
-                              <div className="bg-muted/30 rounded-md px-2 py-1.5 inline-block">
-                                <p className="text-[10px] text-muted-foreground italic">{step.action}</p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                        {/* Chat messages */}
-                        {selectedRevision?.chat.map((msg, i) => (
-                          <div key={`chat-${i}`} className={cn("flex gap-2", msg.from === "user" ? "flex-row-reverse" : "")}>
-                            <Avatar className="h-6 w-6 shrink-0">
-                              <AvatarFallback className={cn(
-                                "text-[9px] font-medium",
-                                msg.from === "user" ? "bg-wj-green/20 text-wj-green" : "bg-muted"
-                              )}>
-                                {msg.from === "user" ? "ME" : getInitials(selectedRevision?.mechanic || "M")}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className={cn(
-                              "max-w-[80%] rounded-md px-2 py-1.5",
-                              msg.from === "user" 
-                                ? "bg-wj-green text-wj-green-foreground" 
-                                : "bg-muted"
-                            )}>
-                              <p className="text-[11px]">{msg.message}</p>
-                              <p className="text-[9px] opacity-70">{msg.time}</p>
-                            </div>
-                          </div>
-                        ))}
-                        {(!selectedRevision?.chat || selectedRevision.chat.length === 0) && (
-                          <p className="text-[10px] text-muted-foreground text-center py-2">No messages</p>
-                        )}
-                      </div>
-                    </ScrollArea>
-                    <div className="p-2 border-t border-border/50">
-                      <div className="flex gap-1.5">
-                        <Input
-                          placeholder="Message..."
-                          value={chatMessage}
-                          onChange={(e) => setChatMessage(e.target.value)}
-                          className="flex-1 bg-muted/50 border-border/50 h-8 text-xs"
-                        />
-                        <Button size="icon" className="bg-wj-green hover:bg-wj-green/90 h-8 w-8">
-                          <Send className="h-3.5 w-3.5" />
+            <div className="flex-1 overflow-hidden relative p-4">
+              <div className="flex gap-4 h-full">
+                {/* Chat Sidebar - Absolute Overlay */}
+                <AnimatePresence mode="wait">
+                  {chatOpen && (
+                    <motion.div
+                      initial={{ x: -20, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      exit={{ x: -20, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute left-4 top-4 bottom-4 z-20 w-[280px] bg-background border border-border/50 rounded-2xl flex flex-col shadow-xl"
+                    >
+                      <div className="p-3 border-b border-border/50 flex items-center justify-between rounded-t-2xl">
+                        <h4 className="text-xs font-medium text-foreground flex items-center gap-1.5">
+                          <MessageCircle className="h-3.5 w-3.5 text-wj-green" /> 
+                          Chat
+                        </h4>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-6 w-6"
+                          onClick={() => setChatOpen(false)}
+                        >
+                          <PanelLeftClose className="h-3.5 w-3.5" />
                         </Button>
                       </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                      <ScrollArea className="flex-1 p-3">
+                        <div className="space-y-2">
+                          {/* Auto status messages */}
+                          {selectedRevision?.progress.map((step, i) => (
+                            <div key={`status-${i}`} className="flex gap-2">
+                              <div className="w-6 h-6 rounded-full bg-muted/50 flex items-center justify-center shrink-0">
+                                <Clock className="h-3 w-3 text-muted-foreground" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="bg-muted/30 rounded-md px-2 py-1.5 inline-block">
+                                  <p className="text-[10px] text-muted-foreground italic">{step.action}</p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                          {/* Chat messages */}
+                          {selectedRevision?.chat.map((msg, i) => (
+                            <div key={`chat-${i}`} className={cn("flex gap-2", msg.from === "user" ? "flex-row-reverse" : "")}>
+                              <Avatar className="h-6 w-6 shrink-0">
+                                <AvatarFallback className={cn(
+                                  "text-[9px] font-medium",
+                                  msg.from === "user" ? "bg-wj-green/20 text-wj-green" : "bg-muted"
+                                )}>
+                                  {msg.from === "user" ? "ME" : getInitials(selectedRevision?.mechanic || "M")}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className={cn(
+                                "max-w-[80%] rounded-md px-2 py-1.5",
+                                msg.from === "user" 
+                                  ? "bg-wj-green text-wj-green-foreground" 
+                                  : "bg-muted"
+                              )}>
+                                <p className="text-[11px]">{msg.message}</p>
+                                <p className="text-[9px] opacity-70">{msg.time}</p>
+                              </div>
+                            </div>
+                          ))}
+                          {(!selectedRevision?.chat || selectedRevision.chat.length === 0) && (
+                            <p className="text-[10px] text-muted-foreground text-center py-2">No messages</p>
+                          )}
+                        </div>
+                      </ScrollArea>
+                      <div className="p-2 border-t border-border/50 rounded-b-2xl">
+                        <div className="flex gap-1.5">
+                          <Input
+                            placeholder="Message..."
+                            value={chatMessage}
+                            onChange={(e) => setChatMessage(e.target.value)}
+                            className="flex-1 bg-muted/50 border-border/50 h-8 text-xs"
+                          />
+                          <Button size="icon" className="bg-wj-green hover:bg-wj-green/90 h-8 w-8">
+                            <Send className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-              {/* Main Content Area */}
-              <div className="flex-1 flex flex-col h-full overflow-hidden relative">
+                {/* Main Content Area */}
+                <div className={cn(
+                  "flex-1 flex flex-col h-full overflow-hidden bg-background border border-border/50 rounded-2xl transition-all duration-200",
+                  chatOpen ? "ml-[296px]" : "ml-0"
+                )}>
                 {/* Toggle Chat Button when closed */}
                 {!chatOpen && (
                   <Button 
@@ -540,6 +544,7 @@ export default function RevisionHistoryTable() {
                     )}
                   </div>
                 </ScrollArea>
+                </div>
               </div>
             </div>
           </DialogContent>
