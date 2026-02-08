@@ -1,13 +1,54 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState, useEffect, useCallback } from "react";
+import { AnimatePresence } from "framer-motion";
+import Loader from "@/components/Loader";
+import Navigation from "@/components/Navigation";
+import HeroSection from "@/components/HeroSection";
+import FeaturesSection from "@/components/FeaturesSection";
+import EPassSection from "@/components/EPassSection";
+import QuickActionsSection from "@/components/QuickActionsSection";
+import Footer from "@/components/Footer";
 
 const Index = () => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  const handleLoadingComplete = useCallback(() => {
+    setIsLoading(false);
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Add dark class by default
+  useEffect(() => {
+    document.documentElement.classList.add("dark");
+  }, []);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
+    <>
+      <AnimatePresence mode="wait">
+        {isLoading && <Loader onLoadingComplete={handleLoadingComplete} />}
+      </AnimatePresence>
+
+      {!isLoading && (
+        <div className="min-h-screen bg-background">
+          <Navigation isScrolled={isScrolled} />
+          <main>
+            <HeroSection />
+            <FeaturesSection />
+            <EPassSection />
+            <QuickActionsSection />
+          </main>
+          <Footer />
+        </div>
+      )}
+    </>
   );
 };
 
