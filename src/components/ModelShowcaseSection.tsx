@@ -44,9 +44,25 @@ const ModelShowcaseSection = ({
   }, [images.length, slideInterval]);
 
   return (
-    <section className="relative overflow-hidden bg-background px-0 md:px-6 py-6">
+    <section className="relative overflow-hidden px-0 md:px-6 py-6">
+      {/* Video Background Layer - visible when component has border radius */}
+      <div className="absolute inset-0 overflow-hidden">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="w-full h-full object-cover"
+        >
+          <source src="/videos/showcase-background.mp4" type="video/mp4" />
+        </video>
+        {/* Subtle overlay for video */}
+        <div className="absolute inset-0 bg-background/30" />
+      </div>
+
+      {/* Main Content Container with scroll animation */}
       <motion.div 
-        className="relative h-[70vh] min-h-[500px] max-h-[700px] overflow-hidden"
+        className="relative h-[70vh] min-h-[500px] max-h-[700px] overflow-hidden bg-background"
         style={{
           borderRadius,
           marginLeft: margin,
