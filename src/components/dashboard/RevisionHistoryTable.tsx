@@ -143,6 +143,7 @@ export default function RevisionHistoryTable() {
   const [photosOpen, setPhotosOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
   const [userRating, setUserRating] = useState(0);
+  const [expandedRowId, setExpandedRowId] = useState<number | null>(null);
 
   return (
     <TooltipProvider>
@@ -165,8 +166,8 @@ export default function RevisionHistoryTable() {
           </div>
         </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto">
+        {/* Desktop Table - Hidden on mobile */}
+        <div className="hidden md:block overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="border-border/50 hover:bg-transparent">
@@ -191,7 +192,6 @@ export default function RevisionHistoryTable() {
                     transition={{ delay: 0.3 + index * 0.05 }}
                     className="border-border/30 hover:bg-muted/30"
                   >
-                    {/* Bike Column */}
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-wj-green/10 flex items-center justify-center">
@@ -200,8 +200,6 @@ export default function RevisionHistoryTable() {
                         <span className="font-medium text-foreground text-sm">{item.bikeName}</span>
                       </div>
                     </TableCell>
-
-                    {/* Date Column */}
                     <TableCell className="text-sm text-muted-foreground">
                       {new Date(item.date).toLocaleDateString("en-GB", { 
                         day: "2-digit", 
@@ -209,8 +207,6 @@ export default function RevisionHistoryTable() {
                         year: "numeric" 
                       })}
                     </TableCell>
-
-                    {/* Mechanic Column */}
                     <TableCell>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -225,30 +221,22 @@ export default function RevisionHistoryTable() {
                         </TooltipContent>
                       </Tooltip>
                     </TableCell>
-
-                    {/* Health Column */}
                     <TableCell>
                       <Badge className={cn("text-xs font-medium border-0", healthTag.color)}>
                         {healthTag.label}
                       </Badge>
                     </TableCell>
-
-                    {/* Status Column */}
                     <TableCell>
                       <Badge className={cn("text-xs font-medium border-0", status.color)}>
                         {status.label}
                       </Badge>
                     </TableCell>
-
-                    {/* Points Column */}
                     <TableCell>
                       <div className="flex items-center gap-1.5">
                         <Wallet className="h-3.5 w-3.5 text-wj-green" />
                         <span className="text-wj-green font-semibold text-sm">+{item.points}</span>
                       </div>
                     </TableCell>
-
-                    {/* Action Column */}
                     <TableCell className="text-right">
                       <Button
                         variant="ghost"
@@ -264,6 +252,109 @@ export default function RevisionHistoryTable() {
               })}
             </TableBody>
           </Table>
+        </div>
+
+        {/* Mobile/Tablet Cards - Expandable rows */}
+        <div className="md:hidden divide-y divide-border/30">
+          {revisionHistory.map((item, index) => {
+            const status = statusConfig[item.status as keyof typeof statusConfig];
+            const healthTag = getHealthTag(item.health);
+            const isExpanded = expandedRowId === item.id;
+            
+            return (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 + index * 0.05 }}
+              >
+                {/* Main Row - Clickable */}
+                <button
+                  onClick={() => setExpandedRowId(isExpanded ? null : item.id)}
+                  className="w-full p-3 flex items-center gap-3 hover:bg-muted/30 transition-colors text-left"
+                >
+                  <div className="w-9 h-9 rounded-full bg-wj-green/10 flex items-center justify-center shrink-0">
+                    <Bike className="h-4 w-4 text-wj-green" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{item.bikeName}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {new Date(item.date).toLocaleDateString("en-GB", { 
+                        day: "2-digit", 
+                        month: "short", 
+                        year: "numeric" 
+                      })}
+                    </p>
+                  </div>
+                  <Badge className={cn("text-[9px] border-0 shrink-0", status.color)}>
+                    {status.label}
+                  </Badge>
+                  <ChevronDown className={cn(
+                    "h-4 w-4 text-muted-foreground transition-transform shrink-0",
+                    isExpanded && "rotate-180"
+                  )} />
+                </button>
+
+                {/* Expanded Content */}
+                <AnimatePresence>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-3 pb-3 pt-1 space-y-3 bg-muted/20">
+                        {/* Details Grid */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Mechanic</p>
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-6 w-6">
+                                <AvatarFallback className="bg-muted text-[9px] font-medium">
+                                  {getInitials(item.mechanic)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-xs text-foreground">{item.mechanic}</span>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Health</p>
+                            <Badge className={cn("text-[10px] border-0", healthTag.color)}>
+                              {healthTag.label}
+                            </Badge>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Points</p>
+                            <div className="flex items-center gap-1">
+                              <Wallet className="h-3 w-3 text-wj-green" />
+                              <span className="text-wj-green font-semibold text-xs">+{item.points}</span>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Notes</p>
+                            <p className="text-[10px] text-foreground line-clamp-2">{item.notes}</p>
+                          </div>
+                        </div>
+
+                        {/* View Details Button */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedRevision(item)}
+                          className="w-full h-8 text-xs border-border/50"
+                        >
+                          <Eye className="h-3.5 w-3.5 mr-1.5" />
+                          View Full Details
+                        </Button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* Details Modal */}
