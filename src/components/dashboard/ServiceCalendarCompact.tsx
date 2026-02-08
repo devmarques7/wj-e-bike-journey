@@ -194,8 +194,11 @@ export default function ServiceCalendarCompact() {
       
       // Check if user is Light tier - show upgrade modal
       if (userTier === "light") {
+        // Set current plan as default center and selected
+        const currentTierIndex = cardOrder.indexOf(userTier);
+        setActiveCardIndex(currentTierIndex >= 0 ? currentTierIndex : 0);
+        setSelectedPlan(userTier);
         setIsUpgradeModalOpen(true);
-        setSelectedPlan(null);
       } else {
         // Plus or Black tier - proceed with booking
         setIsModalOpen(true);
@@ -334,7 +337,7 @@ export default function ServiceCalendarCompact() {
 
       {/* Upgrade Modal for Light Members */}
       <Dialog open={isUpgradeModalOpen} onOpenChange={setIsUpgradeModalOpen}>
-        <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto bg-background/95 backdrop-blur-xl border-border/50 p-4 sm:p-6">
+        <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-hide bg-background/95 backdrop-blur-xl border-border/50 p-4 sm:p-6">
           <DialogHeader className="text-center">
             <DialogTitle className="flex items-center justify-center gap-2 text-lg sm:text-2xl">
               <Crown className="h-5 w-5 sm:h-6 sm:w-6 text-wj-green" />
@@ -391,9 +394,9 @@ export default function ServiceCalendarCompact() {
                     style={{ 
                       transformStyle: "preserve-3d",
                       boxShadow: isCenter 
-                        ? "0 30px 50px -15px rgba(0, 0, 0, 0.6), 0 15px 30px -10px rgba(5, 140, 66, 0.25)" 
-                        : "0 15px 30px -10px rgba(0, 0, 0, 0.35)",
-                      filter: isCenter ? "none" : "brightness(0.85)",
+                        ? "0 35px 60px -15px rgba(0, 0, 0, 0.7), 0 20px 40px -10px rgba(5, 140, 66, 0.35), 0 0 30px rgba(5, 140, 66, 0.15)" 
+                        : "0 10px 20px -8px rgba(0, 0, 0, 0.3)",
+                      filter: isCenter ? "none" : "brightness(0.8)",
                     }}
                   >
                     {/* Animated Border for Black Card */}
