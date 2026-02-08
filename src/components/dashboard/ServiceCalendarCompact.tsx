@@ -334,25 +334,25 @@ export default function ServiceCalendarCompact() {
 
       {/* Upgrade Modal for Light Members */}
       <Dialog open={isUpgradeModalOpen} onOpenChange={setIsUpgradeModalOpen}>
-        <DialogContent className="sm:max-w-2xl bg-background/95 backdrop-blur-xl border-border/50 overflow-hidden">
+        <DialogContent className="w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto bg-background/95 backdrop-blur-xl border-border/50 p-4 sm:p-6">
           <DialogHeader className="text-center">
-            <DialogTitle className="flex items-center justify-center gap-2 text-2xl">
-              <Crown className="h-6 w-6 text-wj-green" />
+            <DialogTitle className="flex items-center justify-center gap-2 text-lg sm:text-2xl">
+              <Crown className="h-5 w-5 sm:h-6 sm:w-6 text-wj-green" />
               Upgrade Your Membership
             </DialogTitle>
-            <DialogDescription className="text-center">
+            <DialogDescription className="text-center text-xs sm:text-sm">
               Calendar booking is a premium feature. Upgrade your E-Pass to schedule services directly.
             </DialogDescription>
           </DialogHeader>
 
           {/* 3D Carousel Container */}
           <div 
-            className="relative flex items-center justify-center py-10 px-4 min-h-[360px] sm:min-h-[420px]" 
+            className="relative flex items-center justify-center py-6 sm:py-10 px-2 sm:px-4 min-h-[280px] sm:min-h-[380px]" 
             style={{ perspective: "1000px" }}
           >
             {/* Cards Container */}
             <div 
-              className="relative w-full max-w-lg flex items-center justify-center h-72"
+              className="relative w-full max-w-lg flex items-center justify-center h-56 sm:h-72"
               style={{ transformStyle: "preserve-3d" }}
             >
               {cardOrder.map((tier, index) => {
@@ -385,8 +385,8 @@ export default function ServiceCalendarCompact() {
                     } : undefined}
                     onClick={() => handleCardClick(tier)}
                     className={cn(
-                      "absolute w-32 h-52 sm:w-40 sm:h-64 md:w-44 md:h-72 rounded-2xl cursor-pointer group overflow-hidden",
-                      isCenter && "ring-2 ring-wj-green/60 ring-offset-4 ring-offset-background"
+                      "absolute w-24 h-40 sm:w-36 sm:h-56 md:w-40 md:h-64 rounded-xl sm:rounded-2xl cursor-pointer group overflow-hidden",
+                      isCenter && "ring-2 ring-wj-green/60 ring-offset-2 sm:ring-offset-4 ring-offset-background"
                     )}
                     style={{ 
                       transformStyle: "preserve-3d",
@@ -521,7 +521,7 @@ export default function ServiceCalendarCompact() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -20, scale: 0.95 }}
                 transition={{ duration: 0.4, type: "spring", stiffness: 100 }}
-                className="mx-4 rounded-2xl bg-muted/30 border border-border/30 backdrop-blur-sm overflow-hidden"
+                className="mx-2 sm:mx-4 rounded-xl sm:rounded-2xl bg-muted/30 border border-border/30 backdrop-blur-sm overflow-hidden"
               >
                 {(() => {
                   const plan = membershipPlans.find(p => p.tier === selectedPlan);
@@ -534,21 +534,21 @@ export default function ServiceCalendarCompact() {
                   const isCurrentPlan = userTier === selectedPlan;
                   
                   return (
-                    <div className="p-5">
+                    <div className="p-3 sm:p-5">
                       {/* Header */}
-                      <div className="flex items-start justify-between mb-5">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-4 sm:mb-5">
                         <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-xl text-foreground">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="font-bold text-base sm:text-xl text-foreground">
                               {plan.name}
                             </h4>
                             {isCurrentPlan && (
-                              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-wj-green/20 text-wj-green border border-wj-green/30">
+                              <span className="text-[9px] sm:text-[10px] font-medium px-2 py-0.5 rounded-full bg-wj-green/20 text-wj-green border border-wj-green/30">
                                 Current
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             {plan.description}
                           </p>
                         </div>
@@ -556,53 +556,53 @@ export default function ServiceCalendarCompact() {
 
                       {/* Pricing Section */}
                       {plan.monthlyPrice > 0 ? (
-                        <div className="mb-5 p-4 rounded-xl bg-background/50 border border-border/30">
-                          <div className="flex items-center justify-between">
+                        <div className="mb-4 sm:mb-5 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-background/50 border border-border/30">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
                             <div>
                               <div className="flex items-baseline gap-1">
-                                <span className="text-3xl font-bold text-foreground">
+                                <span className="text-2xl sm:text-3xl font-bold text-foreground">
                                   €{monthlyFromAnnual.toFixed(0)}
                                 </span>
-                                <span className="text-sm text-muted-foreground">/month</span>
+                                <span className="text-xs sm:text-sm text-muted-foreground">/month</span>
                               </div>
-                              <p className="text-xs text-muted-foreground mt-1">
+                              <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">
                                 Billed annually at €{plan.annualPrice.toFixed(0)}/year
                               </p>
                             </div>
-                            <div className="text-right">
-                              <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-wj-green/10 border border-wj-green/20">
-                                <span className="text-xs font-semibold text-wj-green">Save {savingsPercent}%</span>
+                            <div className="flex items-center gap-2 sm:flex-col sm:items-end">
+                              <div className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-wj-green/10 border border-wj-green/20">
+                                <span className="text-[10px] sm:text-xs font-semibold text-wj-green">Save {savingsPercent}%</span>
                               </div>
-                              <p className="text-xs text-muted-foreground mt-1.5 line-through">
-                                €{plan.monthlyPrice.toFixed(2)}/mo monthly
+                              <p className="text-[10px] sm:text-xs text-muted-foreground line-through">
+                                €{plan.monthlyPrice.toFixed(2)}/mo
                               </p>
                             </div>
                           </div>
                         </div>
                       ) : (
-                        <div className="mb-5 p-4 rounded-xl bg-background/50 border border-border/30">
+                        <div className="mb-4 sm:mb-5 p-3 sm:p-4 rounded-lg sm:rounded-xl bg-background/50 border border-border/30">
                           <div className="flex items-baseline gap-1">
-                            <span className="text-3xl font-bold text-foreground">Free</span>
-                            <span className="text-sm text-muted-foreground">forever</span>
+                            <span className="text-2xl sm:text-3xl font-bold text-foreground">Free</span>
+                            <span className="text-xs sm:text-sm text-muted-foreground">forever</span>
                           </div>
-                          <p className="text-xs text-muted-foreground mt-1">
+                          <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">
                             Included with your bike purchase
                           </p>
                         </div>
                       )}
 
                       {/* Features Grid */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div className="grid grid-cols-1 gap-1.5 sm:gap-2">
                         {plan.features.map((feature, i) => (
                           <motion.div 
                             key={i} 
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: i * 0.04 }}
-                            className="flex items-center gap-2.5 text-sm"
+                            className="flex items-center gap-2 text-xs sm:text-sm"
                           >
-                            <div className="flex-shrink-0 w-5 h-5 rounded-full bg-wj-green/10 flex items-center justify-center">
-                              <CheckCircle2 className="h-3 w-3 text-wj-green" />
+                            <div className="flex-shrink-0 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-wj-green/10 flex items-center justify-center">
+                              <CheckCircle2 className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-wj-green" />
                             </div>
                             <span className="text-foreground/80">{feature}</span>
                           </motion.div>
@@ -616,32 +616,33 @@ export default function ServiceCalendarCompact() {
           </AnimatePresence>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-between pt-4 px-4 border-t border-border/30">
+          <div className="flex items-center justify-between pt-3 sm:pt-4 px-2 sm:px-4 border-t border-border/30">
             <Button
               variant="ghost"
+              size="sm"
               onClick={() => {
                 setIsUpgradeModalOpen(false);
                 setSelectedPlan(null);
                 setActiveCardIndex(1);
               }}
-              className="text-muted-foreground"
+              className="text-muted-foreground text-xs sm:text-sm"
             >
               Maybe Later
             </Button>
             
             {selectedPlan && selectedPlan !== "light" && selectedPlan !== userTier ? (
               <Link to="/membership-plans">
-                <Button className="bg-wj-green hover:bg-wj-green-dark text-white">
+                <Button size="sm" className="bg-wj-green hover:bg-wj-green-dark text-white text-xs sm:text-sm">
                   Upgrade Now
-                  <ArrowRight className="h-4 w-4 ml-2" />
+                  <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1 sm:ml-2" />
                 </Button>
               </Link>
             ) : selectedPlan === userTier ? (
-              <Button disabled className="opacity-50">
+              <Button size="sm" disabled className="opacity-50 text-xs sm:text-sm">
                 Current Plan
               </Button>
             ) : (
-              <Button disabled className="opacity-50">
+              <Button size="sm" disabled className="opacity-50 text-xs sm:text-sm">
                 Select a Plan
               </Button>
             )}
