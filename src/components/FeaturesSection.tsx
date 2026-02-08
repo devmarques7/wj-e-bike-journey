@@ -119,32 +119,24 @@ const FeaturesSection = ({
 
             {/* Main Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 items-center overflow-hidden">
-              {/* Left Side - Centered Active Title */}
+              {/* Left Side - Infinite Loop Titles */}
               <div className="lg:col-span-4 flex flex-col justify-center overflow-hidden h-full relative">
                 {/* Gradient masks for continuity effect */}
-                <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-card/95 to-transparent z-10 pointer-events-none" />
-                <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-card/95 to-transparent z-10 pointer-events-none" />
+                <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-card/95 to-transparent z-10 pointer-events-none" />
+                <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-card/95 to-transparent z-10 pointer-events-none" />
                 
-                {/* Scrolling titles container - centered */}
-                <div className="relative h-[200px] flex items-center justify-center overflow-hidden">
-                  <motion.div 
-                    className="absolute w-full"
-                    style={{
-                      y: useTransform(scrollYProgress, [0, 1], [0, -80 * features.length])
-                    }}
-                  >
-                    {loopedFeatures.map((feature, index) => (
-                      <FeatureTitle
-                        key={`${feature.title}-${index}`}
-                        title={feature.title}
-                        icon={feature.icon}
-                        index={index % features.length}
-                        scrollProgress={scrollYProgress}
-                        totalFeatures={features.length}
-                        loopIndex={Math.floor(index / features.length)}
-                      />
-                    ))}
-                  </motion.div>
+                <div className="relative py-8">
+                  {loopedFeatures.map((feature, index) => (
+                    <FeatureTitle
+                      key={`${feature.title}-${index}`}
+                      title={feature.title}
+                      icon={feature.icon}
+                      index={index % features.length}
+                      scrollProgress={scrollYProgress}
+                      totalFeatures={features.length}
+                      isLooped={index >= features.length}
+                    />
+                  ))}
                 </div>
               </div>
 
@@ -198,39 +190,41 @@ interface FeatureTitleProps {
   index: number;
   scrollProgress: MotionValue<number>;
   totalFeatures: number;
-  loopIndex?: number;
+  isLooped?: boolean;
 }
 
-const FeatureTitle = ({ title, icon: Icon, index, scrollProgress, totalFeatures, loopIndex = 0 }: FeatureTitleProps) => {
+const FeatureTitle = ({ title, icon: Icon, index, scrollProgress, totalFeatures, isLooped = false }: FeatureTitleProps) => {
   const segmentSize = 1 / totalFeatures;
   const start = index * segmentSize;
   const end = (index + 1) * segmentSize;
 
-  // Only highlight the first loop's items based on scroll
-  const isFirstLoop = loopIndex === 0;
-  
+  // For looped items, adjust the scroll position tracking
+  const adjustedStart = isLooped ? start : start;
+  const adjustedEnd = isLooped ? end : end;
+
   const opacity = useTransform(scrollProgress, 
-    [start, start + 0.02, end - 0.02, end], 
-    isFirstLoop ? (
-      index === 0 ? [1, 1, 1, 0.2] : 
-      index === totalFeatures - 1 ? [0.2, 1, 1, 1] : 
-      [0.2, 1, 1, 0.2]
-    ) : [0.15, 0.15, 0.15, 0.15]
+    [adjustedStart, adjustedStart + 0.01, adjustedEnd - 0.01, adjustedEnd], 
+    index === 0 && !isLooped ? [1, 1, 1, 0.3] : 
+    index === totalFeatures - 1 && !isLooped ? [0.3, 1, 1, 1] : 
+    [0.3, 1, 1, 0.3]
   );
 
   const scale = useTransform(scrollProgress, 
-    [start, start + 0.02, end - 0.02, end],
-    isFirstLoop ? (
-      index === 0 ? [1.05, 1.05, 1.05, 0.9] :
-      index === totalFeatures - 1 ? [0.9, 1.05, 1.05, 1.05] :
-      [0.9, 1.05, 1.05, 0.9]
-    ) : [0.85, 0.85, 0.85, 0.85]
+    [adjustedStart, adjustedStart + 0.01, adjustedEnd - 0.01, adjustedEnd],
+    index === 0 && !isLooped ? [1, 1, 1, 0.95] :
+    index === totalFeatures - 1 && !isLooped ? [0.95, 1, 1, 1] :
+    [0.95, 1, 1, 0.95]
+  );
+
+  const y = useTransform(scrollProgress, 
+    [0, 1],
+    [0, -80 * totalFeatures]
   );
 
   return (
     <motion.div
-      style={{ opacity, scale }}
-      className="flex items-center gap-4 py-4 cursor-pointer justify-center lg:justify-start"
+      style={{ opacity, scale, y }}
+      className="flex items-center gap-4 py-3 cursor-pointer"
     >
       <div className="w-12 h-12 rounded-xl gradient-wj flex items-center justify-center flex-shrink-0 shadow-lg">
         <Icon className="h-5 w-5 text-white" />
