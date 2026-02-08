@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useRef } from "react";
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarDays, Clock, Wrench, CheckCircle2, ChevronLeft, ChevronRight, MessageSquare, ArrowRight, Crown, ChevronDown, Sparkles } from "lucide-react";
+import { CalendarDays, Clock, Wrench, CheckCircle2, ChevronLeft, ChevronRight, MessageSquare, ArrowRight, Crown, ChevronDown, Sparkles, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -15,10 +15,11 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, MemberTier } from "@/contexts/AuthContext";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 // Mock available dates (next 30 days, excluding weekends)
 const getAvailableDates = () => {
@@ -97,6 +98,7 @@ const TOTAL_STEPS = 3;
 export default function ServiceCalendarCompact() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
@@ -108,6 +110,36 @@ export default function ServiceCalendarCompact() {
   const [selectedService, setSelectedService] = useState<string>("");
   const [additionalNotes, setAdditionalNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAnnualBilling, setIsAnnualBilling] = useState(true);
+  const [isSwipeCompleted, setIsSwipeCompleted] = useState(false);
+  
+  // Swipe-to-upgrade motion values
+  const swipeConstraintsRef = useRef(null);
+  const swipeX = useMotionValue(0);
+  const swipeSliderWidth = 260;
+  const swipeThumbWidth = 48;
+  const swipeMaxDrag = swipeSliderWidth - swipeThumbWidth - 8;
+  
+  const swipeBgColor = useTransform(
+    swipeX,
+    [0, swipeMaxDrag],
+    ["rgba(5, 140, 66, 0.1)", "rgba(5, 140, 66, 0.4)"]
+  );
+  const swipeTextOpacity = useTransform(swipeX, [0, swipeMaxDrag * 0.4], [1, 0]);
+  const swipeCheckOpacity = useTransform(swipeX, [swipeMaxDrag * 0.7, swipeMaxDrag], [0, 1]);
+
+  const handleSwipeDragEnd = () => {
+    const currentX = swipeX.get();
+    if (currentX >= swipeMaxDrag * 0.75) {
+      animate(swipeX, swipeMaxDrag, { duration: 0.2 });
+      setIsSwipeCompleted(true);
+      setTimeout(() => {
+        navigate("/membership-plans");
+      }, 400);
+    } else {
+      animate(swipeX, 0, { duration: 0.3, type: "spring", stiffness: 400, damping: 30 });
+    }
+  };
   
   const availableDates = getAvailableDates();
   const userTier = user?.tier || "light";
@@ -566,171 +598,163 @@ export default function ServiceCalendarCompact() {
               {selectedPlan && (
                 <motion.div
                   key={selectedPlan}
-                  initial={{ opacity: 0, y: 30, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                  transition={{ duration: 0.4, type: "spring", stiffness: 100 }}
-                  className="mx-4 rounded-2xl bg-muted/30 border border-border/30 backdrop-blur-sm overflow-hidden"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.3 }}
+                  className="mx-4 space-y-4"
                 >
                   {(() => {
                     const plan = membershipPlans.find(p => p.tier === selectedPlan);
                     if (!plan) return null;
                     
-                    const monthlyFromAnnual = plan.annualPrice > 0 ? (plan.annualPrice / 12) : 0;
+                    const displayPrice = isAnnualBilling 
+                      ? (plan.annualPrice / 12) 
+                      : plan.monthlyPrice;
                     const savingsPercent = plan.monthlyPrice > 0 
                       ? Math.round(((plan.monthlyPrice * 12 - plan.annualPrice) / (plan.monthlyPrice * 12)) * 100)
                       : 0;
                     const isCurrentPlan = userTier === selectedPlan;
                     
                     return (
-                      <div className="p-5">
-                        {/* Header */}
-                        <div className="flex items-start justify-between mb-5">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-bold text-xl text-foreground">
-                                {plan.name}
-                              </h4>
-                              {isCurrentPlan && (
-                                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-wj-green/20 text-wj-green border border-wj-green/30">
-                                  Current
+                      <>
+                        {/* Minimalist Plan Card */}
+                        <div className="p-4 rounded-xl bg-muted/20 border border-border/20">
+                          {/* Plan Name + Current Badge */}
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="font-semibold text-lg text-foreground">
+                              {plan.name}
+                            </h4>
+                            {isCurrentPlan && (
+                              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-wj-green/20 text-wj-green">
+                                Current
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Price Display */}
+                          {plan.monthlyPrice > 0 ? (
+                            <div className="flex items-baseline gap-1 mb-3">
+                              <span className="text-3xl font-bold text-foreground">
+                                €{displayPrice.toFixed(0)}
+                              </span>
+                              <span className="text-sm text-muted-foreground">/mo</span>
+                              {isAnnualBilling && (
+                                <span className="ml-2 text-xs text-wj-green font-medium">
+                                  Save {savingsPercent}%
                                 </span>
                               )}
                             </div>
-                            <p className="text-sm text-muted-foreground">
-                              {plan.description}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Pricing Section */}
-                        {plan.monthlyPrice > 0 ? (
-                          <div className="mb-5 p-4 rounded-xl bg-background/50 border border-border/30">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <div className="flex items-baseline gap-1">
-                                  <span className="text-3xl font-bold text-foreground">
-                                    €{monthlyFromAnnual.toFixed(0)}
-                                  </span>
-                                  <span className="text-sm text-muted-foreground">/month</span>
-                                </div>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                  Billed annually at €{plan.annualPrice.toFixed(0)}/year
-                                </p>
-                              </div>
-                              <div className="text-right">
-                                <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-wj-green/10 border border-wj-green/20">
-                                  <span className="text-xs font-semibold text-wj-green">Save {savingsPercent}%</span>
-                                </div>
-                                <p className="text-xs text-muted-foreground mt-1.5 line-through">
-                                  €{plan.monthlyPrice.toFixed(2)}/mo monthly
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="mb-5 p-4 rounded-xl bg-background/50 border border-border/30">
-                            <div className="flex items-baseline gap-1">
+                          ) : (
+                            <div className="flex items-baseline gap-1 mb-3">
                               <span className="text-3xl font-bold text-foreground">Free</span>
-                              <span className="text-sm text-muted-foreground">forever</span>
                             </div>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Included with your bike purchase
-                            </p>
-                          </div>
-                        )}
+                          )}
 
-                        {/* Features Grid */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                          {plan.features.map((feature, i) => (
-                            <motion.div 
-                              key={i} 
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: i * 0.04 }}
-                              className="flex items-center gap-2.5 text-sm"
-                            >
-                              <div className="flex-shrink-0 w-5 h-5 rounded-full bg-wj-green/10 flex items-center justify-center">
-                                <CheckCircle2 className="h-3 w-3 text-wj-green" />
+                          {/* Billing Toggle */}
+                          {plan.monthlyPrice > 0 && (
+                            <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-background/50 border border-border/20">
+                              <span className={cn(
+                                "text-sm transition-colors",
+                                !isAnnualBilling ? "text-foreground font-medium" : "text-muted-foreground"
+                              )}>
+                                Monthly
+                              </span>
+                              <Switch
+                                checked={isAnnualBilling}
+                                onCheckedChange={setIsAnnualBilling}
+                                className="data-[state=checked]:bg-wj-green"
+                              />
+                              <span className={cn(
+                                "text-sm transition-colors",
+                                isAnnualBilling ? "text-foreground font-medium" : "text-muted-foreground"
+                              )}>
+                                Yearly
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Features - Compact List */}
+                          <div className="mt-4 space-y-1.5">
+                            {plan.features.slice(0, 4).map((feature, i) => (
+                              <div key={i} className="flex items-center gap-2 text-sm text-foreground/70">
+                                <Check className="h-3.5 w-3.5 text-wj-green flex-shrink-0" />
+                                <span>{feature}</span>
                               </div>
-                              <span className="text-foreground/80">{feature}</span>
-                            </motion.div>
-                          ))}
+                            ))}
+                            {plan.features.length > 4 && (
+                              <p className="text-xs text-muted-foreground pl-5">
+                                +{plan.features.length - 4} more benefits
+                              </p>
+                            )}
+                          </div>
                         </div>
-                      </div>
+
+                        {/* Swipe to Upgrade or Current Plan */}
+                        {!isCurrentPlan && selectedPlan !== "light" ? (
+                          <motion.div
+                            ref={swipeConstraintsRef}
+                            style={{ backgroundColor: swipeBgColor }}
+                            className="relative h-12 rounded-full border border-wj-green/30 overflow-hidden"
+                          >
+                            {/* Hint Text */}
+                            <motion.div 
+                              style={{ opacity: swipeTextOpacity }}
+                              className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                            >
+                              <span className="text-xs text-wj-green/70 font-medium tracking-wide">
+                                Slide to upgrade →
+                              </span>
+                            </motion.div>
+                            
+                            {/* Success Check */}
+                            <motion.div 
+                              style={{ opacity: swipeCheckOpacity }}
+                              className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                            >
+                              <CheckCircle2 className="h-5 w-5 text-wj-green" />
+                            </motion.div>
+
+                            {/* Draggable Thumb */}
+                            <motion.div
+                              drag="x"
+                              dragConstraints={{ left: 0, right: swipeMaxDrag }}
+                              dragElastic={0}
+                              onDragEnd={handleSwipeDragEnd}
+                              style={{ x: swipeX }}
+                              className="absolute left-1 top-1 bottom-1 w-10 rounded-full bg-wj-green flex items-center justify-center cursor-grab active:cursor-grabbing shadow-lg shadow-wj-green/30"
+                            >
+                              <ArrowRight className="h-4 w-4 text-background" />
+                            </motion.div>
+                          </motion.div>
+                        ) : isCurrentPlan ? (
+                          <div className="h-12 rounded-full bg-muted/30 border border-border/20 flex items-center justify-center">
+                            <span className="text-sm text-muted-foreground">Current Plan</span>
+                          </div>
+                        ) : null}
+                      </>
                     );
                   })()}
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* Action Buttons - Sticky Footer */}
-            <div className="sticky bottom-0 flex items-center justify-between p-4 pt-6 pb-6 bg-gradient-to-t from-background via-background to-transparent border-t border-border/30 mt-4">
+            {/* Close Button - Sticky Footer */}
+            <div className="sticky bottom-0 flex items-center justify-center p-4 bg-gradient-to-t from-background via-background to-transparent">
               <Button
                 variant="ghost"
+                size="sm"
                 onClick={() => {
                   setIsUpgradeModalOpen(false);
                   setSelectedPlan(null);
                   setActiveCardIndex(1);
+                  setIsSwipeCompleted(false);
+                  swipeX.set(0);
                 }}
                 className="text-muted-foreground hover:text-foreground"
               >
                 Maybe Later
               </Button>
-              
-              {selectedPlan && selectedPlan !== "light" && selectedPlan !== userTier ? (
-                <Link to="/membership-plans">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="relative group overflow-hidden px-6 py-3 rounded-xl font-semibold text-white"
-                  >
-                    {/* Animated Gradient Background */}
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-wj-green via-emerald-500 to-wj-green"
-                      style={{ backgroundSize: "200% 100%" }}
-                      animate={{ backgroundPosition: ["0% 0%", "100% 0%", "0% 0%"] }}
-                      transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                    />
-                    
-                    {/* Shine Effect */}
-                    <motion.div
-                      className="absolute inset-0 opacity-0 group-hover:opacity-100"
-                      style={{
-                        background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)",
-                        transform: "translateX(-100%)",
-                      }}
-                      animate={{ x: ["-100%", "200%"] }}
-                      transition={{ 
-                        duration: 1.5, 
-                        repeat: Infinity, 
-                        repeatDelay: 0.5,
-                        ease: "easeInOut" 
-                      }}
-                    />
-                    
-                    {/* Button Content */}
-                    <span className="relative flex items-center gap-2">
-                      <Sparkles className="h-4 w-4" />
-                      Upgrade Now
-                      <motion.span
-                        animate={{ x: [0, 4, 0] }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
-                      >
-                        <ArrowRight className="h-4 w-4" />
-                      </motion.span>
-                    </span>
-                  </motion.button>
-                </Link>
-              ) : selectedPlan === userTier ? (
-                <Button disabled className="opacity-50">
-                  Current Plan
-                </Button>
-              ) : (
-                <Button disabled className="opacity-50">
-                  Select a Plan
-                </Button>
-              )}
             </div>
           </div>
         </DialogContent>
