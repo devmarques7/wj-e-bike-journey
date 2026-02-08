@@ -82,13 +82,13 @@ export default function ServiceRequestCard() {
       {/* Animated Gradient Border */}
       <div className="absolute -inset-[1px] rounded-3xl overflow-hidden">
         <motion.div
-          className="absolute inset-0"
+          className="absolute -inset-[100%] w-[300%] h-[300%]"
           style={{
-            background: "conic-gradient(from 0deg, transparent, hsl(var(--wj-green)), transparent, hsl(var(--wj-green)), transparent)",
+            background: "conic-gradient(from 0deg at 50% 50%, transparent 0deg, transparent 60deg, hsl(var(--wj-green) / 0.8) 120deg, hsl(var(--wj-green)) 180deg, hsl(var(--wj-green) / 0.8) 240deg, transparent 300deg, transparent 360deg)",
           }}
           animate={{ rotate: 360 }}
           transition={{
-            duration: 4,
+            duration: 8,
             repeat: Infinity,
             ease: "linear",
           }}
