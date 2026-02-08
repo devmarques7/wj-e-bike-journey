@@ -1,191 +1,228 @@
 import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { Sparkles, Shield, Crown } from "lucide-react";
+import { motion, useInView } from "framer-motion";
+import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const plans = [
   {
-    name: "E-Pass Light",
-    icon: Sparkles,
-    tagline: "Essential protection",
-    gradient: "from-[#1a1a1a] to-[#2d2d2d]",
-    border: "border-border/50",
-    accent: "text-muted-foreground",
+    name: "Basic",
+    price: "Free",
+    period: "with bike purchase",
+    description: "Essential coverage for everyday riders",
+    features: [
+      { name: "2-year warranty", included: true },
+      { name: "E-ID Digital Passport", included: true },
+      { name: "Basic theft protection", included: true },
+      { name: "Priority service", included: false },
+      { name: "Free annual maintenance", included: false },
+      { name: "Guaranteed resale value", included: false },
+    ],
+    cta: "Included",
+    popular: false,
   },
   {
-    name: "E-Pass Plus",
-    icon: Shield,
-    tagline: "Enhanced coverage",
-    gradient: "from-[#08150d] to-[#0d2818]",
-    border: "border-wj-green/30",
-    accent: "text-wj-green",
+    name: "E-Pass Silver",
+    price: "€14.99",
+    period: "/month",
+    description: "Enhanced protection & peace of mind",
+    features: [
+      { name: "5-year warranty", included: true },
+      { name: "E-ID Digital Passport", included: true },
+      { name: "Premium theft protection", included: true },
+      { name: "Priority service", included: true },
+      { name: "Free annual maintenance", included: true },
+      { name: "Guaranteed resale value", included: false },
+    ],
+    cta: "Choose Silver",
     popular: true,
   },
   {
     name: "E-Pass Black",
-    icon: Crown,
-    tagline: "Ultimate experience",
-    gradient: "from-[#020202] via-[#08150d] to-[#020202]",
-    border: "border-[#f3eff5]/20",
-    accent: "text-[#f3eff5]",
+    price: "€24.99",
+    period: "/month",
+    description: "The ultimate ownership experience",
+    features: [
+      { name: "Lifetime warranty", included: true },
+      { name: "E-ID Digital Passport", included: true },
+      { name: "Complete theft coverage", included: true },
+      { name: "VIP priority service", included: true },
+      { name: "Unlimited maintenance", included: true },
+      { name: "Guaranteed 60% resale", included: true },
+    ],
+    cta: "Choose Black",
+    popular: false,
     premium: true,
   },
 ];
 
 const EPassSection = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start end", "end start"],
-  });
-
-  // Card animations based on scroll
-  const card1Y = useTransform(scrollYProgress, [0, 0.3], [100, 0]);
-  const card1Opacity = useTransform(scrollYProgress, [0, 0.25], [0, 1]);
-  const card1RotateX = useTransform(scrollYProgress, [0, 0.3], [45, 0]);
-
-  const card2Y = useTransform(scrollYProgress, [0.1, 0.4], [100, 0]);
-  const card2Opacity = useTransform(scrollYProgress, [0.1, 0.35], [0, 1]);
-  const card2RotateX = useTransform(scrollYProgress, [0.1, 0.4], [45, 0]);
-
-  const card3Y = useTransform(scrollYProgress, [0.2, 0.5], [100, 0]);
-  const card3Opacity = useTransform(scrollYProgress, [0.2, 0.45], [0, 1]);
-  const card3RotateX = useTransform(scrollYProgress, [0.2, 0.5], [45, 0]);
-
-  const textOpacity = useTransform(scrollYProgress, [0.35, 0.5], [0, 1]);
-  const textY = useTransform(scrollYProgress, [0.35, 0.5], [40, 0]);
-
-  const cardAnimations = [
-    { y: card1Y, opacity: card1Opacity, rotateX: card1RotateX },
-    { y: card2Y, opacity: card2Opacity, rotateX: card2RotateX },
-    { y: card3Y, opacity: card3Opacity, rotateX: card3RotateX },
-  ];
+  const isInView = useInView(containerRef, { once: true, margin: "-100px" });
 
   return (
-    <section
-      id="epass"
-      className="relative min-h-[120vh] bg-background overflow-hidden"
-      ref={containerRef}
-      style={{ perspective: "1200px" }}
-    >
-      {/* Top gradient for smooth transition */}
-      <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-background to-transparent z-10 pointer-events-none" />
+    <section id="epass" className="section-padding bg-background" ref={containerRef}>
+      <div className="container-wj">
+        {/* Section Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
+          <p className="text-wj-green text-sm font-medium tracking-widest uppercase mb-4">
+            E-Pass Membership
+          </p>
+          <h2 className="text-display-sm md:text-display-md font-bold text-foreground mb-6">
+            Choose Your Journey Level
+          </h2>
+          <p className="text-muted-foreground max-w-xl mx-auto">
+            Elevate your ownership with E-Pass. From essential coverage to VIP
+            treatment, find the plan that matches your lifestyle.
+          </p>
+        </motion.div>
 
-      <div className="sticky top-0 min-h-screen flex flex-col items-center justify-center py-20">
-        <div className="container-wj">
-          {/* Section Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <p className="text-wj-green text-sm font-medium tracking-widest uppercase mb-4">
-              Membership Program
-            </p>
-            <h2 className="text-display-sm md:text-display-md font-bold text-foreground mb-4">
-              E-Pass
-            </h2>
-          </motion.div>
+        {/* Plans Grid */}
+        <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
+          {plans.map((plan, index) => (
+            <motion.div
+              key={plan.name}
+              initial={{ opacity: 0, y: 40 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.6, delay: index * 0.15 }}
+              className={`relative rounded-2xl p-6 lg:p-8 transition-all duration-300 ${
+                plan.popular
+                  ? "bg-wj-green/10 border-2 border-wj-green scale-105 shadow-lg shadow-wj-green/10"
+                  : plan.premium
+                  ? "bg-gradient-to-b from-secondary to-background border border-border"
+                  : "bg-card border border-border hover:border-wj-green/30"
+              }`}
+            >
+              {/* Popular Badge */}
+              {plan.popular && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <span className="px-4 py-1 text-xs font-bold uppercase tracking-wider gradient-wj text-white rounded-full">
+                    Most Popular
+                  </span>
+                </div>
+              )}
 
-          {/* Cards Grid */}
-          <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto mb-16">
-            {plans.map((plan, index) => {
-              const Icon = plan.icon;
-              return (
-                <motion.div
-                  key={plan.name}
-                  style={{
-                    y: cardAnimations[index].y,
-                    opacity: cardAnimations[index].opacity,
-                    rotateX: cardAnimations[index].rotateX,
-                    transformStyle: "preserve-3d",
-                  }}
-                  className="relative"
-                >
-                  <div
-                    className={`relative h-72 rounded-2xl bg-gradient-to-b ${plan.gradient} border ${plan.border} p-8 flex flex-col items-center justify-center text-center overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl group`}
+              {/* Premium Badge */}
+              {plan.premium && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <span className="px-4 py-1 text-xs font-bold uppercase tracking-wider bg-foreground text-background rounded-full">
+                    Premium
+                  </span>
+                </div>
+              )}
+
+              {/* Plan Header */}
+              <div className="text-center mb-6">
+                <h3 className="text-xl font-bold text-foreground mb-2">
+                  {plan.name}
+                </h3>
+                <div className="flex items-baseline justify-center gap-1">
+                  <span className="text-3xl lg:text-4xl font-bold text-foreground">
+                    {plan.price}
+                  </span>
+                  <span className="text-muted-foreground">{plan.period}</span>
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">
+                  {plan.description}
+                </p>
+              </div>
+
+              {/* Features List */}
+              <ul className="space-y-3 mb-8">
+                {plan.features.map((feature) => (
+                  <li
+                    key={feature.name}
+                    className="flex items-center gap-3 text-sm"
                   >
-                    {/* Background glow effect */}
-                    {plan.premium && (
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#f3eff5]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    {feature.included ? (
+                      <Check className="h-5 w-5 text-wj-green flex-shrink-0" />
+                    ) : (
+                      <X className="h-5 w-5 text-muted-foreground/50 flex-shrink-0" />
                     )}
-                    {plan.popular && (
-                      <div className="absolute inset-0 bg-gradient-to-t from-wj-green/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    )}
-
-                    {/* Popular/Premium badge */}
-                    {plan.popular && (
-                      <div className="absolute top-4 right-4">
-                        <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider bg-wj-green/20 text-wj-green rounded-full border border-wj-green/30">
-                          Popular
-                        </span>
-                      </div>
-                    )}
-                    {plan.premium && (
-                      <div className="absolute top-4 right-4">
-                        <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider bg-[#f3eff5]/10 text-[#f3eff5] rounded-full border border-[#f3eff5]/20">
-                          Premium
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Icon */}
-                    <div
-                      className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${plan.gradient} border ${plan.border} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}
+                    <span
+                      className={
+                        feature.included
+                          ? "text-foreground"
+                          : "text-muted-foreground/50"
+                      }
                     >
-                      <Icon className={`w-8 h-8 ${plan.accent}`} />
-                    </div>
+                      {feature.name}
+                    </span>
+                  </li>
+                ))}
+              </ul>
 
-                    {/* Plan name */}
-                    <h3
-                      className={`text-2xl font-bold mb-2 ${plan.premium ? "text-[#f3eff5]" : "text-foreground"}`}
-                    >
-                      {plan.name}
-                    </h3>
+              {/* CTA Button */}
+              <Button
+                className={`w-full ${
+                  plan.popular
+                    ? "gradient-wj text-white hover:opacity-90"
+                    : plan.premium
+                    ? "bg-foreground text-background hover:bg-foreground/90"
+                    : "bg-secondary text-foreground hover:bg-secondary/80"
+                }`}
+                size="lg"
+                disabled={plan.cta === "Included"}
+              >
+                {plan.cta}
+              </Button>
+            </motion.div>
+          ))}
+        </div>
 
-                    {/* Tagline */}
-                    <p className={`text-sm ${plan.accent}`}>{plan.tagline}</p>
-
-                    {/* Hover reveal line */}
-                    <div
-                      className={`absolute bottom-0 left-0 right-0 h-1 ${plan.popular ? "bg-wj-green" : plan.premium ? "bg-[#f3eff5]" : "bg-muted-foreground/30"} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left`}
-                    />
+        {/* Physical Card Showcase */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.6 }}
+          className="mt-20 text-center"
+        >
+          <div className="relative inline-block">
+            {/* Physical Card Mockup */}
+            <motion.div
+              className="w-72 h-44 md:w-96 md:h-56 rounded-2xl bg-gradient-to-br from-secondary via-background to-secondary border border-border shadow-2xl shadow-black/20"
+              whileHover={{ rotateY: 10, rotateX: -5 }}
+              transition={{ type: "spring", stiffness: 300 }}
+              style={{ transformStyle: "preserve-3d", perspective: 1000 }}
+            >
+              {/* Card Content */}
+              <div className="absolute inset-0 p-6 flex flex-col justify-between">
+                <div className="flex justify-between items-start">
+                  <span className="text-lg font-bold text-foreground">
+                    WJ VISION
+                  </span>
+                  <span className="text-xs text-wj-green font-medium">
+                    E-PASS BLACK
+                  </span>
+                </div>
+                <div className="flex justify-between items-end">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Member Since</p>
+                    <p className="text-sm text-foreground">2024</p>
                   </div>
-                </motion.div>
-              );
-            })}
+                  <div className="w-12 h-12 rounded-lg border-2 border-wj-green/30 flex items-center justify-center">
+                    <div className="w-8 h-8 bg-wj-green/20 rounded" />
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Glow Effect */}
+            <div className="absolute -inset-4 bg-wj-green/10 rounded-3xl blur-2xl -z-10" />
           </div>
 
-          {/* Description text that appears on scroll */}
-          <motion.div
-            style={{ opacity: textOpacity, y: textY }}
-            className="text-center max-w-2xl mx-auto"
-          >
-            <p className="text-muted-foreground text-lg mb-4">
-              Seja parte da família WJ Vision. Nossos planos de fidelidade
-              oferecem benefícios exclusivos, desde garantia estendida até
-              serviços VIP prioritários.
-            </p>
-            <p className="text-muted-foreground/70 text-sm mb-8">
-              Cada nível desbloqueia vantagens únicas para tornar sua jornada
-              ainda mais especial.
-            </p>
-
-            {/* CTA Button */}
-            <Button
-              size="lg"
-              className="gradient-wj text-white hover:opacity-90 px-8 py-6 text-base font-medium rounded-xl shadow-lg shadow-wj-green/20 hover:shadow-wj-green/40 transition-all duration-300"
-            >
-              See More Details
-            </Button>
-          </motion.div>
-        </div>
+          <p className="mt-8 text-sm text-muted-foreground max-w-md mx-auto">
+            <span className="text-foreground font-medium">
+              The digital world you can touch.
+            </span>{" "}
+            Access priority services with a tap of your physical E-Pass card.
+          </p>
+        </motion.div>
       </div>
-
-      {/* Bottom gradient for smooth transition */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-background to-transparent z-10 pointer-events-none" />
     </section>
   );
 };
