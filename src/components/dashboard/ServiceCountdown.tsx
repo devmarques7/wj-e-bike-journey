@@ -1,12 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Clock, Calendar, CheckCircle, AlertTriangle } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
+import { Calendar, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import serviceBikeOverlay from "@/assets/service-bike-overlay.png";
+import { useNavigate } from "react-router-dom";
+import serviceBikeCorner from "@/assets/service-bike-corner.png";
 
 export default function ServiceCountdown() {
+  const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragX, setDragX] = useState(0);
   
   // Mock service data - last service was 45 days ago, next in 45 days (90 day cycle)
   const serviceCycleDays = 90;
@@ -24,6 +27,8 @@ export default function ServiceCountdown() {
   });
 
   const [progressPercent, setProgressPercent] = useState(50);
+  const totalBars = 14;
+  const filledBars = Math.round((progressPercent / 100) * totalBars);
 
   useEffect(() => {
     const calculateCountdown = () => {
@@ -32,7 +37,7 @@ export default function ServiceCountdown() {
       const totalCycleMs = serviceCycleDays * 24 * 60 * 60 * 1000;
       const elapsedMs = now.getTime() - lastServiceDate.getTime();
       
-      // Progress decreases as we approach maintenance (100% = just serviced, 0% = needs service now)
+      // Progress decreases as we approach maintenance
       const remaining = Math.max(0, Math.min(100, ((totalCycleMs - elapsedMs) / totalCycleMs) * 100));
       setProgressPercent(remaining);
 
@@ -73,33 +78,29 @@ export default function ServiceCountdown() {
     return () => video.removeEventListener("timeupdate", handleTimeUpdate);
   }, []);
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  };
-
-  const daysSinceLastService = Math.floor(
-    (new Date().getTime() - lastServiceDate.getTime()) / (1000 * 60 * 60 * 24)
-  );
-
-  // Determine if urgent (less than 20% remaining)
   const isUrgent = progressPercent < 20;
   const isCritical = progressPercent < 5;
 
-  // Dynamic color classes based on progress
+  const getBarColor = (index: number) => {
+    const isActive = index < filledBars;
+    if (!isActive) return "bg-muted/30";
+    if (isCritical) return "bg-destructive";
+    if (isUrgent) return "bg-amber-500";
+    return "bg-wj-green";
+  };
+
   const getStatusColor = () => {
     if (isCritical) return "text-destructive";
     if (isUrgent) return "text-amber-500";
     return "text-wj-green";
   };
 
-  const getProgressColor = () => {
-    if (isCritical) return "bg-destructive";
-    if (isUrgent) return "bg-amber-500";
-    return "bg-wj-green";
+  const handleDragEnd = (_: any, info: { offset: { x: number } }) => {
+    if (info.offset.x > 100) {
+      navigate("/dashboard/service-booking");
+    }
+    setDragX(0);
+    setIsDragging(false);
   };
 
   return (
@@ -122,113 +123,132 @@ export default function ServiceCountdown() {
       </video>
 
       {/* Layer 2: Dark gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/90 to-background/70" />
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/60" />
 
-      {/* Layer 3: Bike Image Overlay */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+      {/* Layer 3: Bike Image - Bottom Right Corner */}
+      <div className="absolute bottom-0 right-0 w-[70%] h-[60%] pointer-events-none">
         <img
-          src={serviceBikeOverlay}
+          src={serviceBikeCorner}
           alt="Bike"
-          className="w-full h-full object-contain opacity-30 scale-110"
+          className="w-full h-full object-contain object-bottom opacity-60"
         />
       </div>
 
-      {/* Layer 4: Additional gradient for content readability */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/80" />
-
       {/* Content Layer */}
       <div className="relative z-10 h-full p-6 flex flex-col justify-between">
-        {/* Header */}
-        <div>
-          <div className="flex items-center gap-2 mb-4">
-            {isUrgent ? (
-              <AlertTriangle className={cn("h-5 w-5", getStatusColor())} />
-            ) : (
-              <Clock className="h-5 w-5 text-wj-green" />
-            )}
-            <span className={cn("text-sm font-medium", isUrgent ? getStatusColor() : "text-foreground")}>
-              Service Countdown
+        {/* Header - Minimal */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className={cn("w-2 h-2 rounded-full animate-pulse", getStatusColor().replace("text-", "bg-"))} />
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Service Health
+            </span>
+          </div>
+          <span className={cn("text-sm font-bold", getStatusColor())}>
+            {Math.round(progressPercent)}%
+          </span>
+        </div>
+
+        {/* Countdown Timer - Centered & Minimal */}
+        <div className="flex-1 flex flex-col items-center justify-center">
+          <div className="text-center mb-6">
+            <div className="flex items-baseline justify-center gap-1">
+              <span className={cn("text-5xl font-bold tracking-tight", getStatusColor())}>
+                {countdown.days}
+              </span>
+              <span className="text-lg text-muted-foreground">d</span>
+              <span className={cn("text-3xl font-bold ml-2", getStatusColor())}>
+                {countdown.hours.toString().padStart(2, "0")}
+              </span>
+              <span className="text-sm text-muted-foreground">h</span>
+              <span className={cn("text-3xl font-bold ml-2", getStatusColor())}>
+                {countdown.minutes.toString().padStart(2, "0")}
+              </span>
+              <span className="text-sm text-muted-foreground">m</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2 uppercase tracking-wider">
+              Until Next Service
+            </p>
+          </div>
+
+          {/* Battery Bar - 14 Segments */}
+          <div className="w-full max-w-xs">
+            <div className="flex gap-1 w-full">
+              {Array.from({ length: totalBars }).map((_, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, scaleY: 0 }}
+                  animate={{ opacity: 1, scaleY: 1 }}
+                  transition={{ delay: 0.5 + index * 0.05 }}
+                  className={cn(
+                    "flex-1 h-6 rounded-sm transition-colors duration-300",
+                    getBarColor(totalBars - 1 - index)
+                  )}
+                />
+              ))}
+            </div>
+            <div className="flex justify-between mt-2 text-[10px] text-muted-foreground">
+              <span>Service Due</span>
+              <span>Optimal</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer - Next Service Date & Swipe Button */}
+        <div className="space-y-3">
+          {/* Next Service Date */}
+          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+            <Calendar className="h-3 w-3" />
+            <span>
+              Scheduled: <span className={cn("font-medium", getStatusColor())}>
+                {nextServiceDate.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+              </span>
             </span>
           </div>
 
-          {/* Last Service Info */}
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 border border-border/30 backdrop-blur-sm mb-4">
-            <CheckCircle className="h-5 w-5 text-wj-green" />
-            <div>
-              <p className="text-xs text-muted-foreground">Last Service</p>
-              <p className="text-sm font-medium text-foreground">
-                {formatDate(lastServiceDate)} ({daysSinceLastService} days ago)
-              </p>
-            </div>
-          </div>
-
-          {/* Progress Bar - Discharging */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <span className={cn("font-medium", getStatusColor())}>
-                {isCritical ? "Maintenance Required!" : isUrgent ? "Maintenance Soon" : "Service Health"}
-              </span>
-              <span className={cn("font-bold", getStatusColor())}>
-                {Math.round(progressPercent)}%
+          {/* Swipe to Book Button */}
+          <div className="relative h-14 rounded-2xl bg-muted/30 border border-border/30 backdrop-blur-sm overflow-hidden">
+            {/* Track background hint */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-xs text-muted-foreground/50 flex items-center gap-1">
+                Swipe to book service
+                <ChevronRight className="h-3 w-3" />
+                <ChevronRight className="h-3 w-3 -ml-2 opacity-60" />
+                <ChevronRight className="h-3 w-3 -ml-2 opacity-30" />
               </span>
             </div>
-            <div className="relative h-2 rounded-full bg-muted/50 overflow-hidden">
-              <motion.div
-                initial={{ width: "100%" }}
-                animate={{ width: `${progressPercent}%` }}
-                transition={{ duration: 0.5 }}
-                className={cn("h-full rounded-full transition-colors", getProgressColor())}
-              />
-            </div>
-          </div>
-        </div>
 
-        {/* Countdown Timer */}
-        <div className="flex-1 flex flex-col items-center justify-center py-4">
-          <p className={cn("text-xs uppercase tracking-wider mb-4", isUrgent ? getStatusColor() : "text-muted-foreground")}>
-            {isCritical ? "Overdue!" : "Next Service In"}
-          </p>
-          <div className="grid grid-cols-4 gap-3 w-full max-w-xs">
-            {[
-              { value: countdown.days, label: "Days" },
-              { value: countdown.hours, label: "Hours" },
-              { value: countdown.minutes, label: "Min" },
-              { value: countdown.seconds, label: "Sec" },
-            ].map((item, index) => (
+            {/* Draggable Button */}
+            <motion.div
+              drag="x"
+              dragConstraints={{ left: 0, right: 200 }}
+              dragElastic={0.1}
+              onDragStart={() => setIsDragging(true)}
+              onDrag={(_, info) => setDragX(info.offset.x)}
+              onDragEnd={handleDragEnd}
+              whileDrag={{ scale: 1.02 }}
+              className={cn(
+                "absolute left-1 top-1 bottom-1 w-12 rounded-xl flex items-center justify-center cursor-grab active:cursor-grabbing transition-colors",
+                isDragging ? "bg-wj-green" : "bg-wj-green/80"
+              )}
+              style={{ 
+                boxShadow: isDragging ? "0 0 20px hsl(var(--wj-green) / 0.5)" : "none"
+              }}
+            >
               <motion.div
-                key={item.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 + index * 0.1 }}
-                className={cn(
-                  "flex flex-col items-center p-3 rounded-xl backdrop-blur-sm border",
-                  isUrgent 
-                    ? "bg-destructive/10 border-destructive/30" 
-                    : "bg-muted/30 border-border/30"
-                )}
+                animate={{ x: [0, 4, 0] }}
+                transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
               >
-                <span className={cn("text-2xl font-bold", getStatusColor())}>
-                  {item.value.toString().padStart(2, "0")}
-                </span>
-                <span className="text-[10px] text-muted-foreground uppercase">
-                  {item.label}
-                </span>
+                <ChevronRight className="h-5 w-5 text-white" />
               </motion.div>
-            ))}
-          </div>
-        </div>
+            </motion.div>
 
-        {/* Next Service Date */}
-        <div className={cn(
-          "flex items-center justify-center gap-2 p-3 rounded-xl border backdrop-blur-sm",
-          isUrgent 
-            ? "bg-destructive/10 border-destructive/30" 
-            : "bg-wj-green/10 border-wj-green/20"
-        )}>
-          <Calendar className={cn("h-4 w-4", getStatusColor())} />
-          <span className="text-sm text-foreground">
-            Scheduled: <span className={cn("font-medium", getStatusColor())}>{formatDate(nextServiceDate)}</span>
-          </span>
+            {/* Progress fill on drag */}
+            <motion.div
+              className="absolute left-0 top-0 bottom-0 bg-wj-green/20 rounded-2xl"
+              style={{ width: dragX + 48 }}
+            />
+          </div>
         </div>
       </div>
     </motion.div>
