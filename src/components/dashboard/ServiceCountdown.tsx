@@ -1,15 +1,30 @@
 import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
-import { Calendar, ChevronRight } from "lucide-react";
+import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+import { ArrowRight, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
-import serviceBikeCorner from "@/assets/service-bike-corner.png";
+import serviceBikeFull from "@/assets/service-bike-full.png";
 
 export default function ServiceCountdown() {
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragX, setDragX] = useState(0);
+  const constraintsRef = useRef(null);
+  const [isCompleted, setIsCompleted] = useState(false);
+  
+  // Swipe slider motion values (same as ServiceRequestCard)
+  const x = useMotionValue(0);
+  const sliderWidth = 240;
+  const thumbWidth = 56;
+  const maxDrag = sliderWidth - thumbWidth - 8;
+  
+  const backgroundColor = useTransform(
+    x,
+    [0, maxDrag],
+    ["rgba(5, 140, 66, 0.1)", "rgba(5, 140, 66, 0.3)"]
+  );
+  
+  const textOpacity = useTransform(x, [0, maxDrag * 0.5], [1, 0]);
+  const checkOpacity = useTransform(x, [maxDrag * 0.7, maxDrag], [0, 1]);
   
   // Mock service data - last service was 45 days ago, next in 45 days (90 day cycle)
   const serviceCycleDays = 90;
@@ -74,9 +89,23 @@ export default function ServiceCountdown() {
       }
     };
 
+    video.play().catch(() => {});
     video.addEventListener("timeupdate", handleTimeUpdate);
     return () => video.removeEventListener("timeupdate", handleTimeUpdate);
   }, []);
+
+  const handleDragEnd = () => {
+    const currentX = x.get();
+    if (currentX >= maxDrag * 0.8) {
+      animate(x, maxDrag, { duration: 0.2 });
+      setIsCompleted(true);
+      setTimeout(() => {
+        navigate("/dashboard/service-booking");
+      }, 500);
+    } else {
+      animate(x, 0, { duration: 0.3, type: "spring", stiffness: 400, damping: 30 });
+    }
+  };
 
   const isUrgent = progressPercent < 20;
   const isCritical = progressPercent < 5;
@@ -95,14 +124,6 @@ export default function ServiceCountdown() {
     return "text-wj-green";
   };
 
-  const handleDragEnd = (_: any, info: { offset: { x: number } }) => {
-    if (info.offset.x > 100) {
-      navigate("/dashboard/service-booking");
-    }
-    setDragX(0);
-    setIsDragging(false);
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -110,27 +131,27 @@ export default function ServiceCountdown() {
       transition={{ delay: 0.3 }}
       className="relative h-full min-h-[400px] rounded-3xl overflow-hidden"
     >
-      {/* Layer 1: Video Background */}
+      {/* Layer 1: Video Background - 100% opacity */}
       <video
         ref={videoRef}
         autoPlay
         muted
         loop
         playsInline
-        className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300"
+        className="absolute inset-0 w-full h-full object-cover"
       >
         <source src="/videos/service-countdown-bg.mp4" type="video/mp4" />
       </video>
 
       {/* Layer 2: Dark gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/60" />
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/40" />
 
-      {/* Layer 3: Bike Image - Bottom Right Corner */}
-      <div className="absolute bottom-0 right-0 w-[70%] h-[60%] pointer-events-none">
+      {/* Layer 3: Bike Image - Full width, aligned left, bottom */}
+      <div className="absolute bottom-0 left-0 w-full h-[75%] pointer-events-none">
         <img
-          src={serviceBikeCorner}
+          src={serviceBikeFull}
           alt="Bike"
-          className="w-full h-full object-contain object-bottom opacity-60"
+          className="w-full h-full object-contain object-left-bottom"
         />
       </div>
 
@@ -144,9 +165,6 @@ export default function ServiceCountdown() {
               Service Health
             </span>
           </div>
-          <span className={cn("text-sm font-bold", getStatusColor())}>
-            {Math.round(progressPercent)}%
-          </span>
         </div>
 
         {/* Countdown Timer - Centered & Minimal */}
@@ -171,8 +189,8 @@ export default function ServiceCountdown() {
             </p>
           </div>
 
-          {/* Battery Bar - 14 Segments */}
-          <div className="w-full max-w-xs">
+          {/* Battery Bar - 14 Segments with radius, left-to-right fill */}
+          <div className="w-full max-w-xs relative">
             <div className="flex gap-1 w-full">
               {Array.from({ length: totalBars }).map((_, index) => (
                 <motion.div
@@ -181,10 +199,24 @@ export default function ServiceCountdown() {
                   animate={{ opacity: 1, scaleY: 1 }}
                   transition={{ delay: 0.5 + index * 0.05 }}
                   className={cn(
-                    "flex-1 h-6 rounded-sm transition-colors duration-300",
-                    getBarColor(totalBars - 1 - index)
+                    "flex-1 h-6 rounded-md transition-colors duration-300 relative",
+                    getBarColor(index)
                   )}
-                />
+                >
+                  {/* Percentage label above last filled bar */}
+                  {index === filledBars - 1 && filledBars > 0 && (
+                    <motion.span
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={cn(
+                        "absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold whitespace-nowrap",
+                        getStatusColor()
+                      )}
+                    >
+                      {Math.round(progressPercent)}%
+                    </motion.span>
+                  )}
+                </motion.div>
               ))}
             </div>
             <div className="flex justify-between mt-2 text-[10px] text-muted-foreground">
@@ -194,61 +226,43 @@ export default function ServiceCountdown() {
           </div>
         </div>
 
-        {/* Footer - Next Service Date & Swipe Button */}
-        <div className="space-y-3">
-          {/* Next Service Date */}
-          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-            <Calendar className="h-3 w-3" />
-            <span>
-              Scheduled: <span className={cn("font-medium", getStatusColor())}>
-                {nextServiceDate.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-              </span>
-            </span>
-          </div>
-
-          {/* Swipe to Book Button */}
-          <div className="relative h-14 rounded-2xl bg-muted/30 border border-border/30 backdrop-blur-sm overflow-hidden">
-            {/* Track background hint */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-xs text-muted-foreground/50 flex items-center gap-1">
-                Swipe to book service
-                <ChevronRight className="h-3 w-3" />
-                <ChevronRight className="h-3 w-3 -ml-2 opacity-60" />
-                <ChevronRight className="h-3 w-3 -ml-2 opacity-30" />
-              </span>
-            </div>
-
-            {/* Draggable Button */}
-            <motion.div
-              drag="x"
-              dragConstraints={{ left: 0, right: 200 }}
-              dragElastic={0.1}
-              onDragStart={() => setIsDragging(true)}
-              onDrag={(_, info) => setDragX(info.offset.x)}
-              onDragEnd={handleDragEnd}
-              whileDrag={{ scale: 1.02 }}
-              className={cn(
-                "absolute left-1 top-1 bottom-1 w-12 rounded-xl flex items-center justify-center cursor-grab active:cursor-grabbing transition-colors",
-                isDragging ? "bg-wj-green" : "bg-wj-green/80"
-              )}
-              style={{ 
-                boxShadow: isDragging ? "0 0 20px hsl(var(--wj-green) / 0.5)" : "none"
-              }}
+        {/* Footer - Swipe Button (Same as ServiceRequestCard) */}
+        <div>
+          <motion.div
+            ref={constraintsRef}
+            style={{ backgroundColor }}
+            className="relative h-14 rounded-full border border-wj-green/30 overflow-hidden"
+          >
+            {/* Hint Text */}
+            <motion.div 
+              style={{ opacity: textOpacity }}
+              className="absolute inset-0 flex items-center justify-center pointer-events-none"
             >
-              <motion.div
-                animate={{ x: [0, 4, 0] }}
-                transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-              >
-                <ChevronRight className="h-5 w-5 text-white" />
-              </motion.div>
+              <span className="text-xs text-wj-green/70 font-medium tracking-wide">
+                Slide to book service →
+              </span>
+            </motion.div>
+            
+            {/* Success Check */}
+            <motion.div 
+              style={{ opacity: checkOpacity }}
+              className="absolute inset-0 flex items-center justify-center pointer-events-none"
+            >
+              <CheckCircle className="h-5 w-5 text-wj-green" />
             </motion.div>
 
-            {/* Progress fill on drag */}
+            {/* Draggable Thumb */}
             <motion.div
-              className="absolute left-0 top-0 bottom-0 bg-wj-green/20 rounded-2xl"
-              style={{ width: dragX + 48 }}
-            />
-          </div>
+              drag="x"
+              dragConstraints={{ left: 0, right: maxDrag }}
+              dragElastic={0}
+              onDragEnd={handleDragEnd}
+              style={{ x }}
+              className="absolute left-1 top-1 bottom-1 w-12 rounded-full bg-wj-green flex items-center justify-center cursor-grab active:cursor-grabbing shadow-lg shadow-wj-green/30"
+            >
+              <ArrowRight className="h-5 w-5 text-background" />
+            </motion.div>
+          </motion.div>
         </div>
       </div>
     </motion.div>
