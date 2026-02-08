@@ -1,59 +1,8 @@
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
-import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const plans = [
-  {
-    name: "Basic",
-    price: "Free",
-    period: "with bike purchase",
-    description: "Essential coverage for everyday riders",
-    features: [
-      { name: "2-year warranty", included: true },
-      { name: "E-ID Digital Passport", included: true },
-      { name: "Basic theft protection", included: true },
-      { name: "Priority service", included: false },
-      { name: "Free annual maintenance", included: false },
-      { name: "Guaranteed resale value", included: false },
-    ],
-    cta: "Included",
-    popular: false,
-  },
-  {
-    name: "E-Pass Silver",
-    price: "€14.99",
-    period: "/month",
-    description: "Enhanced protection & peace of mind",
-    features: [
-      { name: "5-year warranty", included: true },
-      { name: "E-ID Digital Passport", included: true },
-      { name: "Premium theft protection", included: true },
-      { name: "Priority service", included: true },
-      { name: "Free annual maintenance", included: true },
-      { name: "Guaranteed resale value", included: false },
-    ],
-    cta: "Choose Silver",
-    popular: true,
-  },
-  {
-    name: "E-Pass Black",
-    price: "€24.99",
-    period: "/month",
-    description: "The ultimate ownership experience",
-    features: [
-      { name: "Lifetime warranty", included: true },
-      { name: "E-ID Digital Passport", included: true },
-      { name: "Complete theft coverage", included: true },
-      { name: "VIP priority service", included: true },
-      { name: "Unlimited maintenance", included: true },
-      { name: "Guaranteed 60% resale", included: true },
-    ],
-    cta: "Choose Black",
-    popular: false,
-    premium: true,
-  },
-];
+import { ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const EPassSection = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -81,130 +30,37 @@ const EPassSection = () => {
           </p>
         </motion.div>
 
-        {/* Plans Grid */}
-        <div className="grid md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
-          {plans.map((plan, index) => (
-            <motion.div
-              key={plan.name}
-              initial={{ opacity: 0, y: 40 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: index * 0.15 }}
-              className={`relative rounded-2xl p-6 lg:p-8 transition-all duration-300 ${
-                plan.popular
-                  ? "bg-wj-green/10 border-2 border-wj-green scale-105 shadow-lg shadow-wj-green/10"
-                  : plan.premium
-                  ? "bg-gradient-to-b from-secondary to-background border border-border"
-                  : "bg-card border border-border hover:border-wj-green/30"
-              }`}
-            >
-              {/* Popular Badge */}
-              {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="px-4 py-1 text-xs font-bold uppercase tracking-wider gradient-wj text-white rounded-full">
-                    Most Popular
-                  </span>
-                </div>
-              )}
-
-              {/* Premium Badge */}
-              {plan.premium && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="px-4 py-1 text-xs font-bold uppercase tracking-wider bg-foreground text-background rounded-full">
-                    Premium
-                  </span>
-                </div>
-              )}
-
-              {/* Plan Header */}
-              <div className="text-center mb-6">
-                <h3 className="text-xl font-bold text-foreground mb-2">
-                  {plan.name}
-                </h3>
-                <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-3xl lg:text-4xl font-bold text-foreground">
-                    {plan.price}
-                  </span>
-                  <span className="text-muted-foreground">{plan.period}</span>
-                </div>
-                <p className="text-sm text-muted-foreground mt-2">
-                  {plan.description}
-                </p>
-              </div>
-
-              {/* Features List */}
-              <ul className="space-y-3 mb-8">
-                {plan.features.map((feature) => (
-                  <li
-                    key={feature.name}
-                    className="flex items-center gap-3 text-sm"
-                  >
-                    {feature.included ? (
-                      <Check className="h-5 w-5 text-wj-green flex-shrink-0" />
-                    ) : (
-                      <X className="h-5 w-5 text-muted-foreground/50 flex-shrink-0" />
-                    )}
-                    <span
-                      className={
-                        feature.included
-                          ? "text-foreground"
-                          : "text-muted-foreground/50"
-                      }
-                    >
-                      {feature.name}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-
-              {/* CTA Button */}
-              <Button
-                className={`w-full ${
-                  plan.popular
-                    ? "gradient-wj text-white hover:opacity-90"
-                    : plan.premium
-                    ? "bg-foreground text-background hover:bg-foreground/90"
-                    : "bg-secondary text-foreground hover:bg-secondary/80"
-                }`}
-                size="lg"
-                disabled={plan.cta === "Included"}
-              >
-                {plan.cta}
-              </Button>
-            </motion.div>
-          ))}
-        </div>
-
         {/* Physical Cards Showcase */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, delay: 0.6 }}
-          className="mt-20"
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="mt-8"
         >
           {/* Cards Container - Circular Row Layout */}
           <div 
-            className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-0 mb-12" 
+            className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-0 mb-12" 
             style={{ perspective: "1500px" }}
           >
             {/* E-Pass Light Card - Left */}
             <motion.div
-              initial={{ opacity: 0, x: -100, rotateY: 45, scale: 0.8 }}
-              animate={isInView ? { opacity: 1, x: 0, rotateY: 15, scale: 0.9 } : {}}
-              transition={{ duration: 0.8, delay: 0.9, type: "spring", stiffness: 60 }}
+              initial={{ opacity: 0, y: 100, scale: 0.7 }}
+              animate={isInView ? { opacity: 1, y: 0, rotateY: 15, scale: 0.9 } : {}}
+              transition={{ duration: 0.9, delay: 0.9, type: "spring", stiffness: 50 }}
               whileHover={{ 
                 scale: 0.95, 
                 rotateY: 5, 
-                y: -10,
-                boxShadow: "0 25px 50px -12px rgba(243, 239, 245, 0.4)"
+                y: -15,
+                transition: { duration: 0.3 }
               }}
-              className="w-64 h-40 md:w-72 md:h-44 rounded-2xl cursor-pointer transition-all duration-300 md:-mr-8 z-10"
+              className="w-64 h-40 md:w-72 md:h-44 rounded-2xl cursor-pointer md:-mr-8 z-10 group"
               style={{ 
                 transformStyle: "preserve-3d",
                 background: "linear-gradient(135deg, #F3EFF5 0%, #e8e4ea 50%, #ddd8df 100%)",
                 boxShadow: "0 20px 40px -15px rgba(0, 0, 0, 0.2)"
               }}
             >
-              <div className="absolute inset-0 p-5 flex flex-col justify-between rounded-2xl border border-black/5">
+              <div className="absolute inset-0 p-5 flex flex-col justify-between rounded-2xl border border-black/5 group-hover:border-black/15 transition-colors duration-300">
                 <div className="flex justify-between items-start">
                   <span className="text-base font-bold text-[#08150D]">WJ VISION</span>
                   <span className="text-[10px] font-semibold text-[#08150D]/70 bg-black/5 px-2 py-1 rounded-full">E-PASS LIGHT</span>
@@ -221,61 +77,79 @@ const EPassSection = () => {
               </div>
             </motion.div>
 
-            {/* E-Pass Black Card - Center (Main) */}
+            {/* E-Pass Black Card - Center (Main) with Golden Animated Border */}
             <motion.div
-              initial={{ opacity: 0, y: 80, scale: 0.7 }}
+              initial={{ opacity: 0, y: 120, scale: 0.6 }}
               animate={isInView ? { opacity: 1, y: 0, scale: 1 } : {}}
-              transition={{ duration: 0.8, delay: 0.7, type: "spring", stiffness: 60 }}
+              transition={{ duration: 1, delay: 0.5, type: "spring", stiffness: 45 }}
               whileHover={{ 
                 scale: 1.08, 
-                y: -15,
-                boxShadow: "0 35px 60px -15px rgba(8, 21, 13, 0.6)"
+                y: -20,
+                transition: { duration: 0.3 }
               }}
-              className="w-72 h-44 md:w-80 md:h-52 rounded-2xl cursor-pointer transition-all duration-300 z-20"
+              className="relative w-72 h-44 md:w-80 md:h-52 rounded-2xl cursor-pointer z-20 group"
               style={{ 
                 transformStyle: "preserve-3d",
-                background: "linear-gradient(135deg, #0f2518 0%, #08150D 50%, #050d08 100%)",
-                boxShadow: "0 25px 50px -15px rgba(8, 21, 13, 0.7)"
               }}
             >
-              <div className="absolute inset-0 p-6 flex flex-col justify-between border border-white/10 rounded-2xl">
-                <div className="flex justify-between items-start">
-                  <span className="text-lg font-bold text-white">WJ VISION</span>
-                  <span className="text-xs font-semibold text-white/80 bg-white/10 px-2 py-1 rounded-full">E-PASS BLACK</span>
-                </div>
-                <div className="flex justify-between items-end">
-                  <div>
-                    <p className="text-[10px] text-white/50">Member</p>
-                    <p className="text-sm font-medium text-white">Elite</p>
+              {/* Animated Golden Border */}
+              <div 
+                className="absolute -inset-[2px] rounded-2xl opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+                style={{
+                  background: "linear-gradient(90deg, #FFD700, #FFA500, #FF8C00, #FFD700, #FFA500)",
+                  backgroundSize: "300% 100%",
+                  animation: "borderGlow 3s linear infinite",
+                }}
+              />
+              
+              {/* Card Content */}
+              <div 
+                className="absolute inset-[2px] rounded-2xl"
+                style={{ 
+                  background: "linear-gradient(135deg, #0a0a0a 0%, #020202 50%, #000000 100%)",
+                  boxShadow: "0 25px 50px -15px rgba(0, 0, 0, 0.8)"
+                }}
+              >
+                <div className="absolute inset-0 p-6 flex flex-col justify-between rounded-2xl">
+                  <div className="flex justify-between items-start">
+                    <span className="text-lg font-bold text-white">WJ VISION</span>
+                    <span className="text-xs font-semibold text-amber-400/90 bg-amber-400/10 px-2 py-1 rounded-full border border-amber-400/20">E-PASS BLACK</span>
                   </div>
-                  <div className="w-12 h-12 rounded-xl border-2 border-white/20 flex items-center justify-center bg-white/5">
-                    <div className="w-7 h-7 bg-white/20 rounded-lg" />
+                  <div className="flex justify-between items-end">
+                    <div>
+                      <p className="text-[10px] text-white/50">Member</p>
+                      <p className="text-sm font-medium text-white">Elite</p>
+                    </div>
+                    <div className="w-12 h-12 rounded-xl border-2 border-amber-400/30 flex items-center justify-center bg-amber-400/5">
+                      <div className="w-7 h-7 bg-amber-400/20 rounded-lg" />
+                    </div>
                   </div>
                 </div>
               </div>
+              
               {/* Glow Effect */}
-              <div className="absolute -inset-4 bg-wj-green/10 rounded-3xl blur-2xl -z-10" />
+              <div className="absolute -inset-6 bg-amber-400/10 rounded-3xl blur-2xl -z-10 group-hover:bg-amber-400/20 transition-colors duration-500" />
             </motion.div>
 
             {/* E-Pass Plus Card - Right */}
             <motion.div
-              initial={{ opacity: 0, x: 100, rotateY: -45, scale: 0.8 }}
-              animate={isInView ? { opacity: 1, x: 0, rotateY: -15, scale: 0.9 } : {}}
-              transition={{ duration: 0.8, delay: 1.1, type: "spring", stiffness: 60 }}
+              initial={{ opacity: 0, y: 100, scale: 0.7 }}
+              animate={isInView ? { opacity: 1, y: 0, rotateY: -15, scale: 0.9 } : {}}
+              transition={{ duration: 0.9, delay: 1.1, type: "spring", stiffness: 50 }}
               whileHover={{ 
                 scale: 0.95, 
                 rotateY: -5, 
-                y: -10,
-                boxShadow: "0 25px 50px -12px rgba(5, 140, 66, 0.5)"
+                y: -15,
+                transition: { duration: 0.3 }
               }}
-              className="w-64 h-40 md:w-72 md:h-44 rounded-2xl cursor-pointer transition-all duration-300 md:-ml-8 z-10"
+              className="w-64 h-40 md:w-72 md:h-44 rounded-2xl cursor-pointer md:-ml-8 z-10 group"
               style={{ 
                 transformStyle: "preserve-3d",
                 background: "linear-gradient(135deg, #058C42 0%, #047a3a 50%, #036830 100%)",
                 boxShadow: "0 20px 40px -15px rgba(5, 140, 66, 0.5)"
               }}
             >
-              <div className="absolute inset-0 p-5 flex flex-col justify-between rounded-2xl">
+              <div className="absolute inset-0 p-5 flex flex-col justify-between rounded-2xl border border-white/10 group-hover:border-white/30 transition-colors duration-300">
                 <div className="flex justify-between items-start">
                   <span className="text-base font-bold text-white">WJ VISION</span>
                   <span className="text-[10px] font-semibold text-white/90 bg-white/20 px-2 py-1 rounded-full">E-PASS PLUS</span>
@@ -297,25 +171,48 @@ const EPassSection = () => {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: 1.1 }}
+            transition={{ duration: 0.6, delay: 1.3 }}
             className="text-center"
           >
-            <p className="text-base md:text-lg text-muted-foreground max-w-lg mx-auto mb-6">
+            <p className="text-base md:text-lg text-muted-foreground max-w-lg mx-auto mb-8">
               <span className="text-foreground font-medium">
-                O mundo digital que você pode tocar.
+                The digital world you can touch.
               </span>{" "}
-              Escolha o plano de fidelidade que combina com seu estilo e acesse serviços exclusivos com um toque do seu E-Pass.
+              Choose the loyalty plan that matches your style and access exclusive services with a tap of your E-Pass.
             </p>
-            <Button 
-              className="gradient-wj text-white hover:opacity-90 transition-all duration-300"
-              size="lg"
-            >
-              Ver detalhes dos planos
-              <span className="ml-2">→</span>
-            </Button>
+            
+            <Link to="/membership-plans">
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="inline-block"
+              >
+                <Button 
+                  className="relative overflow-hidden group bg-transparent border-2 border-wj-green text-foreground hover:text-white px-8 py-6 text-base font-medium transition-all duration-500"
+                  size="lg"
+                >
+                  {/* Animated background */}
+                  <span className="absolute inset-0 bg-wj-green transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out" />
+                  
+                  {/* Button content */}
+                  <span className="relative flex items-center gap-3">
+                    View Membership Plans
+                    <ArrowRight className="w-5 h-5 transform group-hover:translate-x-1 transition-transform duration-300" />
+                  </span>
+                </Button>
+              </motion.div>
+            </Link>
           </motion.div>
         </motion.div>
       </div>
+
+      {/* CSS Animation for Golden Border */}
+      <style>{`
+        @keyframes borderGlow {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 300% 50%; }
+        }
+      `}</style>
     </section>
   );
 };
