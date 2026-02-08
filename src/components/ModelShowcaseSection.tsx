@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -27,13 +27,18 @@ const ModelShowcaseSection = ({
   slideInterval = 10000,
 }: ModelShowcaseProps) => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const sectionRef = useRef<HTMLElement>(null);
   
-  const { scrollYProgress } = useScroll();
+  // Track scroll progress within this section
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"],
+  });
   
-  // Transform scroll progress to animation values
-  const borderRadius = useTransform(scrollYProgress, [0, 0.15], [0, 24]);
-  const margin = useTransform(scrollYProgress, [0, 0.15], [0, 24]);
-  const scale = useTransform(scrollYProgress, [0, 0.15], [1, 0.98]);
+  // Animation: shrink on enter (0 to 0.3), stay shrunk (0.3 to 0.7), expand on exit (0.7 to 1)
+  const borderRadius = useTransform(scrollYProgress, [0, 0.15, 0.7, 0.85], [0, 24, 24, 0]);
+  const marginX = useTransform(scrollYProgress, [0, 0.15, 0.7, 0.85], [0, 24, 24, 0]);
+  const scale = useTransform(scrollYProgress, [0, 0.15, 0.7, 0.85], [1, 0.96, 0.96, 1]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -44,7 +49,7 @@ const ModelShowcaseSection = ({
   }, [images.length, slideInterval]);
 
   return (
-    <section className="relative overflow-hidden px-0 md:px-6 py-6">
+    <section ref={sectionRef} className="relative overflow-hidden">
       {/* Video Background Layer - visible when component has border radius */}
       <div className="absolute inset-0 overflow-hidden">
         <video
@@ -60,13 +65,16 @@ const ModelShowcaseSection = ({
         <div className="absolute inset-0 bg-background/30" />
       </div>
 
+      {/* Top gradient for smooth transition from previous section */}
+      <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-background to-transparent z-20 pointer-events-none" />
+
       {/* Main Content Container with scroll animation */}
       <motion.div 
         className="relative h-[70vh] min-h-[500px] max-h-[700px] overflow-hidden bg-background"
         style={{
           borderRadius,
-          marginLeft: margin,
-          marginRight: margin,
+          marginLeft: marginX,
+          marginRight: marginX,
           scale,
         }}
       >
@@ -150,6 +158,9 @@ const ModelShowcaseSection = ({
           </motion.div>
         </div>
       </motion.div>
+
+      {/* Bottom gradient for smooth transition to next section */}
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-card to-transparent z-20 pointer-events-none" />
     </section>
   );
 };
