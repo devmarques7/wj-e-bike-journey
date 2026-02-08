@@ -1,8 +1,25 @@
 import { useRef } from "react";
 import { motion, useScroll, useTransform, MotionValue } from "framer-motion";
-import { Zap, Shield, Leaf, Smartphone } from "lucide-react";
+import { Zap, Shield, Leaf, Smartphone, LucideIcon } from "lucide-react";
 
-const features = [
+interface FeatureItem {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  highlight: string;
+  image: string;
+}
+
+interface FeaturesSectionProps {
+  sectionLabel?: string;
+  sectionTitle?: string;
+  features?: FeatureItem[];
+  backgroundVideo?: string;
+  backgroundImage?: string;
+  heightPerFeature?: number;
+}
+
+const defaultFeatures: FeatureItem[] = [
   {
     icon: Zap,
     title: "Instant Power",
@@ -37,7 +54,14 @@ const features = [
   },
 ];
 
-const FeaturesSection = () => {
+const FeaturesSection = ({
+  sectionLabel = "Technology",
+  sectionTitle = "Engineering Excellence",
+  features = defaultFeatures,
+  backgroundVideo = "/videos/features-background.mp4",
+  backgroundImage,
+  heightPerFeature = 40,
+}: FeaturesSectionProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   
   const { scrollYProgress } = useScroll({
@@ -45,78 +69,116 @@ const FeaturesSection = () => {
     offset: ["start start", "end end"],
   });
 
+  // Create infinite loop by duplicating titles
+  const loopedFeatures = [...features, ...features, ...features];
+
   return (
-    <section ref={containerRef} className="relative" style={{ height: `${features.length * 60}vh` }}>
-      {/* Gradient transition from previous section */}
-      <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-background to-transparent z-10 pointer-events-none" />
+    <section ref={containerRef} className="relative" style={{ height: `${features.length * heightPerFeature}vh` }}>
+      {/* Background Layer - Video or Image */}
+      <div className="fixed inset-0 -z-10">
+        {backgroundVideo && !backgroundImage ? (
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+          >
+            <source src={backgroundVideo} type="video/mp4" />
+          </video>
+        ) : backgroundImage ? (
+          <img
+            src={backgroundImage}
+            alt="Background"
+            className="w-full h-full object-cover"
+          />
+        ) : null}
+        <div className="absolute inset-0 bg-background/60" />
+      </div>
       
       {/* Sticky Container */}
-      <div className="sticky top-0 h-screen overflow-hidden bg-card">
-        <div className="container-wj h-full py-8 md:py-12 flex flex-col">
-          {/* Section Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            viewport={{ once: true }}
-            className="text-center mb-6 md:mb-8"
-          >
-            <p className="text-wj-green text-sm font-medium tracking-widest uppercase mb-2">
-              Technology
-            </p>
-            <h2 className="text-display-sm md:text-display-md font-bold text-foreground">
-              Engineering Excellence
-            </h2>
-          </motion.div>
+      <div className="sticky top-0 h-screen overflow-hidden flex items-center justify-center">
+        {/* Inner Container with 95% width and border radius */}
+        <div className="w-[95%] h-[85%] rounded-3xl bg-card/95 backdrop-blur-sm overflow-hidden shadow-2xl border border-border/20">
+          <div className="h-full py-6 md:py-8 px-6 md:px-8 flex flex-col">
+            {/* Section Header */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              viewport={{ once: true }}
+              className="text-center mb-4 md:mb-6"
+            >
+              <p className="text-wj-green text-sm font-medium tracking-widest uppercase mb-2">
+                {sectionLabel}
+              </p>
+              <h2 className="text-display-md md:text-display-lg font-bold text-foreground">
+                {sectionTitle}
+              </h2>
+            </motion.div>
 
-          {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 items-center max-h-[70vh]">
-            {/* Left Side - Titles */}
-            <div className="lg:col-span-3 flex flex-col justify-center gap-3">
-              {features.map((feature, index) => (
-                <FeatureTitle
-                  key={feature.title}
-                  title={feature.title}
-                  icon={feature.icon}
-                  index={index}
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 items-center overflow-hidden">
+              {/* Left Side - Infinite Loop Titles */}
+              <div className="lg:col-span-4 flex flex-col justify-center overflow-hidden h-full relative">
+                {/* Gradient masks for continuity effect */}
+                <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-card/95 to-transparent z-10 pointer-events-none" />
+                <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-card/95 to-transparent z-10 pointer-events-none" />
+                
+                <div className="relative py-8">
+                  {loopedFeatures.map((feature, index) => (
+                    <FeatureTitle
+                      key={`${feature.title}-${index}`}
+                      title={feature.title}
+                      icon={feature.icon}
+                      index={index % features.length}
+                      scrollProgress={scrollYProgress}
+                      totalFeatures={features.length}
+                      isLooped={index >= features.length}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Right Side - Image with Description & Badge */}
+              <div className="lg:col-span-8 flex items-center justify-center h-full">
+                <div className="relative w-full h-full max-h-[50vh] rounded-2xl overflow-hidden">
+                  {features.map((feature, index) => (
+                    <FeatureImage
+                      key={feature.title}
+                      image={feature.image}
+                      description={feature.description}
+                      highlight={feature.highlight}
+                      title={feature.title}
+                      index={index}
+                      scrollProgress={scrollYProgress}
+                      totalFeatures={features.length}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Progress Indicator */}
+            <div className="flex justify-center gap-2 mt-4">
+              {features.map((_, index) => (
+                <ProgressDot 
+                  key={index} 
+                  index={index} 
                   scrollProgress={scrollYProgress}
                   totalFeatures={features.length}
                 />
               ))}
             </div>
-
-            {/* Right Side - Image with Description & Badge */}
-            <div className="lg:col-span-9 flex items-center justify-center">
-              <div className="relative w-full max-w-2xl aspect-[16/10] rounded-2xl overflow-hidden">
-                {features.map((feature, index) => (
-                  <FeatureImage
-                    key={feature.title}
-                    image={feature.image}
-                    description={feature.description}
-                    highlight={feature.highlight}
-                    title={feature.title}
-                    index={index}
-                    scrollProgress={scrollYProgress}
-                    totalFeatures={features.length}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Progress Indicator */}
-          <div className="flex justify-center gap-2 mt-6">
-            {features.map((_, index) => (
-              <ProgressDot 
-                key={index} 
-                index={index} 
-                scrollProgress={scrollYProgress}
-                totalFeatures={features.length}
-              />
-            ))}
           </div>
         </div>
       </div>
+
+      {/* Top gradient for smooth transition */}
+      <div className="fixed top-0 left-0 right-0 h-24 bg-gradient-to-b from-background to-transparent z-20 pointer-events-none" />
+      
+      {/* Bottom gradient for smooth transition */}
+      <div className="fixed bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent z-20 pointer-events-none" />
     </section>
   );
 };
@@ -124,49 +186,50 @@ const FeaturesSection = () => {
 // Feature Title Component
 interface FeatureTitleProps {
   title: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
   index: number;
   scrollProgress: MotionValue<number>;
   totalFeatures: number;
+  isLooped?: boolean;
 }
 
-const FeatureTitle = ({ title, icon: Icon, index, scrollProgress, totalFeatures }: FeatureTitleProps) => {
+const FeatureTitle = ({ title, icon: Icon, index, scrollProgress, totalFeatures, isLooped = false }: FeatureTitleProps) => {
   const segmentSize = 1 / totalFeatures;
   const start = index * segmentSize;
-  const mid = start + segmentSize * 0.5;
   const end = (index + 1) * segmentSize;
 
-  // More direct/instant transitions
+  // For looped items, adjust the scroll position tracking
+  const adjustedStart = isLooped ? start : start;
+  const adjustedEnd = isLooped ? end : end;
+
   const opacity = useTransform(scrollProgress, 
-    [start, start + 0.01, end - 0.01, end], 
-    index === 0 ? [1, 1, 1, 0.25] : 
-    index === totalFeatures - 1 ? [0.25, 1, 1, 1] : 
-    [0.25, 1, 1, 0.25]
+    [adjustedStart, adjustedStart + 0.01, adjustedEnd - 0.01, adjustedEnd], 
+    index === 0 && !isLooped ? [1, 1, 1, 0.3] : 
+    index === totalFeatures - 1 && !isLooped ? [0.3, 1, 1, 1] : 
+    [0.3, 1, 1, 0.3]
   );
 
   const scale = useTransform(scrollProgress, 
-    [start, start + 0.01, end - 0.01, end],
-    index === 0 ? [1, 1, 1, 0.92] :
-    index === totalFeatures - 1 ? [0.92, 1, 1, 1] :
-    [0.92, 1, 1, 0.92]
+    [adjustedStart, adjustedStart + 0.01, adjustedEnd - 0.01, adjustedEnd],
+    index === 0 && !isLooped ? [1, 1, 1, 0.95] :
+    index === totalFeatures - 1 && !isLooped ? [0.95, 1, 1, 1] :
+    [0.95, 1, 1, 0.95]
   );
 
-  const x = useTransform(scrollProgress, 
-    [start, start + 0.01, end - 0.01, end],
-    index === 0 ? [12, 12, 12, 0] :
-    index === totalFeatures - 1 ? [0, 12, 12, 12] :
-    [0, 12, 12, 0]
+  const y = useTransform(scrollProgress, 
+    [0, 1],
+    [0, -80 * totalFeatures]
   );
 
   return (
     <motion.div
-      style={{ opacity, scale, x }}
-      className="flex items-center gap-3 cursor-pointer"
+      style={{ opacity, scale, y }}
+      className="flex items-center gap-4 py-3 cursor-pointer"
     >
-      <div className="w-9 h-9 rounded-lg gradient-wj flex items-center justify-center flex-shrink-0">
-        <Icon className="h-4 w-4 text-white" />
+      <div className="w-12 h-12 rounded-xl gradient-wj flex items-center justify-center flex-shrink-0 shadow-lg">
+        <Icon className="h-5 w-5 text-white" />
       </div>
-      <span className="text-base font-semibold text-foreground">{title}</span>
+      <span className="text-xl md:text-2xl font-bold text-foreground">{title}</span>
     </motion.div>
   );
 };
@@ -187,7 +250,6 @@ const FeatureImage = ({ image, description, highlight, title, index, scrollProgr
   const start = index * segmentSize;
   const end = (index + 1) * segmentSize;
 
-  // Instant but smooth transitions
   const opacity = useTransform(scrollProgress, 
     [start, start + 0.02, end - 0.02, end],
     index === 0 ? [1, 1, 1, 0] :
@@ -216,9 +278,9 @@ const FeatureImage = ({ image, description, highlight, title, index, scrollProgr
       <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
       
       {/* Content container at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 p-6">
+      <div className="absolute bottom-0 left-0 right-0 p-5">
         {/* Description text */}
-        <p className="text-foreground/90 text-sm md:text-base leading-relaxed mb-4 max-w-lg">
+        <p className="text-foreground/90 text-sm md:text-base leading-relaxed mb-3 max-w-lg">
           {description}
         </p>
         
