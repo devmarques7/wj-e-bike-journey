@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarDays, Clock, Wrench, CheckCircle2, ChevronLeft, ChevronRight, MessageSquare, ArrowRight, Crown } from "lucide-react";
+import { CalendarDays, Clock, Wrench, CheckCircle2, ChevronLeft, ChevronRight, MessageSquare, ArrowRight, Crown, ChevronDown, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -334,317 +334,379 @@ export default function ServiceCalendarCompact() {
 
       {/* Upgrade Modal for Light Members */}
       <Dialog open={isUpgradeModalOpen} onOpenChange={setIsUpgradeModalOpen}>
-        <DialogContent className="sm:max-w-2xl bg-background/95 backdrop-blur-xl border-border/50 overflow-hidden">
-          <DialogHeader className="text-center">
-            <DialogTitle className="flex items-center justify-center gap-2 text-2xl">
-              <Crown className="h-6 w-6 text-wj-green" />
-              Upgrade Your Membership
-            </DialogTitle>
-            <DialogDescription className="text-center">
-              Calendar booking is a premium feature. Upgrade your E-Pass to schedule services directly.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] bg-background/95 backdrop-blur-xl border-border/50 overflow-hidden p-0">
+          {/* Scrollable Container with Hidden Scrollbar */}
+          <div className="overflow-y-auto max-h-[90vh] scrollbar-hide">
+            <div className="p-6 pb-0">
+              <DialogHeader className="text-center">
+                <DialogTitle className="flex items-center justify-center gap-2 text-2xl">
+                  <Crown className="h-6 w-6 text-wj-green" />
+                  Upgrade Your Membership
+                </DialogTitle>
+                <DialogDescription className="text-center">
+                  Calendar booking is a premium feature. Upgrade your E-Pass to schedule services directly.
+                </DialogDescription>
+              </DialogHeader>
+            </div>
 
-          {/* 3D Carousel Container */}
-          <div 
-            className="relative flex items-center justify-center py-10 px-4 min-h-[360px] sm:min-h-[420px]" 
-            style={{ perspective: "1000px" }}
-          >
-            {/* Cards Container */}
+            {/* 3D Carousel Container */}
             <div 
-              className="relative w-full max-w-lg flex items-center justify-center h-72"
-              style={{ transformStyle: "preserve-3d" }}
+              className="relative flex items-center justify-center py-10 px-4 min-h-[360px] sm:min-h-[420px]" 
+              style={{ perspective: "1000px" }}
             >
-              {cardOrder.map((tier, index) => {
-                const plan = membershipPlans.find(p => p.tier === tier)!;
-                const transform = getCardTransform(index);
-                const isCenter = index === activeCardIndex;
-                
-                return (
-                  <motion.div
-                    key={tier}
-                    initial={false}
-                    animate={{
-                      x: transform.x,
-                      y: transform.y,
-                      rotateY: transform.rotateY,
-                      scale: transform.scale,
-                      opacity: transform.opacity,
-                      zIndex: transform.z,
-                    }}
-                    transition={{ 
-                      duration: 0.6, 
-                      type: "spring", 
-                      stiffness: 70,
-                      damping: 12
-                    }}
-                    whileHover={!isCenter ? { 
-                      scale: transform.scale + 0.05,
-                      opacity: 1,
-                      transition: { duration: 0.2 }
-                    } : undefined}
-                    onClick={() => handleCardClick(tier)}
-                    className={cn(
-                      "absolute w-32 h-52 sm:w-40 sm:h-64 md:w-44 md:h-72 rounded-2xl cursor-pointer group overflow-hidden",
-                      isCenter && "ring-2 ring-wj-green/60 ring-offset-4 ring-offset-background"
-                    )}
-                    style={{ 
-                      transformStyle: "preserve-3d",
-                      boxShadow: isCenter 
-                        ? "0 30px 50px -15px rgba(0, 0, 0, 0.6), 0 15px 30px -10px rgba(5, 140, 66, 0.25)" 
-                        : "0 15px 30px -10px rgba(0, 0, 0, 0.35)",
-                      filter: isCenter ? "none" : "brightness(0.85)",
-                    }}
-                  >
-                    {/* Animated Border for Black Card */}
-                    {tier === "black" && (
-                      <div 
-                        className="absolute -inset-[1px] rounded-2xl opacity-40 group-hover:opacity-60 transition-opacity duration-700"
-                        style={{
-                          background: "linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.4), rgba(0,0,0,0.2), rgba(255,255,255,0.3), rgba(0,0,0,0.1), rgba(255,255,255,0.2))",
-                          backgroundSize: "400% 100%",
-                          animation: "borderGlow 8s linear infinite",
-                        }}
-                      />
-                    )}
-                    
-                    {/* Card Inner Container */}
-                    <div className="absolute inset-[1px] rounded-2xl overflow-hidden">
-                      {/* Video Background */}
-                      <video
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                        className="absolute inset-0 w-full h-full object-cover"
-                      >
-                        <source src={plan.videoSrc} type="video/mp4" />
-                      </video>
-                      
-                      {/* Gradient Overlay */}
-                      <div className={cn(
-                        "absolute inset-0",
-                        tier === "light" 
-                          ? "bg-gradient-to-t from-black/60 via-black/20 to-transparent" 
-                          : "bg-gradient-to-t from-black/70 via-black/30 to-black/10"
-                      )} />
-                      
-                      {/* Selected Indicator */}
-                      {selectedPlan === tier && isCenter && (
-                        <motion.div
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          className="absolute top-2 right-2 w-6 h-6 bg-wj-green rounded-full flex items-center justify-center z-30"
-                        >
-                          <CheckCircle2 className="h-4 w-4 text-white" />
-                        </motion.div>
-                      )}
-                      
-                      {/* Card Content */}
-                      <div className="absolute inset-0 p-4 sm:p-5 flex flex-col justify-between">
-                        <div className="flex flex-col gap-2">
-                          <span className={cn(
-                            "text-xs sm:text-sm font-bold tracking-wide",
-                            tier === "light" ? "text-zinc-800" : "text-white"
-                          )}>
-                            WJ VISION
-                          </span>
-                          <span className={cn(
-                            "text-[9px] sm:text-[10px] font-semibold px-2 py-0.5 rounded-full w-fit",
-                            tier === "light" 
-                              ? "bg-zinc-800/20 text-zinc-800 border border-zinc-800/20" 
-                              : tier === "black"
-                                ? "bg-white/10 text-white/90 border border-white/20"
-                                : "bg-white/20 text-white border border-white/30"
-                          )}>
-                            {tier.toUpperCase()}
-                          </span>
-                        </div>
-                        
-                        <div className="flex flex-col gap-1">
-                          <p className={cn(
-                            "text-[9px] sm:text-[10px]",
-                            tier === "light" ? "text-zinc-600" : "text-white/60"
-                          )}>
-                            Member
-                          </p>
-                          <p className={cn(
-                            "text-sm sm:text-base font-semibold",
-                            tier === "light" ? "text-zinc-800" : "text-white"
-                          )}>
-                            {plan.label}
-                          </p>
-                          <p className={cn(
-                            "text-lg sm:text-xl font-bold mt-1",
-                            tier === "light" ? "text-zinc-900" : "text-white"
-                          )}>
-                            {plan.monthlyPrice === 0 ? (
-                              "Free"
-                            ) : (
-                              <>
-                                €{(plan.annualPrice / 12).toFixed(0)}
-                                <span className="text-[10px] sm:text-xs font-normal opacity-70">/mo</span>
-                              </>
-                            )}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* CSS Animation for Border Glow */}
-          <style>{`
-            @keyframes borderGlow {
-              0% { background-position: 0% 50%; }
-              100% { background-position: 300% 50%; }
-            }
-          `}</style>
-
-          {/* Current Plan Badge */}
-          <div className="flex justify-center -mt-4 mb-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/60 border border-border/40">
-              <span className="text-xs text-muted-foreground">Current Plan:</span>
-              <span className="text-xs font-semibold text-foreground capitalize">{userTier}</span>
-            </div>
-          </div>
-
-          {/* Plan Details - Shows when card is selected and centered */}
-          <AnimatePresence mode="wait">
-            {selectedPlan && (
-              <motion.div
-                key={selectedPlan}
-                initial={{ opacity: 0, y: 30, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                transition={{ duration: 0.4, type: "spring", stiffness: 100 }}
-                className="mx-4 rounded-2xl bg-muted/30 border border-border/30 backdrop-blur-sm overflow-hidden"
+              {/* Cards Container */}
+              <div 
+                className="relative w-full max-w-lg flex items-center justify-center h-72"
+                style={{ transformStyle: "preserve-3d" }}
               >
-                {(() => {
-                  const plan = membershipPlans.find(p => p.tier === selectedPlan);
-                  if (!plan) return null;
-                  
-                  const monthlyFromAnnual = plan.annualPrice > 0 ? (plan.annualPrice / 12) : 0;
-                  const savingsPercent = plan.monthlyPrice > 0 
-                    ? Math.round(((plan.monthlyPrice * 12 - plan.annualPrice) / (plan.monthlyPrice * 12)) * 100)
-                    : 0;
-                  const isCurrentPlan = userTier === selectedPlan;
+                {cardOrder.map((tier, index) => {
+                  const plan = membershipPlans.find(p => p.tier === tier)!;
+                  const transform = getCardTransform(index);
+                  const isCenter = index === activeCardIndex;
                   
                   return (
-                    <div className="p-5">
-                      {/* Header */}
-                      <div className="flex items-start justify-between mb-5">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-xl text-foreground">
-                              {plan.name}
-                            </h4>
-                            {isCurrentPlan && (
-                              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-wj-green/20 text-wj-green border border-wj-green/30">
-                                Current
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            {plan.description}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Pricing Section */}
-                      {plan.monthlyPrice > 0 ? (
-                        <div className="mb-5 p-4 rounded-xl bg-background/50 border border-border/30">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="flex items-baseline gap-1">
-                                <span className="text-3xl font-bold text-foreground">
-                                  €{monthlyFromAnnual.toFixed(0)}
-                                </span>
-                                <span className="text-sm text-muted-foreground">/month</span>
-                              </div>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Billed annually at €{plan.annualPrice.toFixed(0)}/year
-                              </p>
-                            </div>
-                            <div className="text-right">
-                              <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-wj-green/10 border border-wj-green/20">
-                                <span className="text-xs font-semibold text-wj-green">Save {savingsPercent}%</span>
-                              </div>
-                              <p className="text-xs text-muted-foreground mt-1.5 line-through">
-                                €{plan.monthlyPrice.toFixed(2)}/mo monthly
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="mb-5 p-4 rounded-xl bg-background/50 border border-border/30">
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-3xl font-bold text-foreground">Free</span>
-                            <span className="text-sm text-muted-foreground">forever</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Included with your bike purchase
-                          </p>
-                        </div>
+                    <motion.div
+                      key={tier}
+                      initial={false}
+                      animate={{
+                        x: transform.x,
+                        y: transform.y,
+                        rotateY: transform.rotateY,
+                        scale: transform.scale,
+                        opacity: transform.opacity,
+                        zIndex: transform.z,
+                      }}
+                      transition={{ 
+                        duration: 0.6, 
+                        type: "spring", 
+                        stiffness: 70,
+                        damping: 12
+                      }}
+                      whileHover={!isCenter ? { 
+                        scale: transform.scale + 0.05,
+                        opacity: 1,
+                        transition: { duration: 0.2 }
+                      } : undefined}
+                      onClick={() => handleCardClick(tier)}
+                      className={cn(
+                        "absolute w-32 h-52 sm:w-40 sm:h-64 md:w-44 md:h-72 rounded-2xl cursor-pointer group overflow-hidden",
+                        isCenter && "ring-2 ring-wj-green/60 ring-offset-4 ring-offset-background"
                       )}
-
-                      {/* Features Grid */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        {plan.features.map((feature, i) => (
-                          <motion.div 
-                            key={i} 
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: i * 0.04 }}
-                            className="flex items-center gap-2.5 text-sm"
+                      style={{ 
+                        transformStyle: "preserve-3d",
+                        boxShadow: isCenter 
+                          ? "0 30px 50px -15px rgba(0, 0, 0, 0.6), 0 15px 30px -10px rgba(5, 140, 66, 0.25)" 
+                          : "0 15px 30px -10px rgba(0, 0, 0, 0.35)",
+                        filter: isCenter ? "none" : "brightness(0.85)",
+                      }}
+                    >
+                      {/* Animated Border for Black Card */}
+                      {tier === "black" && (
+                        <div 
+                          className="absolute -inset-[1px] rounded-2xl opacity-40 group-hover:opacity-60 transition-opacity duration-700"
+                          style={{
+                            background: "linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.4), rgba(0,0,0,0.2), rgba(255,255,255,0.3), rgba(0,0,0,0.1), rgba(255,255,255,0.2))",
+                            backgroundSize: "400% 100%",
+                            animation: "borderGlow 8s linear infinite",
+                          }}
+                        />
+                      )}
+                      
+                      {/* Card Inner Container */}
+                      <div className="absolute inset-[1px] rounded-2xl overflow-hidden">
+                        {/* Video Background */}
+                        <video
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                          className="absolute inset-0 w-full h-full object-cover"
+                        >
+                          <source src={plan.videoSrc} type="video/mp4" />
+                        </video>
+                        
+                        {/* Gradient Overlay */}
+                        <div className={cn(
+                          "absolute inset-0",
+                          tier === "light" 
+                            ? "bg-gradient-to-t from-black/60 via-black/20 to-transparent" 
+                            : "bg-gradient-to-t from-black/70 via-black/30 to-black/10"
+                        )} />
+                        
+                        {/* Selected Indicator */}
+                        {selectedPlan === tier && isCenter && (
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="absolute top-2 right-2 w-6 h-6 bg-wj-green rounded-full flex items-center justify-center z-30"
                           >
-                            <div className="flex-shrink-0 w-5 h-5 rounded-full bg-wj-green/10 flex items-center justify-center">
-                              <CheckCircle2 className="h-3 w-3 text-wj-green" />
-                            </div>
-                            <span className="text-foreground/80">{feature}</span>
+                            <CheckCircle2 className="h-4 w-4 text-white" />
                           </motion.div>
-                        ))}
+                        )}
+                        
+                        {/* Card Content */}
+                        <div className="absolute inset-0 p-4 sm:p-5 flex flex-col justify-between">
+                          <div className="flex flex-col gap-2">
+                            <span className={cn(
+                              "text-xs sm:text-sm font-bold tracking-wide",
+                              tier === "light" ? "text-zinc-800" : "text-white"
+                            )}>
+                              WJ VISION
+                            </span>
+                            <span className={cn(
+                              "text-[9px] sm:text-[10px] font-semibold px-2 py-0.5 rounded-full w-fit",
+                              tier === "light" 
+                                ? "bg-zinc-800/20 text-zinc-800 border border-zinc-800/20" 
+                                : tier === "black"
+                                  ? "bg-white/10 text-white/90 border border-white/20"
+                                  : "bg-white/20 text-white border border-white/30"
+                            )}>
+                              {tier.toUpperCase()}
+                            </span>
+                          </div>
+                          
+                          <div className="flex flex-col gap-1">
+                            <p className={cn(
+                              "text-[9px] sm:text-[10px]",
+                              tier === "light" ? "text-zinc-600" : "text-white/60"
+                            )}>
+                              Member
+                            </p>
+                            <p className={cn(
+                              "text-sm sm:text-base font-semibold",
+                              tier === "light" ? "text-zinc-800" : "text-white"
+                            )}>
+                              {plan.label}
+                            </p>
+                            <p className={cn(
+                              "text-lg sm:text-xl font-bold mt-1",
+                              tier === "light" ? "text-zinc-900" : "text-white"
+                            )}>
+                              {plan.monthlyPrice === 0 ? (
+                                "Free"
+                              ) : (
+                                <>
+                                  €{(plan.annualPrice / 12).toFixed(0)}
+                                  <span className="text-[10px] sm:text-xs font-normal opacity-70">/mo</span>
+                                </>
+                              )}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    </motion.div>
                   );
-                })()}
-              </motion.div>
-            )}
-          </AnimatePresence>
+                })}
+              </div>
+            </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center justify-between pt-4 px-4 border-t border-border/30">
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setIsUpgradeModalOpen(false);
-                setSelectedPlan(null);
-                setActiveCardIndex(1);
-              }}
-              className="text-muted-foreground"
+            {/* CSS Animation for Border Glow */}
+            <style>{`
+              @keyframes borderGlow {
+                0% { background-position: 0% 50%; }
+                100% { background-position: 300% 50%; }
+              }
+            `}</style>
+
+            {/* Current Plan Badge */}
+            <div className="flex justify-center -mt-4 mb-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/60 border border-border/40">
+                <span className="text-xs text-muted-foreground">Current Plan:</span>
+                <span className="text-xs font-semibold text-foreground capitalize">{userTier}</span>
+              </div>
+            </div>
+
+            {/* Scroll Indicator - Animated */}
+            <motion.div 
+              className="flex flex-col items-center justify-center py-3"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
             >
-              Maybe Later
-            </Button>
-            
-            {selectedPlan && selectedPlan !== "light" && selectedPlan !== userTier ? (
-              <Link to="/membership-plans">
-                <Button className="bg-wj-green hover:bg-wj-green-dark text-white">
-                  Upgrade Now
-                  <ArrowRight className="h-4 w-4 ml-2" />
+              <span className="text-xs text-muted-foreground mb-1">Scroll for details</span>
+              <motion.div
+                animate={{ y: [0, 6, 0] }}
+                transition={{ 
+                  duration: 1.5, 
+                  repeat: Infinity, 
+                  ease: "easeInOut" 
+                }}
+              >
+                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+              </motion.div>
+            </motion.div>
+
+            {/* Plan Details - Shows when card is selected and centered */}
+            <AnimatePresence mode="wait">
+              {selectedPlan && (
+                <motion.div
+                  key={selectedPlan}
+                  initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                  transition={{ duration: 0.4, type: "spring", stiffness: 100 }}
+                  className="mx-4 rounded-2xl bg-muted/30 border border-border/30 backdrop-blur-sm overflow-hidden"
+                >
+                  {(() => {
+                    const plan = membershipPlans.find(p => p.tier === selectedPlan);
+                    if (!plan) return null;
+                    
+                    const monthlyFromAnnual = plan.annualPrice > 0 ? (plan.annualPrice / 12) : 0;
+                    const savingsPercent = plan.monthlyPrice > 0 
+                      ? Math.round(((plan.monthlyPrice * 12 - plan.annualPrice) / (plan.monthlyPrice * 12)) * 100)
+                      : 0;
+                    const isCurrentPlan = userTier === selectedPlan;
+                    
+                    return (
+                      <div className="p-5">
+                        {/* Header */}
+                        <div className="flex items-start justify-between mb-5">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-bold text-xl text-foreground">
+                                {plan.name}
+                              </h4>
+                              {isCurrentPlan && (
+                                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-wj-green/20 text-wj-green border border-wj-green/30">
+                                  Current
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {plan.description}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Pricing Section */}
+                        {plan.monthlyPrice > 0 ? (
+                          <div className="mb-5 p-4 rounded-xl bg-background/50 border border-border/30">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="flex items-baseline gap-1">
+                                  <span className="text-3xl font-bold text-foreground">
+                                    €{monthlyFromAnnual.toFixed(0)}
+                                  </span>
+                                  <span className="text-sm text-muted-foreground">/month</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Billed annually at €{plan.annualPrice.toFixed(0)}/year
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-wj-green/10 border border-wj-green/20">
+                                  <span className="text-xs font-semibold text-wj-green">Save {savingsPercent}%</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1.5 line-through">
+                                  €{plan.monthlyPrice.toFixed(2)}/mo monthly
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mb-5 p-4 rounded-xl bg-background/50 border border-border/30">
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-3xl font-bold text-foreground">Free</span>
+                              <span className="text-sm text-muted-foreground">forever</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Included with your bike purchase
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Features Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          {plan.features.map((feature, i) => (
+                            <motion.div 
+                              key={i} 
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: i * 0.04 }}
+                              className="flex items-center gap-2.5 text-sm"
+                            >
+                              <div className="flex-shrink-0 w-5 h-5 rounded-full bg-wj-green/10 flex items-center justify-center">
+                                <CheckCircle2 className="h-3 w-3 text-wj-green" />
+                              </div>
+                              <span className="text-foreground/80">{feature}</span>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Action Buttons - Sticky Footer */}
+            <div className="sticky bottom-0 flex items-center justify-between p-4 pt-6 pb-6 bg-gradient-to-t from-background via-background to-transparent border-t border-border/30 mt-4">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setIsUpgradeModalOpen(false);
+                  setSelectedPlan(null);
+                  setActiveCardIndex(1);
+                }}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Maybe Later
+              </Button>
+              
+              {selectedPlan && selectedPlan !== "light" && selectedPlan !== userTier ? (
+                <Link to="/membership-plans">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="relative group overflow-hidden px-6 py-3 rounded-xl font-semibold text-white"
+                  >
+                    {/* Animated Gradient Background */}
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-wj-green via-emerald-500 to-wj-green"
+                      style={{ backgroundSize: "200% 100%" }}
+                      animate={{ backgroundPosition: ["0% 0%", "100% 0%", "0% 0%"] }}
+                      transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                    />
+                    
+                    {/* Shine Effect */}
+                    <motion.div
+                      className="absolute inset-0 opacity-0 group-hover:opacity-100"
+                      style={{
+                        background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)",
+                        transform: "translateX(-100%)",
+                      }}
+                      animate={{ x: ["-100%", "200%"] }}
+                      transition={{ 
+                        duration: 1.5, 
+                        repeat: Infinity, 
+                        repeatDelay: 0.5,
+                        ease: "easeInOut" 
+                      }}
+                    />
+                    
+                    {/* Button Content */}
+                    <span className="relative flex items-center gap-2">
+                      <Sparkles className="h-4 w-4" />
+                      Upgrade Now
+                      <motion.span
+                        animate={{ x: [0, 4, 0] }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+                      >
+                        <ArrowRight className="h-4 w-4" />
+                      </motion.span>
+                    </span>
+                  </motion.button>
+                </Link>
+              ) : selectedPlan === userTier ? (
+                <Button disabled className="opacity-50">
+                  Current Plan
                 </Button>
-              </Link>
-            ) : selectedPlan === userTier ? (
-              <Button disabled className="opacity-50">
-                Current Plan
-              </Button>
-            ) : (
-              <Button disabled className="opacity-50">
-                Select a Plan
-              </Button>
-            )}
+              ) : (
+                <Button disabled className="opacity-50">
+                  Select a Plan
+                </Button>
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
