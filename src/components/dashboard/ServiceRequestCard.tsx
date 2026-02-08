@@ -24,23 +24,36 @@ export default function ServiceRequestCard() {
   const textOpacity = useTransform(x, [0, maxDrag * 0.5], [1, 0]);
   const checkOpacity = useTransform(x, [maxDrag * 0.7, maxDrag], [0, 1]);
 
-  // Smooth video loop transition
+  // Smooth video loop transition with fade
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
     const handleTimeUpdate = () => {
+      if (!video.duration) return;
       const timeLeft = video.duration - video.currentTime;
-      if (timeLeft <= 0.5) {
-        setVideoOpacity(0);
+      
+      // Start fading out 1 second before video ends
+      if (timeLeft <= 1 && timeLeft > 0) {
+        const fadeProgress = 1 - timeLeft; // 0 to 1
+        setVideoOpacity(1 - fadeProgress * 0.5); // Fade to 0.5 opacity
       }
     };
 
     const handleEnded = () => {
+      // Reset to beginning
       video.currentTime = 0;
       video.play();
-      setTimeout(() => setVideoOpacity(1), 100);
+      
+      // Fade back in smoothly
+      setVideoOpacity(0.5);
+      requestAnimationFrame(() => {
+        setVideoOpacity(1);
+      });
     };
+
+    // Ensure video plays on mount
+    video.play().catch(() => {});
 
     video.addEventListener("timeupdate", handleTimeUpdate);
     video.addEventListener("ended", handleEnded);
@@ -93,11 +106,10 @@ export default function ServiceRequestCard() {
         <motion.video
           ref={videoRef}
           autoPlay
-          loop
           muted
           playsInline
           animate={{ opacity: videoOpacity }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.8, ease: "easeInOut" }}
           className="absolute inset-0 w-full h-full object-cover"
         >
           <source src="/videos/urgent-service-bg.mp4" type="video/mp4" />
