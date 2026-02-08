@@ -11,33 +11,33 @@ const navLinks = [
     href: "/gallery",
     subItems: [
       { name: "E-Bikes", href: "/gallery" },
-      { name: "Accessories", href: "/gallery?category=accessories" },
+      { name: "Accessories", href: "/accessories" },
       { name: "Member Plans", href: "/membership-plans" },
     ]
   },
   { 
     name: "Store", 
-    href: "#store",
+    href: "/find-store",
     subItems: [
-      { name: "Find a Store", href: "#find-store" },
-      { name: "Book Test Ride", href: "#test-ride" },
+      { name: "Find a Store", href: "/find-store" },
+      { name: "Book Test Ride", href: "/book-test-ride" },
     ]
   },
   { 
     name: "About", 
-    href: "#about",
+    href: "/our-story",
     subItems: [
-      { name: "Our Story", href: "#our-story" },
-      { name: "Career", href: "#career" },
+      { name: "Our Story", href: "/our-story" },
+      { name: "Career", href: "/career" },
     ]
   },
   { 
     name: "Support", 
-    href: "#support",
+    href: "/help",
     subItems: [
-      { name: "Find Help", href: "#help" },
-      { name: "Delivery", href: "#delivery" },
-      { name: "Returns", href: "#returns" },
+      { name: "Find Help", href: "/help" },
+      { name: "Delivery", href: "/delivery" },
+      { name: "Returns", href: "/returns" },
     ]
   },
 ];
@@ -284,17 +284,20 @@ const Navigation = ({ isScrolled = false }: NavigationProps) => {
                             >
                               <div className="pl-4 pb-2 pt-1 space-y-1 border-l border-border/30 ml-1">
                                 {link.subItems.map((subItem, subIndex) => (
-                                  <motion.a
+                                  <motion.div
                                     key={subItem.name}
-                                    href={subItem.href}
                                     initial={{ opacity: 0, x: -10 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: subIndex * 0.05, duration: 0.2 }}
-                                    onClick={() => setIsMenuOpen(false)}
-                                    className="block py-1.5 text-sm text-muted-foreground hover:text-wj-green transition-colors duration-200"
                                   >
-                                    {subItem.name}
-                                  </motion.a>
+                                    <Link
+                                      to={subItem.href}
+                                      onClick={() => setIsMenuOpen(false)}
+                                      className="block py-1.5 text-sm text-muted-foreground hover:text-wj-green transition-colors duration-200"
+                                    >
+                                      {subItem.name}
+                                    </Link>
+                                  </motion.div>
                                 ))}
                               </div>
                             </motion.div>
