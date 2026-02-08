@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import useEmblaCarousel from "embla-carousel-react";
 import { useAuth } from "@/contexts/AuthContext";
 import bikeFull from "@/assets/bike-full.png";
 import bikePanel from "@/assets/bike-panel.png";
@@ -71,16 +72,72 @@ const bikeFeatures = [
   },
 ];
 
+// Preload images
+const preloadImages = () => {
+  bikeFeatures.forEach((feature) => {
+    const img = new Image();
+    img.src = feature.image;
+  });
+};
+
 export default function BikeShowcase() {
   const { user } = useAuth();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    loop: true,
+    dragFree: false,
+    skipSnaps: false,
+  });
+
+  // Preload all images on mount
+  useEffect(() => {
+    preloadImages();
+    
+    // Mark as loaded after a short delay to ensure images are cached
+    const timer = setTimeout(() => {
+      setImagesLoaded(true);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Sync embla index with state
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return;
+    setCurrentIndex(emblaApi.selectedScrollSnap());
+  }, [emblaApi]);
 
   useEffect(() => {
+    if (!emblaApi) return;
+    
+    emblaApi.on("select", onSelect);
+    onSelect();
+    
+    return () => {
+      emblaApi.off("select", onSelect);
+    };
+  }, [emblaApi, onSelect]);
+
+  // Auto-advance carousel every 8 seconds
+  useEffect(() => {
+    if (!emblaApi || !imagesLoaded) return;
+
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % bikeFeatures.length);
-    }, 5000);
+      emblaApi.scrollNext();
+    }, 8000);
+
     return () => clearInterval(interval);
-  }, []);
+  }, [emblaApi, imagesLoaded]);
+
+  // Navigate to specific slide
+  const scrollTo = useCallback(
+    (index: number) => {
+      if (emblaApi) emblaApi.scrollTo(index);
+    },
+    [emblaApi]
+  );
 
   const currentFeature = bikeFeatures[currentIndex];
 
@@ -90,35 +147,36 @@ export default function BikeShowcase() {
       animate={{ opacity: 1, scale: 1 }}
       className="relative h-full min-h-[400px] rounded-3xl overflow-hidden"
     >
-      {/* Background Image */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentIndex}
-          initial={{ opacity: 0, scale: 1.05 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.8 }}
-          className="absolute inset-0"
-        >
-          <img
-            src={currentFeature.image}
-            alt={currentFeature.title}
-            className="w-full h-full object-cover"
-          />
-          {/* Dark overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
-        </motion.div>
-      </AnimatePresence>
+      {/* Carousel Container */}
+      <div className="absolute inset-0" ref={emblaRef}>
+        <div className="flex h-full">
+          {bikeFeatures.map((feature, index) => (
+            <div
+              key={index}
+              className="flex-[0_0_100%] min-w-0 relative h-full"
+            >
+              <img
+                src={feature.image}
+                alt={feature.title}
+                className="w-full h-full object-cover"
+                loading="eager"
+              />
+              {/* Dark overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Content Overlay */}
-      <div className="absolute inset-0 flex flex-col justify-end p-6">
+      <div className="absolute inset-0 flex flex-col justify-end p-6 pointer-events-none">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentIndex}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
             className="space-y-3"
           >
             {/* Feature Label */}
@@ -153,7 +211,7 @@ export default function BikeShowcase() {
         </AnimatePresence>
 
         {/* Bike ID & Progress */}
-        <div className="mt-6 pt-4 border-t border-border/30 flex items-center justify-between">
+        <div className="mt-6 pt-4 border-t border-border/30 flex items-center justify-between pointer-events-auto">
           <div>
             <p className="text-xs text-muted-foreground font-mono">
               {user?.bikeId || "V8-2024-NL-00156"}
@@ -165,7 +223,7 @@ export default function BikeShowcase() {
             {bikeFeatures.map((_, index) => (
               <button
                 key={index}
-                onClick={() => setCurrentIndex(index)}
+                onClick={() => scrollTo(index)}
                 className={`h-1 rounded-full transition-all duration-300 ${
                   index === currentIndex
                     ? "w-6 bg-wj-green"
