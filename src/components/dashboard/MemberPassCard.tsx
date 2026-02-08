@@ -74,7 +74,8 @@ export default function MemberPassCard({ bikeId, bikeName, purchaseDate }: Membe
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.1 }}
-      className="relative h-full w-full min-h-[450px] perspective-1000 cursor-pointer"
+      className="relative h-full w-full min-h-[450px] cursor-pointer"
+      style={{ perspective: "1000px" }}
       onClick={() => setIsFlipped(!isFlipped)}
     >
       <motion.div
@@ -84,7 +85,10 @@ export default function MemberPassCard({ bikeId, bikeName, purchaseDate }: Membe
         style={{ transformStyle: "preserve-3d" }}
       >
         {/* Front of Card - Credit Card Style */}
-        <div className="absolute inset-0 rounded-2xl overflow-hidden border border-border/50 shadow-2xl [backface-visibility:hidden]">
+        <div 
+          className="absolute inset-0 rounded-2xl overflow-hidden border border-border/50 shadow-2xl"
+          style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
+        >
           {/* Video Background */}
           <video
             ref={videoRef}
@@ -156,8 +160,12 @@ export default function MemberPassCard({ bikeId, bikeName, purchaseDate }: Membe
 
         {/* Back of Card - Minimal with Video Background */}
         <div
-          className="absolute inset-0 rounded-2xl overflow-hidden border border-border/50 shadow-2xl [backface-visibility:hidden]"
-          style={{ transform: "rotateY(180deg)" }}
+          className="absolute inset-0 rounded-2xl overflow-hidden border border-border/50 shadow-2xl"
+          style={{ 
+            transform: "rotateY(180deg)", 
+            backfaceVisibility: "hidden", 
+            WebkitBackfaceVisibility: "hidden" 
+          }}
         >
           {/* Video Background */}
           <video
