@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { QrCode, Crown, Shield, Sparkles, Star, Calendar, Bike } from "lucide-react";
+import { QrCode, Crown, Sparkles, Star, Calendar, Bike } from "lucide-react";
 import { useAuth, MemberTier } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
@@ -10,23 +10,20 @@ interface MemberPassCardProps {
   purchaseDate?: string;
 }
 
-const tierConfig: Record<MemberTier, { label: string; icon: typeof Crown; gradient: string; badge: string }> = {
+const tierConfig: Record<MemberTier, { label: string; icon: typeof Crown; badge: string }> = {
   light: {
     label: "Light Member",
     icon: Star,
-    gradient: "from-zinc-400 via-zinc-300 to-zinc-500",
     badge: "bg-zinc-400/20 text-zinc-300 border-zinc-400/30",
   },
   plus: {
     label: "Plus Member",
     icon: Sparkles,
-    gradient: "from-amber-400 via-yellow-300 to-amber-500",
     badge: "bg-amber-400/20 text-amber-300 border-amber-400/30",
   },
   black: {
     label: "Black Member",
     icon: Crown,
-    gradient: "from-neutral-900 via-neutral-800 to-neutral-700",
     badge: "bg-white/10 text-white border-white/20",
   },
 };
@@ -35,6 +32,7 @@ export default function MemberPassCard({ bikeId, bikeName, purchaseDate }: Membe
   const { user } = useAuth();
   const [isFlipped, setIsFlipped] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const backVideoRef = useRef<HTMLVideoElement>(null);
 
   const tier = user?.tier || "light";
   const config = tierConfig[tier];
@@ -46,18 +44,28 @@ export default function MemberPassCard({ bikeId, bikeName, purchaseDate }: Membe
 
   // Video loop logic
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
+    const videos = [videoRef.current, backVideoRef.current].filter(Boolean);
+    
+    videos.forEach(video => {
+      if (!video) return;
+      
+      const handleTimeUpdate = () => {
+        if (video.duration - video.currentTime < 0.5) {
+          video.currentTime = 0;
+          video.play();
+        }
+      };
 
-    const handleTimeUpdate = () => {
-      if (video.duration - video.currentTime < 0.5) {
-        video.currentTime = 0;
-        video.play();
-      }
+      video.addEventListener("timeupdate", handleTimeUpdate);
+    });
+
+    return () => {
+      videos.forEach(video => {
+        if (video) {
+          video.removeEventListener("timeupdate", () => {});
+        }
+      });
     };
-
-    video.addEventListener("timeupdate", handleTimeUpdate);
-    return () => video.removeEventListener("timeupdate", handleTimeUpdate);
   }, []);
 
   return (
@@ -65,166 +73,156 @@ export default function MemberPassCard({ bikeId, bikeName, purchaseDate }: Membe
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.1 }}
-      className="relative rounded-2xl border border-border/50 overflow-hidden h-full w-full min-h-[400px]"
+      className="relative h-full w-full min-h-[450px] perspective-1000 cursor-pointer"
+      onClick={() => setIsFlipped(!isFlipped)}
     >
-      {/* Video Background */}
-      <div className="absolute inset-0">
-        <video
-          ref={videoRef}
-          autoPlay
-          muted
-          playsInline
-          loop
-          className="absolute inset-0 w-full h-full object-cover"
+      <motion.div
+        className="relative w-full h-full"
+        animate={{ rotateY: isFlipped ? 180 : 0 }}
+        transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
+        style={{ transformStyle: "preserve-3d" }}
+      >
+        {/* Front of Card */}
+        <div
+          className="absolute inset-0 rounded-2xl overflow-hidden border border-border/50 shadow-2xl"
+          style={{ backfaceVisibility: "hidden" }}
         >
-          <source src="/videos/member-pass-bg.mp4" type="video/mp4" />
-        </video>
-        <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" />
-      </div>
-
-      {/* Content - Vertical layout */}
-      <div className="relative z-10 h-full w-full flex flex-col p-4 sm:p-6">
-        {/* Header */}
-        <div className="pb-4 border-b border-border/30">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-wj-green/10 flex items-center justify-center">
-              <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-wj-green" />
-            </div>
-            <div>
-              <h3 className="text-base sm:text-lg font-medium text-foreground">Member Pass</h3>
-              <p className="text-xs sm:text-sm text-muted-foreground">Tap card to reveal QR</p>
-            </div>
-          </div>
-        </div>
-
-        {/* 3D Flip Card - Takes remaining space */}
-        <div className="flex-1 py-4 sm:py-6 flex items-center justify-center">
-          <div
-            className="relative w-full max-w-[280px] aspect-[3/4] perspective-1000 cursor-pointer"
-            onClick={() => setIsFlipped(!isFlipped)}
+          {/* Video Background */}
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            playsInline
+            loop
+            className="absolute inset-0 w-full h-full object-cover"
           >
-            <motion.div
-              className="relative w-full h-full"
-              animate={{ rotateY: isFlipped ? 180 : 0 }}
-              transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
-              style={{ transformStyle: "preserve-3d" }}
-            >
-              {/* Front of Card */}
-              <div
-                className="absolute inset-0 rounded-xl overflow-hidden shadow-xl"
-                style={{ backfaceVisibility: "hidden" }}
-              >
-                <div className={cn("absolute inset-0 bg-gradient-to-br", config.gradient)} />
-                
-                {/* Decorative pattern */}
-                <div className="absolute inset-0 opacity-10">
-                  <div className="absolute top-4 right-4 w-24 h-24 rounded-full border border-white/50" />
-                  <div className="absolute bottom-4 left-4 w-20 h-20 rounded-full border border-white/50" />
+            <source src="/videos/member-pass-bg.mp4" type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/50 to-black/70" />
+
+          {/* Card Content */}
+          <div className="relative z-10 h-full w-full flex flex-col p-5 sm:p-6">
+            {/* Header Row */}
+            <div className="flex items-start justify-between">
+              <div className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] sm:text-xs font-medium", config.badge)}>
+                <TierIcon className="h-3 w-3" />
+                {config.label}
+              </div>
+              <p className="text-[10px] sm:text-xs font-medium text-white/40 uppercase tracking-widest">WJ VISION</p>
+            </div>
+
+            {/* Center Content - Takes remaining space */}
+            <div className="flex-1 flex flex-col justify-center items-center text-center gap-3">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-wj-green/20 border border-wj-green/30 flex items-center justify-center">
+                <Bike className="h-8 w-8 sm:h-10 sm:w-10 text-wj-green" />
+              </div>
+              <div>
+                <p className="text-white font-medium text-lg sm:text-xl">{displayBikeName}</p>
+                <p className="text-sm sm:text-base font-mono text-white/60 mt-1">{displayBikeId}</p>
+              </div>
+            </div>
+
+            {/* Bottom Row */}
+            <div className="flex items-end justify-between pt-4 border-t border-white/10">
+              <div>
+                <p className="text-[9px] sm:text-[10px] font-medium text-white/40 uppercase tracking-wider mb-1">Owner</p>
+                <p className="text-sm sm:text-base text-white font-medium">{user?.name || "Member"}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[9px] sm:text-[10px] font-medium text-white/40 uppercase tracking-wider mb-1">Since</p>
+                <div className="flex items-center gap-1.5 justify-end">
+                  <Calendar className="h-3.5 w-3.5 text-white/60" />
+                  <p className="text-sm sm:text-base text-white">{displayPurchaseDate}</p>
                 </div>
+              </div>
+            </div>
 
-                <div className="relative p-4 sm:p-5 h-full flex flex-col justify-between">
-                  {/* Top Row */}
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className={cn("inline-flex items-center gap-1.5 px-2 py-1 rounded-full border text-[10px] sm:text-xs font-medium", config.badge)}>
-                        <TierIcon className="h-3 w-3" />
-                        {config.label}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[9px] sm:text-[10px] font-medium text-white/50 uppercase tracking-wider">WJ VISION</p>
-                    </div>
+            {/* Stats Row */}
+            <div className="flex gap-3 mt-4">
+              <div className="flex-1 text-center py-3 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10">
+                <p className="text-base sm:text-lg font-light text-white">
+                  {(user?.totalKm || 0).toLocaleString()}km
+                </p>
+                <p className="text-[9px] sm:text-[10px] text-white/50">Total Distance</p>
+              </div>
+              <div className="flex-1 text-center py-3 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10">
+                <p className="text-base sm:text-lg font-light text-white">
+                  {user?.estimatedDailyKm || 0}km
+                </p>
+                <p className="text-[9px] sm:text-[10px] text-white/50">Daily Average</p>
+              </div>
+            </div>
+
+            {/* Tap hint */}
+            <p className="text-center text-[9px] sm:text-[10px] text-white/30 mt-4">Tap to reveal QR</p>
+          </div>
+        </div>
+
+        {/* Back of Card - QR Code */}
+        <div
+          className="absolute inset-0 rounded-2xl overflow-hidden border border-border/50 shadow-2xl"
+          style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+        >
+          {/* Video Background */}
+          <video
+            ref={backVideoRef}
+            autoPlay
+            muted
+            playsInline
+            loop
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source src="/videos/member-pass-bg.mp4" type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/70 to-black/80" />
+
+          {/* QR Content */}
+          <div className="relative z-10 h-full w-full flex flex-col items-center justify-center p-5 sm:p-6 gap-4 sm:gap-6">
+            {/* QR Code */}
+            <div className="relative">
+              <div className="w-36 h-36 sm:w-44 sm:h-44 bg-white rounded-2xl p-3 sm:p-4 shadow-2xl">
+                <div className="w-full h-full bg-foreground/5 rounded-xl flex items-center justify-center relative overflow-hidden">
+                  <div className="grid grid-cols-9 gap-0.5">
+                    {Array.from({ length: 81 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className={cn(
+                          "w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-sm",
+                          Math.random() > 0.4 ? "bg-foreground" : "bg-transparent"
+                        )}
+                      />
+                    ))}
                   </div>
-
-                  {/* Middle - Bike Info */}
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <Bike className="h-4 w-4 text-white/70" />
-                      <p className="text-white font-medium text-sm sm:text-base">{displayBikeName}</p>
-                    </div>
-                    <p className="text-xs sm:text-sm font-mono text-white/80">{displayBikeId}</p>
-                  </div>
-
-                  {/* Bottom Row */}
-                  <div className="flex items-end justify-between">
-                    <div>
-                      <p className="text-[9px] sm:text-[10px] font-medium text-white/50 uppercase tracking-wider">Owner</p>
-                      <p className="text-xs sm:text-sm text-white">{user?.name || "Member"}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[9px] sm:text-[10px] font-medium text-white/50 uppercase tracking-wider">Since</p>
-                      <div className="flex items-center gap-1 justify-end">
-                        <Calendar className="h-3 w-3 text-white/70" />
-                        <p className="text-xs sm:text-sm text-white">{displayPurchaseDate}</p>
-                      </div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-wj-green rounded-lg flex items-center justify-center shadow-lg">
+                      <span className="text-sm sm:text-base font-bold text-white">WJ</span>
                     </div>
                   </div>
                 </div>
               </div>
-
-              {/* Back of Card - QR Code */}
-              <div
-                className="absolute inset-0 rounded-xl overflow-hidden shadow-xl"
-                style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-background via-card to-muted" />
-                
-                <div className="relative p-4 sm:p-5 h-full flex flex-col items-center justify-center gap-3 sm:gap-4">
-                  {/* QR Code Placeholder */}
-                  <div className="relative">
-                    <div className="w-28 h-28 sm:w-32 sm:h-32 bg-white rounded-xl p-2 sm:p-3 shadow-lg">
-                      <div className="w-full h-full bg-foreground/5 rounded-lg flex items-center justify-center relative overflow-hidden">
-                        <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
-                          {Array.from({ length: 49 }).map((_, i) => (
-                            <div
-                              key={i}
-                              className={cn(
-                                "w-2 h-2 sm:w-3 sm:h-3 rounded-sm",
-                                Math.random() > 0.4 ? "bg-foreground" : "bg-transparent"
-                              )}
-                            />
-                          ))}
-                        </div>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="w-6 h-6 sm:w-8 sm:h-8 bg-wj-green rounded-md flex items-center justify-center">
-                            <span className="text-[8px] sm:text-[10px] font-bold text-white">WJ</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <QrCode className="absolute -bottom-1 -right-1 h-5 w-5 sm:h-6 sm:w-6 text-wj-green" />
-                  </div>
-
-                  <div className="text-center">
-                    <p className="text-xs sm:text-sm font-medium text-foreground">Scan to verify</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
-                      Contains all bike & owner data
-                    </p>
-                  </div>
-
-                  <p className="text-[9px] sm:text-[10px] text-muted-foreground/50">Tap to flip back</p>
-                </div>
+              <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-wj-green rounded-full flex items-center justify-center shadow-lg">
+                <QrCode className="h-5 w-5 text-white" />
               </div>
-            </motion.div>
-          </div>
-        </div>
+            </div>
 
-        {/* Stats at bottom - Horizontal layout */}
-        <div className="flex gap-2 sm:gap-3 pt-4 border-t border-border/30">
-          <div className="flex-1 text-center p-2 sm:p-3 rounded-lg bg-muted/30 backdrop-blur-sm">
-            <p className="text-sm sm:text-lg font-light text-foreground">
-              {(user?.totalKm || 0).toLocaleString()}km
-            </p>
-            <p className="text-[9px] sm:text-[10px] text-muted-foreground">Total Distance</p>
-          </div>
-          <div className="flex-1 text-center p-2 sm:p-3 rounded-lg bg-muted/30 backdrop-blur-sm">
-            <p className="text-sm sm:text-lg font-light text-foreground">
-              {user?.estimatedDailyKm || 0}km
-            </p>
-            <p className="text-[9px] sm:text-[10px] text-muted-foreground">Daily Average</p>
+            {/* Info */}
+            <div className="text-center">
+              <p className="text-base sm:text-lg font-medium text-white">Scan to Verify</p>
+              <p className="text-xs sm:text-sm text-white/50 mt-1">
+                Contains complete bike & ownership data
+              </p>
+            </div>
+
+            {/* Bike ID badge */}
+            <div className="px-4 py-2 rounded-full bg-white/10 border border-white/20">
+              <p className="text-xs sm:text-sm font-mono text-white/80">{displayBikeId}</p>
+            </div>
+
+            {/* Tap hint */}
+            <p className="text-[9px] sm:text-[10px] text-white/30">Tap to flip back</p>
           </div>
         </div>
-      </div>
+      </motion.div>
     </motion.div>
   );
 }
