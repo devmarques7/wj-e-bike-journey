@@ -32,13 +32,6 @@ export default function ServiceDashboard() {
           <ServiceAIAssistant />
         </motion.div>
 
-        {/* Urgent Service - Above the main grid */}
-        <div className="grid grid-cols-12 gap-4 lg:gap-6">
-          <div className="col-span-12 lg:col-span-5">
-            <ServiceRequestCard />
-          </div>
-        </div>
-
         {/* 12 Column Grid Layout */}
         <div className="grid grid-cols-12 gap-4 lg:gap-6">
           {/* Appointments List - Columns 1-5 */}
@@ -46,8 +39,9 @@ export default function ServiceDashboard() {
             <ServiceAppointmentsList />
           </div>
 
-          {/* Calendar - Columns 6-8 (3 cols) */}
-          <div className="col-span-12 lg:col-span-3">
+          {/* Urgent Service + Calendar Stacked - Columns 6-8 (3 cols) */}
+          <div className="col-span-12 lg:col-span-3 flex flex-col gap-4 lg:gap-6">
+            <ServiceRequestCard />
             <ServiceCalendarCompact />
           </div>
 
