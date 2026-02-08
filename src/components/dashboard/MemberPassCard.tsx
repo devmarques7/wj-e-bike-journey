@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { QrCode, Crown, Sparkles, Star, Bike } from "lucide-react";
+import { QrCode, Crown, Sparkles, Star, Wifi } from "lucide-react";
 import { useAuth, MemberTier } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +28,14 @@ const tierConfig: Record<MemberTier, { label: string; icon: typeof Crown; badge:
   },
 };
 
-export default function MemberPassCard({ bikeId, bikeName }: MemberPassCardProps) {
+// Format bike ID as credit card number (groups of 4)
+function formatAsCardNumber(id: string): string {
+  const cleaned = id.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+  const padded = cleaned.padEnd(16, '0').slice(0, 16);
+  return padded.match(/.{1,4}/g)?.join('  ') || padded;
+}
+
+export default function MemberPassCard({ bikeId, bikeName, purchaseDate }: MemberPassCardProps) {
   const { user } = useAuth();
   const [isFlipped, setIsFlipped] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -39,6 +46,12 @@ export default function MemberPassCard({ bikeId, bikeName }: MemberPassCardProps
 
   const displayBikeId = bikeId || user?.bikeId || "V8-2024-XX-00000";
   const displayBikeName = bikeName || user?.bikeName || "WJ V8";
+  const displayPurchaseDate = purchaseDate || user?.purchaseDate || "2024-01";
+  
+  // Format date as MM/YY for credit card style
+  const formattedDate = displayPurchaseDate ? 
+    new Date(displayPurchaseDate).toLocaleDateString('en-US', { month: '2-digit', year: '2-digit' }).replace('/', '/') 
+    : '01/24';
 
   // Video loop logic
   useEffect(() => {
@@ -70,7 +83,7 @@ export default function MemberPassCard({ bikeId, bikeName }: MemberPassCardProps
         transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
         style={{ transformStyle: "preserve-3d" }}
       >
-        {/* Front of Card */}
+        {/* Front of Card - Credit Card Style */}
         <div
           className="absolute inset-0 rounded-2xl overflow-hidden border border-border/50 shadow-2xl"
           style={{ backfaceVisibility: "hidden" }}
@@ -86,31 +99,60 @@ export default function MemberPassCard({ bikeId, bikeName }: MemberPassCardProps
           >
             <source src="/videos/member-pass-bg.mp4" type="video/mp4" />
           </video>
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
+          <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/50 to-black/70" />
 
-          {/* Card Content - Minimalist */}
+          {/* Credit Card Layout */}
           <div className="relative z-10 h-full w-full flex flex-col justify-between p-6 sm:p-8">
-            {/* Top - Brand */}
+            {/* Top Row - Brand & Contactless */}
             <div className="flex items-start justify-between">
-              <p className="text-xs sm:text-sm font-light text-white/40 tracking-[0.3em] uppercase">WJ Vision</p>
-              <div className={cn("inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] sm:text-xs font-medium", config.badge)}>
-                <TierIcon className="h-3 w-3" />
-                {config.label}
+              <div>
+                <p className="text-lg sm:text-xl font-bold text-white tracking-wider">WJ VISION</p>
+                <p className="text-[10px] sm:text-xs text-white/40 tracking-widest uppercase mt-0.5">{displayBikeName}</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Wifi className="h-6 w-6 sm:h-7 sm:w-7 text-white/60 rotate-90" />
               </div>
             </div>
 
-            {/* Center - Bike Icon */}
-            <div className="flex-1 flex items-center justify-center">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-wj-green/10 border border-wj-green/20 flex items-center justify-center">
-                <Bike className="h-10 w-10 sm:h-12 sm:w-12 text-wj-green" />
+            {/* Chip */}
+            <div className="flex items-center gap-4 my-4">
+              <div className="w-12 h-9 sm:w-14 sm:h-10 rounded-md bg-gradient-to-br from-amber-300 via-amber-400 to-amber-500 shadow-lg">
+                <div className="w-full h-full grid grid-cols-3 gap-0.5 p-1">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="bg-amber-600/30 rounded-sm" />
+                  ))}
+                </div>
               </div>
             </div>
 
-            {/* Bottom - Essential Info */}
-            <div className="text-center space-y-2">
-              <p className="text-xl sm:text-2xl font-light text-white tracking-wide">{displayBikeName}</p>
-              <p className="text-xs sm:text-sm font-mono text-white/50">{displayBikeId}</p>
-              <p className="text-sm sm:text-base text-white/70 mt-4">{user?.name || "Member"}</p>
+            {/* Card Number */}
+            <div className="space-y-2">
+              <p className="text-xl sm:text-2xl md:text-3xl font-mono text-white tracking-[0.15em] font-light">
+                {formatAsCardNumber(displayBikeId)}
+              </p>
+            </div>
+
+            {/* Bottom Row - Name, Valid, Tier */}
+            <div className="flex items-end justify-between pt-4">
+              <div className="space-y-3">
+                <div>
+                  <p className="text-[8px] sm:text-[9px] text-white/40 uppercase tracking-widest">Card Holder</p>
+                  <p className="text-sm sm:text-base text-white font-medium uppercase tracking-wide">
+                    {user?.name || "MEMBER NAME"}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-end gap-4 sm:gap-6">
+                <div className="text-right">
+                  <p className="text-[8px] sm:text-[9px] text-white/40 uppercase tracking-widest">Valid</p>
+                  <p className="text-sm sm:text-base text-white font-mono">{formattedDate}</p>
+                </div>
+                <div className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[10px] sm:text-xs font-semibold uppercase tracking-wider", config.badge)}>
+                  <TierIcon className="h-3 w-3" />
+                  {config.label}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -156,7 +198,7 @@ export default function MemberPassCard({ bikeId, bikeName }: MemberPassCardProps
             {/* Scan Text */}
             <div className="text-center">
               <p className="text-lg sm:text-xl font-light text-white">Scan to Verify</p>
-              <p className="text-xs sm:text-sm text-white/60 mt-1 font-mono">{displayBikeId}</p>
+              <p className="text-xs sm:text-sm text-white/60 mt-1 font-mono">{formatAsCardNumber(displayBikeId)}</p>
             </div>
           </div>
         </div>
