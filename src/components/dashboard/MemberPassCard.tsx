@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { QrCode, Crown, Sparkles, Star, Wifi } from "lucide-react";
+import { Crown, Sparkles, Star, Wifi } from "lucide-react";
 import { useAuth, MemberTier } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
@@ -84,10 +84,7 @@ export default function MemberPassCard({ bikeId, bikeName, purchaseDate }: Membe
         style={{ transformStyle: "preserve-3d" }}
       >
         {/* Front of Card - Credit Card Style */}
-        <div
-          className="absolute inset-0 rounded-2xl overflow-hidden border border-border/50 shadow-2xl"
-          style={{ backfaceVisibility: "hidden" }}
-        >
+        <div className="absolute inset-0 rounded-2xl overflow-hidden border border-border/50 shadow-2xl [backface-visibility:hidden]">
           {/* Video Background */}
           <video
             ref={videoRef}
@@ -157,10 +154,10 @@ export default function MemberPassCard({ bikeId, bikeName, purchaseDate }: Membe
           </div>
         </div>
 
-        {/* Back of Card - QR Code with Video Background */}
+        {/* Back of Card - Minimal with Video Background */}
         <div
-          className="absolute inset-0 rounded-2xl overflow-hidden border border-border/50 shadow-2xl"
-          style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+          className="absolute inset-0 rounded-2xl overflow-hidden border border-border/50 shadow-2xl [backface-visibility:hidden]"
+          style={{ transform: "rotateY(180deg)" }}
         >
           {/* Video Background */}
           <video
@@ -172,37 +169,11 @@ export default function MemberPassCard({ bikeId, bikeName, purchaseDate }: Membe
           >
             <source src="/videos/member-pass-back-bg.mp4" type="video/mp4" />
           </video>
-          <div className="absolute inset-0 bg-black/40" />
+          <div className="absolute inset-0 bg-black/50" />
 
-          {/* Minimal QR Content */}
-          <div className="relative z-10 h-full w-full flex flex-col items-center justify-between p-8">
-            {/* Spacer */}
-            <div />
-            
-            {/* QR Code - Centered */}
-            <div className="w-32 h-32 sm:w-40 sm:h-40 bg-white rounded-xl p-3 shadow-2xl">
-              <div className="w-full h-full rounded-lg flex items-center justify-center relative overflow-hidden">
-                <div className="grid grid-cols-9 gap-0.5">
-                  {Array.from({ length: 81 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className={cn(
-                        "w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 rounded-sm",
-                        Math.random() > 0.4 ? "bg-zinc-900" : "bg-transparent"
-                      )}
-                    />
-                  ))}
-                </div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-wj-green rounded-lg flex items-center justify-center shadow-lg">
-                    <span className="text-sm sm:text-base font-bold text-white">WJ</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Minimal Footer */}
-            <p className="text-xs text-white/50 tracking-widest uppercase">Scan QR Code</p>
+          {/* Only Footer Text */}
+          <div className="relative z-10 h-full w-full flex items-end justify-center pb-8">
+            <p className="text-xs text-white/60 tracking-widest uppercase">Scan QR Code</p>
           </div>
         </div>
       </motion.div>
