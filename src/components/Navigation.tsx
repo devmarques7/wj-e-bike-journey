@@ -38,15 +38,7 @@ const Navigation = ({
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <span className="text-xl md:text-2xl font-bold tracking-wider">
-              <span className="text-foreground">e-Bike
-E-Bikes
-E-Pass
-E-ID
-About
-
-
-Configure Yours
-            </span>
+              <span className="text-foreground">WJ</span>
               <span className="text-wj-green"> VISION</span>
             </span>
           </Link>
