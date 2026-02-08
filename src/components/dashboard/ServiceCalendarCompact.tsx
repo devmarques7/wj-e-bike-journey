@@ -369,39 +369,37 @@ export default function ServiceCalendarCompact() {
         <DialogContent className="sm:max-w-2xl max-h-[90vh] bg-background/95 backdrop-blur-xl border-border/50 overflow-hidden p-0">
           {/* Scrollable Container with Hidden Scrollbar */}
           <div className="overflow-y-auto max-h-[90vh] scrollbar-hide">
-            <div className="p-6 pb-0">
+            <div className="p-6 pb-4">
               <DialogHeader>
-                <div className="flex items-center justify-between">
-                  <DialogTitle className="flex items-center gap-2 text-xl">
-                    <Crown className="h-5 w-5 text-wj-green" />
-                    E-Pass
-                  </DialogTitle>
-                  
-                  {/* Billing Toggle - Extreme Right */}
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className={cn(
-                      "transition-colors",
-                      !isAnnualBilling ? "text-foreground font-medium" : "text-muted-foreground"
-                    )}>
-                      Monthly
-                    </span>
-                    <Switch
-                      checked={isAnnualBilling}
-                      onCheckedChange={setIsAnnualBilling}
-                      className="data-[state=checked]:bg-wj-green h-5 w-9"
-                    />
-                    <span className={cn(
-                      "transition-colors",
-                      isAnnualBilling ? "text-foreground font-medium" : "text-muted-foreground"
-                    )}>
-                      Yearly
-                    </span>
-                  </div>
-                </div>
+                <DialogTitle className="flex items-center gap-2 text-xl">
+                  <Crown className="h-5 w-5 text-wj-green" />
+                  E-Pass
+                </DialogTitle>
                 <DialogDescription className="text-sm mt-1">
                   Upgrade to unlock calendar booking and premium benefits.
                 </DialogDescription>
               </DialogHeader>
+              
+              {/* Billing Toggle - Below Description */}
+              <div className="flex items-center justify-center gap-3 mt-4 py-2 px-4 rounded-full bg-muted/30 border border-border/20 w-fit mx-auto">
+                <span className={cn(
+                  "text-xs transition-colors",
+                  !isAnnualBilling ? "text-foreground font-medium" : "text-muted-foreground"
+                )}>
+                  Monthly
+                </span>
+                <Switch
+                  checked={isAnnualBilling}
+                  onCheckedChange={setIsAnnualBilling}
+                  className="data-[state=checked]:bg-wj-green h-5 w-9"
+                />
+                <span className={cn(
+                  "text-xs transition-colors",
+                  isAnnualBilling ? "text-foreground font-medium" : "text-muted-foreground"
+                )}>
+                  Yearly
+                </span>
+              </div>
             </div>
 
             {/* 3D Carousel Container */}
@@ -494,15 +492,10 @@ export default function ServiceCalendarCompact() {
                           <source src={plan.videoSrc} type="video/mp4" />
                         </video>
                         
-                        {/* Gradient Overlay - middle layer */}
+                        {/* Dark Overlay Layer - above video, below content */}
                         <div 
-                          className={cn(
-                            "absolute inset-0 pointer-events-none",
-                            tier === "light" 
-                              ? "bg-gradient-to-t from-black/60 via-black/20 to-transparent" 
-                              : "bg-gradient-to-t from-black/70 via-black/30 to-black/10"
-                          )} 
-                          style={{ zIndex: 2, transform: "translate3d(0,0,0)" }}
+                          className="absolute inset-0 bg-black/70 pointer-events-none"
+                          style={{ zIndex: 3, transform: "translate3d(0,0,0)" }}
                         />
                         
                         {/* Selected Indicator */}
@@ -529,19 +522,16 @@ export default function ServiceCalendarCompact() {
                           {/* Header */}
                           <div className="flex items-start justify-between">
                             <div className="flex flex-col gap-1">
-                              <span className={cn(
-                                "text-[10px] sm:text-xs font-bold tracking-wide",
-                                tier === "light" ? "text-zinc-800" : "text-white"
-                              )}>
+                              <span className="text-xs sm:text-sm font-bold tracking-wide text-white">
                                 WJ VISION
                               </span>
                               <span className={cn(
-                                "text-[8px] sm:text-[9px] font-semibold px-1.5 py-0.5 rounded-full w-fit",
+                                "text-[8px] sm:text-[9px] font-semibold px-1.5 py-0.5 rounded-full w-fit border",
                                 tier === "light" 
-                                  ? "bg-zinc-800/20 text-zinc-800" 
+                                  ? "bg-white/10 text-white/90 border-white/20" 
                                   : tier === "black"
-                                    ? "bg-white/10 text-white/90"
-                                    : "bg-white/20 text-white"
+                                    ? "bg-white/10 text-white/90 border-white/20"
+                                    : "bg-wj-green/20 text-wj-green border-wj-green/30"
                               )}>
                                 {tier.toUpperCase()}
                               </span>
@@ -549,12 +539,7 @@ export default function ServiceCalendarCompact() {
                             
                             {/* Current Badge */}
                             {userTier === tier && (
-                              <span className={cn(
-                                "text-[7px] sm:text-[8px] font-medium px-1.5 py-0.5 rounded-full",
-                                tier === "light" 
-                                  ? "bg-wj-green/30 text-zinc-800" 
-                                  : "bg-wj-green/40 text-white"
-                              )}>
+                              <span className="text-[7px] sm:text-[8px] font-medium px-1.5 py-0.5 rounded-full bg-wj-green/40 text-white">
                                 CURRENT
                               </span>
                             )}
@@ -563,21 +548,15 @@ export default function ServiceCalendarCompact() {
                           {/* Features - Only show on center card */}
                           {isCenter && (
                             <div className="flex-1 flex flex-col justify-center py-2 overflow-hidden">
-                              <div className="space-y-0.5">
+                              <div className="space-y-1">
                                 {plan.features.slice(0, 3).map((feature, i) => (
-                                  <div key={i} className={cn(
-                                    "flex items-center gap-1 text-[8px] sm:text-[9px]",
-                                    tier === "light" ? "text-zinc-700" : "text-white/80"
-                                  )}>
-                                    <Check className="h-2.5 w-2.5 text-wj-green flex-shrink-0" />
-                                    <span className="truncate">{feature}</span>
+                                  <div key={i} className="flex items-center gap-1.5 text-[9px] sm:text-[10px] text-white/90">
+                                    <Check className="h-3 w-3 text-wj-green flex-shrink-0" />
+                                    <span className="truncate font-medium">{feature}</span>
                                   </div>
                                 ))}
                                 {plan.features.length > 3 && (
-                                  <p className={cn(
-                                    "text-[7px] sm:text-[8px] pl-3.5",
-                                    tier === "light" ? "text-zinc-500" : "text-white/50"
-                                  )}>
+                                  <p className="text-[8px] sm:text-[9px] pl-4 text-white/50">
                                     +{plan.features.length - 3} more
                                   </p>
                                 )}
@@ -585,25 +564,19 @@ export default function ServiceCalendarCompact() {
                             </div>
                           )}
                           
-                          {/* Price Footer */}
+                          {/* Price Footer - More Prominent */}
                           <div className="flex items-end justify-between">
                             <div>
-                              <p className={cn(
-                                "text-[8px] sm:text-[9px]",
-                                tier === "light" ? "text-zinc-600" : "text-white/60"
-                              )}>
+                              <p className="text-[9px] sm:text-[10px] text-white/60 font-medium uppercase tracking-wide">
                                 {plan.label}
                               </p>
-                              <p className={cn(
-                                "text-base sm:text-lg font-bold",
-                                tier === "light" ? "text-zinc-900" : "text-white"
-                              )}>
+                              <p className="text-xl sm:text-2xl font-bold text-white">
                                 {plan.monthlyPrice === 0 ? (
                                   "Free"
                                 ) : (
                                   <>
                                     €{isAnnualBilling ? (plan.annualPrice / 12).toFixed(0) : plan.monthlyPrice.toFixed(0)}
-                                    <span className="text-[8px] sm:text-[9px] font-normal opacity-70">/mo</span>
+                                    <span className="text-[10px] sm:text-xs font-normal text-white/60">/mo</span>
                                   </>
                                 )}
                               </p>
@@ -611,12 +584,7 @@ export default function ServiceCalendarCompact() {
                             
                             {/* Savings badge */}
                             {isAnnualBilling && plan.monthlyPrice > 0 && (
-                              <span className={cn(
-                                "text-[7px] sm:text-[8px] font-medium px-1.5 py-0.5 rounded-full",
-                                tier === "light" 
-                                  ? "bg-wj-green/30 text-zinc-800" 
-                                  : "bg-wj-green/40 text-white"
-                              )}>
+                              <span className="text-[8px] sm:text-[9px] font-semibold px-2 py-1 rounded-full bg-wj-green/30 text-wj-green border border-wj-green/40">
                                 Save {Math.round(((plan.monthlyPrice * 12 - plan.annualPrice) / (plan.monthlyPrice * 12)) * 100)}%
                               </span>
                             )}
