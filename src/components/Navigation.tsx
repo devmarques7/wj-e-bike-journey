@@ -38,7 +38,7 @@ const Navigation = ({
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <span className="text-xl md:text-2xl font-bold tracking-wider">
-              <span className="text-foreground">E-Bike
+              <span className="text-foreground">e-Bike
 E-Bikes
 E-Pass
 E-ID
