@@ -161,32 +161,29 @@ export default function ServiceCalendarCompact() {
         x: 0,
         y: 0,
         rotateY: 0,
-        scale: 1.1,
+        scale: 1.05,
         z: 100,
         opacity: 1,
-        translateZ: 80,
       };
     } else if (normalizedDiff === -1 || (activeCardIndex === 0 && cardIndex === 2)) {
-      // Left card - pushed back
+      // Left card - visible and clickable
       return {
-        x: -100,
-        y: 20,
-        rotateY: 45,
-        scale: 0.7,
-        z: 10,
-        opacity: 0.6,
-        translateZ: -60,
+        x: -90,
+        y: 10,
+        rotateY: 30,
+        scale: 0.8,
+        z: 50,
+        opacity: 0.85,
       };
     } else {
-      // Right card - pushed back
+      // Right card - visible and clickable
       return {
-        x: 100,
-        y: 20,
-        rotateY: -45,
-        scale: 0.7,
-        z: 10,
-        opacity: 0.6,
-        translateZ: -60,
+        x: 90,
+        y: 10,
+        rotateY: -30,
+        scale: 0.8,
+        z: 50,
+        opacity: 0.85,
       };
     }
   };
@@ -386,25 +383,29 @@ export default function ServiceCalendarCompact() {
                       scale: transform.scale,
                       opacity: transform.opacity,
                       zIndex: transform.z,
-                      translateZ: transform.translateZ,
                     }}
                     transition={{ 
-                      duration: 0.7, 
+                      duration: 0.6, 
                       type: "spring", 
-                      stiffness: 60,
-                      damping: 14
+                      stiffness: 70,
+                      damping: 12
                     }}
+                    whileHover={!isCenter ? { 
+                      scale: transform.scale + 0.05,
+                      opacity: 1,
+                      transition: { duration: 0.2 }
+                    } : undefined}
                     onClick={() => handleCardClick(tier)}
                     className={cn(
                       "absolute w-32 h-52 sm:w-40 sm:h-64 md:w-44 md:h-72 rounded-2xl cursor-pointer group overflow-hidden",
-                      isCenter && "ring-2 ring-wj-green/50 ring-offset-4 ring-offset-background"
+                      isCenter && "ring-2 ring-wj-green/60 ring-offset-4 ring-offset-background"
                     )}
                     style={{ 
                       transformStyle: "preserve-3d",
                       boxShadow: isCenter 
-                        ? "0 35px 60px -20px rgba(0, 0, 0, 0.7), 0 20px 40px -15px rgba(5, 140, 66, 0.3)" 
-                        : "0 10px 25px -10px rgba(0, 0, 0, 0.4)",
-                      filter: isCenter ? "none" : "brightness(0.7)",
+                        ? "0 30px 50px -15px rgba(0, 0, 0, 0.6), 0 15px 30px -10px rgba(5, 140, 66, 0.25)" 
+                        : "0 15px 30px -10px rgba(0, 0, 0, 0.35)",
+                      filter: isCenter ? "none" : "brightness(0.85)",
                     }}
                   >
                     {/* Animated Border for Black Card */}
