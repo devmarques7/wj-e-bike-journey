@@ -46,9 +46,11 @@ export default function MemberPassCard({ bikeId, bikeName, purchaseDate }: Membe
   const TierIcon = config.icon;
   
   // Video background based on tier
-  const frontVideoSrc = tier === "plus" 
-    ? "/videos/member-pass-plus-bg.mp4" 
-    : "/videos/member-pass-bg.mp4";
+  const frontVideoSrc = tier === "light" 
+    ? "/videos/member-pass-light-bg.mp4" 
+    : tier === "plus" 
+      ? "/videos/member-pass-plus-bg.mp4" 
+      : "/videos/member-pass-bg.mp4";
 
   const displayBikeId = bikeId || user?.bikeId || "V8-2024-XX-00000";
   const displayBikeName = bikeName || user?.bikeName || "WJ V8";
