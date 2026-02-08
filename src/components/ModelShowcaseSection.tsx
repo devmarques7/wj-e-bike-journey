@@ -35,10 +35,9 @@ const ModelShowcaseSection = ({
     offset: ["start start", "end start"],
   });
   
-  // Animation: shrink on enter (0 to 0.3), stay shrunk (0.3 to 0.7), expand on exit (0.7 to 1)
+  // Animation: shrink on enter (0 to 0.15), stay shrunk (0.15 to 0.7), expand on exit (0.7 to 0.85)
   const borderRadius = useTransform(scrollYProgress, [0, 0.15, 0.7, 0.85], [0, 24, 24, 0]);
-  const marginX = useTransform(scrollYProgress, [0, 0.15, 0.7, 0.85], [0, 24, 24, 0]);
-  const scale = useTransform(scrollYProgress, [0, 0.15, 0.7, 0.85], [1, 0.96, 0.96, 1]);
+  const widthPercent = useTransform(scrollYProgress, [0, 0.15, 0.7, 0.85], ["90%", "75%", "75%", "90%"]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -49,7 +48,7 @@ const ModelShowcaseSection = ({
   }, [images.length, slideInterval]);
 
   return (
-    <section ref={sectionRef} className="relative overflow-hidden">
+    <section ref={sectionRef} className="relative overflow-hidden flex justify-center">
       {/* Video Background Layer - visible when component has border radius */}
       <div className="absolute inset-0 overflow-hidden">
         <video
@@ -73,9 +72,7 @@ const ModelShowcaseSection = ({
         className="relative h-[70vh] min-h-[500px] max-h-[700px] overflow-hidden bg-background"
         style={{
           borderRadius,
-          marginLeft: marginX,
-          marginRight: marginX,
-          scale,
+          width: widthPercent,
         }}
       >
         {/* Background Slideshow */}
