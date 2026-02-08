@@ -3,6 +3,7 @@ import { AnimatePresence } from "framer-motion";
 import Loader from "@/components/Loader";
 import Navigation from "@/components/Navigation";
 import HeroSection from "@/components/HeroSection";
+import ModelShowcaseSection from "@/components/ModelShowcaseSection";
 import FeaturesSection from "@/components/FeaturesSection";
 import EPassSection from "@/components/EPassSection";
 import QuickActionsSection from "@/components/QuickActionsSection";
@@ -41,6 +42,7 @@ const Index = () => {
           <Navigation isScrolled={isScrolled} />
           <main>
             <HeroSection />
+            <ModelShowcaseSection />
             <FeaturesSection />
             <EPassSection />
             <QuickActionsSection />
