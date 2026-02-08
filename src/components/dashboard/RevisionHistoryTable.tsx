@@ -349,15 +349,15 @@ export default function RevisionHistoryTable() {
             {/* Main Content */}
             <div className="flex-1 overflow-hidden relative p-4">
               <div className="flex gap-4 h-full">
-                {/* Chat Sidebar - Absolute Overlay */}
+                {/* Chat Sidebar */}
                 <AnimatePresence mode="wait">
                   {chatOpen && (
                     <motion.div
-                      initial={{ x: -20, opacity: 0 }}
-                      animate={{ x: 0, opacity: 1 }}
-                      exit={{ x: -20, opacity: 0 }}
+                      initial={{ width: 0, opacity: 0 }}
+                      animate={{ width: 280, opacity: 1 }}
+                      exit={{ width: 0, opacity: 0 }}
                       transition={{ duration: 0.2 }}
-                      className="absolute left-4 top-4 bottom-4 z-20 w-[280px] bg-background border border-border/50 rounded-2xl flex flex-col shadow-xl"
+                      className="bg-background border border-border/50 rounded-2xl flex flex-col shadow-xl shrink-0 overflow-hidden"
                     >
                       <div className="p-3 border-b border-border/50 flex items-center justify-between rounded-t-2xl">
                         <h4 className="text-xs font-medium text-foreground flex items-center gap-1.5">
@@ -432,22 +432,22 @@ export default function RevisionHistoryTable() {
                   )}
                 </AnimatePresence>
 
-                {/* Main Content Area */}
-                <div className={cn(
-                  "flex-1 flex flex-col h-full overflow-hidden bg-background border border-border/50 rounded-2xl transition-all duration-200",
-                  chatOpen ? "ml-[296px]" : "ml-0"
-                )}>
-                {/* Toggle Chat Button when closed */}
+                {/* Collapsed Chat Column */}
                 {!chatOpen && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    className="absolute left-2 top-4 z-10 h-8 px-2"
-                    onClick={() => setChatOpen(true)}
-                  >
-                    <PanelLeft className="h-4 w-4" />
-                  </Button>
+                  <div className="w-12 bg-background border border-border/50 rounded-2xl flex flex-col items-center py-3 shrink-0">
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="h-9 w-9 hover:bg-wj-green/10"
+                      onClick={() => setChatOpen(true)}
+                    >
+                      <MessageCircle className="h-4 w-4 text-wj-green" />
+                    </Button>
+                  </div>
                 )}
+
+                {/* Main Content Area */}
+                <div className="flex-1 flex flex-col h-full overflow-hidden bg-background border border-border/50 rounded-2xl">
 
                 <ScrollArea className="flex-1">
                   <div className="p-4 space-y-3">
