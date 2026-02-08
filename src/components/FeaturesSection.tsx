@@ -126,15 +126,16 @@ const FeaturesSection = ({
                 <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-card/95 to-transparent z-10 pointer-events-none" />
                 
                 <div className="relative py-8">
-                  {loopedFeatures.map((feature, index) => (
+                  {loopedFeatures.map((feature, loopIndex) => (
                     <FeatureTitle
-                      key={`${feature.title}-${index}`}
+                      key={`${feature.title}-${loopIndex}`}
                       title={feature.title}
                       icon={feature.icon}
-                      index={index % features.length}
+                      index={loopIndex % features.length}
+                      loopIndex={loopIndex}
                       scrollProgress={scrollYProgress}
                       totalFeatures={features.length}
-                      isLooped={index >= features.length}
+                      totalLoopedFeatures={loopedFeatures.length}
                     />
                   ))}
                 </div>
@@ -188,33 +189,45 @@ interface FeatureTitleProps {
   title: string;
   icon: LucideIcon;
   index: number;
+  loopIndex: number;
   scrollProgress: MotionValue<number>;
   totalFeatures: number;
-  isLooped?: boolean;
+  totalLoopedFeatures: number;
 }
 
-const FeatureTitle = ({ title, icon: Icon, index, scrollProgress, totalFeatures, isLooped = false }: FeatureTitleProps) => {
+const FeatureTitle = ({ title, icon: Icon, index, loopIndex, scrollProgress, totalFeatures, totalLoopedFeatures }: FeatureTitleProps) => {
+  // Calculate which physical item should be active based on scroll
+  // We use loopIndex to track absolute position in the looped array
   const segmentSize = 1 / totalFeatures;
-  const start = index * segmentSize;
-  const end = (index + 1) * segmentSize;
+  
+  // Determine the current active feature index based on scroll
+  const activeIndex = useTransform(scrollProgress, (progress) => {
+    const rawIndex = Math.floor(progress * totalFeatures);
+    return Math.min(rawIndex, totalFeatures - 1);
+  });
 
-  // For looped items, adjust the scroll position tracking
-  const adjustedStart = isLooped ? start : start;
-  const adjustedEnd = isLooped ? end : end;
+  // This item is in the "center" batch (features.length to features.length * 2 - 1)
+  const isCenterBatch = loopIndex >= totalFeatures && loopIndex < totalFeatures * 2;
+  
+  // Calculate opacity based on whether this specific looped item matches the active feature
+  const opacity = useTransform(scrollProgress, (progress) => {
+    const currentActiveIndex = Math.min(Math.floor(progress * totalFeatures), totalFeatures - 1);
+    
+    // Only the center batch items should be highlighted
+    if (isCenterBatch && index === currentActiveIndex) {
+      return 1;
+    }
+    return 0.25;
+  });
 
-  const opacity = useTransform(scrollProgress, 
-    [adjustedStart, adjustedStart + 0.01, adjustedEnd - 0.01, adjustedEnd], 
-    index === 0 && !isLooped ? [1, 1, 1, 0.3] : 
-    index === totalFeatures - 1 && !isLooped ? [0.3, 1, 1, 1] : 
-    [0.3, 1, 1, 0.3]
-  );
-
-  const scale = useTransform(scrollProgress, 
-    [adjustedStart, adjustedStart + 0.01, adjustedEnd - 0.01, adjustedEnd],
-    index === 0 && !isLooped ? [1, 1, 1, 0.95] :
-    index === totalFeatures - 1 && !isLooped ? [0.95, 1, 1, 1] :
-    [0.95, 1, 1, 0.95]
-  );
+  const scale = useTransform(scrollProgress, (progress) => {
+    const currentActiveIndex = Math.min(Math.floor(progress * totalFeatures), totalFeatures - 1);
+    
+    if (isCenterBatch && index === currentActiveIndex) {
+      return 1;
+    }
+    return 0.95;
+  });
 
   const y = useTransform(scrollProgress, 
     [0, 1],
@@ -224,7 +237,7 @@ const FeatureTitle = ({ title, icon: Icon, index, scrollProgress, totalFeatures,
   return (
     <motion.div
       style={{ opacity, scale, y }}
-      className="flex items-center gap-4 py-3 cursor-pointer"
+      className="flex items-center gap-4 py-3 cursor-pointer transition-opacity duration-200"
     >
       <div className="w-12 h-12 rounded-xl gradient-wj flex items-center justify-center flex-shrink-0 shadow-lg">
         <Icon className="h-5 w-5 text-white" />
