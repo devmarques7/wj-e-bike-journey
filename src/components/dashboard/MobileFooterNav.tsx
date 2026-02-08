@@ -51,107 +51,115 @@ export default function MobileFooterNav() {
 
   return (
     <>
-      {/* Spacer to prevent content from being hidden behind footer */}
-      <div className="lg:hidden h-28" />
+      {/* Spacer */}
+      <div className="lg:hidden h-24" />
 
-      {/* Footer Navigation - Half Moon Design */}
+      {/* Footer Navigation - Minimalist Full Width Arc */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
-        {/* Half Moon Background */}
+        {/* Full Width Half Moon */}
         <div className="relative">
-          {/* Blue Half Moon Arc */}
-          <div 
-            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[280px] h-[80px] bg-gradient-to-t from-wj-blue-dark to-wj-blue rounded-t-full shadow-lg"
-            style={{
-              clipPath: "ellipse(140px 80px at 50% 100%)",
-              boxShadow: "0 -8px 30px -5px hsl(var(--wj-blue) / 0.4)"
-            }}
-          />
+          {/* Arc Background - Using system colors */}
+          <svg
+            viewBox="0 0 100 20"
+            preserveAspectRatio="none"
+            className="absolute bottom-0 left-0 w-full h-16"
+          >
+            <path
+              d="M0,20 Q50,0 100,20 L100,20 L0,20 Z"
+              className="fill-card"
+            />
+          </svg>
           
-          {/* Navigation Icons floating above the arc */}
-          <div className="relative flex items-end justify-center gap-1 pb-3 pt-2">
+          {/* Subtle top border glow */}
+          <svg
+            viewBox="0 0 100 20"
+            preserveAspectRatio="none"
+            className="absolute bottom-0 left-0 w-full h-16"
+          >
+            <path
+              d="M0,20 Q50,0 100,20"
+              fill="none"
+              className="stroke-wj-green/30"
+              strokeWidth="0.3"
+            />
+          </svg>
+
+          {/* Navigation Icons */}
+          <div className="relative flex items-end justify-center gap-8 pb-4 pt-1">
             {/* Left Icon - V-ID */}
-            <Link
-              to="/dashboard"
-              className="relative z-10 mb-6"
-            >
+            <Link to="/dashboard" className="relative z-10 -mb-1">
               <motion.div
                 whileTap={{ scale: 0.9 }}
                 className={cn(
-                  "w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-md",
+                  "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300",
                   isActive("/dashboard") && location.pathname === "/dashboard"
-                    ? "bg-wj-neutral text-wj-blue"
-                    : "bg-wj-neutral/20 backdrop-blur-sm text-wj-neutral border border-wj-neutral/30"
+                    ? "bg-wj-green text-primary-foreground shadow-lg shadow-wj-green/30"
+                    : "bg-muted text-muted-foreground"
                 )}
               >
                 <motion.div
                   animate={isActive("/dashboard") ? { scale: [1, 1.1, 1] } : {}}
                   transition={{ duration: 0.3 }}
                 >
-                  <CreditCard className="h-5 w-5" />
+                  <CreditCard className="h-4 w-4" />
                 </motion.div>
               </motion.div>
               <span
                 className={cn(
                   "absolute -bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-medium whitespace-nowrap",
-                  isActive("/dashboard") ? "text-wj-neutral" : "text-wj-neutral/70"
+                  isActive("/dashboard") ? "text-wj-green" : "text-muted-foreground"
                 )}
               >
                 V-ID
               </span>
             </Link>
 
-            {/* Center Button - Dashboard/Menu */}
+            {/* Center Button - Menu */}
             <button
               onClick={() => setShowAllMenu(true)}
-              className="relative z-10 mb-10 mx-2"
+              className="relative z-10 -mt-8"
             >
               <motion.div
                 whileTap={{ scale: 0.95 }}
-                className="w-14 h-14 rounded-full bg-wj-neutral flex items-center justify-center shadow-xl"
-                style={{
-                  boxShadow: "0 8px 25px -5px hsl(var(--wj-blue) / 0.5)"
-                }}
+                className="w-14 h-14 rounded-full bg-wj-green flex items-center justify-center shadow-xl shadow-wj-green/40"
               >
                 <motion.div
                   animate={{ rotate: showAllMenu ? 180 : 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <Home className="h-6 w-6 text-wj-blue" />
+                  <Home className="h-6 w-6 text-primary-foreground" />
                 </motion.div>
               </motion.div>
               {/* Pulse Ring */}
               <motion.div
-                animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0, 0.4] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="absolute inset-0 rounded-full bg-wj-neutral/30"
+                animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0, 0.3] }}
+                transition={{ duration: 2.5, repeat: Infinity }}
+                className="absolute inset-0 rounded-full bg-wj-green/20"
               />
             </button>
 
             {/* Right Icon - Service */}
-            <Link
-              to="/dashboard/service"
-              className="relative z-10 mb-6"
-            >
+            <Link to="/dashboard/service" className="relative z-10 -mb-1">
               <motion.div
                 whileTap={{ scale: 0.9 }}
                 className={cn(
-                  "w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 shadow-md",
+                  "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300",
                   isActive("/dashboard/service")
-                    ? "bg-wj-neutral text-wj-blue"
-                    : "bg-wj-neutral/20 backdrop-blur-sm text-wj-neutral border border-wj-neutral/30"
+                    ? "bg-wj-green text-primary-foreground shadow-lg shadow-wj-green/30"
+                    : "bg-muted text-muted-foreground"
                 )}
               >
                 <motion.div
                   animate={isActive("/dashboard/service") ? { scale: [1, 1.1, 1] } : {}}
                   transition={{ duration: 0.3 }}
                 >
-                  <Calendar className="h-5 w-5" />
+                  <Calendar className="h-4 w-4" />
                 </motion.div>
               </motion.div>
               <span
                 className={cn(
                   "absolute -bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-medium whitespace-nowrap",
-                  isActive("/dashboard/service") ? "text-wj-neutral" : "text-wj-neutral/70"
+                  isActive("/dashboard/service") ? "text-wj-green" : "text-muted-foreground"
                 )}
               >
                 Service
@@ -159,12 +167,12 @@ export default function MobileFooterNav() {
             </Link>
           </div>
 
-          {/* Bottom Bar for safe area */}
-          <div className="h-5 bg-gradient-to-t from-wj-blue-dark to-wj-blue-dark" />
+          {/* Safe area bottom fill */}
+          <div className="h-4 bg-card" />
         </div>
       </div>
 
-      {/* Full Menu Overlay - Gear Style */}
+      {/* Expanded Menu Overlay */}
       <AnimatePresence>
         {showAllMenu && (
           <>
@@ -174,68 +182,89 @@ export default function MobileFooterNav() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowAllMenu(false)}
-              className="lg:hidden fixed inset-0 bg-background/80 backdrop-blur-sm z-50"
+              className="lg:hidden fixed inset-0 bg-background/60 backdrop-blur-md z-50"
             />
 
-            {/* Radial Menu Panel */}
+            {/* Menu Panel */}
             <motion.div
-              initial={{ y: "100%", opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: "100%", opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 300 }}
               className="lg:hidden fixed bottom-0 left-0 right-0 z-50"
             >
-              {/* Menu Container */}
               <div className="relative">
-                {/* Extended Blue Half Moon for Menu */}
-                <div 
-                  className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md h-[320px] bg-gradient-to-t from-wj-blue-dark via-wj-blue to-wj-blue rounded-t-[100%] shadow-2xl"
-                />
+                {/* Full Width Arc for Menu */}
+                <svg
+                  viewBox="0 0 100 35"
+                  preserveAspectRatio="none"
+                  className="absolute bottom-0 left-0 w-full h-[280px]"
+                >
+                  <path
+                    d="M0,35 Q50,0 100,35 L100,35 L0,35 Z"
+                    className="fill-card"
+                  />
+                </svg>
                 
+                {/* Arc border */}
+                <svg
+                  viewBox="0 0 100 35"
+                  preserveAspectRatio="none"
+                  className="absolute bottom-0 left-0 w-full h-[280px]"
+                >
+                  <path
+                    d="M0,35 Q50,0 100,35"
+                    fill="none"
+                    className="stroke-border"
+                    strokeWidth="0.2"
+                  />
+                </svg>
+
                 {/* Close Button */}
                 <motion.button
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  exit={{ scale: 0 }}
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0, opacity: 0 }}
+                  transition={{ delay: 0.1 }}
                   onClick={() => setShowAllMenu(false)}
-                  className="absolute top-4 left-1/2 -translate-x-1/2 z-20 w-10 h-10 rounded-full bg-wj-neutral/10 backdrop-blur-sm flex items-center justify-center border border-wj-neutral/20"
+                  className="absolute top-6 left-1/2 -translate-x-1/2 z-20 w-8 h-8 rounded-full bg-muted/80 flex items-center justify-center border border-border/50"
                 >
-                  <X className="h-5 w-5 text-wj-neutral" />
+                  <X className="h-4 w-4 text-muted-foreground" />
                 </motion.button>
 
-                {/* Navigation Grid - Gear Layout */}
-                <div className="relative pt-16 pb-6 px-6">
+                {/* Navigation Grid */}
+                <div className="relative pt-14 pb-4 px-8">
                   {/* Top Row */}
-                  <div className="flex justify-center gap-5 mb-4">
+                  <div className="flex justify-center gap-6 mb-3">
                     {filteredNavItems.slice(0, 3).map((item, index) => {
                       const isItemActive = location.pathname === item.href;
                       return (
                         <motion.div
                           key={item.href}
-                          initial={{ opacity: 0, y: 20 }}
+                          initial={{ opacity: 0, y: 15 }}
                           animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.05 }}
+                          transition={{ delay: index * 0.04 }}
                         >
                           <Link
                             to={item.href}
                             onClick={() => setShowAllMenu(false)}
-                            className="flex flex-col items-center gap-2"
+                            className="flex flex-col items-center gap-1.5"
                           >
                             <motion.div
                               whileTap={{ scale: 0.9 }}
                               className={cn(
-                                "w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg",
+                                "w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300",
                                 isItemActive
-                                  ? "bg-wj-neutral text-wj-blue"
-                                  : "bg-wj-neutral/15 backdrop-blur-sm text-wj-neutral border border-wj-neutral/20"
+                                  ? "bg-wj-green text-primary-foreground shadow-md shadow-wj-green/30"
+                                  : "bg-muted text-muted-foreground hover:bg-muted/80"
                               )}
                             >
                               <item.icon className="h-5 w-5" />
                             </motion.div>
                             <span
                               className={cn(
-                                "text-[10px] font-medium text-center",
-                                isItemActive ? "text-wj-neutral" : "text-wj-neutral/80"
+                                "text-[10px] font-medium",
+                                isItemActive ? "text-wj-green" : "text-muted-foreground"
                               )}
                             >
                               {item.label}
@@ -247,36 +276,36 @@ export default function MobileFooterNav() {
                   </div>
 
                   {/* Bottom Row */}
-                  <div className="flex justify-center gap-5">
+                  <div className="flex justify-center gap-6">
                     {filteredNavItems.slice(3).map((item, index) => {
                       const isItemActive = location.pathname === item.href;
                       return (
                         <motion.div
                           key={item.href}
-                          initial={{ opacity: 0, y: 20 }}
+                          initial={{ opacity: 0, y: 15 }}
                           animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: (index + 3) * 0.05 }}
+                          transition={{ delay: (index + 3) * 0.04 }}
                         >
                           <Link
                             to={item.href}
                             onClick={() => setShowAllMenu(false)}
-                            className="flex flex-col items-center gap-2"
+                            className="flex flex-col items-center gap-1.5"
                           >
                             <motion.div
                               whileTap={{ scale: 0.9 }}
                               className={cn(
-                                "w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg",
+                                "w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300",
                                 isItemActive
-                                  ? "bg-wj-neutral text-wj-blue"
-                                  : "bg-wj-neutral/15 backdrop-blur-sm text-wj-neutral border border-wj-neutral/20"
+                                  ? "bg-wj-green text-primary-foreground shadow-md shadow-wj-green/30"
+                                  : "bg-muted text-muted-foreground hover:bg-muted/80"
                               )}
                             >
                               <item.icon className="h-5 w-5" />
                             </motion.div>
                             <span
                               className={cn(
-                                "text-[10px] font-medium text-center",
-                                isItemActive ? "text-wj-neutral" : "text-wj-neutral/80"
+                                "text-[10px] font-medium",
+                                isItemActive ? "text-wj-green" : "text-muted-foreground"
                               )}
                             >
                               {item.label}
@@ -288,25 +317,30 @@ export default function MobileFooterNav() {
                   </div>
                 </div>
 
-                {/* User Info at Bottom */}
-                <div className="relative px-6 pb-6 flex items-center justify-center gap-3">
+                {/* User Info */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="relative px-6 pb-5 flex items-center justify-center gap-2"
+                >
                   <img
                     src={user?.avatar}
                     alt={user?.name}
-                    className="w-8 h-8 rounded-full bg-wj-neutral/20 border border-wj-neutral/30"
+                    className="w-7 h-7 rounded-full bg-muted border border-border/50"
                   />
                   <div className="text-center">
-                    <p className="font-medium text-wj-neutral text-sm">{user?.name}</p>
-                    <p className="text-[10px] text-wj-neutral/70 capitalize">{user?.tier} member</p>
+                    <p className="font-medium text-foreground text-xs">{user?.name}</p>
+                    <p className="text-[9px] text-muted-foreground capitalize">{user?.tier} member</p>
                   </div>
                   <Link
                     to="/"
                     onClick={() => setShowAllMenu(false)}
-                    className="ml-2 text-[10px] text-wj-neutral/60 hover:text-wj-neutral transition-colors px-2 py-1 rounded-full bg-wj-neutral/10"
+                    className="ml-1 text-[9px] text-muted-foreground hover:text-foreground transition-colors px-2 py-0.5 rounded-full bg-muted/50 border border-border/30"
                   >
                     Exit
                   </Link>
-                </div>
+                </motion.div>
               </div>
             </motion.div>
           </>
