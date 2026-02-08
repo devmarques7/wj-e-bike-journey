@@ -4,6 +4,7 @@ import BikeShowcase from "@/components/dashboard/BikeShowcase";
 import ServiceRequestCard from "@/components/dashboard/ServiceRequestCard";
 import WalletCard from "@/components/dashboard/WalletCard";
 import ServiceCountdown from "@/components/dashboard/ServiceCountdown";
+import RevisionHistoryTable from "@/components/dashboard/RevisionHistoryTable";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 
@@ -20,7 +21,7 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="p-4 lg:p-6">
+      <div className="p-4 lg:p-6 space-y-6">
         {/* 12 Column Grid Layout */}
         <div className="grid grid-cols-12 gap-4 lg:gap-6">
           {/* Bike Showcase - Columns 1-5 */}
@@ -39,6 +40,9 @@ export default function Dashboard() {
             <ServiceCountdown />
           </div>
         </div>
+
+        {/* Revision History Table - Full Width */}
+        <RevisionHistoryTable />
       </div>
     </DashboardLayout>
   );
