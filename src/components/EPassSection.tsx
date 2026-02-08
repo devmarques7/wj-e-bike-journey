@@ -181,89 +181,114 @@ const EPassSection = () => {
           transition={{ duration: 0.6, delay: 0.6 }}
           className="mt-20"
         >
-          {/* Cards Container */}
-          <div className="flex justify-center items-center mb-12">
-            <div className="relative h-72 w-full max-w-2xl flex items-center justify-center">
-              {/* E-Pass Light Card */}
-              <motion.div
-                initial={{ opacity: 0, rotate: -25, x: -100, scale: 0.9 }}
-                animate={isInView ? { opacity: 1, rotate: -15, x: -80, scale: 0.95 } : {}}
-                transition={{ duration: 0.8, delay: 0.7, type: "spring", stiffness: 100 }}
-                whileHover={{ rotate: -5, y: -20, scale: 1, zIndex: 30 }}
-                className="absolute w-64 h-40 md:w-80 md:h-48 rounded-2xl bg-gradient-to-br from-muted via-background to-muted border border-border shadow-2xl shadow-black/20 cursor-pointer z-10"
-                style={{ transformOrigin: "bottom center" }}
-              >
-                <div className="absolute inset-0 p-5 flex flex-col justify-between">
-                  <div className="flex justify-between items-start">
-                    <span className="text-base font-bold text-foreground">WJ VISION</span>
-                    <span className="text-xs text-muted-foreground font-medium">E-PASS LIGHT</span>
+          {/* Cards Container - Vertical Stack */}
+          <div className="flex flex-col items-center gap-6 mb-12" style={{ perspective: "1000px" }}>
+            {/* E-Pass Light Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 60, rotateX: -15 }}
+              animate={isInView ? { opacity: 1, y: 0, rotateX: 0 } : {}}
+              transition={{ duration: 0.7, delay: 0.7, type: "spring", stiffness: 80 }}
+              whileHover={{ 
+                scale: 1.05, 
+                rotateY: 5, 
+                rotateX: -5,
+                boxShadow: "0 25px 50px -12px rgba(62, 255, 85, 0.3)"
+              }}
+              className="w-72 h-44 md:w-96 md:h-52 rounded-2xl cursor-pointer transition-shadow duration-300"
+              style={{ 
+                transformStyle: "preserve-3d",
+                background: "linear-gradient(135deg, #3EFF55 0%, #2ed84a 50%, #25c040 100%)",
+                boxShadow: "0 20px 40px -15px rgba(62, 255, 85, 0.4)"
+              }}
+            >
+              <div className="absolute inset-0 p-6 flex flex-col justify-between">
+                <div className="flex justify-between items-start">
+                  <span className="text-lg font-bold text-[#08150D]">WJ VISION</span>
+                  <span className="text-xs font-semibold text-[#08150D]/80 bg-white/30 px-2 py-1 rounded-full">E-PASS LIGHT</span>
+                </div>
+                <div className="flex justify-between items-end">
+                  <div>
+                    <p className="text-[10px] text-[#08150D]/60">Member</p>
+                    <p className="text-sm font-medium text-[#08150D]">Essential</p>
                   </div>
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <p className="text-[10px] text-muted-foreground">Member</p>
-                      <p className="text-xs text-foreground">Essential</p>
-                    </div>
-                    <div className="w-10 h-10 rounded-lg border border-border/50 flex items-center justify-center">
-                      <div className="w-6 h-6 bg-muted-foreground/20 rounded" />
-                    </div>
+                  <div className="w-12 h-12 rounded-xl border-2 border-[#08150D]/20 flex items-center justify-center bg-white/20">
+                    <div className="w-7 h-7 bg-[#08150D]/20 rounded-lg" />
                   </div>
                 </div>
-              </motion.div>
+              </div>
+            </motion.div>
 
-              {/* E-Pass Plus Card */}
-              <motion.div
-                initial={{ opacity: 0, rotate: 0, y: 50, scale: 0.9 }}
-                animate={isInView ? { opacity: 1, rotate: 0, y: 0, scale: 1 } : {}}
-                transition={{ duration: 0.8, delay: 0.8, type: "spring", stiffness: 100 }}
-                whileHover={{ y: -30, scale: 1.05, zIndex: 30 }}
-                className="absolute w-64 h-40 md:w-80 md:h-48 rounded-2xl bg-gradient-to-br from-wj-green/30 via-wj-green/10 to-wj-green/20 border border-wj-green/40 shadow-2xl shadow-wj-green/20 cursor-pointer z-20"
-                style={{ transformOrigin: "bottom center" }}
-              >
-                <div className="absolute inset-0 p-5 flex flex-col justify-between">
-                  <div className="flex justify-between items-start">
-                    <span className="text-base font-bold text-foreground">WJ VISION</span>
-                    <span className="text-xs text-wj-green font-medium">E-PASS PLUS</span>
+            {/* E-Pass Plus Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 60, rotateX: -15 }}
+              animate={isInView ? { opacity: 1, y: 0, rotateX: 0 } : {}}
+              transition={{ duration: 0.7, delay: 0.9, type: "spring", stiffness: 80 }}
+              whileHover={{ 
+                scale: 1.05, 
+                rotateY: 5, 
+                rotateX: -5,
+                boxShadow: "0 25px 50px -12px rgba(5, 140, 66, 0.5)"
+              }}
+              className="w-72 h-44 md:w-96 md:h-52 rounded-2xl cursor-pointer transition-shadow duration-300"
+              style={{ 
+                transformStyle: "preserve-3d",
+                background: "linear-gradient(135deg, #058C42 0%, #047a3a 50%, #036830 100%)",
+                boxShadow: "0 20px 40px -15px rgba(5, 140, 66, 0.5)"
+              }}
+            >
+              <div className="absolute inset-0 p-6 flex flex-col justify-between">
+                <div className="flex justify-between items-start">
+                  <span className="text-lg font-bold text-white">WJ VISION</span>
+                  <span className="text-xs font-semibold text-white/90 bg-white/20 px-2 py-1 rounded-full">E-PASS PLUS</span>
+                </div>
+                <div className="flex justify-between items-end">
+                  <div>
+                    <p className="text-[10px] text-white/60">Member</p>
+                    <p className="text-sm font-medium text-white">Premium</p>
                   </div>
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <p className="text-[10px] text-muted-foreground">Member</p>
-                      <p className="text-xs text-foreground">Premium</p>
-                    </div>
-                    <div className="w-10 h-10 rounded-lg border border-wj-green/30 flex items-center justify-center">
-                      <div className="w-6 h-6 bg-wj-green/30 rounded" />
-                    </div>
+                  <div className="w-12 h-12 rounded-xl border-2 border-white/30 flex items-center justify-center bg-white/10">
+                    <div className="w-7 h-7 bg-white/30 rounded-lg" />
                   </div>
                 </div>
-                {/* Glow Effect */}
-                <div className="absolute -inset-2 bg-wj-green/10 rounded-3xl blur-xl -z-10" />
-              </motion.div>
+              </div>
+              {/* Glow Effect */}
+              <div className="absolute -inset-3 bg-[#058C42]/20 rounded-3xl blur-2xl -z-10" />
+            </motion.div>
 
-              {/* E-Pass Black Card */}
-              <motion.div
-                initial={{ opacity: 0, rotate: 25, x: 100, scale: 0.9 }}
-                animate={isInView ? { opacity: 1, rotate: 15, x: 80, scale: 0.95 } : {}}
-                transition={{ duration: 0.8, delay: 0.9, type: "spring", stiffness: 100 }}
-                whileHover={{ rotate: 5, y: -20, scale: 1, zIndex: 30 }}
-                className="absolute w-64 h-40 md:w-80 md:h-48 rounded-2xl bg-gradient-to-br from-secondary via-background to-secondary border border-foreground/20 shadow-2xl shadow-black/40 cursor-pointer z-10"
-                style={{ transformOrigin: "bottom center" }}
-              >
-                <div className="absolute inset-0 p-5 flex flex-col justify-between">
-                  <div className="flex justify-between items-start">
-                    <span className="text-base font-bold text-foreground">WJ VISION</span>
-                    <span className="text-xs text-foreground font-medium">E-PASS BLACK</span>
+            {/* E-Pass Black Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 60, rotateX: -15 }}
+              animate={isInView ? { opacity: 1, y: 0, rotateX: 0 } : {}}
+              transition={{ duration: 0.7, delay: 1.1, type: "spring", stiffness: 80 }}
+              whileHover={{ 
+                scale: 1.05, 
+                rotateY: 5, 
+                rotateX: -5,
+                boxShadow: "0 25px 50px -12px rgba(8, 21, 13, 0.7)"
+              }}
+              className="w-72 h-44 md:w-96 md:h-52 rounded-2xl cursor-pointer transition-shadow duration-300"
+              style={{ 
+                transformStyle: "preserve-3d",
+                background: "linear-gradient(135deg, #0f2518 0%, #08150D 50%, #050d08 100%)",
+                boxShadow: "0 20px 40px -15px rgba(8, 21, 13, 0.8)"
+              }}
+            >
+              <div className="absolute inset-0 p-6 flex flex-col justify-between border border-white/10 rounded-2xl">
+                <div className="flex justify-between items-start">
+                  <span className="text-lg font-bold text-white">WJ VISION</span>
+                  <span className="text-xs font-semibold text-white/80 bg-white/10 px-2 py-1 rounded-full">E-PASS BLACK</span>
+                </div>
+                <div className="flex justify-between items-end">
+                  <div>
+                    <p className="text-[10px] text-white/50">Member</p>
+                    <p className="text-sm font-medium text-white">Elite</p>
                   </div>
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <p className="text-[10px] text-muted-foreground">Member</p>
-                      <p className="text-xs text-foreground">Elite</p>
-                    </div>
-                    <div className="w-10 h-10 rounded-lg border border-foreground/20 flex items-center justify-center">
-                      <div className="w-6 h-6 bg-foreground/20 rounded" />
-                    </div>
+                  <div className="w-12 h-12 rounded-xl border-2 border-white/20 flex items-center justify-center bg-white/5">
+                    <div className="w-7 h-7 bg-white/20 rounded-lg" />
                   </div>
                 </div>
-              </motion.div>
-            </div>
+              </div>
+            </motion.div>
           </div>
 
           {/* Description & CTA */}
