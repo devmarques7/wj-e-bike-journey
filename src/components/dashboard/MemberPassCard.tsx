@@ -157,49 +157,52 @@ export default function MemberPassCard({ bikeId, bikeName, purchaseDate }: Membe
           </div>
         </div>
 
-        {/* Back of Card - QR Code with Green Background */}
+        {/* Back of Card - QR Code with Video Background */}
         <div
-          className="absolute inset-0 rounded-2xl overflow-hidden border border-wj-green/30 shadow-2xl"
+          className="absolute inset-0 rounded-2xl overflow-hidden border border-border/50 shadow-2xl"
           style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
         >
-          {/* Green Gradient Background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-wj-green via-wj-forest to-wj-deep" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.1),transparent_50%)]" />
+          {/* Video Background */}
+          <video
+            autoPlay
+            muted
+            playsInline
+            loop
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source src="/videos/member-pass-back-bg.mp4" type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-black/40" />
 
-          {/* QR Content */}
-          <div className="relative z-10 h-full w-full flex flex-col items-center justify-center p-6 sm:p-8 gap-6">
-            {/* QR Code */}
-            <div className="relative">
-              <div className="w-40 h-40 sm:w-48 sm:h-48 bg-white rounded-2xl p-4 shadow-2xl">
-                <div className="w-full h-full rounded-xl flex items-center justify-center relative overflow-hidden">
-                  <div className="grid grid-cols-9 gap-0.5">
-                    {Array.from({ length: 81 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className={cn(
-                          "w-3 h-3 sm:w-4 sm:h-4 rounded-sm",
-                          Math.random() > 0.4 ? "bg-wj-deep" : "bg-transparent"
-                        )}
-                      />
-                    ))}
-                  </div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-wj-green rounded-xl flex items-center justify-center shadow-lg">
-                      <span className="text-base sm:text-lg font-bold text-white">WJ</span>
-                    </div>
+          {/* Minimal QR Content */}
+          <div className="relative z-10 h-full w-full flex flex-col items-center justify-between p-8">
+            {/* Spacer */}
+            <div />
+            
+            {/* QR Code - Centered */}
+            <div className="w-32 h-32 sm:w-40 sm:h-40 bg-white rounded-xl p-3 shadow-2xl">
+              <div className="w-full h-full rounded-lg flex items-center justify-center relative overflow-hidden">
+                <div className="grid grid-cols-9 gap-0.5">
+                  {Array.from({ length: 81 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className={cn(
+                        "w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 rounded-sm",
+                        Math.random() > 0.4 ? "bg-zinc-900" : "bg-transparent"
+                      )}
+                    />
+                  ))}
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-wj-green rounded-lg flex items-center justify-center shadow-lg">
+                    <span className="text-sm sm:text-base font-bold text-white">WJ</span>
                   </div>
                 </div>
               </div>
-              <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg">
-                <QrCode className="h-5 w-5 text-wj-green" />
-              </div>
             </div>
 
-            {/* Scan Text */}
-            <div className="text-center">
-              <p className="text-lg sm:text-xl font-light text-white">Scan to Verify</p>
-              <p className="text-xs sm:text-sm text-white/60 mt-1 font-mono">{formatAsCardNumber(displayBikeId)}</p>
-            </div>
+            {/* Minimal Footer */}
+            <p className="text-xs text-white/50 tracking-widest uppercase">Scan QR Code</p>
           </div>
         </div>
       </motion.div>
