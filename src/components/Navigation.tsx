@@ -124,12 +124,12 @@ const Navigation = ({ isScrolled = false }: NavigationProps) => {
   return (
     <>
       {/* Header Container */}
-      <div className="fixed top-0 left-0 right-0 z-50 flex justify-center mt-4 px-4">
+      <div className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 px-4 pointer-events-none">
         <motion.div
           initial={{ y: -100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className={`w-full md:w-[40%] transition-all duration-500 border border-border/50 overflow-hidden ${
+          className={`w-full md:w-[40%] transition-all duration-500 border border-border/50 overflow-hidden pointer-events-auto ${
             isMenuOpen
               ? "rounded-2xl bg-background/80 backdrop-blur-2xl"
               : "rounded-full bg-background/40 backdrop-blur-xl"
