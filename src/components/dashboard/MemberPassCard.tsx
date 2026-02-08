@@ -43,6 +43,11 @@ export default function MemberPassCard({ bikeId, bikeName, purchaseDate }: Membe
   const tier = user?.tier || "light";
   const config = tierConfig[tier];
   const TierIcon = config.icon;
+  
+  // Video background based on tier
+  const frontVideoSrc = tier === "plus" 
+    ? "/videos/member-pass-plus-bg.mp4" 
+    : "/videos/member-pass-bg.mp4";
 
   const displayBikeId = bikeId || user?.bikeId || "V8-2024-XX-00000";
   const displayBikeName = bikeName || user?.bikeName || "WJ V8";
@@ -92,7 +97,7 @@ export default function MemberPassCard({ bikeId, bikeName, purchaseDate }: Membe
           transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
           style={{ backfaceVisibility: "hidden" }}
         >
-          {/* Video Background */}
+          {/* Video Background - varies by tier */}
           <video
             ref={videoRef}
             autoPlay
@@ -101,7 +106,7 @@ export default function MemberPassCard({ bikeId, bikeName, purchaseDate }: Membe
             loop
             className="absolute inset-0 w-full h-full object-cover"
           >
-            <source src="/videos/member-pass-bg.mp4" type="video/mp4" />
+            <source src={frontVideoSrc} type="video/mp4" />
           </video>
           <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/50 to-black/70" />
 
