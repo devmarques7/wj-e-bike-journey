@@ -370,13 +370,36 @@ export default function ServiceCalendarCompact() {
           {/* Scrollable Container with Hidden Scrollbar */}
           <div className="overflow-y-auto max-h-[90vh] scrollbar-hide">
             <div className="p-6 pb-0">
-              <DialogHeader className="text-center">
-                <DialogTitle className="flex items-center justify-center gap-2 text-2xl">
-                  <Crown className="h-6 w-6 text-wj-green" />
-                  Upgrade Your Membership
-                </DialogTitle>
-                <DialogDescription className="text-center">
-                  Calendar booking is a premium feature. Upgrade your E-Pass to schedule services directly.
+              <DialogHeader>
+                <div className="flex items-center justify-between gap-4">
+                  <DialogTitle className="flex items-center gap-2 text-xl">
+                    <Crown className="h-5 w-5 text-wj-green" />
+                    Upgrade Membership
+                  </DialogTitle>
+                  
+                  {/* Billing Toggle in Header */}
+                  <div className="flex items-center gap-2 px-2 py-1 rounded-full bg-muted/50 border border-border/30">
+                    <span className={cn(
+                      "text-xs transition-colors",
+                      !isAnnualBilling ? "text-foreground font-medium" : "text-muted-foreground"
+                    )}>
+                      Mo
+                    </span>
+                    <Switch
+                      checked={isAnnualBilling}
+                      onCheckedChange={setIsAnnualBilling}
+                      className="data-[state=checked]:bg-wj-green h-5 w-9"
+                    />
+                    <span className={cn(
+                      "text-xs transition-colors",
+                      isAnnualBilling ? "text-foreground font-medium" : "text-muted-foreground"
+                    )}>
+                      Yr
+                    </span>
+                  </div>
+                </div>
+                <DialogDescription className="text-center text-xs mt-2">
+                  Upgrade your E-Pass to schedule services directly.
                 </DialogDescription>
               </DialogHeader>
             </div>
@@ -651,28 +674,6 @@ export default function ServiceCalendarCompact() {
                             </div>
                           )}
 
-                          {/* Billing Toggle */}
-                          {plan.monthlyPrice > 0 && (
-                            <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-background/50 border border-border/20">
-                              <span className={cn(
-                                "text-sm transition-colors",
-                                !isAnnualBilling ? "text-foreground font-medium" : "text-muted-foreground"
-                              )}>
-                                Monthly
-                              </span>
-                              <Switch
-                                checked={isAnnualBilling}
-                                onCheckedChange={setIsAnnualBilling}
-                                className="data-[state=checked]:bg-wj-green"
-                              />
-                              <span className={cn(
-                                "text-sm transition-colors",
-                                isAnnualBilling ? "text-foreground font-medium" : "text-muted-foreground"
-                              )}>
-                                Yearly
-                              </span>
-                            </div>
-                          )}
 
                           {/* Features - Compact List */}
                           <div className="mt-4 space-y-1.5">
