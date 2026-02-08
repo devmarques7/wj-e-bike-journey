@@ -198,8 +198,11 @@ const Navigation = ({ isScrolled = false }: NavigationProps) => {
                   variant="ghost"
                   size="icon"
                   className="text-foreground/80 hover:text-wj-green hover:bg-transparent"
+                  asChild
                 >
-                  <User className="h-5 w-5" />
+                  <Link to="/auth">
+                    <User className="h-5 w-5" />
+                  </Link>
                 </Button>
               </div>
             </div>
