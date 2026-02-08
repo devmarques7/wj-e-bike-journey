@@ -82,19 +82,20 @@ const Navigation = ({ isScrolled = false }: NavigationProps) => {
 
   return (
     <>
-      {/* Header */}
-      <motion.header
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, delay: 0.2 }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled || isMenuOpen
-            ? "bg-background/60 backdrop-blur-xl border-b border-border/50"
-            : "bg-transparent"
-        }`}
-      >
-        <nav className="container-wj">
-          <div className="flex h-14 items-center justify-between">
+      {/* Header Container */}
+      <div className="fixed top-0 left-0 right-0 z-50 flex justify-center mt-4 px-4">
+        <motion.header
+          initial={{ y: -100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className={`w-full md:w-[40%] transition-all duration-300 rounded-full border border-border/50 ${
+            isScrolled || isMenuOpen
+              ? "bg-background/60 backdrop-blur-xl"
+              : "bg-background/30 backdrop-blur-md"
+          }`}
+        >
+          <nav className="px-4">
+            <div className="flex h-12 items-center justify-between">
             {/* Left - Hamburger */}
             <Button
               variant="ghost"
@@ -155,8 +156,9 @@ const Navigation = ({ isScrolled = false }: NavigationProps) => {
           </div>
         </nav>
       </motion.header>
+    </div>
 
-      {/* Menu Overlay */}
+    {/* Menu Overlay */}
       <AnimatePresence>
         {isMenuOpen && (
           <>
