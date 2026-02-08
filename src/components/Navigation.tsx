@@ -5,6 +5,7 @@ import { Menu, X, ShoppingBag, User, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { bikeProducts } from "@/data/products";
 import { useCart, CartBadge } from "@/contexts/CartContext";
+import CartDrawer from "@/components/CartDrawer";
 
 const navLinks = [
   { 
@@ -58,6 +59,7 @@ interface NavigationProps {
 
 const Navigation = ({ isScrolled = false }: NavigationProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState("EN");
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [expandedNav, setExpandedNav] = useState<string | null>(null);
@@ -182,6 +184,7 @@ const Navigation = ({ isScrolled = false }: NavigationProps) => {
                   variant="ghost"
                   size="icon"
                   className="relative text-foreground/80 hover:text-wj-green hover:bg-transparent"
+                  onClick={() => setIsCartOpen(true)}
                 >
                   <motion.div
                     animate={isAnimating ? { scale: [1, 1.3, 1] } : {}}
@@ -395,6 +398,9 @@ const Navigation = ({ isScrolled = false }: NavigationProps) => {
           />
         )}
       </AnimatePresence>
+
+      {/* Cart Drawer */}
+      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </>
   );
 };
