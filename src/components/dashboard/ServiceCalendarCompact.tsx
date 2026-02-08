@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarDays, Clock, Wrench, CheckCircle2, ChevronLeft, ChevronRight, MessageSquare } from "lucide-react";
+import { CalendarDays, Clock, Wrench, CheckCircle2, ChevronLeft, ChevronRight, MessageSquare, ArrowRight, Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
@@ -17,6 +17,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth, MemberTier } from "@/contexts/AuthContext";
+import { Link } from "react-router-dom";
 
 // Mock available dates (next 30 days, excluding weekends)
 const getAvailableDates = () => {
@@ -57,12 +59,57 @@ const serviceTypes = [
   { id: "other", label: "Other", description: "Describe your needs" },
 ];
 
+const membershipPlans = [
+  {
+    tier: "light" as MemberTier,
+    name: "E-Pass Light",
+    label: "Essential",
+    price: "Free",
+    description: "Basic coverage for casual riders",
+    features: ["Basic support", "Standard warranty", "Community access"],
+    style: {
+      background: "linear-gradient(135deg, #F3EFF5 0%, #e8e4ea 50%, #ddd8df 100%)",
+      textColor: "#08150D",
+      shadow: "0 20px 40px -15px rgba(0, 0, 0, 0.2)",
+    },
+  },
+  {
+    tier: "plus" as MemberTier,
+    name: "E-Pass Plus",
+    label: "Premium",
+    price: "€9.99/mo",
+    description: "Enhanced benefits for regular riders",
+    features: ["Priority support", "Extended warranty", "Service discounts", "Calendar booking"],
+    style: {
+      background: "linear-gradient(135deg, #058C42 0%, #047a3a 50%, #036830 100%)",
+      textColor: "#ffffff",
+      shadow: "0 20px 40px -15px rgba(5, 140, 66, 0.5)",
+    },
+  },
+  {
+    tier: "black" as MemberTier,
+    name: "E-Pass Black",
+    label: "Elite",
+    price: "€19.99/mo",
+    description: "VIP treatment for dedicated riders",
+    features: ["24/7 VIP support", "Lifetime warranty", "Free services", "Valet pick-up", "Priority scheduling"],
+    style: {
+      background: "linear-gradient(135deg, #0a0a0a 0%, #020202 50%, #000000 100%)",
+      textColor: "#ffffff",
+      shadow: "0 25px 50px -15px rgba(0, 0, 0, 0.8)",
+    },
+  },
+];
+
 const TOTAL_STEPS = 3;
 
 export default function ServiceCalendarCompact() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<MemberTier | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [selectedService, setSelectedService] = useState<string>("");
@@ -70,6 +117,7 @@ export default function ServiceCalendarCompact() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const availableDates = getAvailableDates();
+  const userTier = user?.tier || "light";
 
   const isDateAvailable = (date: Date) => {
     return availableDates.some(
@@ -86,12 +134,19 @@ export default function ServiceCalendarCompact() {
   const handleDateSelect = (date: Date | undefined) => {
     if (date && isDateAvailable(date) && !isDateBooked(date)) {
       setSelectedDate(date);
-      setIsModalOpen(true);
-      // Reset form
-      setCurrentStep(1);
-      setSelectedTime("");
-      setSelectedService("");
-      setAdditionalNotes("");
+      
+      // Check if user is Light tier - show upgrade modal
+      if (userTier === "light") {
+        setIsUpgradeModalOpen(true);
+        setSelectedPlan(null);
+      } else {
+        // Plus or Black tier - proceed with booking
+        setIsModalOpen(true);
+        setCurrentStep(1);
+        setSelectedTime("");
+        setSelectedService("");
+        setAdditionalNotes("");
+      }
     }
   };
 
@@ -114,7 +169,7 @@ export default function ServiceCalendarCompact() {
       case 2:
         return !!selectedService;
       case 3:
-        return true; // Notes are optional
+        return true;
       default:
         return false;
     }
@@ -126,10 +181,7 @@ export default function ServiceCalendarCompact() {
     }
 
     setIsSubmitting(true);
-    
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500));
-    
     setIsSubmitting(false);
     setIsModalOpen(false);
     
@@ -170,28 +222,36 @@ export default function ServiceCalendarCompact() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Calendar */}
+            {/* Calendar with custom styles for active state */}
             <div className="flex justify-center">
               <Calendar
                 mode="single"
                 selected={selectedDate}
                 onSelect={handleDateSelect}
                 className={cn("rounded-xl border border-border/30 pointer-events-auto")}
+                classNames={{
+                  day_selected: "bg-wj-green text-white rounded-full hover:bg-wj-green-dark focus:bg-wj-green",
+                }}
                 modifiers={{
                   available: (date) => isDateAvailable(date) && !isDateBooked(date),
                   booked: (date) => isDateBooked(date),
                 }}
                 modifiersStyles={{
                   available: {
-                    backgroundColor: "hsl(var(--wj-green) / 0.1)",
+                    backgroundColor: "hsl(var(--wj-green) / 0.15)",
                     color: "hsl(var(--wj-green))",
                     cursor: "pointer",
+                    borderRadius: "9999px",
                   },
                   booked: {
                     backgroundColor: "hsl(var(--primary) / 0.2)",
                     color: "hsl(var(--primary))",
                     fontWeight: "bold",
+                    borderRadius: "9999px",
                   },
+                }}
+                modifiersClassNames={{
+                  available: "hover:bg-wj-green hover:text-white transition-colors",
                 }}
                 disabled={(date) => 
                   date < new Date() || 
@@ -203,17 +263,165 @@ export default function ServiceCalendarCompact() {
             {/* Legend */}
             <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded bg-wj-green/20 border border-wj-green/30" />
+                <div className="w-3 h-3 rounded-full bg-wj-green/20 border border-wj-green/30" />
                 <span>Available</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded bg-primary/20 border border-primary/30" />
+                <div className="w-3 h-3 rounded-full bg-primary/20 border border-primary/30" />
                 <span>Booked</span>
               </div>
             </div>
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Upgrade Modal for Light Members */}
+      <Dialog open={isUpgradeModalOpen} onOpenChange={setIsUpgradeModalOpen}>
+        <DialogContent className="sm:max-w-2xl bg-background/95 backdrop-blur-xl border-border/50 overflow-hidden">
+          <DialogHeader className="text-center">
+            <DialogTitle className="flex items-center justify-center gap-2 text-2xl">
+              <Crown className="h-6 w-6 text-wj-green" />
+              Upgrade Your Membership
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              Calendar booking is a premium feature. Upgrade your E-Pass to schedule services directly.
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Cards Container */}
+          <div 
+            className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-0 py-6" 
+            style={{ perspective: "1500px" }}
+          >
+            {membershipPlans.map((plan, index) => (
+              <motion.div
+                key={plan.tier}
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                whileHover={{ 
+                  scale: plan.tier === "black" ? 1.05 : 0.95, 
+                  y: -10,
+                  rotateY: plan.tier === "light" ? 5 : plan.tier === "plus" ? -5 : 0,
+                }}
+                onClick={() => setSelectedPlan(plan.tier)}
+                className={cn(
+                  "relative cursor-pointer transition-all duration-300",
+                  plan.tier === "black" 
+                    ? "w-64 h-44 md:w-72 md:h-52 z-20" 
+                    : "w-56 h-36 md:w-64 md:h-40 z-10",
+                  plan.tier === "light" && "md:-mr-6",
+                  plan.tier === "plus" && "md:-ml-6",
+                  selectedPlan === plan.tier && "ring-2 ring-wj-green ring-offset-2 ring-offset-background"
+                )}
+                style={{ 
+                  transformStyle: "preserve-3d",
+                  borderRadius: "1rem",
+                }}
+              >
+                {/* Card Background */}
+                <div
+                  className="absolute inset-0 rounded-2xl"
+                  style={{
+                    background: plan.style.background,
+                    boxShadow: plan.style.shadow,
+                  }}
+                />
+
+                {/* Selected Indicator */}
+                {selectedPlan === plan.tier && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-wj-green rounded-full flex items-center justify-center z-30"
+                  >
+                    <CheckCircle2 className="h-4 w-4 text-white" />
+                  </motion.div>
+                )}
+
+                {/* Card Content */}
+                <div 
+                  className="absolute inset-0 p-4 flex flex-col justify-between rounded-2xl border border-white/10"
+                  style={{ color: plan.style.textColor }}
+                >
+                  <div className="flex justify-between items-start">
+                    <span className="text-sm font-bold">WJ VISION</span>
+                    <span 
+                      className="text-[10px] font-semibold px-2 py-1 rounded-full"
+                      style={{ 
+                        backgroundColor: plan.tier === "light" ? "rgba(0,0,0,0.05)" : "rgba(255,255,255,0.15)",
+                      }}
+                    >
+                      {plan.name.toUpperCase().replace("E-PASS ", "")}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-[10px] opacity-60">Member</p>
+                    <p className="text-sm font-medium">{plan.label}</p>
+                    <p className="text-lg font-bold mt-1">{plan.price}</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Plan Details */}
+          <AnimatePresence mode="wait">
+            {selectedPlan && (
+              <motion.div
+                key={selectedPlan}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="p-4 rounded-2xl bg-muted/30 border border-border/30"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-semibold text-foreground">
+                    {membershipPlans.find(p => p.tier === selectedPlan)?.name}
+                  </h4>
+                  <span className="text-wj-green font-bold">
+                    {membershipPlans.find(p => p.tier === selectedPlan)?.price}
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">
+                  {membershipPlans.find(p => p.tier === selectedPlan)?.description}
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {membershipPlans.find(p => p.tier === selectedPlan)?.features.map((feature, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm">
+                      <CheckCircle2 className="h-3 w-3 text-wj-green flex-shrink-0" />
+                      <span className="text-muted-foreground">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Action Buttons */}
+          <div className="flex items-center justify-between pt-4 border-t border-border/30">
+            <Button
+              variant="ghost"
+              onClick={() => setIsUpgradeModalOpen(false)}
+            >
+              Maybe Later
+            </Button>
+            
+            {selectedPlan && selectedPlan !== "light" ? (
+              <Link to="/membership-plans">
+                <Button className="bg-wj-green hover:bg-wj-green-dark text-white">
+                  Upgrade to {membershipPlans.find(p => p.tier === selectedPlan)?.name}
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </Link>
+            ) : (
+              <Button disabled className="opacity-50">
+                Select a Plan
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Booking Modal - Step by Step */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
