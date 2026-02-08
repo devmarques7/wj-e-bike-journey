@@ -6,12 +6,41 @@ import { Button } from "@/components/ui/button";
 import { bikeProducts } from "@/data/products";
 
 const navLinks = [
-  { name: "Products", href: "/gallery" },
-  { name: "Store", href: "#store" },
-  { name: "About", href: "#about" },
-  { name: "Support", href: "#support" },
+  { 
+    name: "Products", 
+    href: "/gallery",
+    subItems: [
+      { name: "E-Bikes", href: "/gallery" },
+      { name: "Accessories", href: "/gallery?category=accessories" },
+      { name: "Member Plans", href: "/membership-plans" },
+    ]
+  },
+  { 
+    name: "Store", 
+    href: "#store",
+    subItems: [
+      { name: "Find a Store", href: "#find-store" },
+      { name: "Book Test Ride", href: "#test-ride" },
+    ]
+  },
+  { 
+    name: "About", 
+    href: "#about",
+    subItems: [
+      { name: "Our Story", href: "#our-story" },
+      { name: "Career", href: "#career" },
+    ]
+  },
+  { 
+    name: "Support", 
+    href: "#support",
+    subItems: [
+      { name: "Find Help", href: "#help" },
+      { name: "Delivery", href: "#delivery" },
+      { name: "Returns", href: "#returns" },
+    ]
+  },
 ];
-
 const languages = [
   { code: "EN", name: "English" },
   { code: "NL", name: "Nederlands" },
@@ -30,6 +59,7 @@ const Navigation = ({ isScrolled = false }: NavigationProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState("EN");
   const [isLangOpen, setIsLangOpen] = useState(false);
+  const [expandedNav, setExpandedNav] = useState<string | null>(null);
   const langRef = useRef<HTMLDivElement>(null);
 
   // Close language dropdown on outside click
@@ -219,7 +249,7 @@ const Navigation = ({ isScrolled = false }: NavigationProps) => {
                     ))}
                   </div>
 
-                  {/* Navigation Links - Large Text */}
+                  {/* Navigation Links - Large Text with Collapsible Sub-items */}
                   <nav className="space-y-1 mb-6">
                     {navLinks.map((link, index) => (
                       <motion.div
@@ -229,15 +259,47 @@ const Navigation = ({ isScrolled = false }: NavigationProps) => {
                         animate="open"
                         custom={index + 1}
                       >
-                        <a
-                          href={link.href}
-                          onClick={() => setIsMenuOpen(false)}
-                          className="group block py-2"
+                        <button
+                          onClick={() => setExpandedNav(expandedNav === link.name ? null : link.name)}
+                          className="group flex items-center justify-between w-full py-2"
                         >
                           <span className="text-2xl font-light text-foreground/80 transition-all duration-300 group-hover:text-wj-green group-hover:tracking-wider">
                             {link.name}
                           </span>
-                        </a>
+                          <ChevronDown 
+                            className={`h-4 w-4 text-muted-foreground/50 transition-transform duration-300 ${
+                              expandedNav === link.name ? 'rotate-180 text-wj-green' : ''
+                            }`} 
+                          />
+                        </button>
+                        
+                        <AnimatePresence>
+                          {expandedNav === link.name && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                              className="overflow-hidden"
+                            >
+                              <div className="pl-4 pb-2 pt-1 space-y-1 border-l border-border/30 ml-1">
+                                {link.subItems.map((subItem, subIndex) => (
+                                  <motion.a
+                                    key={subItem.name}
+                                    href={subItem.href}
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: subIndex * 0.05, duration: 0.2 }}
+                                    onClick={() => setIsMenuOpen(false)}
+                                    className="block py-1.5 text-sm text-muted-foreground hover:text-wj-green transition-colors duration-200"
+                                  >
+                                    {subItem.name}
+                                  </motion.a>
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </motion.div>
                     ))}
                   </nav>
