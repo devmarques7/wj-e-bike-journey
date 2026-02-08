@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, ShoppingBag, Shield, Zap } from "lucide-react";
+import { ArrowRight, Shield } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import AccessoryCard from "@/components/AccessoryCard";
@@ -65,115 +65,97 @@ const Accessories = () => {
       
       <main className="pt-24 md:pt-28">
         {/* Featured Accessory Hero */}
-        <section className="container-wj py-12 md:py-20">
+        <section className="container-wj py-16 md:py-24">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="relative rounded-3xl bg-gradient-to-br from-card to-muted border border-border/50 overflow-hidden"
+            className="relative"
           >
-            <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center">
+            <div className="grid md:grid-cols-2 gap-12 md:gap-20 items-center">
               {/* Image Left */}
-              <div className="relative aspect-square md:aspect-auto md:h-[500px] bg-gradient-to-br from-secondary to-muted flex items-center justify-center p-12">
+              <div className="relative aspect-square flex items-center justify-center">
                 <motion.div
-                  initial={{ scale: 0.9, opacity: 0 }}
+                  initial={{ scale: 0.95, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.8, delay: 0.2 }}
-                  className="relative"
+                  className="relative w-full h-full flex items-center justify-center"
                 >
-                  {/* Featured Badge */}
-                  <div className="absolute -top-4 -left-4 z-10">
-                    <span className="px-4 py-2 text-xs font-bold uppercase tracking-wider gradient-wj text-white rounded-full">
-                      Featured
-                    </span>
-                  </div>
+                  {/* Subtle Background */}
+                  <div 
+                    className="absolute inset-0 rounded-3xl opacity-5"
+                    style={{ backgroundColor: featuredAccessory.colors[0].hex }}
+                  />
                   
                   {/* Accessory Visual */}
-                  <div 
-                    className="w-48 h-48 md:w-64 md:h-64 rounded-3xl flex items-center justify-center"
-                    style={{ backgroundColor: `${featuredAccessory.colors[0].hex}10` }}
-                  >
-                    <Shield 
-                      className="w-24 h-24 md:w-32 md:h-32"
-                      style={{ color: featuredAccessory.colors[0].hex }}
-                    />
-                  </div>
-                  
-                  {/* Floating Elements */}
-                  <motion.div
-                    animate={{ y: [0, -10, 0] }}
-                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute -top-8 -right-8 w-16 h-16 rounded-2xl bg-wj-green/10 flex items-center justify-center"
-                  >
-                    <Zap className="w-8 h-8 text-wj-green" />
-                  </motion.div>
+                  <Shield 
+                    className="w-32 h-32 md:w-48 md:h-48"
+                    style={{ color: featuredAccessory.colors[0].hex }}
+                  />
                 </motion.div>
               </div>
 
               {/* Content Right */}
-              <div className="p-8 md:p-12 md:pr-16">
+              <div className="space-y-8">
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.6, delay: 0.3 }}
+                  className="space-y-6"
                 >
-                  <p className="text-wj-green text-sm font-medium tracking-widest uppercase mb-4">
-                    {featuredAccessory.category}
-                  </p>
-                  <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">
-                    {featuredAccessory.name}
-                  </h1>
-                  <p className="text-lg text-muted-foreground mb-6">
-                    {featuredAccessory.tagline}. {featuredAccessory.features.slice(0, 2).join(", ")}, and more.
-                  </p>
+                  <div className="space-y-3">
+                    <p className="text-xs text-muted-foreground/60 uppercase tracking-[0.2em]">
+                      Featured
+                    </p>
+                    <h1 className="text-3xl md:text-4xl font-light text-foreground">
+                      {featuredAccessory.name}
+                    </h1>
+                    <p className="text-muted-foreground font-light">
+                      {featuredAccessory.tagline}
+                    </p>
+                  </div>
 
-                  {/* Features List */}
-                  <div className="grid grid-cols-2 gap-3 mb-8">
-                    {featuredAccessory.features.map((feature) => (
-                      <div key={feature} className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <div className="w-1.5 h-1.5 rounded-full bg-wj-green" />
-                        {feature}
-                      </div>
+                  {/* Minimal Features */}
+                  <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted-foreground/70">
+                    {featuredAccessory.features.slice(0, 3).map((feature) => (
+                      <span key={feature}>{feature}</span>
                     ))}
                   </div>
 
                   {/* Price & CTA */}
-                  <div className="flex items-center gap-6">
-                    <div>
-                      <span className="text-3xl font-bold text-foreground">
-                        €{featuredAccessory.price}
-                      </span>
-                      {featuredAccessory.originalPrice && (
-                        <span className="ml-2 text-lg text-muted-foreground line-through">
-                          €{featuredAccessory.originalPrice}
-                        </span>
-                      )}
-                    </div>
-                    <Button className="gradient-wj text-white hover:opacity-90 px-6">
-                      <ShoppingBag className="h-4 w-4 mr-2" />
+                  <div className="flex items-center gap-8 pt-4">
+                    <span className="text-2xl font-light text-foreground">
+                      €{featuredAccessory.price}
+                    </span>
+                    <Button 
+                      variant="outline" 
+                      className="border-border/50 text-foreground hover:bg-wj-green hover:text-white hover:border-wj-green transition-all duration-300"
+                    >
                       Add to Cart
                     </Button>
                   </div>
 
                   {/* Color Options */}
-                  <div className="flex items-center gap-4 mt-6">
-                    <span className="text-xs text-muted-foreground">Available in:</span>
-                    <div className="flex gap-2">
-                      {featuredAccessory.colors.map((color) => (
-                        <div
-                          key={color.name}
-                          className="w-6 h-6 rounded-full border-2 border-border/50"
-                          style={{ backgroundColor: color.hex }}
-                          title={color.name}
-                        />
-                      ))}
-                    </div>
+                  <div className="flex items-center gap-3 pt-2">
+                    {featuredAccessory.colors.map((color) => (
+                      <div
+                        key={color.name}
+                        className="w-5 h-5 rounded-full border border-border/30"
+                        style={{ backgroundColor: color.hex }}
+                        title={color.name}
+                      />
+                    ))}
                   </div>
                 </motion.div>
               </div>
             </div>
           </motion.div>
         </section>
+
+        {/* Divider */}
+        <div className="container-wj">
+          <div className="h-px bg-border/20" />
+        </div>
 
         {/* Header & Filters */}
         <section className="container-wj py-8">
