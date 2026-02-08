@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ShoppingBag, User, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { bikeProducts } from "@/data/products";
+import { useCart, CartBadge } from "@/contexts/CartContext";
 
 const navLinks = [
   { 
@@ -61,6 +62,7 @@ const Navigation = ({ isScrolled = false }: NavigationProps) => {
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [expandedNav, setExpandedNav] = useState<string | null>(null);
   const langRef = useRef<HTMLDivElement>(null);
+  const { totalItems, isAnimating } = useCart();
 
   // Close language dropdown on outside click
   useEffect(() => {
@@ -179,9 +181,15 @@ const Navigation = ({ isScrolled = false }: NavigationProps) => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-foreground/80 hover:text-wj-green hover:bg-transparent"
+                  className="relative text-foreground/80 hover:text-wj-green hover:bg-transparent"
                 >
-                  <ShoppingBag className="h-5 w-5" />
+                  <motion.div
+                    animate={isAnimating ? { scale: [1, 1.3, 1] } : {}}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <ShoppingBag className="h-5 w-5" />
+                  </motion.div>
+                  <CartBadge count={totalItems} />
                 </Button>
                 <Button
                   variant="ghost"
