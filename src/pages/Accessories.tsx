@@ -257,111 +257,79 @@ const Accessories = () => {
                     )}
                   </Button>
                 </SheetTrigger>
-                <SheetContent className="w-[320px] sm:w-[400px] bg-background border-border/50">
-                  <SheetHeader className="pb-6">
-                    <SheetTitle className="text-foreground font-light text-xl">
-                      Filters
+                <SheetContent className="w-[280px] sm:w-[320px] bg-background border-border/30">
+                  <SheetHeader className="pb-8">
+                    <SheetTitle className="text-foreground font-light text-lg tracking-wide">
+                      Price
                     </SheetTitle>
                   </SheetHeader>
                   
-                  <div className="space-y-8">
+                  <div className="space-y-10">
                     {/* Price Range */}
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-foreground">
-                          Price Range
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatPrice(priceRange[0])} — {formatPrice(priceRange[1])}
-                        </p>
+                    <div className="space-y-8">
+                      {/* Current Values Display */}
+                      <div className="flex items-center justify-center gap-4">
+                        <div className="text-center">
+                          <p className="text-2xl font-light text-foreground">
+                            {formatPrice(priceRange[0])}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground/50 uppercase tracking-wider mt-1">
+                            Min
+                          </p>
+                        </div>
+                        <div className="w-8 h-px bg-border/40" />
+                        <div className="text-center">
+                          <p className="text-2xl font-light text-foreground">
+                            {formatPrice(priceRange[1])}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground/50 uppercase tracking-wider mt-1">
+                            Max
+                          </p>
+                        </div>
                       </div>
                       
-                      <Slider
-                        value={priceRange}
-                        onValueChange={handlePriceChange}
-                        min={minPrice}
-                        max={maxPrice}
-                        step={5}
-                        className="w-full"
-                      />
+                      {/* Range Slider */}
+                      <div className="px-2">
+                        <Slider
+                          value={priceRange}
+                          onValueChange={handlePriceChange}
+                          min={minPrice}
+                          max={maxPrice}
+                          step={1}
+                          className="w-full"
+                        />
+                      </div>
 
-                      <div className="flex justify-between text-xs text-muted-foreground/60">
+                      {/* Min/Max Labels */}
+                      <div className="flex justify-between text-[10px] text-muted-foreground/40 uppercase tracking-wider">
                         <span>{formatPrice(minPrice)}</span>
                         <span>{formatPrice(maxPrice)}</span>
                       </div>
                     </div>
 
-                    {/* Quick Presets */}
-                    <div className="space-y-3">
-                      <p className="text-xs text-muted-foreground/60 uppercase tracking-wider">
-                        Quick Presets
-                      </p>
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          onClick={() => setPriceRange([minPrice, 50])}
-                          className={`p-3 rounded-xl border text-sm transition-all duration-200 ${
-                            priceRange[0] === minPrice && priceRange[1] === 50
-                              ? "border-wj-green bg-wj-green/10 text-wj-green"
-                              : "border-border/30 text-muted-foreground hover:border-border/60"
-                          }`}
-                        >
-                          Under €50
-                        </button>
-                        <button
-                          onClick={() => setPriceRange([50, 100])}
-                          className={`p-3 rounded-xl border text-sm transition-all duration-200 ${
-                            priceRange[0] === 50 && priceRange[1] === 100
-                              ? "border-wj-green bg-wj-green/10 text-wj-green"
-                              : "border-border/30 text-muted-foreground hover:border-border/60"
-                          }`}
-                        >
-                          €50 - €100
-                        </button>
-                        <button
-                          onClick={() => setPriceRange([100, 150])}
-                          className={`p-3 rounded-xl border text-sm transition-all duration-200 ${
-                            priceRange[0] === 100 && priceRange[1] === 150
-                              ? "border-wj-green bg-wj-green/10 text-wj-green"
-                              : "border-border/30 text-muted-foreground hover:border-border/60"
-                          }`}
-                        >
-                          €100 - €150
-                        </button>
-                        <button
-                          onClick={() => setPriceRange([minPrice, maxPrice])}
-                          className={`p-3 rounded-xl border text-sm transition-all duration-200 ${
-                            priceRange[0] === minPrice && priceRange[1] === maxPrice
-                              ? "border-wj-green bg-wj-green/10 text-wj-green"
-                              : "border-border/30 text-muted-foreground hover:border-border/60"
-                          }`}
-                        >
-                          All Prices
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Results Count */}
-                    <div className="pt-4 border-t border-border/20">
-                      <p className="text-sm text-muted-foreground">
-                        Showing <span className="text-foreground font-medium">{filteredAccessories.length}</span> of {accessories.length} accessories
+                    {/* Results */}
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground/60">
+                        <span className="text-foreground">{filteredAccessories.length}</span> items
                       </p>
                     </div>
 
                     {/* Actions */}
-                    <div className="flex gap-3 pt-4">
-                      <Button
-                        variant="outline"
-                        onClick={resetFilters}
-                        className="flex-1 border-border/50 text-foreground hover:bg-muted/20"
-                      >
-                        Reset All
-                      </Button>
+                    <div className="space-y-3">
                       <Button
                         onClick={() => setIsFilterOpen(false)}
-                        className="flex-1 gradient-wj text-white hover:opacity-90"
+                        className="w-full h-11 gradient-wj text-white hover:opacity-90 text-sm font-medium"
                       >
-                        Apply Filters
+                        Apply
                       </Button>
+                      {hasActiveFilters && (
+                        <button
+                          onClick={resetFilters}
+                          className="w-full text-xs text-muted-foreground/60 hover:text-foreground transition-colors"
+                        >
+                          Reset
+                        </button>
+                      )}
                     </div>
                   </div>
                 </SheetContent>
