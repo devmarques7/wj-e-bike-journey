@@ -70,11 +70,11 @@ const Accessories = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="relative"
+            className="relative rounded-3xl border border-border/30 p-8 md:p-12"
           >
-            <div className="grid md:grid-cols-2 gap-12 md:gap-20 items-center">
+            <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
               {/* Image Left */}
-              <div className="relative aspect-square flex items-center justify-center">
+              <div className="relative aspect-square flex items-center justify-center border-r-0 md:border-r border-border/20 md:pr-12">
                 <motion.div
                   initial={{ scale: 0.95, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
