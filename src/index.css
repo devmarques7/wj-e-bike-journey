@@ -47,6 +47,8 @@
     --wj-forest: 150 32% 7%;
     --wj-green: 147 94% 28%;
     --wj-neutral: 280 20% 97%;
+    --wj-blue: 217 91% 55%;
+    --wj-blue-dark: 217 91% 45%;
     
     /* Glassmorphism */
     --glass-bg: 280 20% 97% / 0.1;
@@ -96,6 +98,8 @@
     --wj-forest: 150 32% 7%;
     --wj-green: 147 94% 28%;
     --wj-neutral: 280 20% 97%;
+    --wj-blue: 217 91% 55%;
+    --wj-blue-dark: 217 91% 45%;
     
     /* Glassmorphism - Dark */
     --glass-bg: 0 0% 100% / 0.05;

@@ -58,6 +58,8 @@ export default {
           forest: "hsl(var(--wj-forest))",
           green: "hsl(var(--wj-green))",
           neutral: "hsl(var(--wj-neutral))",
+          blue: "hsl(var(--wj-blue))",
+          "blue-dark": "hsl(var(--wj-blue-dark))",
         },
       },
       fontFamily: {
