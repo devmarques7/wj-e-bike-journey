@@ -21,6 +21,7 @@ import Delivery from "./pages/Delivery";
 import Returns from "./pages/Returns";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import ServiceDashboard from "./pages/ServiceDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import UrgentService from "./pages/UrgentService";
 import MyWallet from "./pages/MyWallet";
@@ -56,6 +57,7 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/dashboard/wallet" element={<MyWallet />} />
               <Route path="/dashboard/v-id" element={<EPassPage />} />
+              <Route path="/dashboard/service" element={<ServiceDashboard />} />
               <Route path="/dashboard/*" element={<Dashboard />} />
               <Route path="/dashboard/admin" element={<AdminDashboard />} />
               <Route path="/dashboard/admin/*" element={<AdminDashboard />} />
