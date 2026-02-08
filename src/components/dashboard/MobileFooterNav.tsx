@@ -51,23 +51,6 @@ export default function MobileFooterNav() {
     return location.pathname === href;
   };
 
-  // Calculate position along the arc for each item
-  const getArcPosition = (index: number, total: number) => {
-    // Spread items from -60deg to +60deg along the arc
-    const startAngle = -55;
-    const endAngle = 55;
-    const angleStep = (endAngle - startAngle) / (total - 1);
-    const angle = startAngle + (angleStep * index);
-    const radians = (angle * Math.PI) / 180;
-    
-    // Arc radius and vertical offset calculations
-    const radius = 95;
-    const x = Math.sin(radians) * radius;
-    const y = Math.cos(radians) * radius * 0.35;
-    
-    return { x, y, angle };
-  };
-
   return (
     <>
       {/* Spacer */}
@@ -102,7 +85,7 @@ export default function MobileFooterNav() {
             />
           </svg>
 
-          {/* Navigation Icons */}
+          {/* Navigation Icons - 3 items inline */}
           <div className="relative flex items-end justify-center gap-8 pb-4 pt-1">
             <Link to="/dashboard" className="relative z-10 -mb-1">
               <motion.div
@@ -171,7 +154,7 @@ export default function MobileFooterNav() {
         </div>
       </div>
 
-      {/* Expanded Arc Menu */}
+      {/* Expanded Menu - Same Layout Style */}
       <AnimatePresence>
         {showAllMenu && (
           <>
@@ -190,97 +173,97 @@ export default function MobileFooterNav() {
               transition={{ type: "spring", damping: 28, stiffness: 300 }}
               className="lg:hidden fixed bottom-0 left-0 right-0 z-50"
             >
-              <div className="relative h-48">
-                {/* Full Width Arc */}
+              <div className="relative">
+                {/* Arc Background - Same style as closed state */}
                 <svg
-                  viewBox="0 0 100 50"
+                  viewBox="0 0 100 20"
                   preserveAspectRatio="none"
-                  className="absolute bottom-0 left-0 w-full h-full"
+                  className="absolute bottom-0 left-0 w-full h-24"
                 >
                   <path
-                    d="M0,50 Q50,5 100,50 L100,50 L0,50 Z"
+                    d="M0,20 Q50,0 100,20 L100,20 L0,20 Z"
                     className="fill-card"
                   />
                 </svg>
                 
                 {/* Arc border */}
                 <svg
-                  viewBox="0 0 100 50"
+                  viewBox="0 0 100 20"
                   preserveAspectRatio="none"
-                  className="absolute bottom-0 left-0 w-full h-full"
+                  className="absolute bottom-0 left-0 w-full h-24"
                 >
                   <path
-                    d="M0,50 Q50,5 100,50"
+                    d="M0,20 Q50,0 100,20"
                     fill="none"
-                    className="stroke-wj-green/20"
-                    strokeWidth="0.15"
+                    className="stroke-wj-green/30"
+                    strokeWidth="0.3"
                   />
                 </svg>
 
-                {/* Close Button at center top */}
-                <motion.button
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0, opacity: 0 }}
-                  transition={{ delay: 0.1 }}
-                  onClick={() => setShowAllMenu(false)}
-                  className="absolute top-2 left-1/2 -translate-x-1/2 z-20 w-8 h-8 rounded-full bg-muted/80 flex items-center justify-center border border-border/50"
-                >
-                  <X className="h-4 w-4 text-muted-foreground" />
-                </motion.button>
-
-                {/* Items Following the Arc Curve */}
-                <div className="absolute bottom-0 left-0 right-0 flex justify-center">
-                  <div className="relative w-full max-w-sm h-36">
-                    {filteredNavItems.map((item, index) => {
-                      const { x, y } = getArcPosition(index, filteredNavItems.length);
-                      const isItemActive = isActive(item.href);
-                      
-                      return (
-                        <motion.div
-                          key={item.href}
-                          initial={{ opacity: 0, scale: 0.5 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.5 }}
-                          transition={{ delay: index * 0.04, duration: 0.2 }}
-                          className="absolute left-1/2 bottom-6"
-                          style={{
-                            transform: `translateX(calc(-50% + ${x}px)) translateY(${-y}px)`,
-                          }}
+                {/* All Items Inline - Same layout as default */}
+                <div className="relative flex items-end justify-center gap-3 pb-5 pt-2 px-4">
+                  {filteredNavItems.map((item, index) => {
+                    const isItemActive = isActive(item.href);
+                    const isCenter = index === Math.floor(filteredNavItems.length / 2);
+                    
+                    return (
+                      <motion.div
+                        key={item.href}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 20 }}
+                        transition={{ delay: index * 0.03, duration: 0.2 }}
+                      >
+                        <Link
+                          to={item.href}
+                          onClick={() => setShowAllMenu(false)}
+                          className={cn(
+                            "relative z-10 flex flex-col items-center",
+                            isCenter ? "-mt-6" : "-mb-1"
+                          )}
                         >
-                          <Link
-                            to={item.href}
-                            onClick={() => setShowAllMenu(false)}
-                            className="flex flex-col items-center gap-1"
+                          <motion.div
+                            whileTap={{ scale: 0.9 }}
+                            className={cn(
+                              "rounded-full flex items-center justify-center transition-all duration-300",
+                              isCenter ? "w-12 h-12" : "w-10 h-10",
+                              isItemActive
+                                ? "bg-wj-green text-primary-foreground shadow-lg shadow-wj-green/30"
+                                : "bg-muted text-muted-foreground"
+                            )}
                           >
-                            <motion.div
-                              whileTap={{ scale: 0.9 }}
-                              className={cn(
-                                "w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300",
-                                isItemActive
-                                  ? "bg-wj-green text-primary-foreground shadow-lg shadow-wj-green/30"
-                                  : "bg-muted/90 text-muted-foreground hover:bg-muted"
-                              )}
-                            >
-                              <item.icon className="h-5 w-5" />
-                            </motion.div>
-                            <span
-                              className={cn(
-                                "text-[9px] font-medium whitespace-nowrap",
-                                isItemActive ? "text-wj-green" : "text-muted-foreground"
-                              )}
-                            >
-                              {item.label}
-                            </span>
-                          </Link>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
+                            <item.icon className={cn(isCenter ? "h-5 w-5" : "h-4 w-4")} />
+                          </motion.div>
+                          <span
+                            className={cn(
+                              "absolute -bottom-4 left-1/2 -translate-x-1/2 text-[8px] font-medium whitespace-nowrap",
+                              isItemActive ? "text-wj-green" : "text-muted-foreground"
+                            )}
+                          >
+                            {item.label}
+                          </span>
+                        </Link>
+                      </motion.div>
+                    );
+                  })}
+
+                  {/* Close Button */}
+                  <motion.button
+                    initial={{ opacity: 0, scale: 0.5 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.5 }}
+                    transition={{ delay: 0.15 }}
+                    onClick={() => setShowAllMenu(false)}
+                    className="relative z-10 -mt-10"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-muted/80 flex items-center justify-center border border-border/50">
+                      <X className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </motion.button>
                 </div>
 
                 {/* Safe area */}
-                <div className="absolute bottom-0 left-0 right-0 h-4 bg-card" />
+                <div className="h-4 bg-card" />
               </div>
             </motion.div>
           </>
