@@ -246,20 +246,6 @@ export default function MobileFooterNav() {
                       </motion.div>
                     );
                   })}
-
-                  {/* Close Button */}
-                  <motion.button
-                    initial={{ opacity: 0, scale: 0.5 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.5 }}
-                    transition={{ delay: 0.15 }}
-                    onClick={() => setShowAllMenu(false)}
-                    className="relative z-10 -mt-10"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-muted/80 flex items-center justify-center border border-border/50">
-                      <X className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </motion.button>
                 </div>
 
                 {/* Safe area */}
