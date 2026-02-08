@@ -349,12 +349,11 @@ export default function ServiceCalendarCompact() {
               </DialogHeader>
             </div>
 
-            {/* 3D Carousel Container - isolated from scroll context */}
+            {/* 3D Carousel Container */}
             <div 
               className="relative flex items-center justify-center py-10 px-4 min-h-[360px] sm:min-h-[420px]" 
               style={{ 
                 perspective: "1000px",
-                isolation: "isolate",
               }}
             >
               {/* Cards Container */}
@@ -362,7 +361,6 @@ export default function ServiceCalendarCompact() {
                 className="relative w-full max-w-lg flex items-center justify-center h-72"
                 style={{ 
                   transformStyle: "preserve-3d",
-                  transform: "translateZ(0)",
                 }}
               >
                 {cardOrder.map((tier, index) => {
@@ -399,6 +397,8 @@ export default function ServiceCalendarCompact() {
                       )}
                       style={{ 
                         zIndex: isCenter ? 100 : 10,
+                        transformStyle: "flat", // Prevents 3D context from affecting children
+                        backfaceVisibility: "hidden",
                         boxShadow: isCenter 
                           ? "0 30px 50px -15px rgba(0, 0, 0, 0.6), 0 15px 30px -10px rgba(5, 140, 66, 0.25)" 
                           : "0 15px 30px -10px rgba(0, 0, 0, 0.35)",
@@ -408,49 +408,64 @@ export default function ServiceCalendarCompact() {
                       {/* Animated Border for Black Card */}
                       {tier === "black" && (
                         <div 
-                          className="absolute -inset-[1px] rounded-2xl opacity-40 group-hover:opacity-60 transition-opacity duration-700 z-0"
+                          className="absolute -inset-[1px] rounded-2xl opacity-40 group-hover:opacity-60 transition-opacity duration-700"
                           style={{
                             background: "linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.4), rgba(0,0,0,0.2), rgba(255,255,255,0.3), rgba(0,0,0,0.1), rgba(255,255,255,0.2))",
                             backgroundSize: "400% 100%",
                             animation: "borderGlow 8s linear infinite",
+                            zIndex: 0,
                           }}
                         />
                       )}
                       
-                      {/* Card Inner Container */}
-                      <div className="absolute inset-[1px] rounded-2xl overflow-hidden z-10">
-                        {/* Video Background */}
+                      {/* Card Face - All content in a flat 2D context */}
+                      <div 
+                        className="absolute inset-0 rounded-2xl overflow-hidden"
+                        style={{ 
+                          backfaceVisibility: "hidden",
+                          transform: "translateZ(0)", // Creates new stacking context
+                        }}
+                      >
+                        {/* Video Background - lowest layer */}
                         <video
                           autoPlay
                           muted
                           loop
                           playsInline
-                          className="absolute inset-0 w-full h-full object-cover z-0"
+                          className="absolute inset-0 w-full h-full object-cover"
+                          style={{ zIndex: 1 }}
                         >
                           <source src={plan.videoSrc} type="video/mp4" />
                         </video>
                         
-                        {/* Gradient Overlay */}
-                        <div className={cn(
-                          "absolute inset-0 z-10",
-                          tier === "light" 
-                            ? "bg-gradient-to-t from-black/60 via-black/20 to-transparent" 
-                            : "bg-gradient-to-t from-black/70 via-black/30 to-black/10"
-                        )} />
+                        {/* Gradient Overlay - middle layer */}
+                        <div 
+                          className={cn(
+                            "absolute inset-0",
+                            tier === "light" 
+                              ? "bg-gradient-to-t from-black/60 via-black/20 to-transparent" 
+                              : "bg-gradient-to-t from-black/70 via-black/30 to-black/10"
+                          )} 
+                          style={{ zIndex: 2 }}
+                        />
                         
                         {/* Selected Indicator */}
                         {selectedPlan === tier && isCenter && (
                           <motion.div
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
-                            className="absolute top-2 right-2 w-6 h-6 bg-wj-green rounded-full flex items-center justify-center z-30"
+                            className="absolute top-2 right-2 w-6 h-6 bg-wj-green rounded-full flex items-center justify-center"
+                            style={{ zIndex: 10 }}
                           >
                             <CheckCircle2 className="h-4 w-4 text-white" />
                           </motion.div>
                         )}
                         
-                        {/* Card Content */}
-                        <div className="absolute inset-0 p-4 sm:p-5 flex flex-col justify-between z-20">
+                        {/* Card Content - top layer */}
+                        <div 
+                          className="absolute inset-0 p-4 sm:p-5 flex flex-col justify-between"
+                          style={{ zIndex: 5 }}
+                        >
                           <div className="flex flex-col gap-2">
                             <span className={cn(
                               "text-xs sm:text-sm font-bold tracking-wide",
