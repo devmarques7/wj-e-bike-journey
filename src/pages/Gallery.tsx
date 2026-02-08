@@ -1,14 +1,34 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useSearchParams } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { Bot, X, Sparkles } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import { bikeProducts, categories, BikeProduct } from "@/data/products";
 
 const Gallery = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [filteredProducts, setFilteredProducts] = useState<BikeProduct[]>(bikeProducts);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showAiBanner, setShowAiBanner] = useState(false);
+
+  // Read URL params on mount
+  useEffect(() => {
+    const category = searchParams.get("category");
+    const query = searchParams.get("q");
+    
+    if (category && categories.some(c => c.id === category)) {
+      setSelectedCategory(category);
+    }
+    
+    if (query) {
+      setSearchQuery(query);
+      setShowAiBanner(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -23,14 +43,44 @@ const Gallery = () => {
   }, []);
 
   useEffect(() => {
-    if (selectedCategory === "all") {
-      setFilteredProducts(bikeProducts);
-    } else {
-      setFilteredProducts(
-        bikeProducts.filter((product) => product.category === selectedCategory)
-      );
+    let products = bikeProducts;
+    
+    // Filter by category
+    if (selectedCategory !== "all") {
+      products = products.filter((product) => product.category === selectedCategory);
     }
-  }, [selectedCategory]);
+    
+    // Filter by search keywords
+    if (searchQuery) {
+      const keywords = searchQuery.toLowerCase().split(" ");
+      products = products.filter((product) => {
+        const searchableText = `${product.name} ${product.tagline} ${product.features.join(" ")} ${product.category}`.toLowerCase();
+        return keywords.some(keyword => searchableText.includes(keyword));
+      });
+    }
+    
+    setFilteredProducts(products);
+  }, [selectedCategory, searchQuery]);
+
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+    // Update URL params
+    const newParams = new URLSearchParams(searchParams);
+    if (categoryId === "all") {
+      newParams.delete("category");
+    } else {
+      newParams.set("category", categoryId);
+    }
+    setSearchParams(newParams);
+  };
+
+  const clearAiSearch = () => {
+    setSearchQuery("");
+    setShowAiBanner(false);
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete("q");
+    setSearchParams(newParams);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -58,6 +108,34 @@ const Gallery = () => {
             </p>
           </motion.div>
 
+          {/* AI Search Banner */}
+          <AnimatePresence>
+            {showAiBanner && searchQuery && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="mt-8 flex items-center justify-center"
+              >
+                <div className="inline-flex items-center gap-3 px-5 py-3 rounded-full glass border border-wj-green/30">
+                  <div className="flex items-center gap-2">
+                    <Bot className="w-4 h-4 text-wj-green" />
+                    <Sparkles className="w-3 h-3 text-wj-green" />
+                  </div>
+                  <span className="text-sm text-foreground/80">
+                    E-IA encontrou resultados para: <span className="text-wj-green font-medium">"{searchQuery}"</span>
+                  </span>
+                  <button
+                    onClick={clearAiSearch}
+                    className="p-1 rounded-full hover:bg-foreground/10 transition-colors"
+                  >
+                    <X className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Category Filters */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -68,7 +146,7 @@ const Gallery = () => {
             {categories.map((category) => (
               <button
                 key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
+                onClick={() => handleCategoryChange(category.id)}
                 className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
                   selectedCategory === category.id
                     ? "gradient-wj text-white"
