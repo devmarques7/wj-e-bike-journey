@@ -247,106 +247,84 @@ export default function RevisionHistoryTable() {
 
         {/* Details Modal */}
         <Dialog open={!!selectedRevision} onOpenChange={() => setSelectedRevision(null)}>
-          <DialogContent className="max-w-2xl bg-card border-border max-h-[85vh] overflow-hidden flex flex-col">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-wj-green/10 flex items-center justify-center">
-                  <Bike className="h-5 w-5 text-wj-green" />
-                </div>
-                <div>
-                  <p className="text-lg font-semibold">{selectedRevision?.bikeName}</p>
-                  <p className="text-xs text-muted-foreground font-normal">
-                    {selectedRevision && new Date(selectedRevision.date).toLocaleDateString("en-GB", { 
-                      day: "2-digit", 
-                      month: "long", 
-                      year: "numeric" 
-                    })}
-                  </p>
-                </div>
-              </DialogTitle>
-            </DialogHeader>
-
-            <ScrollArea className="flex-1 pr-4">
-              <div className="space-y-6">
-                {/* Status & Health */}
-                <div className="flex gap-3">
-                  {selectedRevision && (
-                    <>
-                      <Badge className={cn("text-xs", statusConfig[selectedRevision.status as keyof typeof statusConfig].color)}>
-                        {statusConfig[selectedRevision.status as keyof typeof statusConfig].label}
-                      </Badge>
-                      <Badge className={cn("text-xs", getHealthTag(selectedRevision.health).color)}>
-                        {getHealthTag(selectedRevision.health).label}
-                      </Badge>
-                    </>
-                  )}
-                </div>
-
-                {/* Notes */}
-                <div>
-                  <h4 className="text-sm font-medium text-foreground mb-2">Notes</h4>
-                  <p className="text-sm text-muted-foreground bg-muted/30 rounded-lg p-3">
-                    {selectedRevision?.notes}
-                  </p>
-                </div>
-
-                {/* Photos */}
-                {selectedRevision?.photos && selectedRevision.photos.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
-                      <ImageIcon className="h-4 w-4" /> Photos
-                    </h4>
-                    <div className="flex gap-2">
-                      {selectedRevision.photos.map((photo, i) => (
-                        <div key={i} className="w-20 h-20 rounded-lg bg-muted overflow-hidden">
-                          <img src={photo} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
-                        </div>
-                      ))}
-                    </div>
+          <DialogContent className="max-w-4xl bg-card border-border max-h-[90vh] overflow-hidden flex flex-col p-0">
+            {/* Header */}
+            <div className="p-4 lg:p-6 border-b border-border/50">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-wj-green/10 flex items-center justify-center">
+                    <Bike className="h-5 w-5 text-wj-green" />
                   </div>
-                )}
+                  <div>
+                    <p className="text-lg font-semibold">{selectedRevision?.bikeName}</p>
+                    <p className="text-xs text-muted-foreground font-normal">
+                      {selectedRevision && new Date(selectedRevision.date).toLocaleDateString("en-GB", { 
+                        day: "2-digit", 
+                        month: "long", 
+                        year: "numeric" 
+                      })}
+                    </p>
+                  </div>
+                  <div className="flex gap-2 ml-auto mr-8">
+                    {selectedRevision && (
+                      <>
+                        <Badge className={cn("text-xs border-0", statusConfig[selectedRevision.status as keyof typeof statusConfig].color)}>
+                          {statusConfig[selectedRevision.status as keyof typeof statusConfig].label}
+                        </Badge>
+                        <Badge className={cn("text-xs border-0", getHealthTag(selectedRevision.health).color)}>
+                          {getHealthTag(selectedRevision.health).label}
+                        </Badge>
+                      </>
+                    )}
+                  </div>
+                </DialogTitle>
+              </DialogHeader>
+            </div>
 
-                {/* Progress Timeline */}
-                <div>
-                  <h4 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
-                    <Clock className="h-4 w-4" /> Progress History
+            {/* Main Grid Layout */}
+            <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-2 gap-0">
+              {/* Left Side - Chat */}
+              <div className="border-r border-border/50 flex flex-col h-full order-2 lg:order-1">
+                <div className="p-4 border-b border-border/50">
+                  <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
+                    <MessageCircle className="h-4 w-4 text-wj-green" /> 
+                    Conversation
                   </h4>
+                </div>
+                <ScrollArea className="flex-1 p-4">
                   <div className="space-y-3">
+                    {/* Auto status messages + chat messages combined */}
                     {selectedRevision?.progress.map((step, i) => (
-                      <div key={i} className="flex gap-3">
-                        <div className="flex flex-col items-center">
-                          <div className="w-6 h-6 rounded-full bg-wj-green/20 flex items-center justify-center">
-                            <CheckCircle2 className="h-3 w-3 text-wj-green" />
-                          </div>
-                          {i < (selectedRevision?.progress.length || 0) - 1 && (
-                            <div className="w-px h-full bg-border flex-1 my-1" />
-                          )}
+                      <div key={`status-${i}`} className="flex gap-3">
+                        <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center shrink-0">
+                          <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                         </div>
-                        <div className="flex-1 pb-3">
-                          <p className="text-sm font-medium text-foreground">{step.action}</p>
-                          <p className="text-xs text-muted-foreground">{step.date} • {step.by}</p>
+                        <div className="flex-1">
+                          <div className="bg-muted/30 rounded-lg px-3 py-2 inline-block">
+                            <p className="text-xs text-muted-foreground italic">{step.action}</p>
+                            <p className="text-[10px] text-muted-foreground/70 mt-0.5">{step.date}</p>
+                          </div>
                         </div>
                       </div>
                     ))}
-                  </div>
-                </div>
-
-                {/* Chat */}
-                <div>
-                  <h4 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
-                    <MessageCircle className="h-4 w-4" /> Chat with Mechanic
-                  </h4>
-                  <div className="bg-muted/30 rounded-lg p-3 space-y-3 min-h-[120px]">
                     {selectedRevision?.chat.map((msg, i) => (
-                      <div key={i} className={cn("flex", msg.from === "user" ? "justify-end" : "justify-start")}>
+                      <div key={`chat-${i}`} className={cn("flex gap-3", msg.from === "user" ? "flex-row-reverse" : "")}>
+                        <Avatar className="h-8 w-8 shrink-0">
+                          <AvatarFallback className={cn(
+                            "text-xs font-medium",
+                            msg.from === "user" ? "bg-wj-green/20 text-wj-green" : "bg-muted"
+                          )}>
+                            {msg.from === "user" ? "ME" : getInitials(selectedRevision?.mechanic || "M")}
+                          </AvatarFallback>
+                        </Avatar>
                         <div className={cn(
-                          "max-w-[80%] rounded-lg px-3 py-2",
+                          "max-w-[75%] rounded-lg px-3 py-2",
                           msg.from === "user" 
                             ? "bg-wj-green text-wj-green-foreground" 
                             : "bg-muted"
                         )}>
                           <p className="text-sm">{msg.message}</p>
-                          <p className="text-xs opacity-70 mt-1">{msg.time}</p>
+                          <p className="text-[10px] opacity-70 mt-1">{msg.time}</p>
                         </div>
                       </div>
                     ))}
@@ -354,20 +332,103 @@ export default function RevisionHistoryTable() {
                       <p className="text-xs text-muted-foreground text-center py-4">No messages yet</p>
                     )}
                   </div>
-                  <div className="flex gap-2 mt-3">
+                </ScrollArea>
+                {/* Chat Input */}
+                <div className="p-4 border-t border-border/50">
+                  <div className="flex gap-2">
                     <Input
                       placeholder="Type a message..."
                       value={chatMessage}
                       onChange={(e) => setChatMessage(e.target.value)}
-                      className="flex-1 bg-muted/50 border-border/50"
+                      className="flex-1 bg-muted/50 border-border/50 h-9 text-sm"
                     />
-                    <Button size="icon" className="bg-wj-green hover:bg-wj-green/90">
+                    <Button size="icon" className="bg-wj-green hover:bg-wj-green/90 h-9 w-9">
                       <Send className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
               </div>
-            </ScrollArea>
+
+              {/* Right Side - Timeline, Photos, Notes */}
+              <div className="flex flex-col h-full overflow-hidden order-1 lg:order-2">
+                <ScrollArea className="flex-1">
+                  <div className="p-4 space-y-6">
+                    {/* Progress Timeline */}
+                    <div>
+                      <h4 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-wj-green" /> Progress Timeline
+                      </h4>
+                      <div className="relative">
+                        <div className="absolute left-3 top-3 bottom-3 w-px bg-border" />
+                        <div className="space-y-0">
+                          {selectedRevision?.progress.map((step, i) => (
+                            <div key={i} className="flex gap-3 relative">
+                              <div className="w-6 h-6 rounded-full bg-wj-green/20 flex items-center justify-center z-10 shrink-0">
+                                <CheckCircle2 className="h-3 w-3 text-wj-green" />
+                              </div>
+                              <div className="flex-1 pb-4">
+                                <p className="text-sm font-medium text-foreground">{step.action}</p>
+                                <p className="text-xs text-muted-foreground">{step.date} • {step.by}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Photos Grid */}
+                    <div>
+                      <h4 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
+                        <ImageIcon className="h-4 w-4 text-wj-green" /> Process Photos
+                      </h4>
+                      {selectedRevision?.photos && selectedRevision.photos.length > 0 ? (
+                        <div className="grid grid-cols-3 gap-2">
+                          {selectedRevision.photos.map((photo, i) => (
+                            <div key={i} className="aspect-square rounded-lg bg-muted overflow-hidden">
+                              <img src={photo} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="bg-muted/30 rounded-lg p-6 text-center">
+                          <ImageIcon className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
+                          <p className="text-xs text-muted-foreground">No photos available</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Mechanic Notes */}
+                    <div>
+                      <h4 className="text-sm font-medium text-foreground mb-3 flex items-center gap-2">
+                        <Wrench className="h-4 w-4 text-wj-green" /> Mechanic Notes
+                      </h4>
+                      <div className="space-y-3">
+                        {selectedRevision?.progress.map((step, i) => (
+                          <div key={i} className="bg-muted/30 rounded-lg p-3">
+                            <div className="flex items-center gap-2 mb-1.5">
+                              <Avatar className="h-5 w-5">
+                                <AvatarFallback className="text-[10px] bg-muted">
+                                  {step.by === "System" ? "SY" : getInitials(step.by)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-xs font-medium text-foreground">{step.action}</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground pl-7">
+                              {i === 0 && "Bike received and checked into system."}
+                              {i === 1 && "Beginning full inspection of all components."}
+                              {i === 2 && "Replaced necessary parts. Quality verified."}
+                              {i === 3 && selectedRevision?.notes}
+                              {i > 3 && "Status updated."}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground/70 pl-7 mt-1">{step.date}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </ScrollArea>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </motion.div>
