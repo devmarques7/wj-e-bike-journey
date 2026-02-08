@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import useEmblaCarousel from "embla-carousel-react";
+import { Bike } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import bikeFull from "@/assets/bike-full.png";
 import bikePanel from "@/assets/bike-panel.png";
@@ -147,6 +148,13 @@ export default function BikeShowcase() {
       animate={{ opacity: 1, scale: 1 }}
       className="relative h-full min-h-[400px] rounded-3xl overflow-hidden"
     >
+      {/* Header */}
+      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4">
+        <span className="text-sm font-medium text-foreground/80">My Bike</span>
+        <div className="p-2 rounded-full bg-background/20 backdrop-blur-sm">
+          <Bike className="h-4 w-4 text-wj-green" />
+        </div>
+      </div>
       {/* Carousel Container */}
       <div className="absolute inset-0" ref={emblaRef}>
         <div className="flex h-full">
