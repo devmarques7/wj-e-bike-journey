@@ -339,132 +339,234 @@ const AccessoryDetail = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-10%" }}
               transition={{ duration: 0.6 }}
-              className="max-w-xl mx-auto"
             >
-              <div className="rounded-3xl border border-border/30 p-8 md:p-12 space-y-8">
-                {/* Header */}
-                <div className="text-center space-y-2">
-                  <h3 className="text-2xl font-light text-foreground">
-                    {accessory.name}
-                  </h3>
-                  <div className="flex items-baseline justify-center gap-3">
-                    <span className="text-3xl font-light text-foreground">
-                      {formatPrice(accessory.price)}
-                    </span>
-                    {accessory.originalPrice && (
-                      <span className="text-lg text-muted-foreground line-through">
-                        {formatPrice(accessory.originalPrice)}
-                      </span>
-                    )}
+              <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
+                {/* Left - Image Gallery */}
+                <div className="space-y-4">
+                  {/* Main Image */}
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5 }}
+                    className="aspect-square rounded-3xl border border-border/30 flex items-center justify-center relative overflow-hidden"
+                    style={{ backgroundColor: `${accessory.colors[selectedColor].hex}05` }}
+                  >
+                    <Package 
+                      className="w-32 h-32 md:w-40 md:h-40 transition-colors duration-500"
+                      style={{ color: accessory.colors[selectedColor].hex }}
+                    />
+                    
+                    {/* Badges */}
+                    <div className="absolute top-6 left-6 flex gap-2">
+                      {accessory.isNew && (
+                        <span className="px-3 py-1 text-xs font-bold uppercase tracking-wider gradient-wj text-white rounded-full">
+                          New
+                        </span>
+                      )}
+                      {accessory.isBestseller && (
+                        <span className="px-3 py-1 text-xs font-bold uppercase tracking-wider bg-foreground text-background rounded-full">
+                          Bestseller
+                        </span>
+                      )}
+                    </div>
+                  </motion.div>
+
+                  {/* Thumbnail Gallery */}
+                  <div className="grid grid-cols-4 gap-3">
+                    {["Front View", "Side View", "Back View", "Detail"].map((view, index) => (
+                      <motion.button
+                        key={view}
+                        initial={{ opacity: 0, y: 10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.3, delay: index * 0.1 }}
+                        className={`aspect-square rounded-xl border flex items-center justify-center transition-all duration-300 ${
+                          index === 0
+                            ? "border-wj-green bg-wj-green/5"
+                            : "border-border/30 hover:border-border/60"
+                        }`}
+                        style={{ backgroundColor: index === 0 ? `${accessory.colors[selectedColor].hex}08` : undefined }}
+                      >
+                        <Package 
+                          className={`w-8 h-8 transition-colors duration-300 ${
+                            index === 0 ? "" : "text-muted-foreground/40"
+                          }`}
+                          style={{ color: index === 0 ? accessory.colors[selectedColor].hex : undefined }}
+                        />
+                      </motion.button>
+                    ))}
                   </div>
                 </div>
 
-                {/* Color Selection */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: 0.1 }}
-                  className="space-y-3"
-                >
-                  <label className="block text-sm text-muted-foreground text-center">
-                    Color: <span className="text-foreground">{accessory.colors[selectedColor].name}</span>
-                  </label>
-                  <div className="flex gap-3 justify-center">
-                    {accessory.colors.map((color, index) => (
-                      <button
-                        key={color.name}
-                        onClick={() => setSelectedColor(index)}
-                        className={`w-10 h-10 rounded-full border-2 transition-all duration-200 ${
-                          selectedColor === index
-                            ? "border-wj-green scale-110"
-                            : "border-transparent hover:scale-105"
-                        }`}
-                        style={{ backgroundColor: color.hex }}
-                        title={color.name}
-                      />
-                    ))}
-                  </div>
-                </motion.div>
-
-                {/* Quantity */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: 0.2 }}
-                  className="flex justify-center"
-                >
-                  <div className="inline-flex items-center border border-border/30 rounded-xl">
-                    <button
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="p-3 hover:bg-muted/20 transition-colors rounded-l-xl"
-                    >
-                      <Minus className="h-4 w-4" />
-                    </button>
-                    <span className="w-14 text-center font-medium">{quantity}</span>
-                    <button
-                      onClick={() => setQuantity(quantity + 1)}
-                      className="p-3 hover:bg-muted/20 transition-colors rounded-r-xl"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </button>
-                  </div>
-                </motion.div>
-
-                {/* Add to Cart */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: 0.3 }}
-                >
-                  <Button
-                    size="lg"
-                    className="w-full gradient-wj text-white hover:opacity-90 py-6"
-                  >
-                    <ShoppingBag className="h-5 w-5 mr-2" />
-                    Add to Cart — {formatPrice(totalPrice)}
-                  </Button>
-                </motion.div>
-
-                {/* Trust Badges */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: 0.4 }}
-                  className="flex justify-center gap-8 pt-4 text-xs text-muted-foreground"
-                >
-                  <div className="flex items-center gap-2">
-                    <Truck className="h-4 w-4 text-wj-green" />
-                    Free Shipping
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Shield className="h-4 w-4 text-wj-green" />
-                    {accessory.specs.warranty || "2yr Warranty"}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Zap className="h-4 w-4 text-wj-green" />
-                    Fast Delivery
-                  </div>
-                </motion.div>
-
-                {/* Compatibility */}
-                {accessory.specs.compatibility && (
+                {/* Right - Product Info */}
+                <div className="lg:sticky lg:top-32 space-y-8">
+                  {/* Header */}
                   <motion.div
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 0.4, delay: 0.5 }}
-                    className="p-4 rounded-xl border border-wj-green/20 bg-wj-green/5 text-center"
+                    transition={{ duration: 0.4 }}
+                    className="space-y-4"
                   >
-                    <p className="text-sm text-foreground">
-                      <span className="text-muted-foreground">Compatible with:</span>{" "}
-                      {accessory.specs.compatibility}
+                    <p className="text-xs text-muted-foreground/60 uppercase tracking-[0.2em]">
+                      {accessory.category}
                     </p>
+                    <h3 className="text-2xl md:text-3xl font-light text-foreground">
+                      {accessory.name}
+                    </h3>
+                    <p className="text-muted-foreground font-light">
+                      {accessory.tagline}
+                    </p>
+                    <div className="flex items-baseline gap-3">
+                      <span className="text-3xl font-light text-foreground">
+                        {formatPrice(accessory.price)}
+                      </span>
+                      {accessory.originalPrice && (
+                        <span className="text-lg text-muted-foreground line-through">
+                          {formatPrice(accessory.originalPrice)}
+                        </span>
+                      )}
+                    </div>
                   </motion.div>
-                )}
+
+                  {/* Divider */}
+                  <div className="h-px bg-border/20" />
+
+                  {/* Features Quick View */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4, delay: 0.1 }}
+                    className="space-y-3"
+                  >
+                    <p className="text-xs text-muted-foreground/60 uppercase tracking-wider">
+                      Key Features
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {accessory.features.slice(0, 4).map((feature) => (
+                        <span
+                          key={feature}
+                          className="px-3 py-1.5 text-xs rounded-full border border-border/30 text-muted-foreground"
+                        >
+                          {feature}
+                        </span>
+                      ))}
+                    </div>
+                  </motion.div>
+
+                  {/* Color Selection */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4, delay: 0.15 }}
+                    className="space-y-3"
+                  >
+                    <label className="block text-xs text-muted-foreground/60 uppercase tracking-wider">
+                      Color: <span className="text-foreground normal-case">{accessory.colors[selectedColor].name}</span>
+                    </label>
+                    <div className="flex gap-3">
+                      {accessory.colors.map((color, index) => (
+                        <button
+                          key={color.name}
+                          onClick={() => setSelectedColor(index)}
+                          className={`w-10 h-10 rounded-full border-2 transition-all duration-200 ${
+                            selectedColor === index
+                              ? "border-wj-green scale-110"
+                              : "border-transparent hover:scale-105"
+                          }`}
+                          style={{ backgroundColor: color.hex }}
+                          title={color.name}
+                        />
+                      ))}
+                    </div>
+                  </motion.div>
+
+                  {/* Quantity */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4, delay: 0.2 }}
+                    className="space-y-3"
+                  >
+                    <label className="block text-xs text-muted-foreground/60 uppercase tracking-wider">
+                      Quantity
+                    </label>
+                    <div className="inline-flex items-center border border-border/30 rounded-xl">
+                      <button
+                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                        className="p-3 hover:bg-muted/20 transition-colors rounded-l-xl"
+                      >
+                        <Minus className="h-4 w-4" />
+                      </button>
+                      <span className="w-14 text-center font-medium">{quantity}</span>
+                      <button
+                        onClick={() => setQuantity(quantity + 1)}
+                        className="p-3 hover:bg-muted/20 transition-colors rounded-r-xl"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </motion.div>
+
+                  {/* Add to Cart */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4, delay: 0.25 }}
+                    className="pt-4"
+                  >
+                    <Button
+                      size="lg"
+                      className="w-full gradient-wj text-white hover:opacity-90 py-6"
+                    >
+                      <ShoppingBag className="h-5 w-5 mr-2" />
+                      Add to Cart — {formatPrice(totalPrice)}
+                    </Button>
+                  </motion.div>
+
+                  {/* Trust Badges */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    whileInView={{ opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4, delay: 0.3 }}
+                    className="flex flex-wrap gap-6 pt-2 text-xs text-muted-foreground"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Truck className="h-4 w-4 text-wj-green" />
+                      Free Shipping
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-wj-green" />
+                      {accessory.specs.warranty || "2yr Warranty"}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Zap className="h-4 w-4 text-wj-green" />
+                      Fast Delivery
+                    </div>
+                  </motion.div>
+
+                  {/* Compatibility */}
+                  {accessory.specs.compatibility && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.4, delay: 0.35 }}
+                      className="p-4 rounded-xl border border-wj-green/20 bg-wj-green/5"
+                    >
+                      <p className="text-sm text-foreground">
+                        <span className="text-muted-foreground">Compatible with:</span>{" "}
+                        {accessory.specs.compatibility}
+                      </p>
+                    </motion.div>
+                  )}
+                </div>
               </div>
             </motion.div>
           </div>
