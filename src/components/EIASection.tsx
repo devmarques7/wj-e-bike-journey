@@ -72,9 +72,24 @@ const EIASection = () => {
   };
 
   return (
-    <section className="relative py-20 md:py-28">
+    <section className="relative py-20 md:py-28 overflow-hidden">
+      {/* Video Background */}
+      <div className="absolute inset-0 z-0">
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+        >
+          <source src="/videos/eia-background.mp4" type="video/mp4" />
+        </video>
+        {/* Overlay for readability */}
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
+      </div>
+
       {/* Minimal glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-wj-green/5 rounded-full blur-[100px]" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[300px] bg-wj-green/5 rounded-full blur-[100px] z-[1]" />
 
       <div className="container-wj relative z-10">
         <motion.div
