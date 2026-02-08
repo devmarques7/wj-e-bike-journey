@@ -30,32 +30,36 @@ const HeroSection = () => {
       </div>
 
       {/* Content */}
-      <div className="relative z-20 container-wj text-center">
+      <div className="relative z-20 container-wj h-full flex items-center">
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, x: -60 }}
+          animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="max-w-4xl mx-auto"
+          className="max-w-xl"
         >
-          {/* Pre-headline */}
-          <motion.p
+          {/* Model Badge */}
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="text-wj-green text-sm md:text-base font-medium tracking-widest uppercase mb-6"
+            className="inline-flex items-center gap-2 mb-8"
           >
-            Premium E-Mobility Experience
-          </motion.p>
+            <span className="h-px w-8 bg-wj-green" />
+            <span className="text-wj-green text-xs font-medium tracking-[0.3em] uppercase">
+              V8 Electric
+            </span>
+          </motion.div>
 
           {/* Main Headline */}
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-display-sm md:text-display-lg lg:text-display-xl font-bold text-foreground mb-6 text-balance"
+            className="text-display-sm md:text-display-lg lg:text-display-xl font-bold text-foreground mb-6 leading-[0.95]"
           >
-            Your journey in the Netherlands,{" "}
-            <span className="text-gradient-wj">elevated to a state of art.</span>
+            Power with bold
+            <br />
+            <span className="text-gradient-wj">urban attitude.</span>
           </motion.h1>
 
           {/* Sub-headline */}
@@ -63,10 +67,19 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
-            className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10"
+            className="text-base md:text-lg text-muted-foreground max-w-md mb-4"
           >
-            We don't just sell e-bikes. We deliver freedom, performance, and the
-            world's first digital mobility passport.
+            Built to own the streets with style, comfort, and silent performance.
+          </motion.p>
+
+          {/* Tagline */}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.7 }}
+            className="text-sm text-foreground/60 tracking-wide mb-10"
+          >
+            More range. More control. No limits.
           </motion.p>
 
           {/* CTA Buttons */}
@@ -74,47 +87,47 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.8 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4"
+            className="flex flex-col sm:flex-row items-start gap-4"
           >
             <Button
               size="lg"
-              className="glass border-wj-green/50 text-foreground hover:bg-wj-green hover:text-white px-8 py-6 text-base transition-all duration-300"
+              className="bg-wj-green text-white hover:bg-wj-green/90 px-8 py-6 text-sm font-medium tracking-wide transition-all duration-300"
               onClick={scrollToNext}
             >
-              Discover My Journey
+              Explore V8
             </Button>
             <Button
               variant="ghost"
               size="lg"
-              className="text-foreground/80 hover:text-foreground gap-2 px-8 py-6 text-base"
+              className="text-foreground/70 hover:text-foreground hover:bg-transparent gap-2 px-6 py-6 text-sm"
             >
-              <Play className="h-5 w-5" />
+              <Play className="h-4 w-4" />
               Watch Film
             </Button>
           </motion.div>
-        </motion.div>
 
-        {/* Stats Row */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 1 }}
-          className="mt-16 md:mt-24 grid grid-cols-3 gap-8 max-w-2xl mx-auto"
-        >
-          {[
-            { value: "150+", label: "km Range" },
-            { value: "25", label: "km/h Top Speed" },
-            { value: "5yr", label: "Warranty" },
-          ].map((stat, index) => (
-            <div key={index} className="text-center">
-              <p className="text-2xl md:text-3xl font-bold text-foreground">
-                {stat.value}
-              </p>
-              <p className="text-xs md:text-sm text-muted-foreground mt-1">
-                {stat.label}
-              </p>
-            </div>
-          ))}
+          {/* Minimal Stats */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 1 }}
+            className="mt-16 flex items-center gap-8 text-sm"
+          >
+            {[
+              { value: "150km", label: "Range" },
+              { value: "25km/h", label: "Speed" },
+              { value: "5yr", label: "Warranty" },
+            ].map((stat, index) => (
+              <div key={index} className="flex items-baseline gap-2">
+                <span className="text-lg font-semibold text-foreground">
+                  {stat.value}
+                </span>
+                <span className="text-xs text-muted-foreground uppercase tracking-wider">
+                  {stat.label}
+                </span>
+              </div>
+            ))}
+          </motion.div>
         </motion.div>
       </div>
 
