@@ -268,17 +268,17 @@ export default function RevisionHistoryTable() {
 
         {/* Details Modal */}
         <Dialog open={!!selectedRevision} onOpenChange={() => setSelectedRevision(null)}>
-          <DialogContent className="max-w-4xl bg-card border-border max-h-[90vh] overflow-hidden flex flex-col p-0">
+          <DialogContent className="w-[95vw] max-w-4xl bg-card border-border max-h-[95vh] md:max-h-[90vh] overflow-hidden flex flex-col p-0">
             {/* Header with Timeline */}
-            <div className="p-4 border-b border-border/50">
+            <div className="p-3 md:p-4 border-b border-border/50">
               <DialogHeader>
-                <DialogTitle className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 rounded-full bg-wj-green/10 flex items-center justify-center">
-                    <Bike className="h-4 w-4 text-wj-green" />
+                <DialogTitle className="flex flex-wrap items-center gap-2 md:gap-3 mb-3 md:mb-4">
+                  <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-wj-green/10 flex items-center justify-center">
+                    <Bike className="h-3.5 w-3.5 md:h-4 md:w-4 text-wj-green" />
                   </div>
-                  <div className="flex-1">
-                    <p className="text-base font-semibold">{selectedRevision?.bikeName}</p>
-                    <p className="text-xs text-muted-foreground font-normal">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm md:text-base font-semibold truncate">{selectedRevision?.bikeName}</p>
+                    <p className="text-[10px] md:text-xs text-muted-foreground font-normal">
                       {selectedRevision && new Date(selectedRevision.date).toLocaleDateString("en-GB", { 
                         day: "2-digit", 
                         month: "short", 
@@ -286,13 +286,13 @@ export default function RevisionHistoryTable() {
                       })}
                     </p>
                   </div>
-                  <div className="flex gap-2 mr-8">
+                  <div className="flex gap-1.5 md:gap-2 mr-6 md:mr-8">
                     {selectedRevision && (
                       <>
-                        <Badge className={cn("text-[10px] border-0", statusConfig[selectedRevision.status as keyof typeof statusConfig].color)}>
+                        <Badge className={cn("text-[8px] md:text-[10px] border-0 px-1.5 py-0.5", statusConfig[selectedRevision.status as keyof typeof statusConfig].color)}>
                           {statusConfig[selectedRevision.status as keyof typeof statusConfig].label}
                         </Badge>
-                        <Badge className={cn("text-[10px] border-0", getHealthTag(selectedRevision.health).color)}>
+                        <Badge className={cn("text-[8px] md:text-[10px] border-0 px-1.5 py-0.5", getHealthTag(selectedRevision.health).color)}>
                           {getHealthTag(selectedRevision.health).label}
                         </Badge>
                       </>
@@ -301,14 +301,14 @@ export default function RevisionHistoryTable() {
                 </DialogTitle>
               </DialogHeader>
 
-              {/* Horizontal Timeline */}
-              <div className="flex items-center justify-between gap-1 mt-2">
+              {/* Horizontal Timeline - Hide labels on mobile */}
+              <div className="flex items-center justify-between gap-0.5 md:gap-1 mt-2">
                 {timelineSteps.map((step, i) => {
                   const activeStep = getActiveStep(selectedRevision?.status || "pending");
                   const isCompleted = i <= activeStep;
                   const isCurrent = i === activeStep;
                   return (
-                    <div key={step.key} className="flex-1 flex flex-col items-center gap-1">
+                    <div key={step.key} className="flex-1 flex flex-col items-center gap-0.5 md:gap-1">
                       <div className="flex items-center w-full">
                         {i > 0 && (
                           <div className={cn(
@@ -317,14 +317,14 @@ export default function RevisionHistoryTable() {
                           )} />
                         )}
                         <div className={cn(
-                          "w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-all",
+                          "w-4 h-4 md:w-5 md:h-5 rounded-full flex items-center justify-center shrink-0 transition-all",
                           isCompleted ? "bg-wj-green" : "bg-muted",
                           isCurrent && "ring-2 ring-wj-green/30"
                         )}>
                           {isCompleted ? (
-                            <CheckCircle2 className="h-3 w-3 text-wj-green-foreground" />
+                            <CheckCircle2 className="h-2.5 w-2.5 md:h-3 md:w-3 text-wj-green-foreground" />
                           ) : (
-                            <Circle className="h-2 w-2 text-muted-foreground" />
+                            <Circle className="h-1.5 w-1.5 md:h-2 md:w-2 text-muted-foreground" />
                           )}
                         </div>
                         {i < timelineSteps.length - 1 && (
@@ -335,7 +335,7 @@ export default function RevisionHistoryTable() {
                         )}
                       </div>
                       <span className={cn(
-                        "text-[9px] text-center leading-tight",
+                        "text-[7px] md:text-[9px] text-center leading-tight hidden sm:block",
                         isCurrent ? "text-wj-green font-medium" : "text-muted-foreground"
                       )}>
                         {step.label}
@@ -347,17 +347,17 @@ export default function RevisionHistoryTable() {
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 overflow-hidden relative p-4">
-              <div className="flex gap-4 h-full">
-                {/* Chat Sidebar */}
+            <div className="flex-1 overflow-hidden relative p-2 md:p-4">
+              <div className="flex flex-col md:flex-row gap-2 md:gap-4 h-full">
+                {/* Chat Sidebar - Full width on mobile when open */}
                 <AnimatePresence mode="wait">
                   {chatOpen && (
                     <motion.div
-                      initial={{ width: 0, opacity: 0 }}
-                      animate={{ width: 280, opacity: 1 }}
-                      exit={{ width: 0, opacity: 0 }}
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.2 }}
-                      className="bg-background border border-border/50 rounded-2xl flex flex-col shadow-xl shrink-0 overflow-hidden"
+                      className="bg-background border border-border/50 rounded-xl md:rounded-2xl flex flex-col shadow-xl shrink-0 overflow-hidden w-full md:w-[280px] max-h-[200px] md:max-h-none md:h-full"
                     >
                       <div className="p-3 border-b border-border/50 flex items-center justify-between rounded-t-2xl">
                         <h4 className="text-xs font-medium text-foreground flex items-center gap-1.5">
@@ -432,28 +432,41 @@ export default function RevisionHistoryTable() {
                   )}
                 </AnimatePresence>
 
-                {/* Collapsed Chat Column */}
+                {/* Collapsed Chat Column - Hidden on mobile, show button instead */}
                 {!chatOpen && (
-                  <div className="w-12 bg-background border border-border/50 rounded-2xl flex flex-col items-center py-3 shrink-0">
+                  <>
+                    {/* Mobile: Floating button */}
                     <Button 
-                      variant="ghost" 
-                      size="icon"
-                      className="h-9 w-9 hover:bg-wj-green/10"
+                      variant="outline" 
+                      size="sm"
+                      className="md:hidden flex items-center gap-2 h-8 px-3 mb-2 bg-background border-border/50"
                       onClick={() => setChatOpen(true)}
                     >
-                      <MessageCircle className="h-4 w-4 text-wj-green" />
+                      <MessageCircle className="h-3.5 w-3.5 text-wj-green" />
+                      <span className="text-xs">Chat</span>
                     </Button>
-                  </div>
+                    {/* Desktop: Slim column */}
+                    <div className="hidden md:flex w-10 bg-background border border-border/50 rounded-xl flex-col items-center py-3 shrink-0">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        className="h-8 w-8 hover:bg-wj-green/10"
+                        onClick={() => setChatOpen(true)}
+                      >
+                        <MessageCircle className="h-4 w-4 text-wj-green" />
+                      </Button>
+                    </div>
+                  </>
                 )}
 
                 {/* Main Content Area */}
-                <div className="flex-1 flex flex-col h-full overflow-hidden bg-background border border-border/50 rounded-2xl">
+                <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-background border border-border/50 rounded-xl md:rounded-2xl">
 
                 <ScrollArea className="flex-1">
-                  <div className="p-4 space-y-3">
+                  <div className="p-3 md:p-4 space-y-2 md:space-y-3">
                     {/* Notes Summary */}
-                    <div className="bg-muted/30 rounded-lg p-3">
-                      <p className="text-sm text-foreground">{selectedRevision?.notes}</p>
+                    <div className="bg-muted/30 rounded-lg p-2.5 md:p-3">
+                      <p className="text-xs md:text-sm text-foreground">{selectedRevision?.notes}</p>
                     </div>
 
                     {/* Collapsible Photos */}
@@ -472,16 +485,16 @@ export default function RevisionHistoryTable() {
                       </CollapsibleTrigger>
                       <CollapsibleContent className="pt-2">
                         {selectedRevision?.photos && selectedRevision.photos.length > 0 ? (
-                          <div className="grid grid-cols-4 gap-2">
+                          <div className="grid grid-cols-3 md:grid-cols-4 gap-1.5 md:gap-2">
                             {selectedRevision.photos.map((photo, i) => (
-                              <div key={i} className="aspect-square rounded-lg bg-muted overflow-hidden">
+                              <div key={i} className="aspect-square rounded-md md:rounded-lg bg-muted overflow-hidden">
                                 <img src={photo} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
                               </div>
                             ))}
                           </div>
                         ) : (
-                          <div className="bg-muted/20 rounded-lg p-4 text-center">
-                            <p className="text-xs text-muted-foreground">No photos</p>
+                          <div className="bg-muted/20 rounded-lg p-3 md:p-4 text-center">
+                            <p className="text-[10px] md:text-xs text-muted-foreground">No photos</p>
                           </div>
                         )}
                       </CollapsibleContent>
@@ -515,9 +528,9 @@ export default function RevisionHistoryTable() {
 
                     {/* Star Rating Review */}
                     {selectedRevision?.status === "completed" && (
-                      <div className="border-t border-border/50 pt-4 mt-4">
-                        <p className="text-xs font-medium text-foreground mb-2">Rate this service</p>
-                        <div className="flex items-center gap-1">
+                      <div className="border-t border-border/50 pt-3 md:pt-4 mt-3 md:mt-4">
+                        <p className="text-[10px] md:text-xs font-medium text-foreground mb-2">Rate this service</p>
+                        <div className="flex items-center gap-0.5 md:gap-1">
                           {[1, 2, 3, 4, 5].map((star) => (
                             <button
                               key={star}
@@ -526,7 +539,7 @@ export default function RevisionHistoryTable() {
                             >
                               <Star 
                                 className={cn(
-                                  "h-6 w-6 transition-colors",
+                                  "h-5 w-5 md:h-6 md:w-6 transition-colors",
                                   star <= userRating 
                                     ? "fill-amber-400 text-amber-400" 
                                     : "text-muted-foreground/30"
@@ -535,7 +548,7 @@ export default function RevisionHistoryTable() {
                             </button>
                           ))}
                           {userRating > 0 && (
-                            <span className="text-xs text-muted-foreground ml-2">
+                            <span className="text-[10px] md:text-xs text-muted-foreground ml-2">
                               {userRating === 5 ? "Excellent!" : userRating >= 4 ? "Great!" : userRating >= 3 ? "Good" : "Thanks"}
                             </span>
                           )}
