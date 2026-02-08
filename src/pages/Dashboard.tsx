@@ -5,6 +5,7 @@ import ServiceRequestCard from "@/components/dashboard/ServiceRequestCard";
 import WalletCard from "@/components/dashboard/WalletCard";
 import ServiceCountdown from "@/components/dashboard/ServiceCountdown";
 import RevisionHistoryTable from "@/components/dashboard/RevisionHistoryTable";
+import AccessoryCarousel from "@/components/dashboard/AccessoryCarousel";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 
@@ -41,8 +42,18 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Revision History Table - Full Width */}
-        <RevisionHistoryTable />
+        {/* Revision History + Accessory Carousel */}
+        <div className="grid grid-cols-12 gap-4 lg:gap-6">
+          {/* Table - 8 columns */}
+          <div className="col-span-12 lg:col-span-8">
+            <RevisionHistoryTable />
+          </div>
+          
+          {/* Accessory Carousel - 4 columns */}
+          <div className="col-span-12 lg:col-span-4">
+            <AccessoryCarousel />
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   );
