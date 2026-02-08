@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingCart, Heart, ChevronUp, ChevronDown } from "lucide-react";
+import { ShoppingCart, Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { accessories } from "@/data/accessories";
 import { useCart } from "@/contexts/CartContext";
@@ -14,11 +14,11 @@ export default function AccessoryCarousel() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const { addItem } = useCart();
 
-  // Auto-rotate carousel every 4 seconds
+  // Auto-rotate carousel every 7 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % carouselAccessories.length);
-    }, 4000);
+    }, 7000);
     return () => clearInterval(interval);
   }, []);
 
@@ -56,128 +56,139 @@ export default function AccessoryCarousel() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}
-      className="h-full rounded-3xl border border-border/50 bg-card/50 backdrop-blur-md overflow-hidden flex flex-col"
+      className="h-full rounded-3xl border border-border/50 overflow-hidden relative"
     >
-      {/* Header */}
-      <div className="p-4 border-b border-border/50">
-        <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">For Your Bike</p>
-        <h3 className="text-sm font-semibold text-foreground">Accessories</h3>
-      </div>
+      {/* Background Image with Animation */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentAccessory.id + "-bg"}
+          initial={{ opacity: 0, scale: 1.1 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.7, ease: "easeInOut" }}
+          className="absolute inset-0"
+        >
+          <img
+            src={currentAccessory.image}
+            alt=""
+            className="w-full h-full object-cover"
+          />
+        </motion.div>
+      </AnimatePresence>
 
-      {/* Carousel Content */}
-      <div className="flex-1 flex flex-col p-4 relative">
-        {/* Navigation Arrows */}
-        <div className="absolute right-4 top-4 flex flex-col gap-1 z-10">
+      {/* Gradient Overlays */}
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-r from-background/80 to-transparent pointer-events-none" />
+
+      {/* Content */}
+      <div className="relative z-10 h-full flex flex-col justify-between p-5">
+        {/* Top Section */}
+        <div className="flex items-start justify-between">
+          {/* Badge */}
+          <AnimatePresence mode="wait">
+            {(currentAccessory.isNew || currentAccessory.isBestseller) && (
+              <motion.span
+                key={currentAccessory.id + "-badge"}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                className="px-2.5 py-1 rounded-full bg-wj-green/90 backdrop-blur-sm text-[10px] font-bold uppercase tracking-wider text-primary-foreground"
+              >
+                {currentAccessory.isNew ? "New" : "Bestseller"}
+              </motion.span>
+            )}
+          </AnimatePresence>
+
+          {/* Favorite Button */}
           <button
-            onClick={goToPrev}
-            className="w-6 h-6 rounded-md bg-muted/50 hover:bg-muted flex items-center justify-center transition-colors"
+            onClick={handleToggleFavorite}
+            className={cn(
+              "w-9 h-9 rounded-full backdrop-blur-md flex items-center justify-center transition-all",
+              isFavorite 
+                ? "bg-destructive/20 text-destructive" 
+                : "bg-background/30 text-foreground/70 hover:bg-background/50"
+            )}
           >
-            <ChevronUp className="w-3 h-3 text-muted-foreground" />
-          </button>
-          <button
-            onClick={goToNext}
-            className="w-6 h-6 rounded-md bg-muted/50 hover:bg-muted flex items-center justify-center transition-colors"
-          >
-            <ChevronDown className="w-3 h-3 text-muted-foreground" />
+            <Heart className={cn("w-4 h-4", isFavorite && "fill-current")} />
           </button>
         </div>
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentAccessory.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-            className="flex-1 flex flex-col"
-          >
-            {/* Image */}
-            <div className="aspect-square rounded-2xl bg-muted/30 flex items-center justify-center mb-3 relative overflow-hidden">
-              <img
-                src={currentAccessory.image}
-                alt={currentAccessory.name}
-                className="w-full h-full object-contain p-4"
-              />
-              {/* Badges */}
-              {currentAccessory.isNew && (
-                <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-wj-green text-[10px] font-bold uppercase text-primary-foreground">
-                  New
-                </span>
-              )}
-              {currentAccessory.isBestseller && !currentAccessory.isNew && (
-                <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-wj-green/80 text-[10px] font-bold uppercase text-primary-foreground">
-                  Bestseller
-                </span>
-              )}
-            </div>
-
-            {/* Info */}
-            <div className="space-y-1 mb-3">
-              <h4 className="text-sm font-semibold text-foreground line-clamp-1">
+        {/* Bottom Section */}
+        <div className="space-y-4">
+          {/* Product Info */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentAccessory.id + "-info"}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="space-y-2"
+            >
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                {currentAccessory.category}
+              </p>
+              <h3 className="text-xl font-bold text-foreground leading-tight">
                 {currentAccessory.name}
-              </h4>
-              <p className="text-xs text-muted-foreground line-clamp-1">
+              </h3>
+              <p className="text-xs text-muted-foreground">
                 {currentAccessory.tagline}
               </p>
               <div className="flex items-baseline gap-2">
-                <span className="text-lg font-bold text-wj-green">€{currentAccessory.price}</span>
+                <span className="text-2xl font-bold text-wj-green">€{currentAccessory.price}</span>
                 {currentAccessory.originalPrice && (
-                  <span className="text-xs text-muted-foreground line-through">
+                  <span className="text-sm text-muted-foreground line-through">
                     €{currentAccessory.originalPrice}
                   </span>
                 )}
               </div>
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Actions Row */}
+          <div className="flex items-center gap-3">
+            {/* Add to Cart */}
+            <Button
+              onClick={handleAddToCart}
+              size="sm"
+              className="flex-1 bg-wj-green hover:bg-wj-green/90 text-primary-foreground h-10"
+            >
+              <ShoppingCart className="w-4 h-4 mr-2" />
+              Add to Cart
+            </Button>
+
+            {/* Navigation */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={goToPrev}
+                className="w-10 h-10 rounded-xl bg-background/30 backdrop-blur-md hover:bg-background/50 flex items-center justify-center transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4 text-foreground" />
+              </button>
+              <button
+                onClick={goToNext}
+                className="w-10 h-10 rounded-xl bg-background/30 backdrop-blur-md hover:bg-background/50 flex items-center justify-center transition-colors"
+              >
+                <ChevronRight className="w-4 h-4 text-foreground" />
+              </button>
             </div>
+          </div>
 
-            {/* Color Dots */}
-            <div className="flex items-center gap-1.5 mb-4">
-              {currentAccessory.colors.slice(0, 4).map((color) => (
-                <div
-                  key={color.name}
-                  className="w-4 h-4 rounded-full border border-border/50"
-                  style={{ backgroundColor: color.hex }}
-                  title={color.name}
-                />
-              ))}
-            </div>
-          </motion.div>
-        </AnimatePresence>
-
-        {/* Actions */}
-        <div className="flex gap-2 mt-auto">
-          <Button
-            onClick={handleAddToCart}
-            size="sm"
-            className="flex-1 bg-wj-green hover:bg-wj-green/90 text-white text-xs h-9"
-          >
-            <ShoppingCart className="w-3.5 h-3.5 mr-1.5" />
-            Add
-          </Button>
-          <Button
-            onClick={handleToggleFavorite}
-            size="sm"
-            variant="outline"
-            className={cn(
-              "h-9 w-9 p-0 border-border/50",
-              isFavorite && "bg-destructive/10 border-destructive/30 text-destructive"
-            )}
-          >
-            <Heart className={cn("w-3.5 h-3.5", isFavorite && "fill-current")} />
-          </Button>
-        </div>
-
-        {/* Dots Indicator */}
-        <div className="flex items-center justify-center gap-1 mt-3">
-          {carouselAccessories.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentIndex(index)}
-              className={cn(
-                "w-1.5 h-1.5 rounded-full transition-all duration-300",
-                index === currentIndex ? "bg-wj-green w-4" : "bg-muted-foreground/30"
-              )}
-            />
-          ))}
+          {/* Progress Dots */}
+          <div className="flex items-center gap-1.5">
+            {carouselAccessories.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentIndex(index)}
+                className={cn(
+                  "h-1 rounded-full transition-all duration-500",
+                  index === currentIndex 
+                    ? "bg-wj-green flex-1" 
+                    : "bg-foreground/20 w-6 hover:bg-foreground/30"
+                )}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </motion.div>
