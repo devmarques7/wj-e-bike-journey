@@ -45,21 +45,21 @@ const FeaturesSection = () => {
     offset: ["start start", "end end"],
   });
 
-  // Calculate active index based on scroll progress
-  const activeIndex = useTransform(scrollYProgress, [0, 1], [0, features.length - 0.01]);
-
   return (
-    <section ref={containerRef} className="relative bg-card" style={{ height: `${features.length * 100}vh` }}>
+    <section ref={containerRef} className="relative" style={{ height: `${features.length * 60}vh` }}>
+      {/* Gradient transition from previous section */}
+      <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-background to-transparent z-10 pointer-events-none" />
+      
       {/* Sticky Container */}
-      <div className="sticky top-0 h-screen overflow-hidden">
-        <div className="container-wj h-full py-12 md:py-20">
+      <div className="sticky top-0 h-screen overflow-hidden bg-card">
+        <div className="container-wj h-full py-8 md:py-12 flex flex-col">
           {/* Section Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.5 }}
             viewport={{ once: true }}
-            className="text-center mb-8 md:mb-12"
+            className="text-center mb-6 md:mb-8"
           >
             <p className="text-wj-green text-sm font-medium tracking-widest uppercase mb-2">
               Technology
@@ -70,9 +70,9 @@ const FeaturesSection = () => {
           </motion.div>
 
           {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-[calc(100%-120px)] items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 items-center max-h-[70vh]">
             {/* Left Side - Titles */}
-            <div className="lg:col-span-3 flex flex-col justify-center gap-4">
+            <div className="lg:col-span-3 flex flex-col justify-center gap-3">
               {features.map((feature, index) => (
                 <FeatureTitle
                   key={feature.title}
@@ -85,28 +85,14 @@ const FeaturesSection = () => {
               ))}
             </div>
 
-            {/* Center - Description */}
-            <div className="lg:col-span-4 flex items-center justify-center">
-              <div className="relative h-48 w-full flex items-center justify-center">
-                {features.map((feature, index) => (
-                  <FeatureDescription
-                    key={feature.title}
-                    description={feature.description}
-                    index={index}
-                    scrollProgress={scrollYProgress}
-                    totalFeatures={features.length}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Right Side - Image with Badge */}
-            <div className="lg:col-span-5 flex items-center justify-center">
-              <div className="relative w-full max-w-md aspect-[4/3] rounded-2xl overflow-hidden">
+            {/* Right Side - Image with Description & Badge */}
+            <div className="lg:col-span-9 flex items-center justify-center">
+              <div className="relative w-full max-w-2xl aspect-[16/10] rounded-2xl overflow-hidden">
                 {features.map((feature, index) => (
                   <FeatureImage
                     key={feature.title}
                     image={feature.image}
+                    description={feature.description}
                     highlight={feature.highlight}
                     title={feature.title}
                     index={index}
@@ -119,7 +105,7 @@ const FeaturesSection = () => {
           </div>
 
           {/* Progress Indicator */}
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2">
+          <div className="flex justify-center gap-2 mt-6">
             {features.map((_, index) => (
               <ProgressDot 
                 key={index} 
@@ -147,77 +133,48 @@ interface FeatureTitleProps {
 const FeatureTitle = ({ title, icon: Icon, index, scrollProgress, totalFeatures }: FeatureTitleProps) => {
   const segmentSize = 1 / totalFeatures;
   const start = index * segmentSize;
+  const mid = start + segmentSize * 0.5;
   const end = (index + 1) * segmentSize;
 
-  const opacity = useTransform(scrollProgress, [start, start + segmentSize * 0.3, end - segmentSize * 0.3, end], 
-    index === 0 ? [1, 1, 1, 0.3] : 
-    index === totalFeatures - 1 ? [0.3, 1, 1, 1] : 
-    [0.3, 1, 1, 0.3]
+  // More direct/instant transitions
+  const opacity = useTransform(scrollProgress, 
+    [start, start + 0.01, end - 0.01, end], 
+    index === 0 ? [1, 1, 1, 0.25] : 
+    index === totalFeatures - 1 ? [0.25, 1, 1, 1] : 
+    [0.25, 1, 1, 0.25]
   );
 
-  const scale = useTransform(scrollProgress, [start, start + segmentSize * 0.3, end - segmentSize * 0.3, end],
-    index === 0 ? [1, 1, 1, 0.95] :
-    index === totalFeatures - 1 ? [0.95, 1, 1, 1] :
-    [0.95, 1, 1, 0.95]
+  const scale = useTransform(scrollProgress, 
+    [start, start + 0.01, end - 0.01, end],
+    index === 0 ? [1, 1, 1, 0.92] :
+    index === totalFeatures - 1 ? [0.92, 1, 1, 1] :
+    [0.92, 1, 1, 0.92]
   );
 
-  const x = useTransform(scrollProgress, [start, start + segmentSize * 0.3, end - segmentSize * 0.3, end],
-    index === 0 ? [8, 8, 8, 0] :
-    index === totalFeatures - 1 ? [0, 8, 8, 8] :
-    [0, 8, 8, 0]
+  const x = useTransform(scrollProgress, 
+    [start, start + 0.01, end - 0.01, end],
+    index === 0 ? [12, 12, 12, 0] :
+    index === totalFeatures - 1 ? [0, 12, 12, 12] :
+    [0, 12, 12, 0]
   );
 
   return (
     <motion.div
       style={{ opacity, scale, x }}
-      className="flex items-center gap-3 cursor-pointer transition-colors"
+      className="flex items-center gap-3 cursor-pointer"
     >
-      <div className="w-10 h-10 rounded-lg gradient-wj flex items-center justify-center flex-shrink-0">
-        <Icon className="h-5 w-5 text-white" />
+      <div className="w-9 h-9 rounded-lg gradient-wj flex items-center justify-center flex-shrink-0">
+        <Icon className="h-4 w-4 text-white" />
       </div>
-      <span className="text-lg font-semibold text-foreground">{title}</span>
+      <span className="text-base font-semibold text-foreground">{title}</span>
     </motion.div>
   );
 };
 
-// Feature Description Component
-interface FeatureDescriptionProps {
-  description: string;
-  index: number;
-  scrollProgress: MotionValue<number>;
-  totalFeatures: number;
-}
-
-const FeatureDescription = ({ description, index, scrollProgress, totalFeatures }: FeatureDescriptionProps) => {
-  const segmentSize = 1 / totalFeatures;
-  const start = index * segmentSize;
-  const end = (index + 1) * segmentSize;
-
-  const opacity = useTransform(scrollProgress, [start, start + segmentSize * 0.2, end - segmentSize * 0.2, end],
-    index === 0 ? [1, 1, 1, 0] :
-    index === totalFeatures - 1 ? [0, 1, 1, 1] :
-    [0, 1, 1, 0]
-  );
-
-  const y = useTransform(scrollProgress, [start, start + segmentSize * 0.2, end - segmentSize * 0.2, end],
-    index === 0 ? [0, 0, 0, -30] :
-    index === totalFeatures - 1 ? [30, 0, 0, 0] :
-    [30, 0, 0, -30]
-  );
-
-  return (
-    <motion.p
-      style={{ opacity, y }}
-      className="absolute text-center text-lg md:text-xl text-muted-foreground leading-relaxed px-4"
-    >
-      {description}
-    </motion.p>
-  );
-};
-
-// Feature Image Component
+// Feature Image Component with Description inside
 interface FeatureImageProps {
   image: string;
+  description: string;
   highlight: string;
   title: string;
   index: number;
@@ -225,21 +182,24 @@ interface FeatureImageProps {
   totalFeatures: number;
 }
 
-const FeatureImage = ({ image, highlight, title, index, scrollProgress, totalFeatures }: FeatureImageProps) => {
+const FeatureImage = ({ image, description, highlight, title, index, scrollProgress, totalFeatures }: FeatureImageProps) => {
   const segmentSize = 1 / totalFeatures;
   const start = index * segmentSize;
   const end = (index + 1) * segmentSize;
 
-  const opacity = useTransform(scrollProgress, [start, start + segmentSize * 0.2, end - segmentSize * 0.2, end],
+  // Instant but smooth transitions
+  const opacity = useTransform(scrollProgress, 
+    [start, start + 0.02, end - 0.02, end],
     index === 0 ? [1, 1, 1, 0] :
     index === totalFeatures - 1 ? [0, 1, 1, 1] :
     [0, 1, 1, 0]
   );
 
-  const scale = useTransform(scrollProgress, [start, start + segmentSize * 0.2, end - segmentSize * 0.2, end],
-    index === 0 ? [1, 1, 1, 0.9] :
-    index === totalFeatures - 1 ? [0.9, 1, 1, 1] :
-    [0.9, 1, 1, 0.9]
+  const scale = useTransform(scrollProgress, 
+    [start, start + 0.02, end - 0.02, end],
+    index === 0 ? [1, 1, 1, 0.95] :
+    index === totalFeatures - 1 ? [0.95, 1, 1, 1] :
+    [0.95, 1, 1, 0.95]
   );
 
   return (
@@ -252,11 +212,17 @@ const FeatureImage = ({ image, highlight, title, index, scrollProgress, totalFea
         alt={title}
         className="w-full h-full object-cover"
       />
-      {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
+      {/* Gradient overlay for text readability */}
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
       
-      {/* Badge at bottom */}
-      <div className="absolute bottom-4 left-4 right-4">
+      {/* Content container at bottom */}
+      <div className="absolute bottom-0 left-0 right-0 p-6">
+        {/* Description text */}
+        <p className="text-foreground/90 text-sm md:text-base leading-relaxed mb-4 max-w-lg">
+          {description}
+        </p>
+        
+        {/* Badge */}
         <div className="inline-flex items-center px-4 py-2 rounded-full bg-wj-green/20 backdrop-blur-sm border border-wj-green/30">
           <span className="text-sm font-medium text-wj-green">
             {highlight}
@@ -279,20 +245,22 @@ const ProgressDot = ({ index, scrollProgress, totalFeatures }: ProgressDotProps)
   const start = index * segmentSize;
   const end = (index + 1) * segmentSize;
 
-  const width = useTransform(scrollProgress, [start, start + segmentSize * 0.2, end - segmentSize * 0.2, end],
-    index === 0 ? [32, 32, 32, 8] :
-    index === totalFeatures - 1 ? [8, 32, 32, 32] :
-    [8, 32, 32, 8]
+  const width = useTransform(scrollProgress, 
+    [start, start + 0.01, end - 0.01, end],
+    index === 0 ? [24, 24, 24, 8] :
+    index === totalFeatures - 1 ? [8, 24, 24, 24] :
+    [8, 24, 24, 8]
   );
 
-  const backgroundColor = useTransform(scrollProgress, [start, start + segmentSize * 0.1],
-    ["rgba(255,255,255,0.3)", "hsl(142, 76%, 36%)"]
+  const backgroundColor = useTransform(scrollProgress, 
+    [start, start + 0.01],
+    ["rgba(255,255,255,0.2)", "hsl(142, 76%, 36%)"]
   );
 
   return (
     <motion.div
       style={{ width, backgroundColor }}
-      className="h-2 rounded-full"
+      className="h-1.5 rounded-full"
     />
   );
 };
