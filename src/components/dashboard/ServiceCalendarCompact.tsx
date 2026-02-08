@@ -370,13 +370,36 @@ export default function ServiceCalendarCompact() {
           {/* Scrollable Container with Hidden Scrollbar */}
           <div className="overflow-y-auto max-h-[90vh] scrollbar-hide">
             <div className="p-6 pb-0">
-              <DialogHeader className="text-center">
-                <DialogTitle className="flex items-center justify-center gap-2 text-2xl">
-                  <Crown className="h-6 w-6 text-wj-green" />
-                  Upgrade Your Membership
-                </DialogTitle>
-                <DialogDescription className="text-center">
-                  Calendar booking is a premium feature. Upgrade your E-Pass to schedule services directly.
+              <DialogHeader>
+                <div className="flex items-center justify-between">
+                  <DialogTitle className="flex items-center gap-2 text-xl">
+                    <Crown className="h-5 w-5 text-wj-green" />
+                    E-Pass
+                  </DialogTitle>
+                  
+                  {/* Billing Toggle - Extreme Right */}
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className={cn(
+                      "transition-colors",
+                      !isAnnualBilling ? "text-foreground font-medium" : "text-muted-foreground"
+                    )}>
+                      Monthly
+                    </span>
+                    <Switch
+                      checked={isAnnualBilling}
+                      onCheckedChange={setIsAnnualBilling}
+                      className="data-[state=checked]:bg-wj-green h-5 w-9"
+                    />
+                    <span className={cn(
+                      "transition-colors",
+                      isAnnualBilling ? "text-foreground font-medium" : "text-muted-foreground"
+                    )}>
+                      Yearly
+                    </span>
+                  </div>
+                </div>
+                <DialogDescription className="text-sm mt-1">
+                  Upgrade to unlock calendar booking and premium benefits.
                 </DialogDescription>
               </DialogHeader>
             </div>
@@ -494,60 +517,109 @@ export default function ServiceCalendarCompact() {
                           </motion.div>
                         )}
                         
-                        {/* Card Content - top layer */}
+                        {/* Card Content - top layer with plan details */}
                         <div 
-                          className="absolute inset-0 p-4 sm:p-5 flex flex-col justify-between"
+                          className="absolute inset-0 p-3 sm:p-4 flex flex-col justify-between"
                           style={{ 
                             zIndex: 5,
                             transform: "translate3d(0,0,1px)",
                             willChange: "transform",
                           }}
                         >
-                          <div className="flex flex-col gap-2">
-                            <span className={cn(
-                              "text-xs sm:text-sm font-bold tracking-wide",
-                              tier === "light" ? "text-zinc-800" : "text-white"
-                            )}>
-                              WJ VISION
-                            </span>
-                            <span className={cn(
-                              "text-[9px] sm:text-[10px] font-semibold px-2 py-0.5 rounded-full w-fit",
-                              tier === "light" 
-                                ? "bg-zinc-800/20 text-zinc-800 border border-zinc-800/20" 
-                                : tier === "black"
-                                  ? "bg-white/10 text-white/90 border border-white/20"
-                                  : "bg-white/20 text-white border border-white/30"
-                            )}>
-                              {tier.toUpperCase()}
-                            </span>
+                          {/* Header */}
+                          <div className="flex items-start justify-between">
+                            <div className="flex flex-col gap-1">
+                              <span className={cn(
+                                "text-[10px] sm:text-xs font-bold tracking-wide",
+                                tier === "light" ? "text-zinc-800" : "text-white"
+                              )}>
+                                WJ VISION
+                              </span>
+                              <span className={cn(
+                                "text-[8px] sm:text-[9px] font-semibold px-1.5 py-0.5 rounded-full w-fit",
+                                tier === "light" 
+                                  ? "bg-zinc-800/20 text-zinc-800" 
+                                  : tier === "black"
+                                    ? "bg-white/10 text-white/90"
+                                    : "bg-white/20 text-white"
+                              )}>
+                                {tier.toUpperCase()}
+                              </span>
+                            </div>
+                            
+                            {/* Current Badge */}
+                            {userTier === tier && (
+                              <span className={cn(
+                                "text-[7px] sm:text-[8px] font-medium px-1.5 py-0.5 rounded-full",
+                                tier === "light" 
+                                  ? "bg-wj-green/30 text-zinc-800" 
+                                  : "bg-wj-green/40 text-white"
+                              )}>
+                                CURRENT
+                              </span>
+                            )}
                           </div>
                           
-                          <div className="flex flex-col gap-1">
-                            <p className={cn(
-                              "text-[9px] sm:text-[10px]",
-                              tier === "light" ? "text-zinc-600" : "text-white/60"
-                            )}>
-                              Member
-                            </p>
-                            <p className={cn(
-                              "text-sm sm:text-base font-semibold",
-                              tier === "light" ? "text-zinc-800" : "text-white"
-                            )}>
-                              {plan.label}
-                            </p>
-                            <p className={cn(
-                              "text-lg sm:text-xl font-bold mt-1",
-                              tier === "light" ? "text-zinc-900" : "text-white"
-                            )}>
-                              {plan.monthlyPrice === 0 ? (
-                                "Free"
-                              ) : (
-                                <>
-                                  €{(plan.annualPrice / 12).toFixed(0)}
-                                  <span className="text-[10px] sm:text-xs font-normal opacity-70">/mo</span>
-                                </>
-                              )}
-                            </p>
+                          {/* Features - Only show on center card */}
+                          {isCenter && (
+                            <div className="flex-1 flex flex-col justify-center py-2 overflow-hidden">
+                              <div className="space-y-0.5">
+                                {plan.features.slice(0, 3).map((feature, i) => (
+                                  <div key={i} className={cn(
+                                    "flex items-center gap-1 text-[8px] sm:text-[9px]",
+                                    tier === "light" ? "text-zinc-700" : "text-white/80"
+                                  )}>
+                                    <Check className="h-2.5 w-2.5 text-wj-green flex-shrink-0" />
+                                    <span className="truncate">{feature}</span>
+                                  </div>
+                                ))}
+                                {plan.features.length > 3 && (
+                                  <p className={cn(
+                                    "text-[7px] sm:text-[8px] pl-3.5",
+                                    tier === "light" ? "text-zinc-500" : "text-white/50"
+                                  )}>
+                                    +{plan.features.length - 3} more
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* Price Footer */}
+                          <div className="flex items-end justify-between">
+                            <div>
+                              <p className={cn(
+                                "text-[8px] sm:text-[9px]",
+                                tier === "light" ? "text-zinc-600" : "text-white/60"
+                              )}>
+                                {plan.label}
+                              </p>
+                              <p className={cn(
+                                "text-base sm:text-lg font-bold",
+                                tier === "light" ? "text-zinc-900" : "text-white"
+                              )}>
+                                {plan.monthlyPrice === 0 ? (
+                                  "Free"
+                                ) : (
+                                  <>
+                                    €{isAnnualBilling ? (plan.annualPrice / 12).toFixed(0) : plan.monthlyPrice.toFixed(0)}
+                                    <span className="text-[8px] sm:text-[9px] font-normal opacity-70">/mo</span>
+                                  </>
+                                )}
+                              </p>
+                            </div>
+                            
+                            {/* Savings badge */}
+                            {isAnnualBilling && plan.monthlyPrice > 0 && (
+                              <span className={cn(
+                                "text-[7px] sm:text-[8px] font-medium px-1.5 py-0.5 rounded-full",
+                                tier === "light" 
+                                  ? "bg-wj-green/30 text-zinc-800" 
+                                  : "bg-wj-green/40 text-white"
+                              )}>
+                                Save {Math.round(((plan.monthlyPrice * 12 - plan.annualPrice) / (plan.monthlyPrice * 12)) * 100)}%
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -565,176 +637,52 @@ export default function ServiceCalendarCompact() {
               }
             `}</style>
 
-            {/* Current Plan Badge */}
-            <div className="flex justify-center -mt-4 mb-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/60 border border-border/40">
-                <span className="text-xs text-muted-foreground">Current Plan:</span>
-                <span className="text-xs font-semibold text-foreground capitalize">{userTier}</span>
-              </div>
-            </div>
-
-            {/* Scroll Indicator - Animated */}
-            <motion.div 
-              className="flex flex-col items-center justify-center py-3"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-            >
-              <span className="text-xs text-muted-foreground mb-1">Scroll for details</span>
-              <motion.div
-                animate={{ y: [0, 6, 0] }}
-                transition={{ 
-                  duration: 1.5, 
-                  repeat: Infinity, 
-                  ease: "easeInOut" 
-                }}
-              >
-                <ChevronDown className="h-4 w-4 text-muted-foreground" />
-              </motion.div>
-            </motion.div>
-
-            {/* Plan Details - Shows when card is selected and centered */}
+            {/* Swipe to Upgrade - Shows when non-current plan selected */}
             <AnimatePresence mode="wait">
-              {selectedPlan && (
+              {selectedPlan && selectedPlan !== userTier && selectedPlan !== "light" && (
                 <motion.div
                   key={selectedPlan}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.3 }}
-                  className="mx-4 space-y-4"
+                  className="mx-6 -mt-2"
                 >
-                  {(() => {
-                    const plan = membershipPlans.find(p => p.tier === selectedPlan);
-                    if (!plan) return null;
+                  <motion.div
+                    ref={swipeConstraintsRef}
+                    style={{ backgroundColor: swipeBgColor }}
+                    className="relative h-12 rounded-full border border-wj-green/30 overflow-hidden"
+                  >
+                    {/* Hint Text */}
+                    <motion.div 
+                      style={{ opacity: swipeTextOpacity }}
+                      className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                    >
+                      <span className="text-xs text-wj-green/70 font-medium tracking-wide">
+                        Slide to upgrade →
+                      </span>
+                    </motion.div>
                     
-                    const displayPrice = isAnnualBilling 
-                      ? (plan.annualPrice / 12) 
-                      : plan.monthlyPrice;
-                    const savingsPercent = plan.monthlyPrice > 0 
-                      ? Math.round(((plan.monthlyPrice * 12 - plan.annualPrice) / (plan.monthlyPrice * 12)) * 100)
-                      : 0;
-                    const isCurrentPlan = userTier === selectedPlan;
-                    
-                    return (
-                      <>
-                        {/* Minimalist Plan Card */}
-                        <div className="p-4 rounded-xl bg-muted/20 border border-border/20">
-                          {/* Plan Name + Current Badge */}
-                          <div className="flex items-center justify-between mb-3">
-                            <h4 className="font-semibold text-lg text-foreground">
-                              {plan.name}
-                            </h4>
-                            {isCurrentPlan && (
-                              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-wj-green/20 text-wj-green">
-                                Current
-                              </span>
-                            )}
-                          </div>
+                    {/* Success Check */}
+                    <motion.div 
+                      style={{ opacity: swipeCheckOpacity }}
+                      className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                    >
+                      <CheckCircle2 className="h-5 w-5 text-wj-green" />
+                    </motion.div>
 
-                          {/* Price Display */}
-                          {plan.monthlyPrice > 0 ? (
-                            <div className="flex items-baseline gap-1 mb-3">
-                              <span className="text-3xl font-bold text-foreground">
-                                €{displayPrice.toFixed(0)}
-                              </span>
-                              <span className="text-sm text-muted-foreground">/mo</span>
-                              {isAnnualBilling && (
-                                <span className="ml-2 text-xs text-wj-green font-medium">
-                                  Save {savingsPercent}%
-                                </span>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="flex items-baseline gap-1 mb-3">
-                              <span className="text-3xl font-bold text-foreground">Free</span>
-                            </div>
-                          )}
-
-                          {/* Billing Toggle */}
-                          {plan.monthlyPrice > 0 && (
-                            <div className="flex items-center justify-between py-2 px-3 rounded-lg bg-background/50 border border-border/20">
-                              <span className={cn(
-                                "text-sm transition-colors",
-                                !isAnnualBilling ? "text-foreground font-medium" : "text-muted-foreground"
-                              )}>
-                                Monthly
-                              </span>
-                              <Switch
-                                checked={isAnnualBilling}
-                                onCheckedChange={setIsAnnualBilling}
-                                className="data-[state=checked]:bg-wj-green"
-                              />
-                              <span className={cn(
-                                "text-sm transition-colors",
-                                isAnnualBilling ? "text-foreground font-medium" : "text-muted-foreground"
-                              )}>
-                                Yearly
-                              </span>
-                            </div>
-                          )}
-
-                          {/* Features - Compact List */}
-                          <div className="mt-4 space-y-1.5">
-                            {plan.features.slice(0, 4).map((feature, i) => (
-                              <div key={i} className="flex items-center gap-2 text-sm text-foreground/70">
-                                <Check className="h-3.5 w-3.5 text-wj-green flex-shrink-0" />
-                                <span>{feature}</span>
-                              </div>
-                            ))}
-                            {plan.features.length > 4 && (
-                              <p className="text-xs text-muted-foreground pl-5">
-                                +{plan.features.length - 4} more benefits
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Swipe to Upgrade or Current Plan */}
-                        {!isCurrentPlan && selectedPlan !== "light" ? (
-                          <motion.div
-                            ref={swipeConstraintsRef}
-                            style={{ backgroundColor: swipeBgColor }}
-                            className="relative h-12 rounded-full border border-wj-green/30 overflow-hidden"
-                          >
-                            {/* Hint Text */}
-                            <motion.div 
-                              style={{ opacity: swipeTextOpacity }}
-                              className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                            >
-                              <span className="text-xs text-wj-green/70 font-medium tracking-wide">
-                                Slide to upgrade →
-                              </span>
-                            </motion.div>
-                            
-                            {/* Success Check */}
-                            <motion.div 
-                              style={{ opacity: swipeCheckOpacity }}
-                              className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                            >
-                              <CheckCircle2 className="h-5 w-5 text-wj-green" />
-                            </motion.div>
-
-                            {/* Draggable Thumb */}
-                            <motion.div
-                              drag="x"
-                              dragConstraints={{ left: 0, right: swipeMaxDrag }}
-                              dragElastic={0}
-                              onDragEnd={handleSwipeDragEnd}
-                              style={{ x: swipeX }}
-                              className="absolute left-1 top-1 bottom-1 w-10 rounded-full bg-wj-green flex items-center justify-center cursor-grab active:cursor-grabbing shadow-lg shadow-wj-green/30"
-                            >
-                              <ArrowRight className="h-4 w-4 text-background" />
-                            </motion.div>
-                          </motion.div>
-                        ) : isCurrentPlan ? (
-                          <div className="h-12 rounded-full bg-muted/30 border border-border/20 flex items-center justify-center">
-                            <span className="text-sm text-muted-foreground">Current Plan</span>
-                          </div>
-                        ) : null}
-                      </>
-                    );
-                  })()}
+                    {/* Draggable Thumb */}
+                    <motion.div
+                      drag="x"
+                      dragConstraints={{ left: 0, right: swipeMaxDrag }}
+                      dragElastic={0}
+                      onDragEnd={handleSwipeDragEnd}
+                      style={{ x: swipeX }}
+                      className="absolute left-1 top-1 bottom-1 w-10 rounded-full bg-wj-green flex items-center justify-center cursor-grab active:cursor-grabbing shadow-lg shadow-wj-green/30"
+                    >
+                      <ArrowRight className="h-4 w-4 text-background" />
+                    </motion.div>
+                  </motion.div>
                 </motion.div>
               )}
             </AnimatePresence>
