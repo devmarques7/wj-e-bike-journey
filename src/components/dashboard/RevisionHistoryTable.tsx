@@ -268,7 +268,7 @@ export default function RevisionHistoryTable() {
 
         {/* Details Modal */}
         <Dialog open={!!selectedRevision} onOpenChange={() => setSelectedRevision(null)}>
-          <DialogContent className="w-[95vw] max-w-4xl bg-card border-border max-h-[95vh] md:max-h-[90vh] overflow-hidden flex flex-col p-0">
+          <DialogContent className="w-[95vw] max-w-4xl bg-card border-border max-h-[95vh] md:max-h-[90vh] overflow-hidden flex flex-col p-0 rounded-2xl md:rounded-3xl">
             {/* Header with Timeline */}
             <div className="p-3 md:p-4 border-b border-border/50">
               <DialogHeader>
