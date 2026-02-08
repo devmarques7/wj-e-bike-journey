@@ -420,10 +420,11 @@ export default function ServiceCalendarCompact() {
                       
                       {/* Card Face - All content in a flat 2D context */}
                       <div 
-                        className="absolute inset-0 rounded-2xl overflow-hidden"
+                        className="absolute inset-0 rounded-2xl overflow-hidden isolate"
                         style={{ 
                           backfaceVisibility: "hidden",
-                          transform: "translateZ(0)", // Creates new stacking context
+                          transform: "translate3d(0,0,0)",
+                          willChange: "transform",
                         }}
                       >
                         {/* Video Background - lowest layer */}
@@ -432,8 +433,8 @@ export default function ServiceCalendarCompact() {
                           muted
                           loop
                           playsInline
-                          className="absolute inset-0 w-full h-full object-cover"
-                          style={{ zIndex: 1 }}
+                          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                          style={{ zIndex: 1, transform: "translate3d(0,0,0)" }}
                         >
                           <source src={plan.videoSrc} type="video/mp4" />
                         </video>
@@ -441,12 +442,12 @@ export default function ServiceCalendarCompact() {
                         {/* Gradient Overlay - middle layer */}
                         <div 
                           className={cn(
-                            "absolute inset-0",
+                            "absolute inset-0 pointer-events-none",
                             tier === "light" 
                               ? "bg-gradient-to-t from-black/60 via-black/20 to-transparent" 
                               : "bg-gradient-to-t from-black/70 via-black/30 to-black/10"
                           )} 
-                          style={{ zIndex: 2 }}
+                          style={{ zIndex: 2, transform: "translate3d(0,0,0)" }}
                         />
                         
                         {/* Selected Indicator */}
@@ -464,7 +465,11 @@ export default function ServiceCalendarCompact() {
                         {/* Card Content - top layer */}
                         <div 
                           className="absolute inset-0 p-4 sm:p-5 flex flex-col justify-between"
-                          style={{ zIndex: 5 }}
+                          style={{ 
+                            zIndex: 5,
+                            transform: "translate3d(0,0,1px)",
+                            willChange: "transform",
+                          }}
                         >
                           <div className="flex flex-col gap-2">
                             <span className={cn(
