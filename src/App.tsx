@@ -23,6 +23,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import UrgentService from "./pages/UrgentService";
+import MyWallet from "./pages/MyWallet";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +53,7 @@ const App = () => (
               <Route path="/returns" element={<Returns />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/dashboard/wallet" element={<MyWallet />} />
               <Route path="/dashboard/*" element={<Dashboard />} />
               <Route path="/dashboard/admin" element={<AdminDashboard />} />
               <Route path="/dashboard/admin/*" element={<AdminDashboard />} />
