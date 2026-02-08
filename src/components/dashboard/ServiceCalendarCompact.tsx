@@ -113,6 +113,8 @@ export default function ServiceCalendarCompact() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<MemberTier | null>(null);
+  const [activeCardIndex, setActiveCardIndex] = useState(1); // 0=light, 1=black, 2=plus
+  const [isAnimating, setIsAnimating] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [selectedService, setSelectedService] = useState<string>("");
@@ -121,6 +123,67 @@ export default function ServiceCalendarCompact() {
   
   const availableDates = getAvailableDates();
   const userTier = user?.tier || "light";
+
+  // Card order based on active index (carousel logic)
+  const cardOrder: MemberTier[] = ["light", "black", "plus"];
+  
+  const handleCardClick = (tier: MemberTier) => {
+    if (isAnimating) return;
+    
+    const tierIndex = cardOrder.indexOf(tier);
+    if (tierIndex === activeCardIndex) {
+      // Already centered, just select
+      setSelectedPlan(tier);
+      return;
+    }
+    
+    setIsAnimating(true);
+    setActiveCardIndex(tierIndex);
+    setSelectedPlan(tier);
+    
+    setTimeout(() => {
+      setIsAnimating(false);
+    }, 600);
+  };
+
+  // Get card position and rotation based on active index
+  const getCardTransform = (cardIndex: number) => {
+    const diff = cardIndex - activeCardIndex;
+    
+    // Normalize for circular rotation
+    let normalizedDiff = diff;
+    if (diff > 1) normalizedDiff = diff - 3;
+    if (diff < -1) normalizedDiff = diff + 3;
+    
+    if (normalizedDiff === 0) {
+      // Center card
+      return {
+        x: 0,
+        rotateY: 0,
+        scale: 1,
+        z: 20,
+        opacity: 1,
+      };
+    } else if (normalizedDiff === -1 || (activeCardIndex === 0 && cardIndex === 2)) {
+      // Left card
+      return {
+        x: -80,
+        rotateY: 35,
+        scale: 0.75,
+        z: 10,
+        opacity: 0.8,
+      };
+    } else {
+      // Right card
+      return {
+        x: 80,
+        rotateY: -35,
+        scale: 0.75,
+        z: 10,
+        opacity: 0.8,
+      };
+    }
+  };
 
   const isDateAvailable = (date: Date) => {
     return availableDates.some(
@@ -291,207 +354,150 @@ export default function ServiceCalendarCompact() {
             </DialogDescription>
           </DialogHeader>
 
-          {/* Cards Container - Arc Layout like EPassSection */}
+          {/* 3D Carousel Container */}
           <div 
-            className="flex flex-row items-center justify-center gap-0 py-4 px-2" 
-            style={{ perspective: "1500px" }}
+            className="relative flex items-center justify-center py-8 px-4 min-h-[320px] sm:min-h-[380px]" 
+            style={{ perspective: "1200px" }}
           >
-            {/* E-Pass Light Card - Left */}
-            <motion.div
-              initial={{ opacity: 0, y: 100, scale: 0.7 }}
-              animate={{ opacity: 1, y: 0, rotateY: 15, scale: 0.85 }}
-              transition={{ duration: 0.9, delay: 0.3, type: "spring", stiffness: 50 }}
-              whileHover={{ 
-                scale: 0.9, 
-                rotateY: 5, 
-                y: -10,
-                transition: { duration: 0.3 }
-              }}
-              onClick={() => setSelectedPlan("light")}
-              className={cn(
-                "w-28 h-44 sm:w-32 sm:h-48 md:w-36 md:h-56 rounded-xl cursor-pointer -mr-3 sm:-mr-4 z-10 group relative overflow-hidden flex-shrink-0",
-                selectedPlan === "light" && "ring-2 ring-wj-green ring-offset-2 ring-offset-background"
-              )}
-              style={{ 
-                transformStyle: "preserve-3d",
-                boxShadow: "0 20px 40px -15px rgba(0, 0, 0, 0.2)"
-              }}
+            {/* Cards Container */}
+            <div 
+              className="relative w-full max-w-md flex items-center justify-center"
+              style={{ transformStyle: "preserve-3d" }}
             >
-              {/* Video Background */}
-              <video
-                autoPlay
-                muted
-                loop
-                playsInline
-                className="absolute inset-0 w-full h-full object-cover"
-              >
-                <source src="/videos/member-pass-light-bg.mp4" type="video/mp4" />
-              </video>
-              
-              {/* Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-              
-              {/* Selected Indicator */}
-              {selectedPlan === "light" && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute top-1 right-1 w-5 h-5 bg-wj-green rounded-full flex items-center justify-center z-30"
-                >
-                  <CheckCircle2 className="h-3 w-3 text-white" />
-                </motion.div>
-              )}
-              
-              {/* Card Content */}
-              <div className="absolute inset-0 p-3 sm:p-4 flex flex-col justify-between rounded-xl border border-white/10 group-hover:border-white/20 transition-colors duration-300">
-                <div className="flex flex-col gap-1">
-                  <span className="text-[10px] sm:text-xs font-bold text-white drop-shadow-md">WJ VISION</span>
-                  <span className="text-[8px] sm:text-[9px] font-semibold text-white/90 bg-black/30 backdrop-blur-sm px-1.5 py-0.5 rounded-full w-fit">LIGHT</span>
-                </div>
-                <div className="flex flex-col">
-                  <p className="text-[8px] sm:text-[9px] text-white/70">Member</p>
-                  <p className="text-xs sm:text-sm font-medium text-white">Essential</p>
-                  <p className="text-sm sm:text-base font-bold text-white mt-1">Free</p>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* E-Pass Black Card - Center (Main) with Animated Border */}
-            <motion.div
-              initial={{ opacity: 0, y: 120, scale: 0.6 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 1, delay: 0.1, type: "spring", stiffness: 45 }}
-              whileHover={{ 
-                scale: 1.05, 
-                y: -10,
-                rotateX: 3,
-                rotateY: -2,
-                transition: { duration: 0.8, ease: "easeOut" }
-              }}
-              onClick={() => setSelectedPlan("black")}
-              className={cn(
-                "relative w-32 h-52 sm:w-36 sm:h-56 md:w-44 md:h-64 rounded-xl cursor-pointer z-20 group overflow-hidden flex-shrink-0",
-                selectedPlan === "black" && "ring-2 ring-wj-green ring-offset-2 ring-offset-background"
-              )}
-              style={{ 
-                transformStyle: "preserve-3d",
-                perspective: "1000px",
-              }}
-            >
-              {/* Animated Subtle Border */}
-              <div 
-                className="absolute -inset-[1px] rounded-xl opacity-40 group-hover:opacity-60 transition-opacity duration-700"
-                style={{
-                  background: "linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.4), rgba(0,0,0,0.2), rgba(255,255,255,0.3), rgba(0,0,0,0.1), rgba(255,255,255,0.2))",
-                  backgroundSize: "400% 100%",
-                  animation: "borderGlow 8s linear infinite",
-                }}
-              />
-              
-              {/* Card Content Container */}
-              <div className="absolute inset-[1px] rounded-xl overflow-hidden">
-                {/* Video Background */}
-                <video
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  className="absolute inset-0 w-full h-full object-cover"
-                >
-                  <source src="/videos/member-pass-bg.mp4" type="video/mp4" />
-                </video>
+              {cardOrder.map((tier, index) => {
+                const plan = membershipPlans.find(p => p.tier === tier)!;
+                const transform = getCardTransform(index);
+                const isCenter = index === activeCardIndex;
                 
-                {/* Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/20" />
-                
-                {/* Selected Indicator */}
-                {selectedPlan === "black" && (
+                return (
                   <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute top-1 right-1 w-5 h-5 bg-wj-green rounded-full flex items-center justify-center z-30"
+                    key={tier}
+                    initial={false}
+                    animate={{
+                      x: transform.x,
+                      rotateY: transform.rotateY,
+                      scale: transform.scale,
+                      opacity: transform.opacity,
+                      zIndex: transform.z,
+                    }}
+                    transition={{ 
+                      duration: 0.6, 
+                      type: "spring", 
+                      stiffness: 80,
+                      damping: 15
+                    }}
+                    onClick={() => handleCardClick(tier)}
+                    className={cn(
+                      "absolute w-32 h-48 sm:w-40 sm:h-60 md:w-44 md:h-64 rounded-2xl cursor-pointer group overflow-hidden",
+                      isCenter && selectedPlan === tier && "ring-2 ring-wj-green ring-offset-2 ring-offset-background"
+                    )}
+                    style={{ 
+                      transformStyle: "preserve-3d",
+                      boxShadow: isCenter 
+                        ? "0 25px 50px -15px rgba(0, 0, 0, 0.6)" 
+                        : "0 15px 30px -10px rgba(0, 0, 0, 0.3)",
+                    }}
                   >
-                    <CheckCircle2 className="h-3 w-3 text-white" />
+                    {/* Animated Border for Black Card */}
+                    {tier === "black" && (
+                      <div 
+                        className="absolute -inset-[1px] rounded-2xl opacity-40 group-hover:opacity-60 transition-opacity duration-700"
+                        style={{
+                          background: "linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.4), rgba(0,0,0,0.2), rgba(255,255,255,0.3), rgba(0,0,0,0.1), rgba(255,255,255,0.2))",
+                          backgroundSize: "400% 100%",
+                          animation: "borderGlow 8s linear infinite",
+                        }}
+                      />
+                    )}
+                    
+                    {/* Card Inner Container */}
+                    <div className="absolute inset-[1px] rounded-2xl overflow-hidden">
+                      {/* Video Background */}
+                      <video
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        className="absolute inset-0 w-full h-full object-cover"
+                      >
+                        <source src={plan.videoSrc} type="video/mp4" />
+                      </video>
+                      
+                      {/* Gradient Overlay */}
+                      <div className={cn(
+                        "absolute inset-0",
+                        tier === "light" 
+                          ? "bg-gradient-to-t from-black/60 via-black/20 to-transparent" 
+                          : "bg-gradient-to-t from-black/70 via-black/30 to-black/10"
+                      )} />
+                      
+                      {/* Selected Indicator */}
+                      {selectedPlan === tier && isCenter && (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          className="absolute top-2 right-2 w-6 h-6 bg-wj-green rounded-full flex items-center justify-center z-30"
+                        >
+                          <CheckCircle2 className="h-4 w-4 text-white" />
+                        </motion.div>
+                      )}
+                      
+                      {/* Card Content */}
+                      <div className="absolute inset-0 p-4 sm:p-5 flex flex-col justify-between">
+                        <div className="flex flex-col gap-2">
+                          <span className={cn(
+                            "text-xs sm:text-sm font-bold tracking-wide",
+                            tier === "light" ? "text-zinc-800" : "text-white"
+                          )}>
+                            WJ VISION
+                          </span>
+                          <span className={cn(
+                            "text-[9px] sm:text-[10px] font-semibold px-2 py-0.5 rounded-full w-fit",
+                            tier === "light" 
+                              ? "bg-zinc-800/20 text-zinc-800 border border-zinc-800/20" 
+                              : tier === "black"
+                                ? "bg-white/10 text-white/90 border border-white/20"
+                                : "bg-white/20 text-white border border-white/30"
+                          )}>
+                            {tier.toUpperCase()}
+                          </span>
+                        </div>
+                        
+                        <div className="flex flex-col gap-1">
+                          <p className={cn(
+                            "text-[9px] sm:text-[10px]",
+                            tier === "light" ? "text-zinc-600" : "text-white/60"
+                          )}>
+                            Member
+                          </p>
+                          <p className={cn(
+                            "text-sm sm:text-base font-semibold",
+                            tier === "light" ? "text-zinc-800" : "text-white"
+                          )}>
+                            {plan.label}
+                          </p>
+                          <p className={cn(
+                            "text-lg sm:text-xl font-bold mt-1",
+                            tier === "light" ? "text-zinc-900" : "text-white"
+                          )}>
+                            {plan.price.includes("€") ? (
+                              <>
+                                {plan.price.split("/")[0]}
+                                <span className="text-[10px] sm:text-xs font-normal opacity-70">
+                                  /{plan.price.split("/")[1]}
+                                </span>
+                              </>
+                            ) : (
+                              plan.price
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </motion.div>
-                )}
-                
-                {/* Card Content */}
-                <div className="absolute inset-0 p-3 sm:p-4 flex flex-col justify-between rounded-xl">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs sm:text-sm font-bold text-white">WJ VISION</span>
-                    <span className="text-[8px] sm:text-[9px] font-semibold text-white/80 bg-white/10 backdrop-blur-sm px-1.5 py-0.5 rounded-full border border-white/10 w-fit">BLACK</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <p className="text-[8px] sm:text-[9px] text-white/50">Member</p>
-                    <p className="text-xs sm:text-sm font-medium text-white">Elite</p>
-                    <p className="text-base sm:text-lg font-bold text-white mt-1">€19.99<span className="text-[10px] sm:text-xs font-normal opacity-70">/mo</span></p>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Subtle Glow Effect */}
-              <div className="absolute -inset-4 bg-white/5 rounded-2xl blur-xl -z-10 group-hover:bg-white/10 transition-colors duration-700" />
-            </motion.div>
-
-            {/* E-Pass Plus Card - Right */}
-            <motion.div
-              initial={{ opacity: 0, y: 100, scale: 0.7 }}
-              animate={{ opacity: 1, y: 0, rotateY: -15, scale: 0.85 }}
-              transition={{ duration: 0.9, delay: 0.5, type: "spring", stiffness: 50 }}
-              whileHover={{ 
-                scale: 0.9, 
-                rotateY: -5, 
-                y: -10,
-                transition: { duration: 0.3 }
-              }}
-              onClick={() => setSelectedPlan("plus")}
-              className={cn(
-                "w-28 h-44 sm:w-32 sm:h-48 md:w-36 md:h-56 rounded-xl cursor-pointer -ml-3 sm:-ml-4 z-10 group relative overflow-hidden flex-shrink-0",
-                selectedPlan === "plus" && "ring-2 ring-wj-green ring-offset-2 ring-offset-background"
-              )}
-              style={{ 
-                transformStyle: "preserve-3d",
-                boxShadow: "0 20px 40px -15px rgba(5, 140, 66, 0.5)"
-              }}
-            >
-              {/* Video Background */}
-              <video
-                autoPlay
-                muted
-                loop
-                playsInline
-                className="absolute inset-0 w-full h-full object-cover"
-              >
-                <source src="/videos/member-pass-plus-bg.mp4" type="video/mp4" />
-              </video>
-              
-              {/* Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-              
-              {/* Selected Indicator */}
-              {selectedPlan === "plus" && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute top-1 right-1 w-5 h-5 bg-wj-green rounded-full flex items-center justify-center z-30"
-                >
-                  <CheckCircle2 className="h-3 w-3 text-white" />
-                </motion.div>
-              )}
-              
-              {/* Card Content */}
-              <div className="absolute inset-0 p-3 sm:p-4 flex flex-col justify-between rounded-xl border border-white/10 group-hover:border-white/30 transition-colors duration-300">
-                <div className="flex flex-col gap-1">
-                  <span className="text-[10px] sm:text-xs font-bold text-white">WJ VISION</span>
-                  <span className="text-[8px] sm:text-[9px] font-semibold text-white/90 bg-white/20 backdrop-blur-sm px-1.5 py-0.5 rounded-full w-fit">PLUS</span>
-                </div>
-                <div className="flex flex-col">
-                  <p className="text-[8px] sm:text-[9px] text-white/60">Member</p>
-                  <p className="text-xs sm:text-sm font-medium text-white">Premium</p>
-                  <p className="text-sm sm:text-base font-bold text-white mt-1">€9.99<span className="text-[10px] sm:text-xs font-normal opacity-70">/mo</span></p>
-                </div>
-              </div>
-            </motion.div>
+                );
+              })}
+            </div>
           </div>
 
           {/* CSS Animation for Border Glow */}
@@ -502,33 +508,43 @@ export default function ServiceCalendarCompact() {
             }
           `}</style>
 
-          {/* Plan Details */}
+          {/* Plan Details - Shows when card is selected and centered */}
           <AnimatePresence mode="wait">
             {selectedPlan && (
               <motion.div
                 key={selectedPlan}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="p-4 rounded-2xl bg-muted/30 border border-border/30"
+                initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                transition={{ duration: 0.4, type: "spring", stiffness: 100 }}
+                className="mx-4 p-4 sm:p-5 rounded-2xl bg-muted/40 border border-border/40 backdrop-blur-sm"
               >
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold text-foreground">
-                    {membershipPlans.find(p => p.tier === selectedPlan)?.name}
-                  </h4>
-                  <span className="text-wj-green font-bold">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h4 className="font-bold text-lg text-foreground">
+                      {membershipPlans.find(p => p.tier === selectedPlan)?.name}
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      {membershipPlans.find(p => p.tier === selectedPlan)?.description}
+                    </p>
+                  </div>
+                  <span className="text-wj-green font-bold text-xl">
                     {membershipPlans.find(p => p.tier === selectedPlan)?.price}
                   </span>
                 </div>
-                <p className="text-sm text-muted-foreground mb-3">
-                  {membershipPlans.find(p => p.tier === selectedPlan)?.description}
-                </p>
-                <div className="grid grid-cols-2 gap-2">
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {membershipPlans.find(p => p.tier === selectedPlan)?.features.map((feature, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm">
-                      <CheckCircle2 className="h-3 w-3 text-wj-green flex-shrink-0" />
+                    <motion.div 
+                      key={i} 
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      <CheckCircle2 className="h-4 w-4 text-wj-green flex-shrink-0" />
                       <span className="text-muted-foreground">{feature}</span>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </motion.div>
@@ -536,10 +552,14 @@ export default function ServiceCalendarCompact() {
           </AnimatePresence>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-between pt-4 border-t border-border/30">
+          <div className="flex items-center justify-between pt-4 px-4 border-t border-border/30">
             <Button
               variant="ghost"
-              onClick={() => setIsUpgradeModalOpen(false)}
+              onClick={() => {
+                setIsUpgradeModalOpen(false);
+                setSelectedPlan(null);
+                setActiveCardIndex(1);
+              }}
             >
               Maybe Later
             </Button>
