@@ -349,15 +349,21 @@ export default function ServiceCalendarCompact() {
               </DialogHeader>
             </div>
 
-            {/* 3D Carousel Container */}
+            {/* 3D Carousel Container - isolated from scroll context */}
             <div 
               className="relative flex items-center justify-center py-10 px-4 min-h-[360px] sm:min-h-[420px]" 
-              style={{ perspective: "1000px" }}
+              style={{ 
+                perspective: "1000px",
+                isolation: "isolate",
+              }}
             >
               {/* Cards Container */}
               <div 
                 className="relative w-full max-w-lg flex items-center justify-center h-72"
-                style={{ transformStyle: "preserve-3d" }}
+                style={{ 
+                  transformStyle: "preserve-3d",
+                  transform: "translateZ(0)",
+                }}
               >
                 {cardOrder.map((tier, index) => {
                   const plan = membershipPlans.find(p => p.tier === tier)!;
@@ -374,7 +380,6 @@ export default function ServiceCalendarCompact() {
                         rotateY: transform.rotateY,
                         scale: transform.scale,
                         opacity: transform.opacity,
-                        zIndex: transform.z,
                       }}
                       transition={{ 
                         duration: 0.6, 
@@ -389,11 +394,11 @@ export default function ServiceCalendarCompact() {
                       } : undefined}
                       onClick={() => handleCardClick(tier)}
                       className={cn(
-                        "absolute w-32 h-52 sm:w-40 sm:h-64 md:w-44 md:h-72 rounded-2xl cursor-pointer group overflow-hidden",
+                        "absolute w-32 h-52 sm:w-40 sm:h-64 md:w-44 md:h-72 rounded-2xl cursor-pointer group",
                         isCenter && "ring-2 ring-wj-green/60 ring-offset-4 ring-offset-background"
                       )}
                       style={{ 
-                        transformStyle: "preserve-3d",
+                        zIndex: isCenter ? 100 : 10,
                         boxShadow: isCenter 
                           ? "0 30px 50px -15px rgba(0, 0, 0, 0.6), 0 15px 30px -10px rgba(5, 140, 66, 0.25)" 
                           : "0 15px 30px -10px rgba(0, 0, 0, 0.35)",
@@ -403,7 +408,7 @@ export default function ServiceCalendarCompact() {
                       {/* Animated Border for Black Card */}
                       {tier === "black" && (
                         <div 
-                          className="absolute -inset-[1px] rounded-2xl opacity-40 group-hover:opacity-60 transition-opacity duration-700"
+                          className="absolute -inset-[1px] rounded-2xl opacity-40 group-hover:opacity-60 transition-opacity duration-700 z-0"
                           style={{
                             background: "linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.4), rgba(0,0,0,0.2), rgba(255,255,255,0.3), rgba(0,0,0,0.1), rgba(255,255,255,0.2))",
                             backgroundSize: "400% 100%",
@@ -413,21 +418,21 @@ export default function ServiceCalendarCompact() {
                       )}
                       
                       {/* Card Inner Container */}
-                      <div className="absolute inset-[1px] rounded-2xl overflow-hidden">
+                      <div className="absolute inset-[1px] rounded-2xl overflow-hidden z-10">
                         {/* Video Background */}
                         <video
                           autoPlay
                           muted
                           loop
                           playsInline
-                          className="absolute inset-0 w-full h-full object-cover"
+                          className="absolute inset-0 w-full h-full object-cover z-0"
                         >
                           <source src={plan.videoSrc} type="video/mp4" />
                         </video>
                         
                         {/* Gradient Overlay */}
                         <div className={cn(
-                          "absolute inset-0",
+                          "absolute inset-0 z-10",
                           tier === "light" 
                             ? "bg-gradient-to-t from-black/60 via-black/20 to-transparent" 
                             : "bg-gradient-to-t from-black/70 via-black/30 to-black/10"
@@ -445,7 +450,7 @@ export default function ServiceCalendarCompact() {
                         )}
                         
                         {/* Card Content */}
-                        <div className="absolute inset-0 p-4 sm:p-5 flex flex-col justify-between">
+                        <div className="absolute inset-0 p-4 sm:p-5 flex flex-col justify-between z-20">
                           <div className="flex flex-col gap-2">
                             <span className={cn(
                               "text-xs sm:text-sm font-bold tracking-wide",
