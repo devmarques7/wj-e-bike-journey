@@ -174,53 +174,119 @@ const EPassSection = () => {
           ))}
         </div>
 
-        {/* Physical Card Showcase */}
+        {/* Physical Cards Showcase */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.6 }}
-          className="mt-20 text-center"
+          className="mt-20"
         >
-          <div className="relative inline-block">
-            {/* Physical Card Mockup */}
-            <motion.div
-              className="w-72 h-44 md:w-96 md:h-56 rounded-2xl bg-gradient-to-br from-secondary via-background to-secondary border border-border shadow-2xl shadow-black/20"
-              whileHover={{ rotateY: 10, rotateX: -5 }}
-              transition={{ type: "spring", stiffness: 300 }}
-              style={{ transformStyle: "preserve-3d", perspective: 1000 }}
-            >
-              {/* Card Content */}
-              <div className="absolute inset-0 p-6 flex flex-col justify-between">
-                <div className="flex justify-between items-start">
-                  <span className="text-lg font-bold text-foreground">
-                    WJ VISION
-                  </span>
-                  <span className="text-xs text-wj-green font-medium">
-                    E-PASS BLACK
-                  </span>
-                </div>
-                <div className="flex justify-between items-end">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Member Since</p>
-                    <p className="text-sm text-foreground">2024</p>
+          {/* Cards Container */}
+          <div className="flex justify-center items-center mb-12">
+            <div className="relative h-72 w-full max-w-2xl flex items-center justify-center">
+              {/* E-Pass Light Card */}
+              <motion.div
+                initial={{ opacity: 0, rotate: -25, x: -100, scale: 0.9 }}
+                animate={isInView ? { opacity: 1, rotate: -15, x: -80, scale: 0.95 } : {}}
+                transition={{ duration: 0.8, delay: 0.7, type: "spring", stiffness: 100 }}
+                whileHover={{ rotate: -5, y: -20, scale: 1, zIndex: 30 }}
+                className="absolute w-64 h-40 md:w-80 md:h-48 rounded-2xl bg-gradient-to-br from-muted via-background to-muted border border-border shadow-2xl shadow-black/20 cursor-pointer z-10"
+                style={{ transformOrigin: "bottom center" }}
+              >
+                <div className="absolute inset-0 p-5 flex flex-col justify-between">
+                  <div className="flex justify-between items-start">
+                    <span className="text-base font-bold text-foreground">WJ VISION</span>
+                    <span className="text-xs text-muted-foreground font-medium">E-PASS LIGHT</span>
                   </div>
-                  <div className="w-12 h-12 rounded-lg border-2 border-wj-green/30 flex items-center justify-center">
-                    <div className="w-8 h-8 bg-wj-green/20 rounded" />
+                  <div className="flex justify-between items-end">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Member</p>
+                      <p className="text-xs text-foreground">Essential</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-lg border border-border/50 flex items-center justify-center">
+                      <div className="w-6 h-6 bg-muted-foreground/20 rounded" />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
+              </motion.div>
 
-            {/* Glow Effect */}
-            <div className="absolute -inset-4 bg-wj-green/10 rounded-3xl blur-2xl -z-10" />
+              {/* E-Pass Plus Card */}
+              <motion.div
+                initial={{ opacity: 0, rotate: 0, y: 50, scale: 0.9 }}
+                animate={isInView ? { opacity: 1, rotate: 0, y: 0, scale: 1 } : {}}
+                transition={{ duration: 0.8, delay: 0.8, type: "spring", stiffness: 100 }}
+                whileHover={{ y: -30, scale: 1.05, zIndex: 30 }}
+                className="absolute w-64 h-40 md:w-80 md:h-48 rounded-2xl bg-gradient-to-br from-wj-green/30 via-wj-green/10 to-wj-green/20 border border-wj-green/40 shadow-2xl shadow-wj-green/20 cursor-pointer z-20"
+                style={{ transformOrigin: "bottom center" }}
+              >
+                <div className="absolute inset-0 p-5 flex flex-col justify-between">
+                  <div className="flex justify-between items-start">
+                    <span className="text-base font-bold text-foreground">WJ VISION</span>
+                    <span className="text-xs text-wj-green font-medium">E-PASS PLUS</span>
+                  </div>
+                  <div className="flex justify-between items-end">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Member</p>
+                      <p className="text-xs text-foreground">Premium</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-lg border border-wj-green/30 flex items-center justify-center">
+                      <div className="w-6 h-6 bg-wj-green/30 rounded" />
+                    </div>
+                  </div>
+                </div>
+                {/* Glow Effect */}
+                <div className="absolute -inset-2 bg-wj-green/10 rounded-3xl blur-xl -z-10" />
+              </motion.div>
+
+              {/* E-Pass Black Card */}
+              <motion.div
+                initial={{ opacity: 0, rotate: 25, x: 100, scale: 0.9 }}
+                animate={isInView ? { opacity: 1, rotate: 15, x: 80, scale: 0.95 } : {}}
+                transition={{ duration: 0.8, delay: 0.9, type: "spring", stiffness: 100 }}
+                whileHover={{ rotate: 5, y: -20, scale: 1, zIndex: 30 }}
+                className="absolute w-64 h-40 md:w-80 md:h-48 rounded-2xl bg-gradient-to-br from-secondary via-background to-secondary border border-foreground/20 shadow-2xl shadow-black/40 cursor-pointer z-10"
+                style={{ transformOrigin: "bottom center" }}
+              >
+                <div className="absolute inset-0 p-5 flex flex-col justify-between">
+                  <div className="flex justify-between items-start">
+                    <span className="text-base font-bold text-foreground">WJ VISION</span>
+                    <span className="text-xs text-foreground font-medium">E-PASS BLACK</span>
+                  </div>
+                  <div className="flex justify-between items-end">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Member</p>
+                      <p className="text-xs text-foreground">Elite</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-lg border border-foreground/20 flex items-center justify-center">
+                      <div className="w-6 h-6 bg-foreground/20 rounded" />
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
           </div>
 
-          <p className="mt-8 text-sm text-muted-foreground max-w-md mx-auto">
-            <span className="text-foreground font-medium">
-              The digital world you can touch.
-            </span>{" "}
-            Access priority services with a tap of your physical E-Pass card.
-          </p>
+          {/* Description & CTA */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, delay: 1.1 }}
+            className="text-center"
+          >
+            <p className="text-base md:text-lg text-muted-foreground max-w-lg mx-auto mb-6">
+              <span className="text-foreground font-medium">
+                O mundo digital que você pode tocar.
+              </span>{" "}
+              Escolha o plano de fidelidade que combina com seu estilo e acesse serviços exclusivos com um toque do seu E-Pass.
+            </p>
+            <Button 
+              className="gradient-wj text-white hover:opacity-90 transition-all duration-300"
+              size="lg"
+            >
+              Ver detalhes dos planos
+              <span className="ml-2">→</span>
+            </Button>
+          </motion.div>
         </motion.div>
       </div>
     </section>
