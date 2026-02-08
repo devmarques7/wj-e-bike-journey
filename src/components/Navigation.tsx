@@ -1,22 +1,22 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ShoppingBag, User, ChevronRight, Globe } from "lucide-react";
+import { Menu, X, ShoppingBag, User, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { bikeProducts } from "@/data/products";
 
 const navLinks = [
-  { name: "Products", href: "/gallery", description: "Explore our e-bikes" },
-  { name: "Store", href: "#store", description: "Find us near you" },
-  { name: "About", href: "#about", description: "Our story" },
-  { name: "Support", href: "#support", description: "Get help" },
+  { name: "Products", href: "/gallery" },
+  { name: "Store", href: "#store" },
+  { name: "About", href: "#about" },
+  { name: "Support", href: "#support" },
 ];
 
 const languages = [
-  { code: "en", name: "English" },
-  { code: "nl", name: "Nederlands" },
-  { code: "de", name: "Deutsch" },
-  { code: "fr", name: "Français" },
+  { code: "EN", name: "English" },
+  { code: "NL", name: "Nederlands" },
+  { code: "DE", name: "Deutsch" },
+  { code: "FR", name: "Français" },
 ];
 
 // Get top 3 bestseller/new bikes
@@ -28,7 +28,20 @@ interface NavigationProps {
 
 const Navigation = ({ isScrolled = false }: NavigationProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState("en");
+  const [selectedLanguage, setSelectedLanguage] = useState("EN");
+  const [isLangOpen, setIsLangOpen] = useState(false);
+  const langRef = useRef<HTMLDivElement>(null);
+
+  // Close language dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (langRef.current && !langRef.current.contains(event.target as Node)) {
+        setIsLangOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const contentVariants = {
     closed: {
@@ -50,12 +63,12 @@ const Navigation = ({ isScrolled = false }: NavigationProps) => {
   };
 
   const itemVariants = {
-    closed: { opacity: 0, y: -10 },
+    closed: { opacity: 0, x: -20 },
     open: (i: number) => ({
       opacity: 1,
-      y: 0,
+      x: 0,
       transition: {
-        delay: 0.15 + i * 0.05,
+        delay: 0.1 + i * 0.05,
         duration: 0.3,
       },
     }),
@@ -67,7 +80,7 @@ const Navigation = ({ isScrolled = false }: NavigationProps) => {
       opacity: 1,
       scale: 1,
       transition: {
-        delay: 0.2 + i * 0.08,
+        delay: 0.15 + i * 0.08,
         duration: 0.4,
         ease: [0.25, 0.46, 0.45, 0.94] as const,
       },
@@ -161,18 +174,18 @@ const Navigation = ({ isScrolled = false }: NavigationProps) => {
                 exit="closed"
                 className="overflow-hidden"
               >
-                <div className="px-4 pb-4 pt-2 border-t border-border/30">
+                <div className="px-6 pb-6 pt-4 border-t border-border/20">
                   {/* Featured Bikes */}
                   <motion.p
                     variants={itemVariants}
                     initial="closed"
                     animate="open"
                     custom={0}
-                    className="text-xs font-medium text-muted-foreground mb-3 uppercase tracking-wider"
+                    className="text-[10px] font-medium text-muted-foreground/60 mb-3 uppercase tracking-[0.2em]"
                   >
-                    Featured Bikes
+                    Featured
                   </motion.p>
-                  <div className="grid grid-cols-3 gap-3 mb-4">
+                  <div className="grid grid-cols-3 gap-3 mb-6">
                     {featuredBikes.map((bike, index) => (
                       <motion.div
                         key={bike.id}
@@ -186,99 +199,108 @@ const Navigation = ({ isScrolled = false }: NavigationProps) => {
                           onClick={() => setIsMenuOpen(false)}
                           className="group block"
                         >
-                          <div className="relative aspect-square rounded-lg bg-gradient-to-br from-muted/50 to-muted overflow-hidden border border-border/30 transition-all duration-300 group-hover:border-wj-green/50 group-hover:shadow-lg group-hover:shadow-wj-green/10">
+                          <div className="relative aspect-square rounded-xl bg-muted/30 overflow-hidden border border-border/20 transition-all duration-500 group-hover:border-wj-green/30 group-hover:bg-muted/50">
                             <img
                               src={bike.image}
                               alt={bike.name}
-                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                             />
                             {bike.isNew && (
-                              <span className="absolute top-1 right-1 text-[8px] font-bold px-1.5 py-0.5 rounded-full bg-wj-green text-white">
+                              <span className="absolute top-1.5 right-1.5 text-[7px] font-semibold px-1.5 py-0.5 rounded-full bg-wj-green/90 text-white">
                                 NEW
                               </span>
                             )}
                           </div>
-                          <p className="mt-2 text-xs font-medium text-foreground/80 group-hover:text-wj-green transition-colors truncate">
+                          <p className="mt-2 text-[11px] font-medium text-foreground/70 group-hover:text-wj-green transition-colors duration-300">
                             {bike.name}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground">
-                            €{bike.price.toLocaleString()}
                           </p>
                         </Link>
                       </motion.div>
                     ))}
                   </div>
 
-                  {/* Navigation Links */}
-                  <motion.p
-                    variants={itemVariants}
-                    initial="closed"
-                    animate="open"
-                    custom={1}
-                    className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wider"
-                  >
-                    Navigation
-                  </motion.p>
-                  <nav className="space-y-1 mb-4">
+                  {/* Navigation Links - Large Text */}
+                  <nav className="space-y-1 mb-6">
                     {navLinks.map((link, index) => (
                       <motion.div
                         key={link.name}
                         variants={itemVariants}
                         initial="closed"
                         animate="open"
-                        custom={index + 2}
+                        custom={index + 1}
                       >
                         <a
                           href={link.href}
                           onClick={() => setIsMenuOpen(false)}
-                          className="group flex items-center justify-between py-2 px-3 rounded-lg hover:bg-muted/50 transition-all duration-200"
+                          className="group block py-2"
                         >
-                          <div>
-                            <p className="text-sm font-medium text-foreground group-hover:text-wj-green transition-colors">
-                              {link.name}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {link.description}
-                            </p>
-                          </div>
-                          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-wj-green group-hover:translate-x-1 transition-all" />
+                          <span className="text-2xl font-light text-foreground/80 transition-all duration-300 group-hover:text-wj-green group-hover:tracking-wider">
+                            {link.name}
+                          </span>
                         </a>
                       </motion.div>
                     ))}
                   </nav>
 
-                  {/* Footer */}
+                  {/* Footer - Language & Account */}
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: 0.4, duration: 0.3 }}
-                    className="pt-3 border-t border-border/30 flex items-center justify-between gap-3"
+                    transition={{ delay: 0.35, duration: 0.3 }}
+                    className="pt-4 border-t border-border/20 flex items-center justify-between"
                   >
-                    {/* Language Selector */}
-                    <div className="flex items-center gap-2">
-                      <Globe className="h-4 w-4 text-muted-foreground" />
-                      <select
-                        value={selectedLanguage}
-                        onChange={(e) => setSelectedLanguage(e.target.value)}
-                        className="text-xs bg-muted/50 border border-border/50 rounded-md px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-wj-green"
+                    {/* Language Dropdown */}
+                    <div ref={langRef} className="relative">
+                      <button
+                        onClick={() => setIsLangOpen(!isLangOpen)}
+                        className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
                       >
-                        {languages.map((lang) => (
-                          <option key={lang.code} value={lang.code}>
-                            {lang.name}
-                          </option>
-                        ))}
-                      </select>
+                        <span className="text-sm">{selectedLanguage}</span>
+                        <ChevronDown 
+                          className={`h-3 w-3 transition-transform duration-200 ${isLangOpen ? 'rotate-180' : ''}`} 
+                        />
+                      </button>
+                      
+                      <AnimatePresence>
+                        {isLangOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute bottom-full left-0 mb-2 py-1 bg-background/95 backdrop-blur-xl border border-border/50 rounded-lg shadow-xl min-w-[80px] overflow-hidden z-50"
+                          >
+                            {languages.map((lang) => (
+                              <button
+                                key={lang.code}
+                                onClick={() => {
+                                  setSelectedLanguage(lang.code);
+                                  setIsLangOpen(false);
+                                }}
+                                className={`w-full px-3 py-1.5 text-left text-xs transition-colors duration-150 ${
+                                  selectedLanguage === lang.code
+                                    ? "text-wj-green bg-wj-green/10"
+                                    : "text-foreground/70 hover:text-foreground hover:bg-muted/50"
+                                }`}
+                              >
+                                {lang.code}
+                              </button>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
 
-                    {/* Account Button */}
-                    <Button
-                      size="sm"
-                      className="bg-wj-green hover:bg-wj-green-dark text-white"
+                    {/* Account Button - Minimalist */}
+                    <button
                       onClick={() => setIsMenuOpen(false)}
+                      className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-all duration-200 group"
                     >
-                      <User className="h-4 w-4 mr-1" />
-                      Account
-                    </Button>
+                      <span className="group-hover:tracking-wide transition-all duration-200">Account</span>
+                      <div className="w-6 h-6 rounded-full border border-border/50 flex items-center justify-center group-hover:border-foreground/30 transition-colors duration-200">
+                        <User className="h-3 w-3" />
+                      </div>
+                    </button>
                   </motion.div>
                 </div>
               </motion.div>
