@@ -1,14 +1,23 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, CreditCard, Lock, Shield, Truck } from "lucide-react";
+import { ArrowLeft, CreditCard, Lock, Shield, Truck, Plus, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Navigation from "@/components/Navigation";
+import { useCart } from "@/contexts/CartContext";
+import { accessories } from "@/data/accessories";
+
+// Upsell items - popular accessories
+const upsellItems = accessories
+  .filter((a) => a.isBestseller || a.isNew)
+  .slice(0, 3);
 
 const Checkout = () => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [addedUpsells, setAddedUpsells] = useState<string[]>([]);
+  const { items, totalPrice, addItem } = useCart();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,17 +31,6 @@ const Checkout = () => {
     document.documentElement.classList.add("dark");
   }, []);
 
-  // Mock order data - in real app this would come from cart state/context
-  const orderData = {
-    product: "Vision X1",
-    color: "Midnight Black",
-    quantity: 1,
-    price: 2499,
-    ePass: "Silver",
-    ePassPrice: 14.99,
-    shipping: 0,
-  };
-
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("nl-NL", {
       style: "currency",
@@ -41,11 +39,32 @@ const Checkout = () => {
     }).format(price);
   };
 
+  const handleAddUpsell = (item: typeof upsellItems[0]) => {
+    addItem({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      color: item.colors[0]?.name,
+    });
+    setAddedUpsells((prev) => [...prev, item.id]);
+    setTimeout(() => {
+      setAddedUpsells((prev) => prev.filter((id) => id !== item.id));
+    }, 2000);
+  };
+
+  const shipping = totalPrice >= 100 ? 0 : 9.95;
+  const grandTotal = totalPrice + shipping;
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation isScrolled={isScrolled} />
 
-      <main className="pt-24 md:pt-28 pb-16">
+      <motion.main
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="pt-24 md:pt-28 pb-16"
+      >
         <div className="container-wj">
           {/* Back Button */}
           <motion.div
@@ -60,7 +79,7 @@ const Checkout = () => {
               size="sm"
               className="text-muted-foreground hover:text-foreground"
             >
-              <Link to="/gallery">
+              <Link to="/accessories">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Continue Shopping
               </Link>
@@ -71,291 +90,251 @@ const Checkout = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-center mb-12"
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="mb-12"
           >
-            <h1 className="text-display-sm md:text-display-md font-bold text-foreground mb-2">
+            <h1 className="text-3xl md:text-4xl font-light text-foreground">
               Checkout
             </h1>
-            <p className="text-muted-foreground">
-              Complete your order in one simple step
-            </p>
           </motion.div>
 
           {/* Main Content Grid */}
           <div className="grid lg:grid-cols-5 gap-8 lg:gap-12">
-            {/* Left - Shipping Form */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="lg:col-span-3"
-            >
-              <div className="bg-card rounded-2xl border border-border p-6 md:p-8">
-                <h2 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
-                  <Truck className="h-5 w-5 text-wj-green" />
-                  Shipping Information
-                </h2>
-
-                <form className="space-y-6">
-                  {/* Name Row */}
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="firstName">First Name</Label>
-                      <Input
-                        id="firstName"
-                        placeholder="Jan"
-                        className="mt-1.5"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="lastName">Last Name</Label>
-                      <Input
-                        id="lastName"
-                        placeholder="de Vries"
-                        className="mt-1.5"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Email */}
-                  <div>
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="jan@example.nl"
-                      className="mt-1.5"
-                    />
-                  </div>
-
-                  {/* Phone */}
-                  <div>
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="+31 6 12345678"
-                      className="mt-1.5"
-                    />
-                  </div>
-
-                  {/* Address */}
-                  <div>
-                    <Label htmlFor="address">Street Address</Label>
-                    <Input
-                      id="address"
-                      placeholder="Keizersgracht 123"
-                      className="mt-1.5"
-                    />
-                  </div>
-
-                  {/* City Row */}
-                  <div className="grid sm:grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor="postcode">Postcode</Label>
-                      <Input
-                        id="postcode"
-                        placeholder="1015 CJ"
-                        className="mt-1.5"
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <Label htmlFor="city">City</Label>
-                      <Input
-                        id="city"
-                        placeholder="Amsterdam"
-                        className="mt-1.5"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Country */}
-                  <div>
-                    <Label htmlFor="country">Country</Label>
-                    <Input
-                      id="country"
-                      defaultValue="Netherlands"
-                      className="mt-1.5"
-                      disabled
-                    />
-                  </div>
-
-                  {/* Divider */}
-                  <div className="border-t border-border pt-6">
-                    <h3 className="text-lg font-bold text-foreground mb-6 flex items-center gap-2">
-                      <CreditCard className="h-5 w-5 text-wj-green" />
-                      Payment Method
-                    </h3>
-
-                    {/* Payment Options - Placeholder for Shopify */}
-                    <div className="space-y-3">
-                      <div className="p-4 rounded-xl border-2 border-wj-green bg-wj-green/5">
-                        <div className="flex items-center gap-3">
-                          <div className="w-5 h-5 rounded-full border-2 border-wj-green flex items-center justify-center">
-                            <div className="w-2.5 h-2.5 rounded-full bg-wj-green" />
-                          </div>
-                          <span className="font-medium text-foreground">
-                            iDEAL
-                          </span>
-                          <span className="text-xs text-muted-foreground ml-auto">
-                            Most popular in NL
-                          </span>
-                        </div>
-                      </div>
-                      <div className="p-4 rounded-xl border border-border hover:border-wj-green/30 transition-colors cursor-pointer">
-                        <div className="flex items-center gap-3">
-                          <div className="w-5 h-5 rounded-full border-2 border-muted-foreground" />
-                          <span className="font-medium text-foreground">
-                            Credit Card
-                          </span>
-                        </div>
-                      </div>
-                      <div className="p-4 rounded-xl border border-border hover:border-wj-green/30 transition-colors cursor-pointer">
-                        <div className="flex items-center gap-3">
-                          <div className="w-5 h-5 rounded-full border-2 border-muted-foreground" />
-                          <span className="font-medium text-foreground">
-                            PayPal
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </form>
-              </div>
-            </motion.div>
-
-            {/* Right - Order Summary */}
+            {/* Left - Form */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
+              className="lg:col-span-3 space-y-8"
+            >
+              {/* Shipping */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-wj-green/10 flex items-center justify-center">
+                    <Truck className="h-4 w-4 text-wj-green" />
+                  </div>
+                  <h2 className="text-lg font-medium text-foreground">Shipping</h2>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="firstName" className="text-xs text-muted-foreground">First Name</Label>
+                    <Input id="firstName" placeholder="Jan" className="mt-1 bg-muted/20 border-border/30" />
+                  </div>
+                  <div>
+                    <Label htmlFor="lastName" className="text-xs text-muted-foreground">Last Name</Label>
+                    <Input id="lastName" placeholder="de Vries" className="mt-1 bg-muted/20 border-border/30" />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="email" className="text-xs text-muted-foreground">Email</Label>
+                  <Input id="email" type="email" placeholder="jan@example.nl" className="mt-1 bg-muted/20 border-border/30" />
+                </div>
+
+                <div>
+                  <Label htmlFor="phone" className="text-xs text-muted-foreground">Phone</Label>
+                  <Input id="phone" type="tel" placeholder="+31 6 12345678" className="mt-1 bg-muted/20 border-border/30" />
+                </div>
+
+                <div>
+                  <Label htmlFor="address" className="text-xs text-muted-foreground">Address</Label>
+                  <Input id="address" placeholder="Keizersgracht 123" className="mt-1 bg-muted/20 border-border/30" />
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="postcode" className="text-xs text-muted-foreground">Postcode</Label>
+                    <Input id="postcode" placeholder="1015 CJ" className="mt-1 bg-muted/20 border-border/30" />
+                  </div>
+                  <div className="col-span-2">
+                    <Label htmlFor="city" className="text-xs text-muted-foreground">City</Label>
+                    <Input id="city" placeholder="Amsterdam" className="mt-1 bg-muted/20 border-border/30" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment */}
+              <div className="space-y-6 pt-6 border-t border-border/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-wj-green/10 flex items-center justify-center">
+                    <CreditCard className="h-4 w-4 text-wj-green" />
+                  </div>
+                  <h2 className="text-lg font-medium text-foreground">Payment</h2>
+                </div>
+
+                <div className="space-y-2">
+                  {["iDEAL", "Credit Card", "PayPal"].map((method, index) => (
+                    <motion.button
+                      key={method}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 + index * 0.05 }}
+                      className={`w-full p-4 rounded-xl border text-left transition-all ${
+                        index === 0
+                          ? "border-wj-green bg-wj-green/5"
+                          : "border-border/30 hover:border-border/50"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                          index === 0 ? "border-wj-green" : "border-muted-foreground/30"
+                        }`}>
+                          {index === 0 && <div className="w-2 h-2 rounded-full bg-wj-green" />}
+                        </div>
+                        <span className="text-sm font-medium text-foreground">{method}</span>
+                        {index === 0 && (
+                          <span className="text-[10px] text-muted-foreground ml-auto">Popular</span>
+                        )}
+                      </div>
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Upsell Section */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="pt-6 border-t border-border/20"
+              >
+                <h3 className="text-sm font-medium text-muted-foreground mb-4">
+                  Frequently bought together
+                </h3>
+                <div className="grid sm:grid-cols-3 gap-3">
+                  {upsellItems.map((item, index) => (
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.5 + index * 0.1 }}
+                      className="p-3 rounded-xl border border-border/30 bg-muted/10 hover:border-border/50 transition-all"
+                    >
+                      <div className="aspect-square rounded-lg bg-muted/20 mb-3 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-wj-green/20 to-wj-green/5" />
+                      </div>
+                      <p className="text-xs font-medium text-foreground truncate">{item.name}</p>
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-xs text-muted-foreground">{formatPrice(item.price)}</span>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className={`h-7 w-7 p-0 ${
+                            addedUpsells.includes(item.id)
+                              ? "text-wj-green"
+                              : "text-muted-foreground hover:text-wj-green"
+                          }`}
+                          onClick={() => handleAddUpsell(item)}
+                          disabled={addedUpsells.includes(item.id)}
+                        >
+                          <motion.div
+                            key={addedUpsells.includes(item.id) ? "check" : "plus"}
+                            initial={{ scale: 0, rotate: -90 }}
+                            animate={{ scale: 1, rotate: 0 }}
+                            transition={{ type: "spring", stiffness: 300 }}
+                          >
+                            {addedUpsells.includes(item.id) ? (
+                              <Check className="h-4 w-4" />
+                            ) : (
+                              <Plus className="h-4 w-4" />
+                            )}
+                          </motion.div>
+                        </Button>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            </motion.div>
+
+            {/* Right - Summary */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
               className="lg:col-span-2"
             >
-              <div className="sticky top-28">
-                <div className="glass rounded-2xl p-6 md:p-8 mb-6">
-                  <h2 className="text-xl font-bold text-foreground mb-6">
-                    Order Summary
-                  </h2>
+              <div className="sticky top-28 space-y-4">
+                <div className="p-6 rounded-2xl border border-border/30 bg-muted/5">
+                  <h2 className="text-sm font-medium text-muted-foreground mb-4">Order Summary</h2>
 
-                  {/* Product Item */}
-                  <div className="flex gap-4 pb-6 border-b border-border mb-6">
-                    <div className="w-20 h-20 rounded-xl bg-secondary flex items-center justify-center flex-shrink-0">
-                      <svg
-                        viewBox="0 0 200 120"
-                        className="w-16 h-10"
-                        fill="none"
-                      >
-                        <g stroke="hsl(var(--wj-green))" strokeWidth="2">
-                          <circle cx="160" cy="80" r="20" />
-                          <circle cx="50" cy="80" r="20" />
-                          <path d="M50 80 L90 50 L140 50 L160 80" />
-                          <path d="M90 50 L90 80" />
-                        </g>
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-foreground">
-                        {orderData.product}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {orderData.color}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Qty: {orderData.quantity}
-                      </p>
-                    </div>
-                    <p className="font-medium text-foreground">
-                      {formatPrice(orderData.price)}
+                  {/* Cart Items */}
+                  {items.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-4 text-center">
+                      Your cart is empty
                     </p>
-                  </div>
+                  ) : (
+                    <div className="space-y-3 mb-6">
+                      {items.map((item) => (
+                        <div key={`${item.id}-${item.color}`} className="flex gap-3">
+                          <div className="w-12 h-12 rounded-lg bg-muted/30 flex items-center justify-center flex-shrink-0">
+                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-wj-green/20 to-wj-green/5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{item.name}</p>
+                            <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
+                          </div>
+                          <p className="text-sm font-medium text-foreground">
+                            {formatPrice(item.price * item.quantity)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
-                  {/* Line Items */}
-                  <div className="space-y-3 mb-6">
+                  {/* Totals */}
+                  <div className="space-y-2 pt-4 border-t border-border/20">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Subtotal</span>
-                      <span className="text-foreground">
-                        {formatPrice(orderData.price)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">
-                        E-Pass {orderData.ePass}
-                      </span>
-                      <span className="text-foreground">
-                        +{formatPrice(orderData.ePassPrice)}/mo
-                      </span>
+                      <span className="text-foreground">{formatPrice(totalPrice)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Shipping</span>
-                      <span className="text-wj-green">Free</span>
+                      <span className={shipping === 0 ? "text-wj-green" : "text-foreground"}>
+                        {shipping === 0 ? "Free" : formatPrice(shipping)}
+                      </span>
                     </div>
                   </div>
 
-                  {/* Total */}
-                  <div className="border-t border-border pt-4 mb-6">
-                    <div className="flex justify-between">
-                      <span className="text-lg font-bold text-foreground">
-                        Total
-                      </span>
-                      <span className="text-lg font-bold text-foreground">
-                        {formatPrice(orderData.price)}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      + {formatPrice(orderData.ePassPrice)}/mo for E-Pass
-                    </p>
+                  <div className="flex justify-between pt-4 mt-4 border-t border-border/20">
+                    <span className="font-medium text-foreground">Total</span>
+                    <span className="text-xl font-bold text-foreground">{formatPrice(grandTotal)}</span>
                   </div>
-
-                  {/* CTA */}
-                  <Button
-                    size="lg"
-                    className="w-full gradient-wj text-white hover:opacity-90"
-                  >
-                    <Lock className="h-4 w-4 mr-2" />
-                    Complete Order
-                  </Button>
-
-                  <p className="text-xs text-center text-muted-foreground mt-4">
-                    By completing this order, you agree to our{" "}
-                    <a href="#" className="text-wj-green hover:underline">
-                      Terms of Service
-                    </a>{" "}
-                    and{" "}
-                    <a href="#" className="text-wj-green hover:underline">
-                      Privacy Policy
-                    </a>
-                  </p>
                 </div>
 
-                {/* Trust Badges */}
-                <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+                {/* CTA */}
+                <Button
+                  size="lg"
+                  className="w-full gradient-wj text-white hover:opacity-90"
+                  disabled={items.length === 0}
+                >
+                  <Lock className="h-4 w-4 mr-2" />
+                  Complete Order
+                </Button>
+
+                <div className="flex items-center justify-center gap-4 text-[10px] text-muted-foreground">
                   <div className="flex items-center gap-1">
-                    <Shield className="h-4 w-4 text-wj-green" />
-                    <span>Secure Payment</span>
+                    <Shield className="h-3 w-3 text-wj-green" />
+                    <span>Secure</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Lock className="h-4 w-4 text-wj-green" />
+                    <Lock className="h-3 w-3 text-wj-green" />
                     <span>SSL Encrypted</span>
                   </div>
                 </div>
 
-                {/* Reserved Message */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.5, delay: 0.5 }}
-                  className="mt-6 p-4 rounded-xl bg-wj-green/10 border border-wj-green/20 text-center"
-                >
-                  <p className="text-sm text-wj-green font-medium">
-                    ✨ Reserved for you for the next 15 minutes
-                  </p>
-                </motion.div>
+                <p className="text-[10px] text-center text-muted-foreground">
+                  By completing this order, you agree to our{" "}
+                  <a href="#" className="text-wj-green hover:underline">Terms</a>
+                  {" "}and{" "}
+                  <a href="#" className="text-wj-green hover:underline">Privacy Policy</a>
+                </p>
               </div>
             </motion.div>
           </div>
         </div>
-      </main>
+      </motion.main>
     </div>
   );
 };
