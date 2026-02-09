@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Wifi } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const EPassSection = () => {
@@ -53,21 +53,36 @@ const EPassSection = () => {
                 y: -15,
                 transition: { duration: 0.3 }
               }}
-              className="w-64 h-40 md:w-72 md:h-44 rounded-2xl cursor-pointer md:-mr-8 z-10 group"
+              className="w-64 h-40 md:w-72 md:h-44 rounded-2xl cursor-pointer md:-mr-8 z-10 group overflow-hidden"
               style={{ 
                 transformStyle: "preserve-3d",
-                background: "linear-gradient(135deg, #F3EFF5 0%, #e8e4ea 50%, #ddd8df 100%)",
-                boxShadow: "0 20px 40px -15px rgba(0, 0, 0, 0.2)"
+                boxShadow: "0 20px 40px -15px rgba(0, 0, 0, 0.3)"
               }}
             >
-              <div className="absolute inset-0 p-5 flex flex-col justify-between rounded-2xl border border-black/5 group-hover:border-black/15 transition-colors duration-300">
+              {/* Video Background */}
+              <video
+                autoPlay
+                muted
+                playsInline
+                loop
+                className="absolute inset-0 w-full h-full object-cover"
+              >
+                <source src="/videos/member-pass-light-bg.mp4" type="video/mp4" />
+              </video>
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-zinc-100/80 via-zinc-200/60 to-zinc-300/70" />
+              
+              <div className="relative z-10 h-full p-5 flex flex-col justify-between rounded-2xl border border-black/10 group-hover:border-black/20 transition-colors duration-300">
                 <div className="flex justify-between items-start">
                   <span className="text-base font-bold text-[#08150D]">WJ VISION</span>
-                  <span className="text-[10px] font-semibold text-[#08150D]/70 bg-black/5 px-2 py-1 rounded-full">E-PASS LIGHT</span>
+                  <div className="flex items-center gap-2">
+                    <Wifi className="h-4 w-4 text-[#08150D]/40 rotate-90" />
+                    <span className="text-[10px] font-semibold text-[#08150D]/70 bg-black/5 px-2 py-1 rounded-full">LIGHT</span>
+                  </div>
                 </div>
                 <div className="flex justify-between items-end">
                   <div>
-                    <p className="text-[9px] text-[#08150D]/50">Member</p>
+                    <p className="text-[9px] text-[#08150D]/50 uppercase tracking-wider">Member</p>
                     <p className="text-xs font-medium text-[#08150D]">Essential</p>
                   </div>
                   <div className="w-10 h-10 rounded-lg border border-[#08150D]/10 flex items-center justify-center bg-white/50">
@@ -89,7 +104,7 @@ const EPassSection = () => {
                 rotateY: -3,
                 transition: { duration: 0.8, ease: "easeOut" }
               }}
-              className="relative w-72 h-44 md:w-80 md:h-52 rounded-2xl cursor-pointer z-20 group"
+              className="relative w-72 h-44 md:w-80 md:h-52 rounded-2xl cursor-pointer z-20 group overflow-hidden"
               style={{ 
                 transformStyle: "preserve-3d",
                 perspective: "1000px",
@@ -97,7 +112,7 @@ const EPassSection = () => {
             >
               {/* Animated Subtle Border */}
               <div 
-                className="absolute -inset-[1px] rounded-2xl opacity-40 group-hover:opacity-60 transition-opacity duration-700"
+                className="absolute -inset-[1px] rounded-2xl opacity-40 group-hover:opacity-60 transition-opacity duration-700 z-30"
                 style={{
                   background: "linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.4), rgba(0,0,0,0.2), rgba(255,255,255,0.3), rgba(0,0,0,0.1), rgba(255,255,255,0.2))",
                   backgroundSize: "400% 100%",
@@ -106,21 +121,31 @@ const EPassSection = () => {
               />
               
               {/* Card Content */}
-              <div 
-                className="absolute inset-[1px] rounded-2xl"
-                style={{ 
-                  background: "linear-gradient(135deg, #0a0a0a 0%, #020202 50%, #000000 100%)",
-                  boxShadow: "0 25px 50px -15px rgba(0, 0, 0, 0.8)"
-                }}
-              >
-                <div className="absolute inset-0 p-6 flex flex-col justify-between rounded-2xl">
+              <div className="absolute inset-[1px] rounded-2xl overflow-hidden">
+                {/* Video Background */}
+                <video
+                  autoPlay
+                  muted
+                  playsInline
+                  loop
+                  className="absolute inset-0 w-full h-full object-cover"
+                >
+                  <source src="/videos/member-pass-bg.mp4" type="video/mp4" />
+                </video>
+                {/* Dark Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/50 to-black/70" />
+                
+                <div className="relative z-10 h-full p-6 flex flex-col justify-between">
                   <div className="flex justify-between items-start">
                     <span className="text-lg font-bold text-white">WJ VISION</span>
-                    <span className="text-xs font-semibold text-white/80 bg-white/5 px-2 py-1 rounded-full border border-white/10">E-PASS BLACK</span>
+                    <div className="flex items-center gap-2">
+                      <Wifi className="h-5 w-5 text-white/50 rotate-90" />
+                      <span className="text-xs font-semibold text-white/80 bg-white/5 px-2 py-1 rounded-full border border-white/10">BLACK</span>
+                    </div>
                   </div>
                   <div className="flex justify-between items-end">
                     <div>
-                      <p className="text-[10px] text-white/50">Member</p>
+                      <p className="text-[10px] text-white/50 uppercase tracking-wider">Member</p>
                       <p className="text-sm font-medium text-white">Elite</p>
                     </div>
                     <div className="w-12 h-12 rounded-xl border border-white/20 flex items-center justify-center bg-white/5">
@@ -145,21 +170,36 @@ const EPassSection = () => {
                 y: -15,
                 transition: { duration: 0.3 }
               }}
-              className="w-64 h-40 md:w-72 md:h-44 rounded-2xl cursor-pointer md:-ml-8 z-10 group"
+              className="w-64 h-40 md:w-72 md:h-44 rounded-2xl cursor-pointer md:-ml-8 z-10 group overflow-hidden"
               style={{ 
                 transformStyle: "preserve-3d",
-                background: "linear-gradient(135deg, #058C42 0%, #047a3a 50%, #036830 100%)",
                 boxShadow: "0 20px 40px -15px rgba(5, 140, 66, 0.5)"
               }}
             >
-              <div className="absolute inset-0 p-5 flex flex-col justify-between rounded-2xl border border-white/10 group-hover:border-white/30 transition-colors duration-300">
+              {/* Video Background */}
+              <video
+                autoPlay
+                muted
+                playsInline
+                loop
+                className="absolute inset-0 w-full h-full object-cover"
+              >
+                <source src="/videos/member-pass-plus-bg.mp4" type="video/mp4" />
+              </video>
+              {/* Green Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-wj-green/70 via-wj-green/50 to-wj-forest/70" />
+              
+              <div className="relative z-10 h-full p-5 flex flex-col justify-between rounded-2xl border border-white/10 group-hover:border-white/30 transition-colors duration-300">
                 <div className="flex justify-between items-start">
                   <span className="text-base font-bold text-white">WJ VISION</span>
-                  <span className="text-[10px] font-semibold text-white/90 bg-white/20 px-2 py-1 rounded-full">E-PASS PLUS</span>
+                  <div className="flex items-center gap-2">
+                    <Wifi className="h-4 w-4 text-white/50 rotate-90" />
+                    <span className="text-[10px] font-semibold text-white/90 bg-white/20 px-2 py-1 rounded-full">PLUS</span>
+                  </div>
                 </div>
                 <div className="flex justify-between items-end">
                   <div>
-                    <p className="text-[9px] text-white/60">Member</p>
+                    <p className="text-[9px] text-white/60 uppercase tracking-wider">Member</p>
                     <p className="text-xs font-medium text-white">Premium</p>
                   </div>
                   <div className="w-10 h-10 rounded-lg border border-white/30 flex items-center justify-center bg-white/10">
