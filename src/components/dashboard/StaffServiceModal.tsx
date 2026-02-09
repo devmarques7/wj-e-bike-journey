@@ -221,7 +221,7 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-md bg-card border-border/50 max-h-[85vh] overflow-hidden flex flex-col p-0 rounded-2xl">
+      <DialogContent className="w-[95vw] max-w-sm bg-card border-border/50 overflow-hidden p-0 rounded-2xl">
         {/* Compact Header */}
         <div className="p-3 border-b border-border/30">
           <DialogHeader>
@@ -261,9 +261,8 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-hidden relative">
-          <ScrollArea className="h-full">
-            <div className="p-3 space-y-3">
+        <div className="relative max-h-[70vh] overflow-y-auto">
+          <div className="p-3 space-y-3">
               {/* Owner Card - Compact */}
               <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-muted/30 border border-border/30">
                 <Avatar className="h-8 w-8">
@@ -496,8 +495,7 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
                   <p className="text-[10px] text-muted-foreground">Cliente notificado automaticamente</p>
                 </motion.div>
               )}
-            </div>
-          </ScrollArea>
+          </div>
         </div>
 
         {/* START OVERLAY */}
