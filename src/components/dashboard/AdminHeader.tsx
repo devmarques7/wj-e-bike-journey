@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { 
   ChevronLeft, 
   Bell, 
@@ -7,9 +7,10 @@ import {
   LogOut,
   LayoutDashboard,
   Users,
-  ShoppingCart,
   Wrench,
-  BarChart3,
+  Calendar,
+  CreditCard,
+  Package
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -24,15 +25,17 @@ import { cn } from "@/lib/utils";
 
 const quickNavItems = [
   { icon: LayoutDashboard, label: "Overview", href: "/dashboard/admin" },
-  { icon: BarChart3, label: "Analytics", href: "/dashboard/admin/analytics" },
-  { icon: ShoppingCart, label: "Orders", href: "/dashboard/admin/orders" },
-  { icon: Users, label: "Members", href: "/dashboard/admin/members" },
   { icon: Wrench, label: "Workshop", href: "/dashboard/admin/workshop" },
+  { icon: Calendar, label: "Manage", href: "/dashboard/admin/manage" },
+  { icon: CreditCard, label: "Plans", href: "/dashboard/admin/plans" },
+  { icon: Users, label: "Staff", href: "/dashboard/admin/members" },
+  { icon: Package, label: "Inventory", href: "/dashboard/admin/inventory" },
 ];
 
 export default function AdminHeader() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -46,6 +49,13 @@ export default function AdminHeader() {
       .join("")
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  const isActive = (href: string) => {
+    if (href === "/dashboard/admin") {
+      return location.pathname === "/dashboard/admin";
+    }
+    return location.pathname === href;
   };
 
   return (
@@ -67,11 +77,16 @@ export default function AdminHeader() {
           
           {/* Quick Nav Pills */}
           <div className="hidden lg:flex items-center gap-1 ml-4 pl-4 border-l border-border/30">
-            {quickNavItems.slice(0, 4).map((item) => (
+            {quickNavItems.map((item) => (
               <Link
                 key={item.href}
                 to={item.href}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-colors",
+                  isActive(item.href)
+                    ? "bg-wj-green/20 text-wj-green font-medium"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                )}
               >
                 <item.icon className="h-3.5 w-3.5" />
                 <span>{item.label}</span>
