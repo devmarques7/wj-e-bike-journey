@@ -50,10 +50,13 @@ const Auth = () => {
     setIsLoading(false);
   };
 
-  const handleDemoLogin = (type: "admin" | "light" | "plus" | "black") => {
+  const handleDemoLogin = (type: "admin" | "staff" | "light" | "plus" | "black") => {
     if (type === "admin") {
       setMockUser("admin");
       navigate("/dashboard/admin");
+    } else if (type === "staff") {
+      setMockUser("staff");
+      navigate("/dashboard/staff");
     } else {
       setMockUser("member", type);
       navigate("/dashboard");
@@ -61,7 +64,7 @@ const Auth = () => {
     
     toast({
       title: "Demo mode activated",
-      description: `Logged in as ${type === "admin" ? "Admin" : `${type.charAt(0).toUpperCase() + type.slice(1)} Member`}`,
+      description: `Logged in as ${type === "admin" ? "Admin" : type === "staff" ? "Staff Mechanic" : `${type.charAt(0).toUpperCase() + type.slice(1)} Member`}`,
     });
   };
 
@@ -241,6 +244,28 @@ const Auth = () => {
                     </div>
                     <div className="px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-medium">
                       ADMIN
+                    </div>
+                  </div>
+                </motion.button>
+
+                {/* Staff Demo */}
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => handleDemoLogin("staff")}
+                  className="w-full p-4 rounded-xl border border-border/50 bg-muted/30 hover:bg-muted/50 hover:border-wj-green/50 transition-all group text-left"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-foreground group-hover:text-wj-green transition-colors">
+                        Staff Mechanic
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Access workshop tasks & schedule
+                      </p>
+                    </div>
+                    <div className="px-3 py-1 rounded-full bg-wj-green/20 text-wj-green text-xs font-medium">
+                      STAFF
                     </div>
                   </div>
                 </motion.button>

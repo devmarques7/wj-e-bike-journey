@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 
 export type MemberTier = "light" | "plus" | "black";
-export type UserRole = "guest" | "member" | "admin";
+export type UserRole = "guest" | "member" | "admin" | "staff";
 
 export interface User {
   id: string;
@@ -35,6 +35,13 @@ const mockUsers: Record<string, User> = {
     email: "admin@wjvision.com",
     role: "admin",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=admin",
+  },
+  "staff@wjvision.com": {
+    id: "staff-001",
+    name: "Marco Hendriks",
+    email: "staff@wjvision.com",
+    role: "staff",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=marco",
   },
   "light@wjvision.com": {
     id: "member-light-001",
@@ -97,6 +104,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const setMockUser = (role: UserRole, tier?: MemberTier) => {
     if (role === "admin") {
       setUser(mockUsers["admin@wjvision.com"]);
+    } else if (role === "staff") {
+      setUser(mockUsers["staff@wjvision.com"]);
     } else if (role === "member" && tier) {
       setUser(mockUsers[`${tier}@wjvision.com`]);
     } else {
