@@ -80,9 +80,9 @@ const ProductDetail = () => {
   });
 
   // Transform for sticky bike image and video
-  const bikeScale = useTransform(scrollYProgress, [0, 0.15], [0.95, 1]);
-  const bikeOpacity = useTransform(scrollYProgress, [0.05, 0.15], [0, 1]);
-  const videoOpacity = useTransform(scrollYProgress, [0, 0.1], [1, 0]);
+  const bikeScale = useTransform(scrollYProgress, [0, 0.12], [0.95, 1]);
+  const bikeOpacity = useTransform(scrollYProgress, [0.04, 0.12], [0, 1]);
+  const videoOpacity = useTransform(scrollYProgress, [0, 0.08], [1, 0]);
 
   useEffect(() => {
     const foundProduct = bikeProducts.find((p) => p.id === id);
@@ -93,12 +93,13 @@ const ProductDetail = () => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
       
-      // Update active part based on scroll position
+      // Update active part based on scroll position - slower transitions
       const scrollPercent = window.scrollY / (document.body.scrollHeight - window.innerHeight);
+      // Reduced multiplier for slower image transitions (more scroll distance per image)
       const partIndex = Math.max(
         0,
         Math.min(
-          Math.floor(scrollPercent * productParts.length * 1.5),
+          Math.floor(scrollPercent * productParts.length * 1.2),
           productParts.length - 1
         )
       );
@@ -157,7 +158,7 @@ const ProductDetail = () => {
 
       <main className="pt-0">
         {/* Hero Section with Video Background */}
-        <section className="relative min-h-[350vh]">
+        <section className="relative min-h-[420vh]">
           {/* Sticky Container */}
           <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden">
             {/* Static Background base */}
@@ -264,11 +265,11 @@ const ProductDetail = () => {
           </div>
 
           {/* Scroll Content - Part Details with more spacing */}
-          <div className="relative z-10 pointer-events-none pt-[20vh]">
+          <div className="relative z-10 pointer-events-none pt-[30vh]">
             {productParts.map((part, index) => (
               <div
                 key={part.id}
-                className="min-h-[70vh] flex items-center px-8 py-16"
+                className="min-h-[85vh] flex items-center px-8 py-16"
               >
                 <motion.div
                   initial={{ opacity: 0, x: index % 2 === 0 ? -60 : 60 }}
