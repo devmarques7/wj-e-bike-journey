@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Check, Minus, Plus, ShoppingBag, Shield, Truck, Zap } from "lucide-react";
+import { ArrowLeft, Check, Minus, Plus, ShoppingBag, Shield, Truck, Zap, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -151,24 +151,39 @@ const ProductDetail = () => {
         </Button>
       </div>
 
-      <main className="pt-24 md:pt-28">
-        {/* Hero Section with Sticky Bike */}
-        <section className="relative min-h-[200vh]">
-          {/* Sticky Bike Image Container */}
+      <main className="pt-0">
+        {/* Hero Section with Video Background */}
+        <section className="relative min-h-[350vh]">
+          {/* Sticky Container */}
           <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden">
-            {/* Bike Image Carousel */}
+            {/* Video Background - Always visible initially */}
+            <div className="absolute inset-0 z-0">
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full h-full object-cover"
+              >
+                <source src="/videos/product-detail-bg.mp4" type="video/mp4" />
+              </video>
+              {/* Gradient Overlays */}
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-background/20" />
+              <div className="absolute inset-0 bg-gradient-to-r from-background/70 via-transparent to-transparent" />
+            </div>
+
+            {/* Bike Images - Fade in on scroll */}
             <motion.div
               style={{ scale: bikeScale, opacity: bikeOpacity }}
-              className="relative w-full h-full"
+              className="absolute inset-0 z-10"
             >
-              {/* Main Image with Animation */}
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activePart}
-                  initial={{ opacity: 0, scale: 1.1 }}
+                  initial={{ opacity: 0, scale: 1.05 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  transition={{ duration: 1.2, ease: [0.25, 0.1, 0.25, 1] }}
                   className="absolute inset-0"
                 >
                   <img
@@ -177,19 +192,19 @@ const ProductDetail = () => {
                     className="w-full h-full object-cover"
                   />
                   {/* Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
-                  <div className="absolute inset-0 bg-gradient-to-r from-background/60 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-background/70 to-transparent" />
                 </motion.div>
               </AnimatePresence>
 
               {/* Progress Indicators */}
-              <div className="absolute right-8 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-20">
+              <div className="absolute right-8 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-20">
                 {productParts.map((_, index) => (
                   <motion.div
                     key={index}
-                    className={`w-1 rounded-full transition-all duration-300 ${
+                    className={`w-1 rounded-full transition-all duration-500 ${
                       index === activePart
-                        ? "h-8 bg-wj-green"
+                        ? "h-10 bg-wj-green"
                         : "h-2 bg-foreground/20"
                     }`}
                   />
@@ -198,18 +213,18 @@ const ProductDetail = () => {
             </motion.div>
 
             {/* Product Info Overlay */}
-            <div className="absolute bottom-8 left-0 right-0 px-8 z-10">
+            <div className="absolute bottom-24 left-0 right-0 px-8 z-20">
               <div className="container-wj">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.3 }}
+                  transition={{ duration: 0.8, delay: 0.3 }}
                   className="text-center md:text-left"
                 >
-                  <p className="text-wj-green text-sm font-medium tracking-widest uppercase mb-2">
+                  <p className="text-wj-green text-sm font-medium tracking-widest uppercase mb-3">
                     {product.category}
                   </p>
-                  <h1 className="text-display-sm md:text-display-lg font-bold text-foreground mb-2">
+                  <h1 className="text-display-sm md:text-display-lg font-bold text-foreground mb-3">
                     {product.name}
                   </h1>
                   <p className="text-xl text-muted-foreground">
@@ -218,30 +233,48 @@ const ProductDetail = () => {
                 </motion.div>
               </div>
             </div>
+
+            {/* Scroll Down Indicator */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1, duration: 0.8 }}
+              className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2"
+            >
+              <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/70">
+                Scroll para explorar
+              </span>
+              <motion.div
+                animate={{ y: [0, 8, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <ChevronDown className="h-5 w-5 text-wj-green" />
+              </motion.div>
+            </motion.div>
           </div>
 
-          {/* Scroll Content - Part Details */}
-          <div className="relative z-10 pointer-events-none">
+          {/* Scroll Content - Part Details with more spacing */}
+          <div className="relative z-10 pointer-events-none pt-[20vh]">
             {productParts.map((part, index) => (
               <div
                 key={part.id}
-                className="min-h-[50vh] flex items-center px-8"
+                className="min-h-[70vh] flex items-center px-8 py-16"
               >
                 <motion.div
-                  initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
+                  initial={{ opacity: 0, x: index % 2 === 0 ? -60 : 60 }}
                   whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true, margin: "-20%" }}
-                  transition={{ duration: 0.6 }}
+                  viewport={{ once: true, margin: "-30%" }}
+                  transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
                   className={`max-w-md ${
                     index % 2 === 0 ? "mr-auto" : "ml-auto text-right"
                   }`}
                 >
-                  <div className="glass rounded-2xl p-6 pointer-events-auto backdrop-blur-xl">
+                  <div className="glass rounded-2xl p-8 pointer-events-auto backdrop-blur-xl border border-white/5">
                     {/* Feature Tag */}
-                    <span className="inline-block px-2 py-1 text-[10px] font-medium uppercase tracking-widest text-wj-green bg-wj-green/10 rounded mb-3">
+                    <span className="inline-block px-3 py-1.5 text-[10px] font-medium uppercase tracking-widest text-wj-green bg-wj-green/10 rounded-full mb-4">
                       {part.subtitle}
                     </span>
-                    <h3 className="text-xl font-bold text-foreground mb-2">
+                    <h3 className="text-2xl font-bold text-foreground mb-3">
                       {part.title}
                     </h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">
