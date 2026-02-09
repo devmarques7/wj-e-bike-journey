@@ -6,24 +6,18 @@ import {
   CheckCircle2, 
   Clock, 
   AlertCircle, 
-  User,
   Crown,
   Star,
   ChevronDown,
-  MessageCircle,
-  Send,
-  ImageIcon,
   Wrench
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import StaffServiceModal from "./StaffServiceModal";
 
 // Mock tasks data
 const tasksData = [
@@ -154,7 +148,6 @@ const sortedTasksData = [...tasksData].sort((a, b) => {
 
 export default function StaffTasksTable() {
   const [selectedTask, setSelectedTask] = useState<typeof tasksData[0] | null>(null);
-  const [chatMessage, setChatMessage] = useState("");
   const [expandedRowId, setExpandedRowId] = useState<number | null>(null);
 
   const completedCount = tasksData.filter(t => t.status === "completed").length;
@@ -358,125 +351,12 @@ export default function StaffTasksTable() {
           })}
         </div>
 
-        {/* Details Modal */}
-        <Dialog open={!!selectedTask} onOpenChange={() => setSelectedTask(null)}>
-          <DialogContent className="w-[95vw] max-w-2xl bg-card border-border max-h-[90vh] overflow-hidden flex flex-col p-0 rounded-2xl">
-            <DialogHeader className="p-4 border-b border-border/30">
-              <DialogTitle className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center">
-                  <Bike className="h-5 w-5 text-wj-green" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold">{selectedTask?.service}</p>
-                  <p className="text-xs text-muted-foreground font-normal">{selectedTask?.bikeId}</p>
-                </div>
-              </DialogTitle>
-            </DialogHeader>
-
-            <ScrollArea className="flex-1 p-4">
-              <div className="space-y-4">
-                {/* Owner Info */}
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback className="bg-muted text-sm font-medium">
-                      {selectedTask && getInitials(selectedTask.owner)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground">{selectedTask?.owner}</p>
-                    <p className="text-xs text-muted-foreground">{selectedTask?.ownerEmail}</p>
-                  </div>
-                  {selectedTask && (
-                    <Badge className={cn("text-xs", planConfig[selectedTask.memberPlan as keyof typeof planConfig].color)}>
-                      {planConfig[selectedTask.memberPlan as keyof typeof planConfig].label} Member
-                    </Badge>
-                  )}
-                </div>
-
-                {/* Task Details */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 rounded-xl bg-muted/30">
-                    <p className="text-[10px] text-muted-foreground uppercase mb-1">Scheduled</p>
-                    <p className="text-sm font-medium text-foreground">{selectedTask?.scheduledTime}</p>
-                    <p className="text-xs text-muted-foreground">{selectedTask?.estimatedTime}</p>
-                  </div>
-                  <div className="p-3 rounded-xl bg-muted/30">
-                    <p className="text-[10px] text-muted-foreground uppercase mb-1">Bike Health</p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg font-bold text-foreground">{selectedTask?.health}%</span>
-                      {selectedTask && (
-                        <Badge className={cn("text-[10px]", getHealthTag(selectedTask.health).color)}>
-                          {getHealthTag(selectedTask.health).label}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Notes */}
-                <div className="p-3 rounded-xl bg-muted/30">
-                  <p className="text-[10px] text-muted-foreground uppercase mb-2">Service Notes</p>
-                  <p className="text-sm text-foreground">{selectedTask?.notes}</p>
-                </div>
-
-                {/* Photos */}
-                {selectedTask?.photos && selectedTask.photos.length > 0 && (
-                  <div className="p-3 rounded-xl bg-muted/30">
-                    <div className="flex items-center gap-2 mb-2">
-                      <ImageIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                      <p className="text-[10px] text-muted-foreground uppercase">Photos</p>
-                    </div>
-                    <div className="flex gap-2">
-                      {selectedTask.photos.map((photo, i) => (
-                        <div key={i} className="w-16 h-16 rounded-lg bg-muted overflow-hidden">
-                          <img src={photo} alt="" className="w-full h-full object-cover" />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Chat */}
-                <div className="p-3 rounded-xl bg-muted/30">
-                  <div className="flex items-center gap-2 mb-3">
-                    <MessageCircle className="h-3.5 w-3.5 text-muted-foreground" />
-                    <p className="text-[10px] text-muted-foreground uppercase">Customer Chat</p>
-                  </div>
-                  
-                  {selectedTask?.chat && selectedTask.chat.length > 0 ? (
-                    <div className="space-y-2 mb-3">
-                      {selectedTask.chat.map((msg, i) => (
-                        <div key={i} className={cn(
-                          "p-2 rounded-lg text-xs max-w-[80%]",
-                          msg.from === "mechanic" 
-                            ? "bg-wj-green/20 text-foreground ml-auto"
-                            : "bg-muted text-foreground"
-                        )}>
-                          <p>{msg.message}</p>
-                          <p className="text-[9px] text-muted-foreground mt-1">{msg.time}</p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground mb-3">No messages yet</p>
-                  )}
-
-                  <div className="flex gap-2">
-                    <Input
-                      value={chatMessage}
-                      onChange={(e) => setChatMessage(e.target.value)}
-                      placeholder="Send a message..."
-                      className="h-9 text-xs bg-background/50"
-                    />
-                    <Button size="sm" className="h-9 px-3 bg-wj-green hover:bg-wj-green/90">
-                      <Send className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </ScrollArea>
-          </DialogContent>
-        </Dialog>
+        {/* Staff Service Modal */}
+        <StaffServiceModal 
+          task={selectedTask} 
+          open={!!selectedTask} 
+          onClose={() => setSelectedTask(null)} 
+        />
       </motion.div>
     </TooltipProvider>
   );
