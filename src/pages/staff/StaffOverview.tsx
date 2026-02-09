@@ -2,10 +2,9 @@ import { motion } from "framer-motion";
 import { Wrench, Calendar, Star, Clock } from "lucide-react";
 import StaffDashboardLayout from "@/components/dashboard/StaffDashboardLayout";
 import StaffKPICard from "@/components/dashboard/StaffKPICard";
-import StaffTodayTasks from "@/components/dashboard/StaffTodayTasks";
-import StaffClientFeedback from "@/components/dashboard/StaffClientFeedback";
-import StaffSchedulePreview from "@/components/dashboard/StaffSchedulePreview";
-import StaffWorkloadMeter from "@/components/dashboard/StaffWorkloadMeter";
+import StaffTasksTable from "@/components/dashboard/StaffTasksTable";
+import ShiftTracker from "@/components/dashboard/ShiftTracker";
+import StaffCalendarHeatmap from "@/components/dashboard/StaffCalendarHeatmap";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 
@@ -80,26 +79,22 @@ export default function StaffOverview() {
 
         {/* Main Content Grid - 12 Columns */}
         <div className="grid grid-cols-12 gap-4 lg:gap-6">
-          {/* Today's Tasks - 5 columns */}
-          <div className="col-span-12 lg:col-span-5">
-            <StaffTodayTasks />
+          {/* Today's Tasks Table - 8 columns */}
+          <div className="col-span-12 lg:col-span-8">
+            <StaffTasksTable />
           </div>
 
-          {/* Middle Section - 3 columns (stacked) */}
-          <div className="col-span-12 lg:col-span-3 flex flex-col gap-4 lg:gap-6">
-            <StaffWorkloadMeter
-              currentLoad={75}
-              weeklyHours={32}
-              targetHours={40}
-              completedToday={2}
-              totalToday={5}
-            />
-            <StaffSchedulePreview />
-          </div>
+          {/* Right Sidebar - 4 columns (stacked) */}
+          <div className="col-span-12 lg:col-span-4 flex flex-col gap-4 lg:gap-6">
+            {/* Shift Tracker */}
+            <div className="min-h-[200px]">
+              <ShiftTracker />
+            </div>
 
-          {/* Client Feedback - 4 columns */}
-          <div className="col-span-12 lg:col-span-4">
-            <StaffClientFeedback />
+            {/* Calendar Heatmap */}
+            <div className="flex-1 min-h-[280px]">
+              <StaffCalendarHeatmap />
+            </div>
           </div>
         </div>
       </div>
