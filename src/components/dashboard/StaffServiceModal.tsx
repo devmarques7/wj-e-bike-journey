@@ -12,6 +12,7 @@ import {
   Crown,
   Bell,
   ChevronLeft,
+  ChevronDown,
   Wrench,
   Search,
   ClipboardList,
@@ -49,6 +50,15 @@ interface StaffServiceModalProps {
   task: TaskData | null;
   open: boolean;
   onClose: () => void;
+  onMinimize?: (serviceState: ActiveServiceState) => void;
+}
+
+export interface ActiveServiceState {
+  task: TaskData;
+  repairSeconds: number;
+  currentStepIndex: number;
+  completedSteps: Record<string, boolean>;
+  startTimestamp: number;
 }
 
 const planConfig = {
@@ -242,7 +252,7 @@ function TinderStepCard({
   );
 }
 
-export default function StaffServiceModal({ task, open, onClose }: StaffServiceModalProps) {
+export default function StaffServiceModal({ task, open, onClose, onMinimize }: StaffServiceModalProps) {
   const [repairStatus, setRepairStatus] = useState<"pending" | "in_progress" | "completed">("pending");
   const [repairSeconds, setRepairSeconds] = useState(0);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
@@ -255,6 +265,7 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
   const [chatMessages, setChatMessages] = useState<{ from: string; message: string; time: string }[]>([]);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const startTimestampRef = useRef<number>(Date.now());
   const startX = useMotionValue(0);
   const completeX = useMotionValue(0);
   const maxDrag = 208;
@@ -310,6 +321,7 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
       setTimeout(() => {
         setRepairStatus("in_progress");
         setShowStartOverlay(false);
+        startTimestampRef.current = Date.now();
         animate(startX, 0, { duration: 0 });
         notifyClient("🔧 Repair started! The mechanic has begun working on your bike.");
       }, 200);
@@ -363,9 +375,29 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
   const allStepsCompleted = repairSteps.every(s => completedSteps[s.id]);
   const completedCount = Object.values(completedSteps).filter(Boolean).length;
 
+  const handleMinimize = () => {
+    if (repairStatus === "in_progress" && onMinimize) {
+      onMinimize({
+        task,
+        repairSeconds,
+        currentStepIndex,
+        completedSteps,
+        startTimestamp: startTimestampRef.current,
+      });
+    } else {
+      onClose();
+    }
+  };
+
+  const handleDialogChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      handleMinimize();
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="w-[90vw] max-w-xs bg-transparent border-0 shadow-none overflow-hidden p-0 rounded-3xl min-h-[600px] max-h-[92vh] flex flex-col">
+    <Dialog open={open} onOpenChange={handleDialogChange}>
+      <DialogContent className="w-[90vw] max-w-xs bg-transparent border-0 shadow-none overflow-hidden p-0 rounded-3xl min-h-[600px] max-h-[92vh] flex flex-col [&>button:last-child]:hidden">
         <DialogTitle className="sr-only">{task.service}</DialogTitle>
 
         {/* Video Background */}
@@ -396,9 +428,13 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
                 </Badge>
               </div>
             </div>
-            <div className="w-9 h-9 rounded-full bg-wj-green/20 border border-wj-green/30 flex items-center justify-center">
-              <Bike className="h-4 w-4 text-wj-green" />
-            </div>
+            {/* Minimize button (arrow down) instead of X */}
+            <button
+              onClick={handleMinimize}
+              className="w-9 h-9 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors"
+            >
+              <ChevronDown className="h-4 w-4 text-white" />
+            </button>
           </div>
 
           {/* Main Content */}

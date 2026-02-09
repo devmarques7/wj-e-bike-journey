@@ -17,7 +17,9 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import StaffServiceModal from "./StaffServiceModal";
+import StaffServiceModal, { type ActiveServiceState } from "./StaffServiceModal";
+import ActiveServiceBar from "./ActiveServiceBar";
+import { AnimatePresence as ServiceBarPresence } from "framer-motion";
 
 // Mock tasks data
 const tasksData = [
@@ -146,9 +148,13 @@ const sortedTasksData = [...tasksData].sort((a, b) => {
   return parseInt(timeA) - parseInt(timeB);
 });
 
+const repairStepsLabels = ["Inspection", "Diagnosis", "Repair", "Testing", "Quality"];
+
 export default function StaffTasksTable() {
   const [selectedTask, setSelectedTask] = useState<typeof tasksData[0] | null>(null);
   const [expandedRowId, setExpandedRowId] = useState<number | null>(null);
+  const [minimizedService, setMinimizedService] = useState<ActiveServiceState | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const completedCount = tasksData.filter(t => t.status === "completed").length;
 
@@ -257,7 +263,7 @@ export default function StaffTasksTable() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setSelectedTask(task)}
+                        onClick={() => { setSelectedTask(task); setModalOpen(true); }}
                         className="h-7 w-7 p-0 hover:bg-wj-green/10"
                       >
                         <Eye className="h-3.5 w-3.5 text-muted-foreground hover:text-wj-green" />
@@ -336,7 +342,7 @@ export default function StaffTasksTable() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setSelectedTask(task)}
+                          onClick={() => { setSelectedTask(task); setModalOpen(true); }}
                           className="w-full h-8 text-xs border-border/50"
                         >
                           <Eye className="h-3.5 w-3.5 mr-1.5" />
@@ -354,10 +360,32 @@ export default function StaffTasksTable() {
         {/* Staff Service Modal */}
         <StaffServiceModal 
           task={selectedTask} 
-          open={!!selectedTask} 
-          onClose={() => setSelectedTask(null)} 
+          open={!!selectedTask && modalOpen} 
+          onClose={() => { setSelectedTask(null); setModalOpen(false); setMinimizedService(null); }}
+          onMinimize={(state) => {
+            setMinimizedService(state);
+            setModalOpen(false);
+          }}
         />
       </motion.div>
+
+      {/* Active Service Bar - Fixed at bottom when minimized */}
+      <ServiceBarPresence>
+        {minimizedService && !modalOpen && (
+          <ActiveServiceBar
+            taskName={minimizedService.task.service}
+            bikeId={minimizedService.task.bikeId}
+            stepLabel={repairStepsLabels[minimizedService.currentStepIndex] || "In Progress"}
+            stepIndex={minimizedService.currentStepIndex}
+            totalSteps={5}
+            startTime={minimizedService.startTimestamp}
+            onReopen={() => {
+              setSelectedTask(minimizedService.task);
+              setModalOpen(true);
+            }}
+          />
+        )}
+      </ServiceBarPresence>
     </TooltipProvider>
   );
 }
