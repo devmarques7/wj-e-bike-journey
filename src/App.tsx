@@ -35,6 +35,9 @@ import AdminPlans from "./pages/admin/AdminPlans";
 import AdminMembers from "./pages/admin/AdminMembers";
 import AdminInventory from "./pages/admin/AdminInventory";
 
+// Staff Pages
+import StaffOverview from "./pages/staff/StaffOverview";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -76,6 +79,9 @@ const App = () => (
               <Route path="/dashboard/admin/plans" element={<AdminPlans />} />
               <Route path="/dashboard/admin/members" element={<AdminMembers />} />
               <Route path="/dashboard/admin/inventory" element={<AdminInventory />} />
+              
+              {/* Staff Dashboard Routes */}
+              <Route path="/dashboard/staff" element={<StaffOverview />} />
               
               <Route path="/urgent-service" element={<UrgentService />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
