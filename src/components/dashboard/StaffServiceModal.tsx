@@ -505,71 +505,103 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col items-center justify-center p-6"
+              className="absolute inset-0 z-50 overflow-hidden"
             >
-              <motion.div
-                initial={{ scale: 0.9, y: 20 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.9, y: 20 }}
-                className="text-center max-w-xs"
+              {/* Video Background */}
+              <video
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover"
               >
-                <div className="w-16 h-16 rounded-2xl bg-wj-green/10 flex items-center justify-center mx-auto mb-4 border border-wj-green/20">
-                  <Play className="h-7 w-7 text-wj-green" />
-                </div>
-                
-                <h3 className="text-lg font-semibold text-foreground mb-2">Iniciar Serviço?</h3>
-                <p className="text-xs text-muted-foreground mb-1">{task.service}</p>
-                <p className="text-[10px] text-muted-foreground mb-6">
-                  <span className="font-mono">{task.bikeId}</span> • {task.owner}
-                </p>
-                
-                {/* Warning */}
-                <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-left mb-6">
-                  <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-                  <p className="text-[10px] text-amber-500">
-                    O cliente será notificado que o reparo foi iniciado
-                  </p>
-                </div>
-
-                {/* Swipe to start */}
-                <motion.div
-                  style={{ 
-                    backgroundColor: `rgba(5, 140, 66, ${startBgOpacity.get()})` 
-                  }}
-                  className="relative h-12 rounded-full border border-wj-green/30 overflow-hidden mx-auto max-w-[240px]"
-                >
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <span className="text-xs text-wj-green/70 font-medium">Deslize para iniciar →</span>
+                <source src="/videos/staff-service-bg.mp4" type="video/mp4" />
+              </video>
+              
+              {/* Dark Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/40" />
+              
+              {/* Content */}
+              <div className="relative z-10 h-full flex flex-col">
+                {/* Header */}
+                <div className="p-4 flex items-center gap-3">
+                  {/* Owner Avatar - Top Left */}
+                  <Avatar className="h-9 w-9 border-2 border-wj-green/30">
+                    <AvatarFallback className="bg-wj-green/20 text-wj-green text-xs font-bold">
+                      {getInitials(task.owner)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-foreground truncate">{task.owner}</p>
+                    <p className="text-[10px] text-muted-foreground font-mono">{task.bikeId}</p>
                   </div>
-                  
-                  <motion.div 
-                    style={{ scale: startCheckScale }}
-                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                  >
-                    <CheckCircle2 className="h-5 w-5 text-wj-green" />
-                  </motion.div>
+                  {/* Service Icon - Top Right */}
+                  <div className="w-9 h-9 rounded-xl bg-wj-green/20 flex items-center justify-center border border-wj-green/30">
+                    <Bike className="h-4 w-4 text-wj-green" />
+                  </div>
+                </div>
 
+                {/* Main Content - Centered */}
+                <div className="flex-1 flex flex-col items-center justify-center px-6">
                   <motion.div
-                    drag="x"
-                    dragConstraints={{ left: 0, right: maxDrag }}
-                    dragElastic={0}
-                    onDragEnd={handleStartDragEnd}
-                    style={{ x: startX }}
-                    className="absolute left-0.5 top-0.5 bottom-0.5 w-11 rounded-full bg-wj-green flex items-center justify-center cursor-grab active:cursor-grabbing shadow-lg shadow-wj-green/30"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="text-center mb-8"
                   >
-                    <ArrowRight className="h-4 w-4 text-background" />
+                    <h2 className="text-xl font-semibold text-foreground mb-1">{task.service}</h2>
+                    <p className="text-[10px] text-muted-foreground/70">
+                      Cliente será notificado ao iniciar
+                    </p>
                   </motion.div>
-                </motion.div>
+                </div>
 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => { setShowStartOverlay(false); onClose(); }}
-                  className="mt-4 text-xs text-muted-foreground"
-                >
-                  Cancelar
-                </Button>
-              </motion.div>
+                {/* Bottom Section - Swipe */}
+                <div className="p-4 pb-6">
+                  {/* Full Width Swipe */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    style={{ 
+                      backgroundColor: `rgba(5, 140, 66, ${startBgOpacity.get()})` 
+                    }}
+                    className="relative h-14 rounded-2xl border border-wj-green/30 overflow-hidden w-full"
+                  >
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <span className="text-sm text-wj-green/70 font-medium tracking-wide">
+                        Iniciar Serviço →
+                      </span>
+                    </div>
+                    
+                    <motion.div 
+                      style={{ scale: startCheckScale }}
+                      className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                    >
+                      <CheckCircle2 className="h-6 w-6 text-wj-green" />
+                    </motion.div>
+
+                    <motion.div
+                      drag="x"
+                      dragConstraints={{ left: 0, right: 280 }}
+                      dragElastic={0}
+                      onDragEnd={handleStartDragEnd}
+                      style={{ x: startX }}
+                      className="absolute left-1 top-1 bottom-1 w-12 rounded-xl bg-wj-green flex items-center justify-center cursor-grab active:cursor-grabbing shadow-lg shadow-wj-green/40"
+                    >
+                      <ArrowRight className="h-5 w-5 text-background" />
+                    </motion.div>
+                  </motion.div>
+
+                  {/* Cancel */}
+                  <button
+                    onClick={() => { setShowStartOverlay(false); onClose(); }}
+                    className="w-full mt-3 py-2 text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
