@@ -1,38 +1,81 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
-import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowLeft, Check, Minus, Plus, ShoppingBag, Shield, Truck, Zap } from "lucide-react";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { ArrowLeft, Check, Minus, Plus, ShoppingBag, Shield, Truck, Zap, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { bikeProducts, BikeProduct } from "@/data/products";
+import useEmblaCarousel from "embla-carousel-react";
 
-// Product part descriptions for scroll reveal
-const productParts = [
+// Import bike images from BikeShowcase
+import bikeFull from "@/assets/bike-full.png";
+import bikePanel from "@/assets/bike-panel.png";
+import bikeHeadlight from "@/assets/bike-headlight.png";
+import bikeWheel from "@/assets/bike-wheel.png";
+import bikeChain from "@/assets/bike-chain.png";
+import bikeBrakes from "@/assets/bike-brakes.png";
+import bikeV8Front from "@/assets/bike-v8-front.png";
+import bikeV8Side from "@/assets/bike-v8-side.png";
+
+// Bike gallery images with details
+const bikeGallery = [
   {
-    id: "motor",
-    title: "Brushless Motor",
-    description: "250W of pure Dutch engineering. Silent, powerful, and designed to last 20,000+ kilometers.",
-    position: { x: "65%", y: "70%" },
+    image: bikeFull,
+    title: "WJ V8 Prestige",
+    subtitle: "Vista Completa",
+    description: "Design urbano arrojado com acabamento premium",
   },
   {
-    id: "battery",
-    title: "Removable Battery",
-    description: "Samsung cells with intelligent BMS. Charge at home or at the office in under 4 hours.",
-    position: { x: "50%", y: "45%" },
+    image: bikeV8Side,
+    title: "Perfil Aerodinâmico",
+    subtitle: "Vista Lateral",
+    description: "Linhas fluidas que combinam velocidade e elegância",
   },
   {
-    id: "frame",
-    title: "Aerospace Aluminum",
-    description: "6061-T6 aluminum frame, hydroformed for strength and elegance. Lifetime warranty included.",
-    position: { x: "35%", y: "55%" },
+    image: bikeV8Front,
+    title: "Presença Imponente",
+    subtitle: "Vista Frontal",
+    description: "Faróis integrados e guidão ergonômico",
   },
   {
-    id: "seat",
-    title: "Ergonomic Saddle",
-    description: "Italian leather with memory foam. Designed for 2+ hours of comfortable riding.",
-    position: { x: "45%", y: "25%" },
+    image: bikePanel,
+    title: "Smart Display LCD",
+    subtitle: "Painel Digital",
+    description: "GPS integrado, velocidade e autonomia em tempo real",
   },
+  {
+    image: bikeHeadlight,
+    title: "LED Premium 1200lm",
+    subtitle: "Faróis Inteligentes",
+    description: "Iluminação automática com sensor de luz ambiente",
+  },
+  {
+    image: bikeWheel,
+    title: "Kenda Fat Tire 20x4.0",
+    subtitle: "Rodas All-Terrain",
+    description: "Máxima aderência em qualquer superfície",
+  },
+  {
+    image: bikeChain,
+    title: "Shimano 7-Speed",
+    subtitle: "Transmissão Pro",
+    description: "Sistema de marchas de alta performance",
+  },
+  {
+    image: bikeBrakes,
+    title: "Disco Hidráulico 180mm",
+    subtitle: "Sistema de Freios",
+    description: "Frenagem precisa com pastilhas cerâmicas",
+  },
+];
+
+// Product specs from BikeShowcase
+const bikeSpecs = [
+  { label: "Velocidade Máx", value: "45 km/h" },
+  { label: "Autonomia", value: "80 km" },
+  { label: "Motor", value: "750W" },
+  { label: "Bateria", value: "48V 15Ah" },
 ];
 
 const ProductDetail = () => {
@@ -42,17 +85,49 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedEPass, setSelectedEPass] = useState<"basic" | "silver" | "black">("basic");
   const [isScrolled, setIsScrolled] = useState(false);
-  const [activePart, setActivePart] = useState(0);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end end"],
+
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    loop: true,
+    dragFree: false,
   });
 
-  // Transform for sticky bike image
-  const bikeScale = useTransform(scrollYProgress, [0, 0.3], [0.9, 1]);
-  const bikeOpacity = useTransform(scrollYProgress, [0, 0.1], [0, 1]);
+  const [thumbsRef, thumbsApi] = useEmblaCarousel({
+    containScroll: "keepSnaps",
+    dragFree: true,
+  });
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi || !thumbsApi) return;
+    setCurrentSlide(emblaApi.selectedScrollSnap());
+    thumbsApi.scrollTo(emblaApi.selectedScrollSnap());
+  }, [emblaApi, thumbsApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    emblaApi.on("select", onSelect);
+    onSelect();
+    return () => {
+      emblaApi.off("select", onSelect);
+    };
+  }, [emblaApi, onSelect]);
+
+  const scrollPrev = useCallback(() => {
+    if (emblaApi) emblaApi.scrollPrev();
+  }, [emblaApi]);
+
+  const scrollNext = useCallback(() => {
+    if (emblaApi) emblaApi.scrollNext();
+  }, [emblaApi]);
+
+  const scrollTo = useCallback(
+    (index: number) => {
+      if (emblaApi) emblaApi.scrollTo(index);
+    },
+    [emblaApi]
+  );
 
   useEffect(() => {
     const foundProduct = bikeProducts.find((p) => p.id === id);
@@ -62,14 +137,6 @@ const ProductDetail = () => {
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
-      
-      // Update active part based on scroll position
-      const scrollPercent = window.scrollY / (document.body.scrollHeight - window.innerHeight);
-      const partIndex = Math.min(
-        Math.floor(scrollPercent * productParts.length * 2),
-        productParts.length - 1
-      );
-      setActivePart(partIndex);
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
@@ -102,6 +169,7 @@ const ProductDetail = () => {
   };
 
   const totalPrice = product.price * quantity;
+  const currentImage = bikeGallery[currentSlide];
 
   return (
     <div className="min-h-screen bg-background" ref={containerRef}>
@@ -123,255 +191,259 @@ const ProductDetail = () => {
       </div>
 
       <main className="pt-24 md:pt-28">
-        {/* Hero Section with Sticky Bike */}
-        <section className="relative min-h-[200vh]">
-          {/* Sticky Bike Container */}
-          <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden">
-            <motion.div
-              style={{ scale: bikeScale, opacity: bikeOpacity }}
-              className="relative w-full max-w-2xl mx-auto px-8"
-            >
-              {/* Bike SVG */}
-              <svg
-                viewBox="0 0 200 120"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-full h-auto"
-              >
-                <g stroke={product.colors[selectedColor].hex} strokeWidth="2.5">
-                  <path d="M50 80 L90 50 L140 50 L160 80" strokeLinecap="round" />
-                  <path d="M90 50 L90 80" strokeLinecap="round" />
-                  <path d="M50 80 L90 80" strokeLinecap="round" />
-                  <circle cx="160" cy="80" r="25" />
-                  <circle cx="160" cy="80" r="4" fill={product.colors[selectedColor].hex} />
-                  <circle cx="50" cy="80" r="25" />
-                  <circle cx="50" cy="80" r="4" fill={product.colors[selectedColor].hex} />
-                  <path d="M140 50 L145 40 L155 38" strokeLinecap="round" />
-                  <path d="M85 45 L95 45" strokeLinecap="round" strokeWidth="4" />
-                  <path d="M90 45 L90 50" strokeLinecap="round" />
-                  <circle cx="90" cy="80" r="10" />
-                  <path d="M80 80 L100 80" strokeLinecap="round" strokeWidth="3" />
-                  <rect x="73" y="53" width="24" height="10" rx="2" fill={product.colors[selectedColor].hex} />
-                </g>
-              </svg>
-
-              {/* Part Callouts */}
-              {productParts.map((part, index) => (
-                <motion.div
-                  key={part.id}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{
-                    opacity: activePart >= index ? 1 : 0.3,
-                    scale: activePart === index ? 1.05 : 1,
-                  }}
-                  transition={{ duration: 0.4 }}
-                  className="absolute"
-                  style={{ left: part.position.x, top: part.position.y }}
-                >
-                  <div className={`w-3 h-3 rounded-full border-2 ${
-                    activePart === index
-                      ? "bg-wj-green border-wj-green"
-                      : "bg-transparent border-muted-foreground"
-                  }`} />
-                </motion.div>
-              ))}
-            </motion.div>
-
-            {/* Product Info Overlay */}
-            <div className="absolute bottom-8 left-0 right-0 px-8">
-              <div className="container-wj">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.3 }}
-                  className="text-center md:text-left"
-                >
-                  <p className="text-wj-green text-sm font-medium tracking-widest uppercase mb-2">
-                    {product.category}
-                  </p>
-                  <h1 className="text-display-sm md:text-display-lg font-bold text-foreground mb-2">
-                    {product.name}
-                  </h1>
-                  <p className="text-xl text-muted-foreground">
-                    {product.tagline}
-                  </p>
-                </motion.div>
-              </div>
-            </div>
-          </div>
-
-          {/* Scroll Content - Part Details */}
-          <div className="relative z-10 pointer-events-none">
-            {productParts.map((part, index) => (
-              <div
-                key={part.id}
-                className="min-h-[50vh] flex items-center px-8"
-              >
-                <motion.div
-                  initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true, margin: "-20%" }}
-                  transition={{ duration: 0.6 }}
-                  className={`max-w-md ${
-                    index % 2 === 0 ? "mr-auto" : "ml-auto text-right"
-                  }`}
-                >
-                  <div className="glass rounded-2xl p-6 pointer-events-auto">
-                    <h3 className="text-lg font-bold text-foreground mb-2">
-                      {part.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {part.description}
-                    </p>
-                  </div>
-                </motion.div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Configuration Section */}
-        <section className="section-padding bg-card">
-          <div className="container-wj">
-            <div className="grid lg:grid-cols-2 gap-12">
-              {/* Left - Options */}
-              <div>
-                <h2 className="text-2xl font-bold text-foreground mb-8">
-                  Configure Your {product.name}
-                </h2>
-
-                {/* Color Selection */}
-                <div className="mb-8">
-                  <label className="block text-sm font-medium text-foreground mb-3">
-                    Color: {product.colors[selectedColor].name}
-                  </label>
-                  <div className="flex gap-3">
-                    {product.colors.map((color, index) => (
-                      <button
-                        key={color.name}
-                        onClick={() => setSelectedColor(index)}
-                        className={`w-12 h-12 rounded-full border-2 transition-all duration-200 ${
-                          selectedColor === index
-                            ? "border-wj-green scale-110 ring-2 ring-wj-green/30"
-                            : "border-transparent hover:scale-105"
-                        }`}
-                        style={{ backgroundColor: color.hex }}
-                        title={color.name}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                {/* E-Pass Selection */}
-                <div className="mb-8">
-                  <label className="block text-sm font-medium text-foreground mb-3">
-                    E-Pass Membership
-                  </label>
-                  <div className="space-y-3">
-                    {(["basic", "silver", "black"] as const).map((tier) => (
-                      <button
-                        key={tier}
-                        onClick={() => setSelectedEPass(tier)}
-                        className={`w-full p-4 rounded-xl border text-left transition-all duration-200 ${
-                          selectedEPass === tier
-                            ? "border-wj-green bg-wj-green/5"
-                            : "border-border hover:border-wj-green/30"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium text-foreground capitalize">
-                              {tier === "basic" ? "Basic (Included)" : `E-Pass ${tier}`}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {tier === "basic" && "2-year warranty • E-ID included"}
-                              {tier === "silver" && "5-year warranty • Priority service"}
-                              {tier === "black" && "Lifetime warranty • VIP treatment"}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-foreground">
-                              {tier === "basic" ? "Free" : `+€${ePassPrices[tier]}/mo`}
-                            </span>
-                            {selectedEPass === tier && (
-                              <Check className="h-5 w-5 text-wj-green" />
-                            )}
-                          </div>
+        {/* Hero Section - Image Gallery */}
+        <section className="relative min-h-screen">
+          <div className="container-wj py-8">
+            <div className="grid lg:grid-cols-12 gap-8 lg:gap-12">
+              {/* Left - Main Image Gallery */}
+              <div className="lg:col-span-7 xl:col-span-8">
+                {/* Main Carousel */}
+                <div className="relative rounded-2xl overflow-hidden bg-card mb-4">
+                  <div ref={emblaRef} className="overflow-hidden">
+                    <div className="flex">
+                      {bikeGallery.map((item, index) => (
+                        <div
+                          key={index}
+                          className="flex-[0_0_100%] min-w-0 relative aspect-[4/3]"
+                        >
+                          <img
+                            src={item.image}
+                            alt={item.title}
+                            className="w-full h-full object-cover"
+                          />
+                          {/* Gradient overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
                         </div>
-                      </button>
-                    ))}
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Navigation Arrows */}
+                  <button
+                    onClick={scrollPrev}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-background transition-colors"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={scrollNext}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center text-foreground hover:bg-background transition-colors"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+
+                  {/* Current Image Info */}
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={currentSlide}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.3 }}
+                      className="absolute bottom-6 left-6 right-6"
+                    >
+                      <span className="inline-block px-2 py-1 text-[10px] font-medium uppercase tracking-widest text-wj-green bg-wj-green/10 rounded mb-2">
+                        {currentImage.subtitle}
+                      </span>
+                      <h3 className="text-xl font-semibold text-foreground">
+                        {currentImage.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {currentImage.description}
+                      </p>
+                    </motion.div>
+                  </AnimatePresence>
+
+                  {/* Slide Counter */}
+                  <div className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-background/80 backdrop-blur-sm">
+                    <span className="text-xs font-mono text-muted-foreground">
+                      <span className="text-wj-green font-semibold">{String(currentSlide + 1).padStart(2, '0')}</span>
+                      /{String(bikeGallery.length).padStart(2, '0')}
+                    </span>
                   </div>
                 </div>
 
-                {/* Quantity */}
-                <div className="mb-8">
-                  <label className="block text-sm font-medium text-foreground mb-3">
-                    Quantity
-                  </label>
-                  <div className="inline-flex items-center border border-border rounded-lg">
-                    <button
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="p-3 hover:bg-secondary transition-colors"
-                    >
-                      <Minus className="h-4 w-4" />
-                    </button>
-                    <span className="w-12 text-center font-medium">{quantity}</span>
-                    <button
-                      onClick={() => setQuantity(quantity + 1)}
-                      className="p-3 hover:bg-secondary transition-colors"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </button>
+                {/* Thumbnails */}
+                <div className="relative">
+                  <div ref={thumbsRef} className="overflow-hidden">
+                    <div className="flex gap-2">
+                      {bikeGallery.map((item, index) => (
+                        <button
+                          key={index}
+                          onClick={() => scrollTo(index)}
+                          className={`flex-[0_0_80px] min-w-0 aspect-square rounded-lg overflow-hidden transition-all duration-300 ${
+                            currentSlide === index
+                              ? "ring-2 ring-wj-green ring-offset-2 ring-offset-background"
+                              : "opacity-50 hover:opacity-80"
+                          }`}
+                        >
+                          <img
+                            src={item.image}
+                            alt={item.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </button>
+                      ))}
+                    </div>
                   </div>
+                </div>
+
+                {/* Specs Grid */}
+                <div className="grid grid-cols-4 gap-3 mt-8">
+                  {bikeSpecs.map((spec) => (
+                    <div
+                      key={spec.label}
+                      className="text-center p-4 rounded-xl bg-card border border-border"
+                    >
+                      <p className="text-lg font-semibold text-foreground">{spec.value}</p>
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
+                        {spec.label}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Right - Summary */}
-              <div>
-                <div className="sticky top-28 glass rounded-2xl p-8">
-                  <h3 className="text-lg font-bold text-foreground mb-6">
-                    Order Summary
-                  </h3>
+              {/* Right - Product Info & Config */}
+              <div className="lg:col-span-5 xl:col-span-4">
+                <div className="sticky top-28 space-y-6">
+                  {/* Product Title */}
+                  <div>
+                    <p className="text-wj-green text-sm font-medium tracking-widest uppercase mb-2">
+                      {product.category}
+                    </p>
+                    <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
+                      {product.name}
+                    </h1>
+                    <p className="text-lg text-muted-foreground">
+                      {product.tagline}
+                    </p>
+                    <div className="flex items-baseline gap-3 mt-4">
+                      <span className="text-3xl font-bold text-foreground">
+                        {formatPrice(product.price)}
+                      </span>
+                      {product.originalPrice && (
+                        <span className="text-lg text-muted-foreground line-through">
+                          {formatPrice(product.originalPrice)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
 
-                  <div className="space-y-4 mb-6">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">
-                        {product.name} × {quantity}
-                      </span>
+                  {/* Color Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-3">
+                      Color: {product.colors[selectedColor].name}
+                    </label>
+                    <div className="flex gap-3">
+                      {product.colors.map((color, index) => (
+                        <button
+                          key={color.name}
+                          onClick={() => setSelectedColor(index)}
+                          className={`w-10 h-10 rounded-full border-2 transition-all duration-200 ${
+                            selectedColor === index
+                              ? "border-wj-green scale-110 ring-2 ring-wj-green/30"
+                              : "border-transparent hover:scale-105"
+                          }`}
+                          style={{ backgroundColor: color.hex }}
+                          title={color.name}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* E-Pass Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-3">
+                      E-Pass Membership
+                    </label>
+                    <div className="space-y-2">
+                      {(["basic", "silver", "black"] as const).map((tier) => (
+                        <button
+                          key={tier}
+                          onClick={() => setSelectedEPass(tier)}
+                          className={`w-full p-3 rounded-xl border text-left transition-all duration-200 ${
+                            selectedEPass === tier
+                              ? "border-wj-green bg-wj-green/5"
+                              : "border-border hover:border-wj-green/30"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-foreground capitalize">
+                                {tier === "basic" ? "Basic (Included)" : `E-Pass ${tier}`}
+                              </p>
+                              <p className="text-[10px] text-muted-foreground mt-0.5">
+                                {tier === "basic" && "2-year warranty • E-ID included"}
+                                {tier === "silver" && "5-year warranty • Priority service"}
+                                {tier === "black" && "Lifetime warranty • VIP treatment"}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-medium text-foreground">
+                                {tier === "basic" ? "Free" : `+€${ePassPrices[tier]}/mo`}
+                              </span>
+                              {selectedEPass === tier && (
+                                <Check className="h-4 w-4 text-wj-green" />
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Quantity */}
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-3">
+                      Quantity
+                    </label>
+                    <div className="inline-flex items-center border border-border rounded-lg">
+                      <button
+                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                        className="p-2.5 hover:bg-secondary transition-colors"
+                      >
+                        <Minus className="h-4 w-4" />
+                      </button>
+                      <span className="w-10 text-center text-sm font-medium">{quantity}</span>
+                      <button
+                        onClick={() => setQuantity(quantity + 1)}
+                        className="p-2.5 hover:bg-secondary transition-colors"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Order Summary */}
+                  <div className="glass rounded-2xl p-5 space-y-4">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">{product.name} × {quantity}</span>
+                      <span className="text-foreground">{formatPrice(totalPrice)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">E-Pass {selectedEPass}</span>
                       <span className="text-foreground">
-                        {formatPrice(totalPrice)}
+                        {selectedEPass === "basic" ? "Included" : `+€${ePassPrices[selectedEPass]}/mo`}
                       </span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">
-                        E-Pass {selectedEPass}
-                      </span>
-                      <span className="text-foreground">
-                        {selectedEPass === "basic"
-                          ? "Included"
-                          : `+€${ePassPrices[selectedEPass]}/mo`}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Shipping</span>
                       <span className="text-wj-green">Free</span>
                     </div>
                     <div className="border-t border-border pt-4">
                       <div className="flex justify-between">
-                        <span className="text-lg font-bold text-foreground">
-                          Total
-                        </span>
-                        <span className="text-lg font-bold text-foreground">
-                          {formatPrice(totalPrice)}
-                        </span>
+                        <span className="font-bold text-foreground">Total</span>
+                        <span className="font-bold text-foreground">{formatPrice(totalPrice)}</span>
                       </div>
                     </div>
                   </div>
 
+                  {/* CTA */}
                   <Button
                     asChild
                     size="lg"
-                    className="w-full gradient-wj text-white hover:opacity-90 mb-4"
+                    className="w-full gradient-wj text-white hover:opacity-90"
                   >
                     <Link to="/checkout">
                       <ShoppingBag className="h-5 w-5 mr-2" />
@@ -379,29 +451,19 @@ const ProductDetail = () => {
                     </Link>
                   </Button>
 
-                  <p className="text-xs text-center text-muted-foreground mb-6">
-                    Reserved for you for the next 15 minutes
-                  </p>
-
                   {/* Trust Badges */}
-                  <div className="grid grid-cols-3 gap-4 text-center">
+                  <div className="grid grid-cols-3 gap-4 text-center pt-2">
                     <div>
                       <Truck className="h-5 w-5 mx-auto text-wj-green mb-1" />
-                      <p className="text-xs text-muted-foreground">
-                        Free Shipping
-                      </p>
+                      <p className="text-[10px] text-muted-foreground">Free Shipping</p>
                     </div>
                     <div>
                       <Shield className="h-5 w-5 mx-auto text-wj-green mb-1" />
-                      <p className="text-xs text-muted-foreground">
-                        2yr Warranty
-                      </p>
+                      <p className="text-[10px] text-muted-foreground">2yr Warranty</p>
                     </div>
                     <div>
                       <Zap className="h-5 w-5 mx-auto text-wj-green mb-1" />
-                      <p className="text-xs text-muted-foreground">
-                        Fast Delivery
-                      </p>
+                      <p className="text-[10px] text-muted-foreground">Fast Delivery</p>
                     </div>
                   </div>
                 </div>
@@ -410,7 +472,47 @@ const ProductDetail = () => {
           </div>
         </section>
 
-        {/* Specs Section */}
+        {/* Features Section */}
+        <section className="section-padding bg-card">
+          <div className="container-wj">
+            <h2 className="text-2xl font-bold text-foreground mb-8 text-center">
+              Componentes Premium
+            </h2>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {bikeGallery.slice(3).map((item, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="group relative aspect-square rounded-xl overflow-hidden cursor-pointer"
+                  onClick={() => {
+                    scrollTo(index + 3);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                >
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent opacity-80" />
+                  <div className="absolute bottom-4 left-4 right-4">
+                    <span className="text-[9px] font-medium uppercase tracking-widest text-wj-green">
+                      {item.subtitle}
+                    </span>
+                    <h3 className="text-sm font-semibold text-foreground mt-1">
+                      {item.title}
+                    </h3>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Technical Specs */}
         <section className="section-padding bg-background">
           <div className="container-wj">
             <h2 className="text-2xl font-bold text-foreground mb-8 text-center">
@@ -422,38 +524,14 @@ const ProductDetail = () => {
                   key={key}
                   className="text-center p-6 rounded-xl bg-card border border-border"
                 >
-                  <p className="text-2xl font-bold text-foreground mb-1">
-                    {value}
-                  </p>
-                  <p className="text-sm text-muted-foreground capitalize">
-                    {key}
-                  </p>
+                  <p className="text-2xl font-bold text-foreground mb-1">{value}</p>
+                  <p className="text-sm text-muted-foreground capitalize">{key}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
       </main>
-
-      {/* Floating Purchase Bar - Mobile */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden">
-        <div className="glass border-t border-border p-4">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground">{product.name}</p>
-              <p className="text-lg font-bold text-foreground">
-                {formatPrice(totalPrice)}
-              </p>
-            </div>
-            <Button asChild className="gradient-wj text-white">
-              <Link to="/checkout">
-                <ShoppingBag className="h-4 w-4 mr-2" />
-                Checkout
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </div>
 
       <Footer />
     </div>
