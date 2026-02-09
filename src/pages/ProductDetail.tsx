@@ -79,9 +79,10 @@ const ProductDetail = () => {
     offset: ["start start", "end end"],
   });
 
-  // Transform for sticky bike image
-  const bikeScale = useTransform(scrollYProgress, [0, 0.3], [0.9, 1]);
-  const bikeOpacity = useTransform(scrollYProgress, [0, 0.1], [0, 1]);
+  // Transform for sticky bike image and video
+  const bikeScale = useTransform(scrollYProgress, [0, 0.15], [0.95, 1]);
+  const bikeOpacity = useTransform(scrollYProgress, [0.05, 0.15], [0, 1]);
+  const videoOpacity = useTransform(scrollYProgress, [0, 0.1], [1, 0]);
 
   useEffect(() => {
     const foundProduct = bikeProducts.find((p) => p.id === id);
@@ -159,8 +160,11 @@ const ProductDetail = () => {
         <section className="relative min-h-[350vh]">
           {/* Sticky Container */}
           <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden">
-            {/* Video Background - Always visible initially */}
-            <div className="absolute inset-0 z-0">
+            {/* Video Background - Fades out on scroll */}
+            <motion.div 
+              className="absolute inset-0 z-0"
+              style={{ opacity: videoOpacity }}
+            >
               <video
                 autoPlay
                 loop
@@ -173,7 +177,10 @@ const ProductDetail = () => {
               {/* Gradient Overlays */}
               <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-background/20" />
               <div className="absolute inset-0 bg-gradient-to-r from-background/70 via-transparent to-transparent" />
-            </div>
+            </motion.div>
+
+            {/* Static Background for images */}
+            <div className="absolute inset-0 z-[1] bg-background" />
 
             {/* Bike Images - Fade in on scroll */}
             <motion.div
