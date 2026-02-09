@@ -10,13 +10,16 @@ import {
   Send,
   Star,
   Crown,
-  AlertTriangle,
-  X,
-  Play,
   Bell,
-  ChevronLeft
+  ChevronLeft,
+  X,
+  Wrench,
+  Search,
+  ClipboardList,
+  Zap,
+  ShieldCheck,
 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -55,11 +58,11 @@ const planConfig = {
 };
 
 const repairSteps = [
-  { id: "inspection", label: "Inspeção", icon: "🔍" },
-  { id: "diagnosis", label: "Diagnóstico", icon: "📋" },
-  { id: "repair", label: "Reparo", icon: "🔧" },
-  { id: "testing", label: "Teste", icon: "⚡" },
-  { id: "quality", label: "Qualidade", icon: "✅" },
+  { id: "inspection", label: "Inspection", icon: Search, specs: ["Frame check", "Bolts torque", "Visual assessment"] },
+  { id: "diagnosis", label: "Diagnosis", icon: ClipboardList, specs: ["Error codes", "Component testing", "Root cause"] },
+  { id: "repair", label: "Repair", icon: Wrench, specs: ["Parts replacement", "Adjustments", "Lubrication"] },
+  { id: "testing", label: "Testing", icon: Zap, specs: ["Road test", "Brake test", "Electronics check"] },
+  { id: "quality", label: "Quality", icon: ShieldCheck, specs: ["Final inspection", "Clean up", "Documentation"] },
 ];
 
 const getInitials = (name: string) => {
@@ -71,40 +74,33 @@ const getInitials = (name: string) => {
 };
 
 export default function StaffServiceModal({ task, open, onClose }: StaffServiceModalProps) {
-  // States
   const [repairStatus, setRepairStatus] = useState<"pending" | "in_progress" | "completed">("pending");
   const [repairSeconds, setRepairSeconds] = useState(0);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<Record<string, boolean>>({});
   const [stepPhotos, setStepPhotos] = useState<Record<string, string>>({});
-  const [revealedStep, setRevealedStep] = useState<string | null>(null);
-  
-  // Overlays
+
   const [showStartOverlay, setShowStartOverlay] = useState(false);
   const [showChatOverlay, setShowChatOverlay] = useState(false);
-  
-  // Chat
+
   const [chatMessage, setChatMessage] = useState("");
   const [chatMessages, setChatMessages] = useState<{ from: string; message: string; time: string }[]>([]);
-  
-  // Refs & Motion
+
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const startX = useMotionValue(0);
   const completeX = useMotionValue(0);
-  const sliderWidth = 240;
-  const thumbWidth = 44;
+  const sliderWidth = 260;
+  const thumbWidth = 48;
   const maxDrag = sliderWidth - thumbWidth - 4;
-  
+
   const startBgOpacity = useTransform(startX, [0, maxDrag], [0.1, 0.4]);
   const startCheckScale = useTransform(startX, [maxDrag * 0.7, maxDrag], [0, 1]);
   const completeBgOpacity = useTransform(completeX, [0, maxDrag], [0.1, 0.4]);
 
-  // Initialize
   useEffect(() => {
     if (task?.chat) setChatMessages(task.chat);
   }, [task]);
 
-  // Timer
   useEffect(() => {
     if (repairStatus === "in_progress") {
       timerRef.current = setInterval(() => setRepairSeconds(prev => prev + 1), 1000);
@@ -115,7 +111,6 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [repairStatus]);
 
-  // Reset on open
   useEffect(() => {
     if (open && task) {
       setRepairStatus(task.status === "in_progress" ? "in_progress" : "pending");
@@ -140,7 +135,7 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
     setChatMessages(prev => [...prev, {
       from: "system",
       message,
-      time: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+      time: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
     }]);
   };
 
@@ -151,7 +146,7 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
         setRepairStatus("in_progress");
         setShowStartOverlay(false);
         animate(startX, 0, { duration: 0 });
-        notifyClient("🔧 Reparo iniciado! O mecânico começou a trabalhar na sua bike.");
+        notifyClient("🔧 Repair started! The mechanic has begun working on your bike.");
       }, 200);
     } else {
       animate(startX, 0, { type: "spring", stiffness: 500, damping: 30 });
@@ -169,30 +164,23 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
       setTimeout(() => {
         setRepairStatus("completed");
         animate(completeX, 0, { duration: 0 });
-        notifyClient("✅ Reparo concluído! Sua bike está pronta para retirada.");
+        notifyClient("✅ Repair complete! Your bike is ready for pickup.");
       }, 200);
     } else {
       animate(completeX, 0, { type: "spring", stiffness: 500, damping: 30 });
     }
   };
 
-  const handleStepDrag = (stepId: string, info: PanInfo) => {
-    if (info.offset.x < -80) {
-      setRevealedStep(stepId);
-    }
-  };
-
   const handleCompleteStep = (stepId: string) => {
     const hasPhoto = !!stepPhotos[stepId];
     if (!hasPhoto) return;
-    
+
     setCompletedSteps(prev => ({ ...prev, [stepId]: true }));
-    setRevealedStep(null);
-    
+
     const stepIndex = repairSteps.findIndex(s => s.id === stepId);
     const step = repairSteps[stepIndex];
-    notifyClient(`${step.icon} Etapa "${step.label}" concluída!`);
-    
+    notifyClient(`${step.label} step completed!`);
+
     if (stepIndex < repairSteps.length - 1) {
       setCurrentStepIndex(stepIndex + 1);
     }
@@ -207,7 +195,7 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
     setChatMessages(prev => [...prev, {
       from: "mechanic",
       message: chatMessage,
-      time: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+      time: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })
     }]);
     setChatMessage("");
   };
@@ -218,283 +206,218 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
   const PlanIcon = plan?.icon;
   const allStepsCompleted = repairSteps.every(s => completedSteps[s.id]);
   const completedCount = Object.values(completedSteps).filter(Boolean).length;
+  const currentStep = repairSteps[currentStepIndex];
+  const StepIcon = currentStep?.icon;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="w-[90vw] max-w-xs bg-card border-border/50 overflow-hidden p-0 rounded-2xl min-h-[500px] max-h-[90vh] flex flex-col">
-        {/* Compact Header */}
-        <div className="p-3 border-b border-border/30">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-wj-green/10 flex items-center justify-center">
-                <Bike className="h-4 w-4 text-wj-green" />
+      <DialogContent className="w-[90vw] max-w-xs bg-transparent border-0 shadow-none overflow-hidden p-0 rounded-3xl min-h-[560px] max-h-[90vh] flex flex-col">
+        <DialogTitle className="sr-only">{task.service}</DialogTitle>
+
+        {/* Video Background */}
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover rounded-3xl"
+        >
+          <source src="/videos/staff-service-modal-bg.mp4" type="video/mp4" />
+        </video>
+
+        {/* Dark gradient overlays */}
+        <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/80 via-black/50 to-transparent rounded-t-3xl" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/90 via-black/50 to-transparent rounded-b-3xl" />
+        <div className="absolute inset-0 bg-black/20 rounded-3xl" />
+
+        {/* Content Layer */}
+        <div className="relative z-10 flex flex-col h-full min-h-[560px]">
+          {/* Header: Owner left, Service icon right */}
+          <div className="p-4 flex items-center gap-3">
+            <Avatar className="h-9 w-9 border-2 border-white/20">
+              <AvatarFallback className="bg-white/10 text-white text-xs font-bold">
+                {getInitials(task.owner)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-white truncate">{task.owner}</p>
+              <div className="flex items-center gap-1.5">
+                <Badge className={cn("text-[9px] border-0 px-1.5 py-0 h-4", plan?.color)}>
+                  {PlanIcon && <PlanIcon className="h-2.5 w-2.5 mr-0.5" />}
+                  {plan?.label}
+                </Badge>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold truncate">{task.service}</p>
-                <p className="text-[10px] text-muted-foreground font-mono">{task.bikeId}</p>
-              </div>
-              
-              {/* Timer Badge - Always visible when in progress */}
-              {repairStatus === "in_progress" && (
-                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-wj-green/10 border border-wj-green/20">
-                  <Clock className="h-3 w-3 text-wj-green" />
-                  <span className="text-xs font-mono font-bold text-wj-green">{formatTime(repairSeconds)}</span>
-                </div>
-              )}
-              
-              {/* Chat Button */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowChatOverlay(true)}
-                className="h-8 w-8 p-0 rounded-full hover:bg-wj-green/10 mr-4"
+            </div>
+            <div className="w-9 h-9 rounded-full bg-wj-green/20 border border-wj-green/30 flex items-center justify-center">
+              <Bike className="h-4 w-4 text-wj-green" />
+            </div>
+          </div>
+
+          {/* Main Area - Grows to fill */}
+          <div className="flex-1 flex flex-col justify-end px-4 pb-4 gap-3">
+            {/* In Progress: Horizontal Swipe Step Card */}
+            {repairStatus === "in_progress" && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col gap-3 flex-1 justify-end"
               >
-                <MessageCircle className="h-4 w-4 text-muted-foreground" />
-                {chatMessages.length > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-wj-green text-[9px] text-background flex items-center justify-center font-bold">
-                    {chatMessages.length}
-                  </span>
-                )}
-              </Button>
-            </DialogTitle>
-          </DialogHeader>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-3 space-y-3">
-              {/* Owner Card - Compact */}
-              <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-muted/30 border border-border/30">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-muted text-xs font-medium">
-                    {getInitials(task.owner)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-foreground truncate">{task.owner}</p>
-                  <div className="flex items-center gap-1.5">
-                    <Badge className={cn("text-[9px] border-0 px-1.5 py-0 h-4", plan?.color)}>
-                      {PlanIcon && <PlanIcon className="h-2.5 w-2.5 mr-0.5" />}
-                      {plan?.label}
-                    </Badge>
-                    <span className="text-[10px] text-muted-foreground">• {task.scheduledTime}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Steps Section - In Progress */}
-              {repairStatus === "in_progress" && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="space-y-2"
-                >
-                  {/* Progress indicator */}
-                  <div className="flex items-center justify-between px-1">
-                    <span className="text-[10px] text-muted-foreground">
-                      {completedCount}/{repairSteps.length} etapas
-                    </span>
-                    <div className="flex gap-1">
-                      {repairSteps.map((step, i) => (
-                        <div
-                          key={step.id}
-                          className={cn(
-                            "w-6 h-1 rounded-full transition-colors",
-                            completedSteps[step.id] ? "bg-wj-green" : 
-                            i === currentStepIndex ? "bg-wj-green/40" : "bg-muted"
-                          )}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Step Cards - Swipe to reveal */}
-                  {repairSteps.map((step, index) => {
-                    const isCompleted = completedSteps[step.id];
-                    const isCurrent = index === currentStepIndex;
-                    const isRevealed = revealedStep === step.id;
-                    const hasPhoto = !!stepPhotos[step.id];
-                    const isLocked = index > currentStepIndex && !isCompleted;
-
-                    if (isCompleted) {
-                      return (
-                        <motion.div
-                          key={step.id}
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          className="flex items-center gap-2 p-2 rounded-lg bg-wj-green/10 border border-wj-green/20"
-                        >
-                          <div className="w-6 h-6 rounded-full bg-wj-green flex items-center justify-center">
-                            <CheckCircle2 className="h-3.5 w-3.5 text-background" />
+                {/* Step Card - Swipeable horizontally */}
+                <div className="relative w-full overflow-hidden rounded-2xl">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={currentStepIndex}
+                      initial={{ opacity: 0, x: 80 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -80 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                      className="w-full bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl p-4 space-y-3"
+                    >
+                      {/* Timer inside card */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-xl bg-wj-green/20 flex items-center justify-center">
+                            {StepIcon && <StepIcon className="h-4 w-4 text-wj-green" />}
                           </div>
-                          <span className="text-xs text-wj-green font-medium">{step.label}</span>
-                          <span className="ml-auto text-lg">{step.icon}</span>
-                        </motion.div>
-                      );
-                    }
-
-                    if (isLocked) {
-                      return (
-                        <div
-                          key={step.id}
-                          className="flex items-center gap-2 p-2 rounded-lg bg-muted/20 border border-border/20 opacity-40"
-                        >
-                          <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
-                            <span className="text-[10px] text-muted-foreground">{index + 1}</span>
+                          <div>
+                            <p className="text-sm font-semibold text-white">{currentStep.label}</p>
+                            <p className="text-[10px] text-white/50">Step {currentStepIndex + 1} of {repairSteps.length}</p>
                           </div>
-                          <span className="text-xs text-muted-foreground">{step.label}</span>
                         </div>
-                      );
-                    }
-
-                    return (
-                      <div key={step.id} className="relative overflow-hidden rounded-xl">
-                        {/* Hidden action area */}
-                        <div className="absolute inset-y-0 right-0 w-24 bg-wj-green/20 flex items-center justify-center">
-                          <span className="text-[10px] text-wj-green font-medium">Concluir</span>
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-wj-green/10 border border-wj-green/20">
+                          <Clock className="h-3 w-3 text-wj-green" />
+                          <span className="text-xs font-mono font-bold text-wj-green">{formatTime(repairSeconds)}</span>
                         </div>
-
-                        {/* Draggable card */}
-                        <motion.div
-                          drag={isCurrent && !isRevealed ? "x" : false}
-                          dragConstraints={{ left: -100, right: 0 }}
-                          dragElastic={0.1}
-                          onDragEnd={(_, info) => handleStepDrag(step.id, info)}
-                          animate={{ x: isRevealed ? -100 : 0 }}
-                          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                          className={cn(
-                            "relative p-3 rounded-xl border bg-card cursor-grab active:cursor-grabbing",
-                            isCurrent ? "border-wj-green/50 shadow-lg shadow-wj-green/5" : "border-border/30"
-                          )}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={cn(
-                              "w-10 h-10 rounded-xl flex items-center justify-center text-lg",
-                              isCurrent ? "bg-wj-green/20" : "bg-muted/50"
-                            )}>
-                              {step.icon}
-                            </div>
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-foreground">{step.label}</p>
-                              <p className="text-[10px] text-muted-foreground">
-                                {isCurrent ? "← Arraste para concluir" : "Aguardando"}
-                              </p>
-                            </div>
-                            {isCurrent && (
-                              <ChevronLeft className="h-4 w-4 text-wj-green/50 animate-pulse" />
-                            )}
-                          </div>
-                        </motion.div>
-
-                        {/* Revealed Form */}
-                        <AnimatePresence>
-                          {isRevealed && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: "auto" }}
-                              exit={{ opacity: 0, height: 0 }}
-                              className="mt-2 p-3 rounded-xl bg-muted/30 border border-border/30 space-y-3"
-                            >
-                              {/* Photo upload */}
-                              <div className="flex items-center gap-2">
-                                {hasPhoto ? (
-                                  <div className="w-14 h-14 rounded-lg bg-muted overflow-hidden relative">
-                                    <img src={stepPhotos[step.id]} alt="" className="w-full h-full object-cover" />
-                                    <div className="absolute inset-0 bg-wj-green/20 flex items-center justify-center">
-                                      <CheckCircle2 className="h-5 w-5 text-wj-green" />
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <button
-                                    onClick={() => handlePhotoUpload(step.id)}
-                                    className="w-14 h-14 rounded-lg border-2 border-dashed border-wj-green/30 flex flex-col items-center justify-center gap-1 hover:bg-wj-green/5 transition-colors"
-                                  >
-                                    <Camera className="h-5 w-5 text-wj-green/70" />
-                                    <span className="text-[8px] text-wj-green/70">Foto</span>
-                                  </button>
-                                )}
-                                <div className="flex-1 text-xs text-muted-foreground">
-                                  {hasPhoto ? (
-                                    <span className="text-wj-green">Foto adicionada ✓</span>
-                                  ) : (
-                                    <span>Adicione uma foto para concluir</span>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Complete button */}
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setRevealedStep(null)}
-                                  className="flex-1 h-9 text-xs"
-                                >
-                                  Cancelar
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleCompleteStep(step.id)}
-                                  disabled={!hasPhoto}
-                                  className="flex-1 h-9 text-xs bg-wj-green hover:bg-wj-green/90 disabled:opacity-50"
-                                >
-                                  <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
-                                  Concluir Etapa
-                                </Button>
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
                       </div>
+
+                      {/* Specs */}
+                      <div className="space-y-1.5">
+                        {currentStep.specs.map((spec, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <div className="w-1 h-1 rounded-full bg-wj-green/60" />
+                            <span className="text-[11px] text-white/60">{spec}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Photo + Complete inside card */}
+                      <div className="flex items-center gap-2 pt-1">
+                        {stepPhotos[currentStep.id] ? (
+                          <div className="w-10 h-10 rounded-lg bg-wj-green/20 flex items-center justify-center border border-wj-green/30">
+                            <CheckCircle2 className="h-4 w-4 text-wj-green" />
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => handlePhotoUpload(currentStep.id)}
+                            className="w-10 h-10 rounded-lg border border-dashed border-white/20 flex items-center justify-center hover:bg-white/5 transition-colors"
+                          >
+                            <Camera className="h-4 w-4 text-white/40" />
+                          </button>
+                        )}
+                        <Button
+                          size="sm"
+                          onClick={() => handleCompleteStep(currentStep.id)}
+                          disabled={!stepPhotos[currentStep.id]}
+                          className="flex-1 h-9 text-xs bg-wj-green hover:bg-wj-green/90 disabled:opacity-30 rounded-xl"
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+                          Complete Step
+                        </Button>
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+
+                {/* Step Counters */}
+                <div className="flex items-center justify-center gap-2">
+                  {repairSteps.map((step, i) => {
+                    const isCompleted = completedSteps[step.id];
+                    const isCurrent = i === currentStepIndex;
+                    const SIcon = step.icon;
+                    return (
+                      <button
+                        key={step.id}
+                        onClick={() => {
+                          if (isCompleted || isCurrent) return;
+                        }}
+                        className={cn(
+                          "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 border",
+                          isCompleted
+                            ? "bg-wj-green/30 border-wj-green/50"
+                            : isCurrent
+                            ? "bg-white/10 border-wj-green/40 scale-110"
+                            : "bg-white/5 border-white/10 opacity-40"
+                        )}
+                      >
+                        {isCompleted ? (
+                          <CheckCircle2 className="h-3.5 w-3.5 text-wj-green" />
+                        ) : (
+                          <SIcon className={cn("h-3 w-3", isCurrent ? "text-wj-green" : "text-white/40")} />
+                        )}
+                      </button>
                     );
                   })}
+                </div>
 
-                  {/* Complete Swipe */}
-                  {allStepsCompleted && (
+                {/* Complete Swipe - when all done */}
+                {allStepsCompleted && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
                     <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="pt-3"
+                      style={{ backgroundColor: `rgba(5, 140, 66, ${completeBgOpacity.get()})` }}
+                      className="relative h-14 rounded-full border border-wj-green/30 overflow-hidden w-full"
                     >
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <span className="text-sm text-wj-green/70 font-medium">Finish Service →</span>
+                      </div>
                       <motion.div
-                        style={{ backgroundColor: `rgba(5, 140, 66, ${completeBgOpacity.get()})` }}
-                        className="relative h-12 rounded-full border border-wj-green/30 overflow-hidden mx-auto max-w-[240px]"
+                        drag="x"
+                        dragConstraints={{ left: 0, right: maxDrag }}
+                        dragElastic={0}
+                        onDragEnd={handleCompleteDragEnd}
+                        style={{ x: completeX }}
+                        className="absolute left-1 top-1 bottom-1 w-12 rounded-full bg-wj-green flex items-center justify-center cursor-grab active:cursor-grabbing shadow-lg shadow-wj-green/30"
                       >
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                          <span className="text-xs text-wj-green font-medium">Finalizar Serviço →</span>
-                        </div>
-
-                        <motion.div
-                          drag="x"
-                          dragConstraints={{ left: 0, right: maxDrag }}
-                          dragElastic={0}
-                          onDragEnd={handleCompleteDragEnd}
-                          style={{ x: completeX }}
-                          className="absolute left-0.5 top-0.5 bottom-0.5 w-11 rounded-full bg-wj-green flex items-center justify-center cursor-grab active:cursor-grabbing shadow-lg shadow-wj-green/30"
-                        >
-                          <ArrowRight className="h-4 w-4 text-background" />
-                        </motion.div>
+                        <ArrowRight className="h-5 w-5 text-background" />
                       </motion.div>
                     </motion.div>
-                  )}
-                </motion.div>
-              )}
+                  </motion.div>
+                )}
+              </motion.div>
+            )}
 
-              {/* Completed State */}
-              {repairStatus === "completed" && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="text-center py-8"
-                >
-                  <div className="w-14 h-14 rounded-full bg-wj-green/20 flex items-center justify-center mx-auto mb-3">
-                    <CheckCircle2 className="h-7 w-7 text-wj-green" />
-                  </div>
-                  <h3 className="text-base font-semibold text-foreground mb-1">Serviço Concluído!</h3>
-                  <p className="text-2xl font-mono font-bold text-wj-green mb-2">{formatTime(repairSeconds)}</p>
-                  <p className="text-[10px] text-muted-foreground">Cliente notificado automaticamente</p>
-                </motion.div>
+            {/* Completed State */}
+            {repairStatus === "completed" && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-center py-8"
+              >
+                <div className="w-14 h-14 rounded-full bg-wj-green/20 flex items-center justify-center mx-auto mb-3">
+                  <CheckCircle2 className="h-7 w-7 text-wj-green" />
+                </div>
+                <h3 className="text-base font-semibold text-white mb-1">Service Complete!</h3>
+                <p className="text-2xl font-mono font-bold text-wj-green mb-2">{formatTime(repairSeconds)}</p>
+                <p className="text-[10px] text-white/50">Customer notified automatically</p>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Floating Chat FAB - Always visible, bottom right */}
+          <div className="absolute bottom-5 right-5 z-50">
+            <button
+              onClick={() => setShowChatOverlay(true)}
+              className="relative w-12 h-12 rounded-full bg-wj-green shadow-lg shadow-wj-green/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+            >
+              <MessageCircle className="h-5 w-5 text-background" />
+              {chatMessages.length > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-white text-[10px] text-wj-green flex items-center justify-center font-bold shadow-sm">
+                  {chatMessages.length}
+                </span>
               )}
+            </button>
           </div>
         </div>
 
@@ -505,9 +428,8 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 z-50 overflow-hidden"
+              className="absolute inset-0 z-50 overflow-hidden rounded-3xl"
             >
-              {/* Video Background */}
               <video
                 autoPlay
                 muted
@@ -517,18 +439,12 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
               >
                 <source src="/videos/staff-service-bg.mp4" type="video/mp4" />
               </video>
-              
-              {/* Dark Gradient - Top */}
-              <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/80 via-black/40 to-transparent" />
-              
-              {/* Dark Gradient - Bottom */}
-              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
-              
-              {/* Content */}
+
+              <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/80 via-black/40 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent" />
+
               <div className="relative z-10 h-full flex flex-col">
-                {/* Header */}
                 <div className="p-4 flex items-center gap-3">
-                  {/* Owner Avatar - Top Left */}
                   <Avatar className="h-9 w-9 border-2 border-white/20">
                     <AvatarFallback className="bg-white/10 text-white text-xs font-bold">
                       {getInitials(task.owner)}
@@ -536,15 +452,13 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-white truncate">{task.owner}</p>
-                    <p className="text-[10px] text-white/60 font-mono">{task.bikeId}</p>
+                    <p className="text-[10px] text-white/50 font-mono">{task.bikeId}</p>
                   </div>
-                  {/* Service Icon - Top Right */}
                   <div className="w-9 h-9 rounded-full bg-wj-green/20 flex items-center justify-center border border-wj-green/30">
                     <Bike className="h-4 w-4 text-wj-green" />
                   </div>
                 </div>
 
-                {/* Main Content - Centered */}
                 <div className="flex-1 flex flex-col items-center justify-center px-6">
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
@@ -552,22 +466,20 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
                     transition={{ delay: 0.1 }}
                     className="text-center"
                   >
-                    <h2 className="text-lg font-semibold text-foreground mb-1">{task.service}</h2>
-                    <p className="text-[10px] text-muted-foreground/70">
+                    <h2 className="text-lg font-semibold text-white mb-1">{task.service}</h2>
+                    <p className="text-[10px] text-white/40">
                       Customer will be notified when started
                     </p>
                   </motion.div>
                 </div>
 
-                {/* Bottom Section - Swipe */}
                 <div className="p-4 pb-8">
-                  {/* Full Width Swipe with rounded thumb */}
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    style={{ 
-                      backgroundColor: `rgba(5, 140, 66, ${startBgOpacity.get()})` 
+                    style={{
+                      backgroundColor: `rgba(5, 140, 66, ${startBgOpacity.get()})`
                     }}
                     className="relative h-14 rounded-full border border-wj-green/30 overflow-hidden w-full"
                   >
@@ -576,8 +488,8 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
                         Start Service →
                       </span>
                     </div>
-                    
-                    <motion.div 
+
+                    <motion.div
                       style={{ scale: startCheckScale }}
                       className="absolute inset-0 flex items-center justify-center pointer-events-none"
                     >
@@ -586,7 +498,7 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
 
                     <motion.div
                       drag="x"
-                      dragConstraints={{ left: 0, right: 240 }}
+                      dragConstraints={{ left: 0, right: maxDrag }}
                       dragElastic={0}
                       onDragEnd={handleStartDragEnd}
                       style={{ x: startX }}
@@ -596,10 +508,9 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
                     </motion.div>
                   </motion.div>
 
-                  {/* Cancel */}
                   <button
                     onClick={() => { setShowStartOverlay(false); onClose(); }}
-                    className="w-full mt-4 py-2 text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                    className="w-full mt-4 py-2 text-xs text-white/30 hover:text-white/60 transition-colors"
                   >
                     Cancel
                   </button>
@@ -613,12 +524,11 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
         <AnimatePresence>
           {showChatOverlay && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 z-50 bg-background flex flex-col"
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 40 }}
+              className="absolute inset-0 z-[60] bg-background/95 backdrop-blur-xl flex flex-col rounded-3xl"
             >
-              {/* Chat Header */}
               <div className="p-3 border-b border-border/30 flex items-center gap-3">
                 <Button
                   variant="ghost"
@@ -635,17 +545,16 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
                 </Avatar>
                 <div className="flex-1">
                   <p className="text-xs font-medium">{task.owner}</p>
-                  <p className="text-[10px] text-muted-foreground">Cliente</p>
+                  <p className="text-[10px] text-muted-foreground">Customer</p>
                 </div>
               </div>
 
-              {/* Chat Messages */}
               <ScrollArea className="flex-1 p-3">
                 <div className="space-y-2">
                   {chatMessages.length === 0 && (
                     <div className="text-center py-8">
                       <MessageCircle className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
-                      <p className="text-xs text-muted-foreground">Nenhuma mensagem ainda</p>
+                      <p className="text-xs text-muted-foreground">No messages yet</p>
                     </div>
                   )}
                   {chatMessages.map((msg, i) => (
@@ -663,7 +572,7 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
                           "bg-muted"
                         )}>
                           {msg.from === "owner" ? getInitials(task.owner) :
-                           msg.from === "system" ? <Bell className="h-3 w-3" /> : "EU"}
+                           msg.from === "system" ? <Bell className="h-3 w-3" /> : "ME"}
                         </AvatarFallback>
                       </Avatar>
                       <div className={cn(
@@ -680,12 +589,11 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
                 </div>
               </ScrollArea>
 
-              {/* Chat Input */}
               <div className="p-3 border-t border-border/30 flex gap-2">
                 <Input
                   value={chatMessage}
                   onChange={(e) => setChatMessage(e.target.value)}
-                  placeholder="Mensagem..."
+                  placeholder="Message..."
                   className="h-10 text-xs bg-muted/30 border-border/30 rounded-full px-4"
                   onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                 />
