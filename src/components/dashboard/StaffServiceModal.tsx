@@ -221,7 +221,7 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] max-w-sm bg-card border-border/50 overflow-hidden p-0 rounded-2xl min-h-[400px] max-h-[85vh] flex flex-col">
+      <DialogContent className="w-[90vw] max-w-xs bg-card border-border/50 overflow-hidden p-0 rounded-2xl min-h-[500px] max-h-[90vh] flex flex-col">
         {/* Compact Header */}
         <div className="p-3 border-b border-border/30">
           <DialogHeader>
@@ -518,25 +518,28 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
                 <source src="/videos/staff-service-bg.mp4" type="video/mp4" />
               </video>
               
-              {/* Dark Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/40" />
+              {/* Dark Gradient - Top */}
+              <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/80 via-black/40 to-transparent" />
+              
+              {/* Dark Gradient - Bottom */}
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
               
               {/* Content */}
               <div className="relative z-10 h-full flex flex-col">
                 {/* Header */}
                 <div className="p-4 flex items-center gap-3">
                   {/* Owner Avatar - Top Left */}
-                  <Avatar className="h-9 w-9 border-2 border-wj-green/30">
-                    <AvatarFallback className="bg-wj-green/20 text-wj-green text-xs font-bold">
+                  <Avatar className="h-9 w-9 border-2 border-white/20">
+                    <AvatarFallback className="bg-white/10 text-white text-xs font-bold">
                       {getInitials(task.owner)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-foreground truncate">{task.owner}</p>
-                    <p className="text-[10px] text-muted-foreground font-mono">{task.bikeId}</p>
+                    <p className="text-xs font-medium text-white truncate">{task.owner}</p>
+                    <p className="text-[10px] text-white/60 font-mono">{task.bikeId}</p>
                   </div>
                   {/* Service Icon - Top Right */}
-                  <div className="w-9 h-9 rounded-xl bg-wj-green/20 flex items-center justify-center border border-wj-green/30">
+                  <div className="w-9 h-9 rounded-full bg-wj-green/20 flex items-center justify-center border border-wj-green/30">
                     <Bike className="h-4 w-4 text-wj-green" />
                   </div>
                 </div>
@@ -547,18 +550,18 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="text-center mb-8"
+                    className="text-center"
                   >
-                    <h2 className="text-xl font-semibold text-foreground mb-1">{task.service}</h2>
+                    <h2 className="text-lg font-semibold text-foreground mb-1">{task.service}</h2>
                     <p className="text-[10px] text-muted-foreground/70">
-                      Cliente será notificado ao iniciar
+                      Customer will be notified when started
                     </p>
                   </motion.div>
                 </div>
 
                 {/* Bottom Section - Swipe */}
-                <div className="p-4 pb-6">
-                  {/* Full Width Swipe */}
+                <div className="p-4 pb-8">
+                  {/* Full Width Swipe with rounded thumb */}
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -566,11 +569,11 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
                     style={{ 
                       backgroundColor: `rgba(5, 140, 66, ${startBgOpacity.get()})` 
                     }}
-                    className="relative h-14 rounded-2xl border border-wj-green/30 overflow-hidden w-full"
+                    className="relative h-14 rounded-full border border-wj-green/30 overflow-hidden w-full"
                   >
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <span className="text-sm text-wj-green/70 font-medium tracking-wide">
-                        Iniciar Serviço →
+                        Start Service →
                       </span>
                     </div>
                     
@@ -583,11 +586,11 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
 
                     <motion.div
                       drag="x"
-                      dragConstraints={{ left: 0, right: 280 }}
+                      dragConstraints={{ left: 0, right: 240 }}
                       dragElastic={0}
                       onDragEnd={handleStartDragEnd}
                       style={{ x: startX }}
-                      className="absolute left-1 top-1 bottom-1 w-12 rounded-xl bg-wj-green flex items-center justify-center cursor-grab active:cursor-grabbing shadow-lg shadow-wj-green/40"
+                      className="absolute left-1 top-1 bottom-1 w-12 rounded-full bg-wj-green flex items-center justify-center cursor-grab active:cursor-grabbing shadow-lg shadow-wj-green/40"
                     >
                       <ArrowRight className="h-5 w-5 text-background" />
                     </motion.div>
@@ -596,9 +599,9 @@ export default function StaffServiceModal({ task, open, onClose }: StaffServiceM
                   {/* Cancel */}
                   <button
                     onClick={() => { setShowStartOverlay(false); onClose(); }}
-                    className="w-full mt-3 py-2 text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                    className="w-full mt-4 py-2 text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
                   >
-                    Cancelar
+                    Cancel
                   </button>
                 </div>
               </div>
