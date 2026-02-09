@@ -188,13 +188,13 @@ const ProductDetail = () => {
               style={{ scale: bikeScale, opacity: bikeOpacity }}
               className="absolute inset-0 z-[2]"
             >
-              <AnimatePresence mode="wait">
+              <AnimatePresence mode="sync">
                 <motion.div
                   key={activePart}
-                  initial={{ opacity: 0, scale: 1.05 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                  transition={{ duration: 1.2, ease: [0.25, 0.1, 0.25, 1] }}
+                  initial={{ opacity: 0.7 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0.7 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
                   className="absolute inset-0"
                 >
                   <img
