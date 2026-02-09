@@ -1,37 +1,66 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Check, Minus, Plus, ShoppingBag, Shield, Truck, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { bikeProducts, BikeProduct } from "@/data/products";
+import useEmblaCarousel from "embla-carousel-react";
 
-// Product part descriptions for scroll reveal
+// Import bike images from BikeShowcase
+import bikeFull from "@/assets/bike-full.png";
+import bikePanel from "@/assets/bike-panel.png";
+import bikeHeadlight from "@/assets/bike-headlight.png";
+import bikeWheel from "@/assets/bike-wheel.png";
+import bikeChain from "@/assets/bike-chain.png";
+import bikeBrakes from "@/assets/bike-brakes.png";
+import bikeV8Side from "@/assets/bike-v8-side.png";
+import bikeV8Front from "@/assets/bike-v8-front.png";
+
+// Product part descriptions for scroll reveal with images
 const productParts = [
   {
-    id: "motor",
-    title: "Brushless Motor",
-    description: "250W of pure Dutch engineering. Silent, powerful, and designed to last 20,000+ kilometers.",
-    position: { x: "65%", y: "70%" },
+    id: "full",
+    image: bikeFull,
+    title: "WJ V8 Prestige",
+    subtitle: "Design Completo",
+    description: "Acabamento premium em cada detalhe. Estrutura em alumínio aeroespacial 6061-T6.",
   },
   {
-    id: "battery",
-    title: "Removable Battery",
-    description: "Samsung cells with intelligent BMS. Charge at home or at the office in under 4 hours.",
-    position: { x: "50%", y: "45%" },
+    id: "panel",
+    image: bikePanel,
+    title: "Smart Display",
+    subtitle: "Painel Digital LCD",
+    description: "GPS integrado, métricas em tempo real e conectividade Bluetooth 5.0.",
   },
   {
-    id: "frame",
-    title: "Aerospace Aluminum",
-    description: "6061-T6 aluminum frame, hydroformed for strength and elegance. Lifetime warranty included.",
-    position: { x: "35%", y: "55%" },
+    id: "headlight",
+    image: bikeHeadlight,
+    title: "LED Premium 1200lm",
+    subtitle: "Iluminação Inteligente",
+    description: "Faróis automáticos com sensor de luz ambiente. Alcance de 50 metros.",
   },
   {
-    id: "seat",
-    title: "Ergonomic Saddle",
-    description: "Italian leather with memory foam. Designed for 2+ hours of comfortable riding.",
-    position: { x: "45%", y: "25%" },
+    id: "wheel",
+    image: bikeWheel,
+    title: "Kenda Fat Tire 20x4.0",
+    subtitle: "Rodas All-Terrain",
+    description: "Pneus para máxima aderência em qualquer superfície. Pressão ideal: 15 PSI.",
+  },
+  {
+    id: "chain",
+    image: bikeChain,
+    title: "Shimano 7-Speed",
+    subtitle: "Transmissão Premium",
+    description: "Sistema de marchas de alta performance com troca suave e precisa.",
+  },
+  {
+    id: "brakes",
+    image: bikeBrakes,
+    title: "Disco Hidráulico 180mm",
+    subtitle: "Sistema de Freios",
+    description: "Freios a disco com pastilhas cerâmicas para frenagem potente e silenciosa.",
   },
 ];
 
@@ -125,60 +154,51 @@ const ProductDetail = () => {
       <main className="pt-24 md:pt-28">
         {/* Hero Section with Sticky Bike */}
         <section className="relative min-h-[200vh]">
-          {/* Sticky Bike Container */}
+          {/* Sticky Bike Image Container */}
           <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden">
+            {/* Bike Image Carousel */}
             <motion.div
               style={{ scale: bikeScale, opacity: bikeOpacity }}
-              className="relative w-full max-w-2xl mx-auto px-8"
+              className="relative w-full h-full"
             >
-              {/* Bike SVG */}
-              <svg
-                viewBox="0 0 200 120"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-full h-auto"
-              >
-                <g stroke={product.colors[selectedColor].hex} strokeWidth="2.5">
-                  <path d="M50 80 L90 50 L140 50 L160 80" strokeLinecap="round" />
-                  <path d="M90 50 L90 80" strokeLinecap="round" />
-                  <path d="M50 80 L90 80" strokeLinecap="round" />
-                  <circle cx="160" cy="80" r="25" />
-                  <circle cx="160" cy="80" r="4" fill={product.colors[selectedColor].hex} />
-                  <circle cx="50" cy="80" r="25" />
-                  <circle cx="50" cy="80" r="4" fill={product.colors[selectedColor].hex} />
-                  <path d="M140 50 L145 40 L155 38" strokeLinecap="round" />
-                  <path d="M85 45 L95 45" strokeLinecap="round" strokeWidth="4" />
-                  <path d="M90 45 L90 50" strokeLinecap="round" />
-                  <circle cx="90" cy="80" r="10" />
-                  <path d="M80 80 L100 80" strokeLinecap="round" strokeWidth="3" />
-                  <rect x="73" y="53" width="24" height="10" rx="2" fill={product.colors[selectedColor].hex} />
-                </g>
-              </svg>
-
-              {/* Part Callouts */}
-              {productParts.map((part, index) => (
+              {/* Main Image with Animation */}
+              <AnimatePresence mode="wait">
                 <motion.div
-                  key={part.id}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{
-                    opacity: activePart >= index ? 1 : 0.3,
-                    scale: activePart === index ? 1.05 : 1,
-                  }}
-                  transition={{ duration: 0.4 }}
-                  className="absolute"
-                  style={{ left: part.position.x, top: part.position.y }}
+                  key={activePart}
+                  initial={{ opacity: 0, scale: 1.1 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+                  className="absolute inset-0"
                 >
-                  <div className={`w-3 h-3 rounded-full border-2 ${
-                    activePart === index
-                      ? "bg-wj-green border-wj-green"
-                      : "bg-transparent border-muted-foreground"
-                  }`} />
+                  <img
+                    src={productParts[activePart].image}
+                    alt={productParts[activePart].title}
+                    className="w-full h-full object-cover"
+                  />
+                  {/* Gradient Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-background/60 to-transparent" />
                 </motion.div>
-              ))}
+              </AnimatePresence>
+
+              {/* Progress Indicators */}
+              <div className="absolute right-8 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-20">
+                {productParts.map((_, index) => (
+                  <motion.div
+                    key={index}
+                    className={`w-1 rounded-full transition-all duration-300 ${
+                      index === activePart
+                        ? "h-8 bg-wj-green"
+                        : "h-2 bg-foreground/20"
+                    }`}
+                  />
+                ))}
+              </div>
             </motion.div>
 
             {/* Product Info Overlay */}
-            <div className="absolute bottom-8 left-0 right-0 px-8">
+            <div className="absolute bottom-8 left-0 right-0 px-8 z-10">
               <div className="container-wj">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -216,11 +236,15 @@ const ProductDetail = () => {
                     index % 2 === 0 ? "mr-auto" : "ml-auto text-right"
                   }`}
                 >
-                  <div className="glass rounded-2xl p-6 pointer-events-auto">
-                    <h3 className="text-lg font-bold text-foreground mb-2">
+                  <div className="glass rounded-2xl p-6 pointer-events-auto backdrop-blur-xl">
+                    {/* Feature Tag */}
+                    <span className="inline-block px-2 py-1 text-[10px] font-medium uppercase tracking-widest text-wj-green bg-wj-green/10 rounded mb-3">
+                      {part.subtitle}
+                    </span>
+                    <h3 className="text-xl font-bold text-foreground mb-2">
                       {part.title}
                     </h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground leading-relaxed">
                       {part.description}
                     </p>
                   </div>
