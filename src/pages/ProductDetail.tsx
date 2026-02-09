@@ -160,9 +160,12 @@ const ProductDetail = () => {
         <section className="relative min-h-[350vh]">
           {/* Sticky Container */}
           <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden">
-            {/* Video Background - Fades out on scroll */}
+            {/* Static Background base */}
+            <div className="absolute inset-0 z-0 bg-background" />
+
+            {/* Video Background - Visible on load, fades out on scroll */}
             <motion.div 
-              className="absolute inset-0 z-0"
+              className="absolute inset-0 z-[5]"
               style={{ opacity: videoOpacity }}
             >
               <video
@@ -175,17 +178,14 @@ const ProductDetail = () => {
                 <source src="/videos/product-detail-bg.mp4" type="video/mp4" />
               </video>
               {/* Gradient Overlays */}
-              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-background/20" />
-              <div className="absolute inset-0 bg-gradient-to-r from-background/70 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/30 to-background/10" />
+              <div className="absolute inset-0 bg-gradient-to-r from-background/60 via-transparent to-transparent" />
             </motion.div>
 
-            {/* Static Background for images */}
-            <div className="absolute inset-0 z-[1] bg-background" />
-
-            {/* Bike Images - Fade in on scroll */}
+            {/* Bike Images - Fade in on scroll (behind video initially) */}
             <motion.div
               style={{ scale: bikeScale, opacity: bikeOpacity }}
-              className="absolute inset-0 z-10"
+              className="absolute inset-0 z-[2]"
             >
               <AnimatePresence mode="wait">
                 <motion.div
