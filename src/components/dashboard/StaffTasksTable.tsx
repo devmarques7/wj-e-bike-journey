@@ -138,8 +138,19 @@ const getHealthTag = (health: number) => {
 };
 
 const getInitials = (name: string) => {
-  return name.split(" ").map(n => n[0]).join("").toUpperCase();
+  const parts = name.split(" ");
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return parts[0].slice(0, 2).toUpperCase();
 };
+
+// Sort tasks by scheduled time
+const sortedTasksData = [...tasksData].sort((a, b) => {
+  const timeA = a.scheduledTime.replace(":", "");
+  const timeB = b.scheduledTime.replace(":", "");
+  return parseInt(timeA) - parseInt(timeB);
+});
 
 export default function StaffTasksTable() {
   const [selectedTask, setSelectedTask] = useState<typeof tasksData[0] | null>(null);
@@ -179,18 +190,17 @@ export default function StaffTasksTable() {
           <Table>
             <TableHeader>
               <TableRow className="border-border/30 hover:bg-transparent">
+                <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider">Time</TableHead>
                 <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider">Bike</TableHead>
                 <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider">Owner</TableHead>
                 <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider">Health</TableHead>
-                <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider">Plan</TableHead>
                 <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider">Service</TableHead>
-                <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider">Time</TableHead>
                 <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider">Status</TableHead>
                 <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tasksData.map((task, index) => {
+              {sortedTasksData.map((task, index) => {
                 const status = statusConfig[task.status as keyof typeof statusConfig];
                 const healthTag = getHealthTag(task.health);
                 const plan = planConfig[task.memberPlan as keyof typeof planConfig];
@@ -205,6 +215,12 @@ export default function StaffTasksTable() {
                     className="border-border/30 hover:bg-muted/30"
                   >
                     <TableCell>
+                      <div className="text-xs">
+                        <p className="font-medium text-foreground">{task.scheduledTime}</p>
+                        <p className="text-[10px] text-muted-foreground">{task.estimatedTime}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
                       <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-full bg-wj-green/10 flex items-center justify-center">
                           <Bike className="h-3.5 w-3.5 text-wj-green" />
@@ -218,18 +234,18 @@ export default function StaffTasksTable() {
                     <TableCell>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <div className="flex items-center gap-2 cursor-pointer">
-                            <Avatar className="h-6 w-6">
-                              <AvatarFallback className="bg-muted text-[9px] font-medium">
-                                {getInitials(task.owner)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-xs text-foreground">{task.owner.split(" ")[0]}</span>
-                          </div>
+                          <Avatar className="h-7 w-7 cursor-pointer hover:ring-2 hover:ring-wj-green/50 transition-all">
+                            <AvatarFallback className="bg-muted text-[9px] font-medium">
+                              {getInitials(task.owner)}
+                            </AvatarFallback>
+                          </Avatar>
                         </TooltipTrigger>
-                        <TooltipContent side="top" className="bg-card border-border">
+                        <TooltipContent side="top" className="bg-card border-border p-2">
                           <p className="font-medium text-xs">{task.owner}</p>
-                          <p className="text-[10px] text-muted-foreground">{task.ownerEmail}</p>
+                          <Badge className={cn("text-[9px] font-medium border-0 px-1.5 gap-1 mt-1", plan.color)}>
+                            {PlanIcon && <PlanIcon className="h-2.5 w-2.5" />}
+                            {plan.label} Member
+                          </Badge>
                         </TooltipContent>
                       </Tooltip>
                     </TableCell>
@@ -238,19 +254,7 @@ export default function StaffTasksTable() {
                         {healthTag.label}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      <Badge className={cn("text-[10px] font-medium border-0 px-1.5 gap-1", plan.color)}>
-                        {PlanIcon && <PlanIcon className="h-2.5 w-2.5" />}
-                        {plan.label}
-                      </Badge>
-                    </TableCell>
                     <TableCell className="text-xs text-foreground">{task.service}</TableCell>
-                    <TableCell>
-                      <div className="text-xs">
-                        <p className="font-medium text-foreground">{task.scheduledTime}</p>
-                        <p className="text-[10px] text-muted-foreground">{task.estimatedTime}</p>
-                      </div>
-                    </TableCell>
                     <TableCell>
                       <Badge className={cn("text-[10px] font-medium border-0", status.bg, status.color)}>
                         {status.label}
@@ -275,7 +279,7 @@ export default function StaffTasksTable() {
 
         {/* Mobile/Tablet Cards */}
         <div className="lg:hidden divide-y divide-border/30 max-h-[400px] overflow-y-auto">
-          {tasksData.map((task, index) => {
+          {sortedTasksData.map((task, index) => {
             const status = statusConfig[task.status as keyof typeof statusConfig];
             const healthTag = getHealthTag(task.health);
             const plan = planConfig[task.memberPlan as keyof typeof planConfig];
