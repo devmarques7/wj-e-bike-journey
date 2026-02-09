@@ -94,9 +94,12 @@ const ProductDetail = () => {
       
       // Update active part based on scroll position
       const scrollPercent = window.scrollY / (document.body.scrollHeight - window.innerHeight);
-      const partIndex = Math.min(
-        Math.floor(scrollPercent * productParts.length * 2),
-        productParts.length - 1
+      const partIndex = Math.max(
+        0,
+        Math.min(
+          Math.floor(scrollPercent * productParts.length * 1.5),
+          productParts.length - 1
+        )
       );
       setActivePart(partIndex);
     };
