@@ -22,11 +22,18 @@ import Returns from "./pages/Returns";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import ServiceDashboard from "./pages/ServiceDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
 import UrgentService from "./pages/UrgentService";
 import MyWallet from "./pages/MyWallet";
 import EPassPage from "./pages/EPassPage";
 import NotFound from "./pages/NotFound";
+
+// Admin Pages
+import AdminOverview from "./pages/admin/AdminOverview";
+import AdminWorkshop from "./pages/admin/AdminWorkshop";
+import AdminManage from "./pages/admin/AdminManage";
+import AdminPlans from "./pages/admin/AdminPlans";
+import AdminMembers from "./pages/admin/AdminMembers";
+import AdminInventory from "./pages/admin/AdminInventory";
 
 const queryClient = new QueryClient();
 
@@ -54,13 +61,22 @@ const App = () => (
               <Route path="/delivery" element={<Delivery />} />
               <Route path="/returns" element={<Returns />} />
               <Route path="/auth" element={<Auth />} />
+              
+              {/* Member Dashboard Routes */}
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/dashboard/wallet" element={<MyWallet />} />
               <Route path="/dashboard/v-id" element={<EPassPage />} />
               <Route path="/dashboard/service" element={<ServiceDashboard />} />
               <Route path="/dashboard/*" element={<Dashboard />} />
-              <Route path="/dashboard/admin" element={<AdminDashboard />} />
-              <Route path="/dashboard/admin/*" element={<AdminDashboard />} />
+              
+              {/* Admin Dashboard Routes */}
+              <Route path="/dashboard/admin" element={<AdminOverview />} />
+              <Route path="/dashboard/admin/workshop" element={<AdminWorkshop />} />
+              <Route path="/dashboard/admin/manage" element={<AdminManage />} />
+              <Route path="/dashboard/admin/plans" element={<AdminPlans />} />
+              <Route path="/dashboard/admin/members" element={<AdminMembers />} />
+              <Route path="/dashboard/admin/inventory" element={<AdminInventory />} />
+              
               <Route path="/urgent-service" element={<UrgentService />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

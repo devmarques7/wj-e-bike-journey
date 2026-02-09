@@ -40,7 +40,7 @@ const kpiData = [
   },
 ];
 
-export default function AdminDashboard() {
+export default function AdminOverview() {
   const { user, isAuthenticated } = useAuth();
 
   if (!isAuthenticated) {
