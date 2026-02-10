@@ -1,19 +1,21 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
+import { Eye, EyeOff, ArrowRight, Loader2, ArrowLeft, User, Mail, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [mode, setMode] = useState<"login" | "demo">("login");
+  const [mode, setMode] = useState<"login" | "demo" | "register">("login");
   
   const { login, setMockUser } = useAuth();
   const navigate = useNavigate();
@@ -45,6 +47,37 @@ const Auth = () => {
         description: "Please check your credentials or use a demo account.",
         variant: "destructive",
       });
+    }
+
+    setIsLoading(false);
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: window.location.origin,
+        data: { full_name: fullName },
+      },
+    });
+
+    if (error) {
+      toast({
+        title: "Registration failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Account created!",
+        description: "Check your email to confirm your account.",
+      });
+      setMode("login");
+      setPassword("");
     }
 
     setIsLoading(false);
@@ -99,10 +132,10 @@ const Auth = () => {
             className="mb-8"
           >
             <h1 className="text-display-sm font-light text-foreground mb-2">
-              Welcome back
+              {mode === "register" ? "Create account" : "Welcome back"}
             </h1>
             <p className="text-muted-foreground">
-              Sign in to access your dashboard
+              {mode === "register" ? "Join WJ Vision and start your journey" : "Sign in to access your dashboard"}
             </p>
           </motion.div>
 
@@ -113,26 +146,80 @@ const Auth = () => {
             transition={{ delay: 0.4 }}
             className="flex gap-2 mb-8"
           >
-            <Button
-              variant={mode === "login" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setMode("login")}
-              className={mode === "login" ? "gradient-wj" : ""}
-            >
-              Sign In
-            </Button>
-            <Button
-              variant={mode === "demo" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setMode("demo")}
-              className={mode === "demo" ? "gradient-wj" : ""}
-            >
-              Demo Access
-            </Button>
+            {mode === "register" ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setMode("login")}
+                className="gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Sign In
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant={mode === "login" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setMode("login")}
+                  className={mode === "login" ? "gradient-wj" : ""}
+                >
+                  Sign In
+                </Button>
+                <Button
+                  variant={mode === "demo" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setMode("demo")}
+                  className={mode === "demo" ? "gradient-wj" : ""}
+                >
+                  Demo Access
+                </Button>
+              </>
+            )}
           </motion.div>
 
           <AnimatePresence mode="wait">
-            {mode === "login" ? (
+            {mode === "register" ? (
+              <motion.form
+                key="register"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+                onSubmit={handleRegister}
+                className="space-y-5"
+              >
+                <div className="space-y-2">
+                  <Label htmlFor="fullName" className="text-sm font-medium">Full Name</Label>
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input id="fullName" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Your full name" required className="h-12 bg-muted/50 border-border/50 focus:border-wj-green pl-11" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="reg-email" className="text-sm font-medium">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input id="reg-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required className="h-12 bg-muted/50 border-border/50 focus:border-wj-green pl-11" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="reg-password" className="text-sm font-medium">Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input id="reg-password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min. 6 characters" required minLength={6} className="h-12 bg-muted/50 border-border/50 focus:border-wj-green pl-11 pr-12" />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Must be at least 6 characters</p>
+                </div>
+                <Button type="submit" disabled={isLoading} className="w-full h-12 gradient-wj text-primary-foreground font-medium">
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : (<>Create Account<ArrowRight className="h-4 w-4 ml-2" /></>)}
+                </Button>
+                <p className="text-xs text-center text-muted-foreground">By creating an account, you agree to our Terms of Service and Privacy Policy.</p>
+              </motion.form>
+            ) : mode === "login" ? (
               <motion.form
                 key="login"
                 initial={{ opacity: 0, x: -20 }}
@@ -142,75 +229,24 @@ const Auth = () => {
                 onSubmit={handleLogin}
                 className="space-y-6"
               >
-                {/* Email */}
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium">
-                    Email
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    required
-                    className="h-12 bg-muted/50 border-border/50 focus:border-wj-green"
-                  />
+                  <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+                  <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required className="h-12 bg-muted/50 border-border/50 focus:border-wj-green" />
                 </div>
-
-                {/* Password */}
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium">
-                    Password
-                  </Label>
+                  <Label htmlFor="password" className="text-sm font-medium">Password</Label>
                   <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      required
-                      className="h-12 bg-muted/50 border-border/50 focus:border-wj-green pr-12"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
+                    <Input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required className="h-12 bg-muted/50 border-border/50 focus:border-wj-green pr-12" />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                 </div>
-
-                {/* Forgot Password */}
                 <div className="text-right">
-                  <button
-                    type="button"
-                    className="text-sm text-muted-foreground hover:text-wj-green transition-colors"
-                  >
-                    Forgot password?
-                  </button>
+                  <button type="button" className="text-sm text-muted-foreground hover:text-wj-green transition-colors">Forgot password?</button>
                 </div>
-
-                {/* Submit */}
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full h-12 gradient-wj text-primary-foreground font-medium"
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      Sign In
-                      <ArrowRight className="h-4 w-4 ml-2" />
-                    </>
-                  )}
+                <Button type="submit" disabled={isLoading} className="w-full h-12 gradient-wj text-primary-foreground font-medium">
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : (<>Sign In<ArrowRight className="h-4 w-4 ml-2" /></>)}
                 </Button>
               </motion.form>
             ) : (
@@ -222,93 +258,39 @@ const Auth = () => {
                 transition={{ duration: 0.3 }}
                 className="space-y-4"
               >
-                <p className="text-sm text-muted-foreground mb-6">
-                  Select a demo account to explore the dashboard:
-                </p>
-
-                {/* Admin Demo */}
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => handleDemoLogin("admin")}
-                  className="w-full p-4 rounded-xl border border-border/50 bg-muted/30 hover:bg-muted/50 hover:border-wj-green/50 transition-all group text-left"
-                >
+                <p className="text-sm text-muted-foreground mb-6">Select a demo account to explore the dashboard:</p>
+                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => handleDemoLogin("admin")} className="w-full p-4 rounded-xl border border-border/50 bg-muted/30 hover:bg-muted/50 hover:border-wj-green/50 transition-all group text-left">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-foreground group-hover:text-wj-green transition-colors">
-                        Admin Dashboard
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Access the WJ Command Center
-                      </p>
+                      <p className="font-medium text-foreground group-hover:text-wj-green transition-colors">Admin Dashboard</p>
+                      <p className="text-sm text-muted-foreground">Access the WJ Command Center</p>
                     </div>
-                    <div className="px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-medium">
-                      ADMIN
-                    </div>
+                    <div className="px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-xs font-medium">ADMIN</div>
                   </div>
                 </motion.button>
-
-                {/* Staff Demo */}
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => handleDemoLogin("staff")}
-                  className="w-full p-4 rounded-xl border border-border/50 bg-muted/30 hover:bg-muted/50 hover:border-wj-green/50 transition-all group text-left"
-                >
+                <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => handleDemoLogin("staff")} className="w-full p-4 rounded-xl border border-border/50 bg-muted/30 hover:bg-muted/50 hover:border-wj-green/50 transition-all group text-left">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-medium text-foreground group-hover:text-wj-green transition-colors">
-                        Staff Mechanic
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Access workshop tasks & schedule
-                      </p>
+                      <p className="font-medium text-foreground group-hover:text-wj-green transition-colors">Staff Mechanic</p>
+                      <p className="text-sm text-muted-foreground">Access workshop tasks & schedule</p>
                     </div>
-                    <div className="px-3 py-1 rounded-full bg-wj-green/20 text-wj-green text-xs font-medium">
-                      STAFF
-                    </div>
+                    <div className="px-3 py-1 rounded-full bg-wj-green/20 text-wj-green text-xs font-medium">STAFF</div>
                   </div>
                 </motion.button>
-
-                {/* Member Tiers */}
                 <div className="pt-4 border-t border-border/30">
-                  <p className="text-xs font-medium text-muted-foreground/60 uppercase tracking-wider mb-3">
-                    Member Tiers
-                  </p>
-                  
+                  <p className="text-xs font-medium text-muted-foreground/60 uppercase tracking-wider mb-3">Member Tiers</p>
                   {[
                     { tier: "light" as const, label: "Light", desc: "Basic member access" },
                     { tier: "plus" as const, label: "Plus", desc: "Enhanced service features" },
                     { tier: "black" as const, label: "Black", desc: "VIP Valet & Concierge" },
                   ].map((item, index) => (
-                    <motion.button
-                      key={item.tier}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      onClick={() => handleDemoLogin(item.tier)}
-                      className="w-full p-4 rounded-xl border border-border/50 bg-muted/30 hover:bg-muted/50 hover:border-wj-green/50 transition-all group text-left mb-3"
-                    >
+                    <motion.button key={item.tier} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }} onClick={() => handleDemoLogin(item.tier)} className="w-full p-4 rounded-xl border border-border/50 bg-muted/30 hover:bg-muted/50 hover:border-wj-green/50 transition-all group text-left mb-3">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-medium text-foreground group-hover:text-wj-green transition-colors">
-                            {item.label} Member
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {item.desc}
-                          </p>
+                          <p className="font-medium text-foreground group-hover:text-wj-green transition-colors">{item.label} Member</p>
+                          <p className="text-sm text-muted-foreground">{item.desc}</p>
                         </div>
-                        <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          item.tier === "black" 
-                            ? "bg-foreground text-background" 
-                            : item.tier === "plus"
-                            ? "bg-wj-green/20 text-wj-green"
-                            : "bg-muted text-muted-foreground"
-                        }`}>
-                          {item.label.toUpperCase()}
-                        </div>
+                        <div className={`px-3 py-1 rounded-full text-xs font-medium ${item.tier === "black" ? "bg-foreground text-background" : item.tier === "plus" ? "bg-wj-green/20 text-wj-green" : "bg-muted text-muted-foreground"}`}>{item.label.toUpperCase()}</div>
                       </div>
                     </motion.button>
                   ))}
@@ -318,17 +300,19 @@ const Auth = () => {
           </AnimatePresence>
 
           {/* Footer */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.6 }}
-            className="mt-8 text-center text-sm text-muted-foreground"
-          >
-            New to WJ Vision?{" "}
-            <button className="text-wj-green hover:underline">
-              Create an account
-            </button>
-          </motion.p>
+          {mode !== "register" && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+              className="mt-8 text-center text-sm text-muted-foreground"
+            >
+              New to WJ Vision?{" "}
+              <button onClick={() => setMode("register")} className="text-wj-green hover:underline">
+                Create an account
+              </button>
+            </motion.p>
+          )}
         </motion.div>
       </div>
 
