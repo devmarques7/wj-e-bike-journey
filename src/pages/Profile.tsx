@@ -23,7 +23,15 @@ type Role = "admin" | "staff" | "member" | "guest";
 
 // Diverse human avatar options powered by DiceBear (no install needed).
 // Mixes styles + seeds to provide a wide variety of human personas.
-const AVATAR_STYLES = ["personas", "avataaars", "micah", "lorelei", "notionists", "open-peeps"] as const;
+const AVATAR_STYLES = [
+  { id: "personas", label: "Personas" },
+  { id: "avataaars", label: "Avataaars" },
+  { id: "micah", label: "Micah" },
+  { id: "lorelei", label: "Lorelei" },
+  { id: "notionists", label: "Notionists" },
+  { id: "open-peeps", label: "Peeps" },
+] as const;
+type AvatarStyleId = typeof AVATAR_STYLES[number]["id"];
 const AVATAR_SEEDS = [
   "Aria", "Leo", "Mia", "Noah", "Zoe", "Ethan", "Luna", "Kai",
   "Sofia", "Liam", "Maya", "Theo", "Nora", "Felix", "Iris", "Hugo",
@@ -31,8 +39,9 @@ const AVATAR_SEEDS = [
 ];
 const buildAvatar = (style: string, seed: string) =>
   `https://api.dicebear.com/9.x/${style}/svg?seed=${encodeURIComponent(seed)}`;
-const AVATAR_OPTIONS: string[] = AVATAR_STYLES.flatMap((s) =>
-  AVATAR_SEEDS.map((seed) => buildAvatar(s, seed))
+type AvatarOption = { url: string; style: AvatarStyleId; seed: string };
+const AVATAR_OPTIONS: AvatarOption[] = AVATAR_STYLES.flatMap((s) =>
+  AVATAR_SEEDS.map((seed) => ({ url: buildAvatar(s.id, seed), style: s.id, seed }))
 );
 
 export default function Profile() {
