@@ -542,7 +542,7 @@ export default function AdminMembers() {
 
       {/* Add Member Dialog */}
       <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setCreatedCreds(null); }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-md max-h-[90vh] overflow-y-auto overflow-x-hidden">
           <DialogHeader>
             <DialogTitle className="font-light">
               {createdCreds ? "Member ready" : "Add new member"}
@@ -569,9 +569,16 @@ export default function AdminMembers() {
                       {copied === "link" ? "Copied" : "Copy link"}
                     </button>
                   </div>
-                  <div className="rounded-lg border border-wj-green/30 bg-wj-green/5 p-3 flex items-center gap-2">
+                  <div className="rounded-lg border border-wj-green/30 bg-wj-green/5 p-3 flex items-center gap-2 min-w-0 overflow-hidden">
                     <Link2 className="h-3.5 w-3.5 text-wj-green shrink-0" />
-                    <p className="text-[11px] font-mono text-foreground truncate">{createdCreds.setup_link}</p>
+                    <p
+                      className="text-[11px] font-mono text-foreground truncate min-w-0 flex-1"
+                      title={createdCreds.setup_link}
+                    >
+                      {createdCreds.setup_link.length > 48
+                        ? `${createdCreds.setup_link.slice(0, 48)}…`
+                        : createdCreds.setup_link}
+                    </p>
                   </div>
                 </div>
               ) : (
@@ -593,14 +600,18 @@ export default function AdminMembers() {
                     {copied === "creds" ? "Copied" : "Copy"}
                   </button>
                 </div>
-                <div className="rounded-lg border border-border/50 bg-muted/30 p-3 text-[11px] space-y-1.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-muted-foreground">Email</span>
-                    <span className="font-mono truncate">{createdCreds.email}</span>
+                <div className="rounded-lg border border-border/50 bg-muted/30 p-3 text-[11px] space-y-1.5 min-w-0 overflow-hidden">
+                  <div className="flex items-center justify-between gap-2 min-w-0">
+                    <span className="text-muted-foreground shrink-0">Email</span>
+                    <span className="font-mono truncate min-w-0" title={createdCreds.email}>
+                      {createdCreds.email}
+                    </span>
                   </div>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-muted-foreground">Password</span>
-                    <span className="font-mono">{createdCreds.password}</span>
+                  <div className="flex items-center justify-between gap-2 min-w-0">
+                    <span className="text-muted-foreground shrink-0">Password</span>
+                    <span className="font-mono truncate min-w-0" title={createdCreds.password}>
+                      {createdCreds.password}
+                    </span>
                   </div>
                 </div>
               </div>
