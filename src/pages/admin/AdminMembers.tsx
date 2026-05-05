@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { 
   Users, 
@@ -8,7 +8,11 @@ import {
   Calendar,
   ThumbsUp,
   Wrench,
-  TrendingUp
+  TrendingUp,
+  Plus,
+  Copy,
+  Loader2,
+  Mail
 } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
@@ -25,6 +29,38 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+type Role = "admin" | "staff" | "member" | "guest";
+
+interface MemberRow {
+  user_id: string;
+  full_name: string | null;
+  email: string | null;
+  avatar_url: string | null;
+  must_complete_profile: boolean;
+  role: Role;
+  created_at: string;
+}
 
 const staffKPIs = [
   {
@@ -66,34 +102,115 @@ const staffMembers = [
   { id: 6, name: "Anna de Jong", role: "Customer Service", rating: 4.8, reviews: 210, servicesWeek: 0, appointmentsWeek: 25, hoursWeek: 40, avatar: "AJ" },
 ];
 
-const topPerformers = [
+const topPerformersFallback = [
   { name: "Tom Hendriks", metric: "Most Services", value: "12 this week", avatar: "TH" },
   { name: "Anna de Jong", metric: "Best Feedback", value: "4.9 rating", avatar: "AJ" },
   { name: "Jan Smit", metric: "Most Hours", value: "45h worked", avatar: "JS" },
   { name: "Lisa van Dijk", metric: "Most Appointments", value: "15 scheduled", avatar: "LV" },
 ];
 
-const getRoleBadge = (role: string) => {
-  switch (role) {
-    case "Senior Mechanic":
-      return <Badge className="bg-wj-green/20 text-wj-green border-wj-green/30 text-[10px]">Senior</Badge>;
-    case "Mechanic":
-      return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 text-[10px]">Mechanic</Badge>;
-    case "Junior Mechanic":
-      return <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-[10px]">Junior</Badge>;
-    case "Trainee":
-      return <Badge variant="outline" className="text-[10px]">Trainee</Badge>;
-    case "Sales Manager":
-      return <Badge className="bg-purple-500/20 text-purple-400 border-purple-500/30 text-[10px]">Sales</Badge>;
-    case "Customer Service":
-      return <Badge className="bg-pink-500/20 text-pink-400 border-pink-500/30 text-[10px]">Support</Badge>;
-    default:
-      return <Badge variant="outline" className="text-[10px]">{role}</Badge>;
-  }
+const getRoleBadge = (role: Role) => {
+  const map: Record<Role, string> = {
+    admin: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+    staff: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+    member: "bg-wj-green/20 text-wj-green border-wj-green/30",
+    guest: "bg-muted text-muted-foreground border-border/50",
+  };
+  return <Badge className={cn("text-[10px] capitalize", map[role])}>{role}</Badge>;
 };
+
+function initials(name: string | null | undefined, email: string | null | undefined) {
+  const src = (name || email || "?").trim();
+  const parts = src.split(/\s+/);
+  const a = parts[0]?.[0] ?? "?";
+  const b = parts[1]?.[0] ?? src[1] ?? "";
+  return (a + b).toUpperCase();
+}
 
 export default function AdminMembers() {
   const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const [members, setMembers] = useState<MemberRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [form, setForm] = useState({ email: "", full_name: "", role: "member" as Role });
+  const [createdCreds, setCreatedCreds] = useState<{ email: string; password: string } | null>(null);
+
+  const loadMembers = async () => {
+    setLoading(true);
+    const { data: profiles, error } = await supabase
+      .from("profiles")
+      .select("user_id, full_name, email, avatar_url, must_complete_profile, created_at")
+      .order("created_at", { ascending: false });
+    if (error) {
+      toast({ title: "Failed to load members", description: error.message, variant: "destructive" });
+      setLoading(false);
+      return;
+    }
+    const ids = (profiles ?? []).map((p) => p.user_id);
+    let rolesById = new Map<string, Role>();
+    if (ids.length) {
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("user_id, role")
+        .in("user_id", ids);
+      (roles ?? []).forEach((r: any) => {
+        const prev = rolesById.get(r.user_id);
+        const rank = (x: Role) => (x === "admin" ? 3 : x === "staff" ? 2 : x === "member" ? 1 : 0);
+        if (!prev || rank(r.role) > rank(prev)) rolesById.set(r.user_id, r.role);
+      });
+    }
+    setMembers(
+      (profiles ?? []).map((p: any) => ({
+        ...p,
+        role: rolesById.get(p.user_id) ?? "member",
+      })),
+    );
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    if (isAuthenticated && user?.role === "admin") loadMembers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user?.role]);
+
+  const onCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.email) return;
+    setCreating(true);
+    const { data: sess } = await supabase.auth.getSession();
+    const token = sess.session?.access_token;
+    if (!token) {
+      toast({ title: "Session expired", variant: "destructive" });
+      setCreating(false);
+      return;
+    }
+    const { data, error } = await supabase.functions.invoke("admin-create-member", {
+      body: form,
+    });
+    if (error || !(data as any)?.success) {
+      toast({
+        title: "Could not create member",
+        description: error?.message || (data as any)?.error || "Unknown error",
+        variant: "destructive",
+      });
+      setCreating(false);
+      return;
+    }
+    setCreatedCreds({ email: (data as any).email, password: (data as any).temp_password });
+    setForm({ email: "", full_name: "", role: "member" });
+    await loadMembers();
+    setCreating(false);
+  };
+
+  const copyCreds = async () => {
+    if (!createdCreds) return;
+    await navigator.clipboard.writeText(
+      `Email: ${createdCreds.email}\nTemporary password: ${createdCreds.password}`,
+    );
+    toast({ title: "Copied", description: "Credentials copied to clipboard." });
+  };
 
   if (!isAuthenticated) {
     return <Navigate to="/auth" replace />;
@@ -103,6 +220,18 @@ export default function AdminMembers() {
     return <Navigate to="/dashboard" replace />;
   }
 
+  const totalMembers = members.length;
+  const pending = members.filter((m) => m.must_complete_profile).length;
+  const admins = members.filter((m) => m.role === "admin").length;
+  const staffCount = members.filter((m) => m.role === "staff").length;
+
+  const dynamicKPIs = [
+    { label: "Total Members", value: String(totalMembers), change: `+${members.filter(m => Date.now() - new Date(m.created_at).getTime() < 7*864e5).length} this week`, trend: "up" as const, icon: Users },
+    { label: "Pending Setup", value: String(pending), change: pending ? "needs action" : "all set", trend: "up" as const, icon: Mail },
+    { label: "Staff", value: String(staffCount), change: "+0", trend: "up" as const, icon: Wrench },
+    { label: "Admins", value: String(admins), change: "+0", trend: "up" as const, icon: Star },
+  ];
+
   return (
     <AdminDashboardLayout>
       <div className="p-4 lg:p-6 space-y-6">
@@ -111,16 +240,22 @@ export default function AdminMembers() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
+          className="flex items-start justify-between gap-4 flex-wrap"
         >
-          <h1 className="text-xl sm:text-2xl font-light text-foreground">Staff Management</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Team performance and rankings
-          </p>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-light text-foreground">Member Management</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Pre-register users — they finish setup on first login.
+            </p>
+          </div>
+          <Button onClick={() => setOpen(true)} className="gradient-wj h-10">
+            <Plus className="h-4 w-4 mr-2" /> Add member
+          </Button>
         </motion.div>
 
         {/* KPI Cards */}
         <div className="grid grid-cols-12 gap-4 lg:gap-6">
-          {staffKPIs.map((kpi, index) => (
+          {dynamicKPIs.map((kpi, index) => (
             <div key={kpi.label} className="col-span-6 lg:col-span-3">
               <AdminKPICard {...kpi} index={index} />
             </div>
@@ -137,8 +272,9 @@ export default function AdminMembers() {
               transition={{ delay: 0.2 }}
               className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl overflow-hidden"
             >
-              <div className="p-4 border-b border-border/30">
+              <div className="p-4 border-b border-border/30 flex items-center justify-between">
                 <h3 className="text-sm font-medium text-foreground">Team Members</h3>
+                <span className="text-xs text-muted-foreground">{totalMembers} total</span>
               </div>
               
               <div className="overflow-x-auto">
@@ -146,37 +282,43 @@ export default function AdminMembers() {
                   <TableHeader>
                     <TableRow className="border-border/30 hover:bg-transparent">
                       <TableHead className="text-muted-foreground text-xs">Member</TableHead>
+                      <TableHead className="text-muted-foreground text-xs">Email</TableHead>
                       <TableHead className="text-muted-foreground text-xs">Role</TableHead>
-                      <TableHead className="text-muted-foreground text-xs">Rating</TableHead>
-                      <TableHead className="text-muted-foreground text-xs">Services</TableHead>
-                      <TableHead className="text-muted-foreground text-xs">Upcoming</TableHead>
-                      <TableHead className="text-muted-foreground text-xs">Hours</TableHead>
+                      <TableHead className="text-muted-foreground text-xs">Status</TableHead>
+                      <TableHead className="text-muted-foreground text-xs">Joined</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {staffMembers.map((staff) => (
-                      <TableRow key={staff.id} className="border-border/30 hover:bg-muted/30">
+                    {loading ? (
+                      <TableRow><TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-8">Loading…</TableCell></TableRow>
+                    ) : members.length === 0 ? (
+                      <TableRow><TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-8">No members yet. Click "Add member" to invite the first one.</TableCell></TableRow>
+                    ) : members.map((m) => (
+                      <TableRow key={m.user_id} className="border-border/30 hover:bg-muted/30">
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <Avatar className="h-7 w-7">
-                              <AvatarFallback className="bg-wj-green/20 text-wj-green text-[10px] font-bold">
-                                {staff.avatar}
-                              </AvatarFallback>
+                              {m.avatar_url ? <img src={m.avatar_url} alt="" /> : (
+                                <AvatarFallback className="bg-wj-green/20 text-wj-green text-[10px] font-bold">
+                                  {initials(m.full_name, m.email)}
+                                </AvatarFallback>
+                              )}
                             </Avatar>
-                            <span className="text-xs font-medium">{staff.name}</span>
+                            <span className="text-xs font-medium">{m.full_name || "—"}</span>
                           </div>
                         </TableCell>
-                        <TableCell>{getRoleBadge(staff.role)}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{m.email || "—"}</TableCell>
+                        <TableCell>{getRoleBadge(m.role)}</TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
-                            <span className="text-xs">{staff.rating}</span>
-                            <span className="text-[10px] text-muted-foreground">({staff.reviews})</span>
-                          </div>
+                          {m.must_complete_profile ? (
+                            <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-[10px]">Pending setup</Badge>
+                          ) : (
+                            <Badge className="bg-wj-green/20 text-wj-green border-wj-green/30 text-[10px]">Active</Badge>
+                          )}
                         </TableCell>
-                        <TableCell className="text-xs">{staff.servicesWeek}/week</TableCell>
-                        <TableCell className="text-xs">{staff.appointmentsWeek}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{staff.hoursWeek}h</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {new Date(m.created_at).toLocaleDateString()}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -200,7 +342,7 @@ export default function AdminMembers() {
               </div>
               
               <div className="space-y-3">
-                {topPerformers.map((performer, index) => (
+                {topPerformersFallback.map((performer, index) => (
                   <motion.div
                     key={performer.name}
                     initial={{ opacity: 0, x: -20 }}
