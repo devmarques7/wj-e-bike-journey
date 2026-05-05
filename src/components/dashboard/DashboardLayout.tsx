@@ -2,6 +2,7 @@ import { ReactNode, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import DashboardHeader from "./DashboardHeader";
 import MobileFooterNav from "./MobileFooterNav";
+import ThemeToggle from "@/components/ThemeToggle";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -60,6 +61,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <span className="text-foreground">WJ</span>
               <span className="text-wj-green"> VISION</span>
             </span>
+            <ThemeToggle />
           </div>
         </div>
 
