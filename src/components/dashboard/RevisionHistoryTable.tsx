@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import EmptyState from "./EmptyState";
 
 // Timeline status steps
 const timelineSteps = [
@@ -137,6 +139,9 @@ const getInitials = (name: string) => {
 };
 
 export default function RevisionHistoryTable() {
+  const { user } = useAuth();
+  // Only demo users see seed history. Real users start with no records.
+  const records = user?.isDemo ? revisionHistory : [];
   const [selectedRevision, setSelectedRevision] = useState<typeof revisionHistory[0] | null>(null);
   const [chatMessage, setChatMessage] = useState("");
   const [chatOpen, setChatOpen] = useState(true);
@@ -167,6 +172,15 @@ export default function RevisionHistoryTable() {
         </div>
 
         {/* Desktop Table - Hidden on mobile */}
+        {records.length === 0 ? (
+          <EmptyState
+            icon={Wrench}
+            title="No revision history yet"
+            description="Your service records will appear here after your first visit."
+            className="min-h-[220px]"
+          />
+        ) : (
+        <>
         <div className="hidden md:block overflow-x-auto">
           <Table>
             <TableHeader>
@@ -181,7 +195,7 @@ export default function RevisionHistoryTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {revisionHistory.map((item, index) => {
+              {records.map((item, index) => {
                 const status = statusConfig[item.status as keyof typeof statusConfig];
                 const healthTag = getHealthTag(item.health);
                 return (
