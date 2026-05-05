@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const navItems = [
   { href: "/dashboard", icon: LayoutGrid, label: "Overview" },
@@ -90,6 +91,7 @@ export default function DashboardHeader() {
 
           {/* Right - Actions */}
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <button className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
               <Search className="h-5 w-5" />
             </button>
