@@ -21,7 +21,10 @@ import {
   XCircle,
   Hourglass,
   Pencil,
-  Trash2
+  Trash2,
+  EyeOff,
+  RefreshCw,
+  KeyRound
 } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
@@ -180,6 +183,11 @@ export default function AdminMembers() {
   const [revoking, setRevoking] = useState(false);
   const [linkLoadingId, setLinkLoadingId] = useState<string | null>(null);
   const [copiedInviteId, setCopiedInviteId] = useState<string | null>(null);
+  const [showCreatedPwd, setShowCreatedPwd] = useState(false);
+  const [showEditPwd, setShowEditPwd] = useState(false);
+  const [editPassword, setEditPassword] = useState("");
+  const [savingPwd, setSavingPwd] = useState(false);
+  const [pwdResult, setPwdResult] = useState<string | null>(null);
 
   const loadMembers = async () => {
     setLoading(true);
@@ -282,6 +290,9 @@ export default function AdminMembers() {
   const openEditInvite = (inv: InviteRow) => {
     setEditRole(inv.role);
     setEditInvite(inv);
+    setEditPassword("");
+    setShowEditPwd(false);
+    setPwdResult(null);
   };
 
   const saveInviteRole = async () => {
@@ -351,6 +362,33 @@ export default function AdminMembers() {
     } catch {
       toast({ title: "Copy failed", description: link, variant: "destructive" });
     }
+  };
+
+  const submitPasswordChange = async (mode: "custom" | "regenerate") => {
+    if (!editInvite) return;
+    if (mode === "custom" && (editPassword.length < 8 || editPassword.length > 72)) {
+      toast({ title: "Password must be 8–72 characters", variant: "destructive" });
+      return;
+    }
+    setSavingPwd(true);
+    const { data, error } = await supabase.functions.invoke("admin-reset-invite-password", {
+      body: {
+        invitation_id: editInvite.id,
+        ...(mode === "custom" ? { password: editPassword } : {}),
+      },
+    });
+    setSavingPwd(false);
+    if (error || !(data as any)?.success) {
+      toast({
+        title: "Could not update password",
+        description: error?.message || (data as any)?.error || "Unknown error",
+        variant: "destructive",
+      });
+      return;
+    }
+    setPwdResult((data as any).password as string);
+    setEditPassword("");
+    toast({ title: "Password updated" });
   };
 
   if (!isAuthenticated) {
@@ -733,9 +771,25 @@ export default function AdminMembers() {
                   </div>
                   <div className="flex items-center justify-between gap-2 min-w-0">
                     <span className="text-muted-foreground shrink-0">Password</span>
-                    <span className="font-mono truncate min-w-0" title={createdCreds.password}>
-                      {createdCreds.password}
-                    </span>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span
+                        className={cn(
+                          "font-mono truncate min-w-0",
+                          !showCreatedPwd && "tracking-widest"
+                        )}
+                        title={showCreatedPwd ? createdCreds.password : undefined}
+                      >
+                        {showCreatedPwd ? createdCreds.password : "••••••••••••••"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowCreatedPwd((s) => !s)}
+                        className="text-muted-foreground hover:text-foreground shrink-0"
+                        aria-label={showCreatedPwd ? "Hide password" : "Show password"}
+                      >
+                        {showCreatedPwd ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -782,11 +836,11 @@ export default function AdminMembers() {
 
       {/* Edit invite dialog */}
       <Dialog open={!!editInvite} onOpenChange={(o) => !o && setEditInvite(null)}>
-        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-sm">
+        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-sm max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-light">Edit invite</DialogTitle>
             <DialogDescription className="text-xs">
-              Update the role assigned to this pending invite.
+              Update the role or reset the temporary password for this pending invite.
             </DialogDescription>
           </DialogHeader>
           {editInvite && (
@@ -806,6 +860,71 @@ export default function AdminMembers() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Password section */}
+              <div className="space-y-2 pt-2 border-t border-border/30">
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-1.5">
+                    <KeyRound className="h-3.5 w-3.5" /> Temporary password
+                  </Label>
+                  <button
+                    type="button"
+                    onClick={() => submitPasswordChange("regenerate")}
+                    disabled={savingPwd}
+                    className="text-[10px] text-wj-green hover:underline inline-flex items-center gap-1 disabled:opacity-50"
+                  >
+                    <RefreshCw className={cn("h-3 w-3", savingPwd && "animate-spin")} /> Regenerate
+                  </button>
+                </div>
+                <div className="relative">
+                  <Input
+                    type={showEditPwd ? "text" : "password"}
+                    placeholder="Set a new password (min 8 chars)"
+                    value={editPassword}
+                    maxLength={72}
+                    onChange={(e) => setEditPassword(e.target.value)}
+                    className="pr-9 font-mono text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowEditPwd((s) => !s)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    aria-label={showEditPwd ? "Hide password" : "Show password"}
+                  >
+                    {showEditPwd ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  </button>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => submitPasswordChange("custom")}
+                  disabled={savingPwd || editPassword.length < 8}
+                  className="w-full h-8 text-xs"
+                >
+                  {savingPwd ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Set password"}
+                </Button>
+
+                {pwdResult && (
+                  <div className="rounded-lg border border-wj-green/30 bg-wj-green/5 p-2.5 flex items-center justify-between gap-2">
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground shrink-0">New</span>
+                    <span className="font-mono text-xs truncate flex-1" title={pwdResult}>
+                      {pwdResult}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await navigator.clipboard.writeText(pwdResult);
+                        toast({ title: "Password copied" });
+                      }}
+                      className="text-wj-green hover:underline text-[10px] inline-flex items-center gap-1 shrink-0"
+                    >
+                      <Copy className="h-3 w-3" /> Copy
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <DialogFooter>
                 <Button variant="outline" onClick={() => setEditInvite(null)}>Cancel</Button>
                 <Button onClick={saveInviteRole} disabled={savingEdit} className="gradient-wj">

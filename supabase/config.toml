@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.admin-invite-link]
 verify_jwt = false
+
+[functions.admin-reset-invite-password]
+verify_jwt = false
