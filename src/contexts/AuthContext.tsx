@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 export type MemberTier = "light" | "plus" | "black";
 export type UserRole = "guest" | "member" | "admin" | "staff";
@@ -20,12 +20,45 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string, remember?: boolean) => Promise<boolean>;
   logout: () => void;
-  setMockUser: (role: UserRole, tier?: MemberTier) => void;
+  setMockUser: (role: UserRole, tier?: MemberTier, remember?: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const STORAGE_KEY = "wj_auth_user";
+const EXPIRY_KEY = "wj_auth_expiry";
+const SESSION_MS = 24 * 60 * 60 * 1000; // 1 day
+const REMEMBER_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+function readStoredUser(): User | null {
+  try {
+    const expiry = localStorage.getItem(EXPIRY_KEY);
+    if (!expiry || Date.now() > Number(expiry)) {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(EXPIRY_KEY);
+      return null;
+    }
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as User) : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistUser(user: User | null, remember: boolean) {
+  if (!user) {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(EXPIRY_KEY);
+    return;
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+  localStorage.setItem(
+    EXPIRY_KEY,
+    String(Date.now() + (remember ? REMEMBER_MS : SESSION_MS))
+  );
+}
 
 // Mock users for demonstration
 const mockUsers: Record<string, User> = {
@@ -85,13 +118,28 @@ const mockUsers: Record<string, User> = {
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => readStoredUser());
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  useEffect(() => {
+    // Re-check expiry on focus / tab return
+    const onFocus = () => {
+      const restored = readStoredUser();
+      if (!restored && user) setUser(null);
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [user]);
+
+  const login = async (
+    email: string,
+    password: string,
+    remember: boolean = false
+  ): Promise<boolean> => {
     // Mock authentication - in production, this would call an API
     const mockUser = mockUsers[email.toLowerCase()];
     if (mockUser && password.length >= 4) {
       setUser(mockUser);
+      persistUser(mockUser, remember);
       return true;
     }
     return false;
@@ -99,18 +147,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setUser(null);
+    persistUser(null, false);
   };
 
-  const setMockUser = (role: UserRole, tier?: MemberTier) => {
+  const setMockUser = (
+    role: UserRole,
+    tier?: MemberTier,
+    remember: boolean = false
+  ) => {
+    let next: User | null = null;
     if (role === "admin") {
-      setUser(mockUsers["admin@wjvision.com"]);
+      next = mockUsers["admin@wjvision.com"];
     } else if (role === "staff") {
-      setUser(mockUsers["staff@wjvision.com"]);
+      next = mockUsers["staff@wjvision.com"];
     } else if (role === "member" && tier) {
-      setUser(mockUsers[`${tier}@wjvision.com`]);
-    } else {
-      setUser(null);
+      next = mockUsers[`${tier}@wjvision.com`];
     }
+    setUser(next);
+    persistUser(next, remember);
   };
 
   return (
