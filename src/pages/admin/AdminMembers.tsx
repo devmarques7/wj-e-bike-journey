@@ -12,7 +12,9 @@ import {
   Plus,
   Copy,
   Loader2,
-  Mail
+  Mail,
+  Link2,
+  Check
 } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
@@ -135,7 +137,12 @@ export default function AdminMembers() {
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ email: "", full_name: "", role: "member" as Role });
-  const [createdCreds, setCreatedCreds] = useState<{ email: string; password: string } | null>(null);
+  const [createdCreds, setCreatedCreds] = useState<{
+    email: string;
+    password: string;
+    setup_link: string | null;
+  } | null>(null);
+  const [copied, setCopied] = useState<"link" | "creds" | null>(null);
 
   const loadMembers = async () => {
     setLoading(true);
@@ -198,18 +205,26 @@ export default function AdminMembers() {
       setCreating(false);
       return;
     }
-    setCreatedCreds({ email: (data as any).email, password: (data as any).temp_password });
+    setCreatedCreds({
+      email: (data as any).email,
+      password: (data as any).temp_password,
+      setup_link: (data as any).setup_link ?? null,
+    });
     setForm({ email: "", full_name: "", role: "member" });
     await loadMembers();
     setCreating(false);
   };
 
-  const copyCreds = async () => {
+  const copyTo = async (kind: "link" | "creds") => {
     if (!createdCreds) return;
-    await navigator.clipboard.writeText(
-      `Email: ${createdCreds.email}\nTemporary password: ${createdCreds.password}`,
-    );
-    toast({ title: "Copied", description: "Credentials copied to clipboard." });
+    const text =
+      kind === "link"
+        ? createdCreds.setup_link ?? ""
+        : `Email: ${createdCreds.email}\nTemporary password: ${createdCreds.password}`;
+    if (!text) return;
+    await navigator.clipboard.writeText(text);
+    setCopied(kind);
+    setTimeout(() => setCopied(null), 1800);
   };
 
   if (!isAuthenticated) {
