@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      member_invitations: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       phone_otps: {
         Row: {
           attempts: number
@@ -54,6 +90,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          must_complete_profile: boolean
           phone: string | null
           phone_verified: boolean
           updated_at: string
@@ -65,6 +102,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          must_complete_profile?: boolean
           phone?: string | null
           phone_verified?: boolean
           updated_at?: string
@@ -76,6 +114,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          must_complete_profile?: boolean
           phone?: string | null
           phone_verified?: boolean
           updated_at?: string
