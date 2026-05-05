@@ -39,7 +39,6 @@ const Gallery = () => {
   }, []);
 
   useEffect(() => {
-    document.documentElement.classList.add("dark");
   }, []);
 
   useEffect(() => {
