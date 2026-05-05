@@ -939,7 +939,6 @@ export default function AdminMembers() {
                     </>
                   )}
                 </Button>
-                )}
               </div>
 
               <DialogFooter>
