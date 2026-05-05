@@ -16,43 +16,35 @@ export default function ThemeToggle({ className }: ThemeToggleProps) {
       onClick={toggleTheme}
       aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
       className={cn(
-        "relative inline-flex h-8 w-14 items-center rounded-full border border-border/50 transition-colors duration-300",
-        isDark ? "bg-muted/40" : "bg-wj-green/15",
+        "relative inline-flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors",
         className
       )}
     >
-      <motion.span
-        layout
-        transition={{ type: "spring", stiffness: 500, damping: 30 }}
-        className={cn(
-          "absolute top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-full shadow-md",
-          isDark ? "left-1 bg-background" : "left-[calc(100%-1.75rem)] bg-wj-green"
+      <AnimatePresence mode="wait" initial={false}>
+        {isDark ? (
+          <motion.span
+            key="moon"
+            initial={{ rotate: -90, opacity: 0, scale: 0.6 }}
+            animate={{ rotate: 0, opacity: 1, scale: 1 }}
+            exit={{ rotate: 90, opacity: 0, scale: 0.6 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="absolute inset-0 flex items-center justify-center"
+          >
+            <Moon className="h-4 w-4" />
+          </motion.span>
+        ) : (
+          <motion.span
+            key="sun"
+            initial={{ rotate: 90, opacity: 0, scale: 0.6 }}
+            animate={{ rotate: 0, opacity: 1, scale: 1 }}
+            exit={{ rotate: -90, opacity: 0, scale: 0.6 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="absolute inset-0 flex items-center justify-center"
+          >
+            <Sun className="h-4 w-4 text-wj-green" />
+          </motion.span>
         )}
-      >
-        <AnimatePresence mode="wait" initial={false}>
-          {isDark ? (
-            <motion.span
-              key="moon"
-              initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
-              animate={{ rotate: 0, opacity: 1, scale: 1 }}
-              exit={{ rotate: 90, opacity: 0, scale: 0.5 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Moon className="h-3.5 w-3.5 text-wj-green" />
-            </motion.span>
-          ) : (
-            <motion.span
-              key="sun"
-              initial={{ rotate: 90, opacity: 0, scale: 0.5 }}
-              animate={{ rotate: 0, opacity: 1, scale: 1 }}
-              exit={{ rotate: -90, opacity: 0, scale: 0.5 }}
-              transition={{ duration: 0.2 }}
-            >
-              <Sun className="h-3.5 w-3.5 text-primary-foreground" />
-            </motion.span>
-          )}
-        </AnimatePresence>
-      </motion.span>
+      </AnimatePresence>
     </button>
   );
 }
