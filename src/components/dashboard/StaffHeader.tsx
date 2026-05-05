@@ -99,8 +99,8 @@ export default function StaffHeader() {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem>
-                <span>My Profile</span>
+              <DropdownMenuItem asChild>
+                <Link to="/profile">My Profile</Link>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <span>Settings</span>
