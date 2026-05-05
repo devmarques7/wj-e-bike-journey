@@ -16,6 +16,10 @@ export default function Dashboard() {
     return <Navigate to="/auth" replace />;
   }
 
+  if (user?.mustCompleteProfile) {
+    return <Navigate to="/complete-profile" replace />;
+  }
+
   if (user?.role === "admin") {
     return <Navigate to="/dashboard/admin" replace />;
   }
