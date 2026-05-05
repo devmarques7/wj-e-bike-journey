@@ -270,7 +270,7 @@ export default function RevisionHistoryTable() {
 
         {/* Mobile/Tablet Cards - Expandable rows */}
         <div className="md:hidden divide-y divide-border/30">
-          {revisionHistory.map((item, index) => {
+          {records.map((item, index) => {
             const status = statusConfig[item.status as keyof typeof statusConfig];
             const healthTag = getHealthTag(item.health);
             const isExpanded = expandedRowId === item.id;
@@ -370,6 +370,8 @@ export default function RevisionHistoryTable() {
             );
           })}
         </div>
+        </>
+        )}
 
         {/* Details Modal */}
         <Dialog open={!!selectedRevision} onOpenChange={() => setSelectedRevision(null)}>
