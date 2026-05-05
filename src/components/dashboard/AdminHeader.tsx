@@ -39,9 +39,9 @@ export default function AdminHeader() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleLogout = () => {
-    logout();
-    navigate("/");
+  const handleLogout = async () => {
+    await logout();
+    navigate("/auth", { replace: true });
   };
 
   const getInitials = (name: string) => {
