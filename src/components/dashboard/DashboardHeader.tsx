@@ -36,9 +36,9 @@ export default function DashboardHeader() {
       .slice(0, 2);
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate("/");
+  const handleLogout = async () => {
+    await logout();
+    navigate("/auth", { replace: true });
   };
 
   return (
