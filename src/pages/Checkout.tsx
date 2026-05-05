@@ -28,7 +28,6 @@ const Checkout = () => {
   }, []);
 
   useEffect(() => {
-    document.documentElement.classList.add("dark");
   }, []);
 
   const formatPrice = (price: number) => {

@@ -110,7 +110,6 @@ const ProductDetail = () => {
   }, []);
 
   useEffect(() => {
-    document.documentElement.classList.add("dark");
   }, []);
 
   if (!product) {

@@ -54,7 +54,6 @@ const Accessories = () => {
   }, []);
 
   useEffect(() => {
-    document.documentElement.classList.add("dark");
   }, []);
 
   useEffect(() => {
