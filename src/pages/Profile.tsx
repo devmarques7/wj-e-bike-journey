@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { z } from "zod";
 
 const profileSchema = z.object({
@@ -21,6 +22,7 @@ type Role = "admin" | "staff" | "member" | "guest";
 export default function Profile() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user: mockUser, isAuthenticated } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [loading, setLoading] = useState(true);
@@ -32,15 +34,29 @@ export default function Profile() {
   const [email, setEmail] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
+  const [isDemo, setIsDemo] = useState(false);
 
   useEffect(() => {
     const load = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
       const session = sessionData.session;
+
+      // Demo / mock fallback (no Supabase session but logged via AuthContext)
       if (!session) {
+        if (isAuthenticated && mockUser) {
+          setIsDemo(true);
+          setUserId(mockUser.id);
+          setFullName(mockUser.name);
+          setEmail(mockUser.email);
+          setAvatarUrl(mockUser.avatar ?? null);
+          setRoles([mockUser.role as Role]);
+          setLoading(false);
+          return;
+        }
         navigate("/auth");
         return;
       }
+
       setUserId(session.user.id);
       setEmail(session.user.email ?? "");
 
@@ -59,7 +75,7 @@ export default function Profile() {
       setLoading(false);
     };
     load();
-  }, [navigate]);
+  }, [navigate, isAuthenticated, mockUser]);
 
   const handleSave = async () => {
     const parsed = profileSchema.safeParse({ full_name: fullName, email });
@@ -68,6 +84,10 @@ export default function Profile() {
       return;
     }
     if (!userId) return;
+    if (isDemo) {
+      toast({ title: "Demo mode", description: "Sign in with a real account to persist changes." });
+      return;
+    }
     setSaving(true);
 
     const { error } = await supabase
@@ -86,6 +106,10 @@ export default function Profile() {
   const handleAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !userId) return;
+    if (isDemo) {
+      toast({ title: "Demo mode", description: "Avatar upload requires a real account." });
+      return;
+    }
     if (file.size > 5 * 1024 * 1024) {
       toast({ title: "File too large", description: "Max 5MB.", variant: "destructive" });
       return;
