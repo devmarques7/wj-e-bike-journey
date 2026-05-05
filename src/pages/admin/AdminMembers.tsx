@@ -610,10 +610,20 @@ export default function AdminMembers() {
                                   )}
                                   <DropdownMenuItem
                                     onClick={() => setRevokeInvite(i)}
-                                    className="text-destructive focus:text-destructive"
+                                    className={cn(
+                                      i.status !== "completed" &&
+                                        "text-destructive focus:text-destructive",
+                                    )}
                                   >
-                                    <Trash2 className="h-3.5 w-3.5 mr-2" />{" "}
-                                    {i.status === "completed" ? "Close invite" : "Cancel invite"}
+                                    {i.status === "completed" ? (
+                                      <>
+                                        <Check className="h-3.5 w-3.5 mr-2 text-wj-green" /> Close invite
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Trash2 className="h-3.5 w-3.5 mr-2" /> Cancel invite
+                                      </>
+                                    )}
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
@@ -938,15 +948,17 @@ export default function AdminMembers() {
         </DialogContent>
       </Dialog>
 
-      {/* Revoke invite dialog */}
+      {/* Revoke / Close invite dialog */}
       <Dialog open={!!revokeInvite} onOpenChange={(o) => !o && setRevokeInvite(null)}>
         <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle className="font-light">Cancel invite?</DialogTitle>
+            <DialogTitle className="font-light">
+              {revokeInvite?.status === "completed" ? "Close invite?" : "Cancel invite?"}
+            </DialogTitle>
             <DialogDescription className="text-xs">
-              This permanently removes the invitation
-              {revokeInvite?.status === "pending" && " and the pre-registered user account"}.
-              This action cannot be undone.
+              {revokeInvite?.status === "completed"
+                ? "Setup is already completed. This will only archive the invitation entry — the member account stays active."
+                : "This permanently removes the invitation and the pre-registered user account. This action cannot be undone."}
             </DialogDescription>
           </DialogHeader>
           {revokeInvite && (
@@ -955,14 +967,26 @@ export default function AdminMembers() {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRevokeInvite(null)}>Keep</Button>
-            <Button
-              onClick={confirmRevokeInvite}
-              disabled={revoking}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {revoking ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Trash2 className="h-4 w-4 mr-1" /> Cancel invite</>}
+            <Button variant="outline" onClick={() => setRevokeInvite(null)}>
+              {revokeInvite?.status === "completed" ? "Cancel" : "Keep"}
             </Button>
+            {revokeInvite?.status === "completed" ? (
+              <Button
+                onClick={confirmRevokeInvite}
+                disabled={revoking}
+                className="gradient-wj"
+              >
+                {revoking ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Check className="h-4 w-4 mr-1" /> Close invite</>}
+              </Button>
+            ) : (
+              <Button
+                onClick={confirmRevokeInvite}
+                disabled={revoking}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {revoking ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Trash2 className="h-4 w-4 mr-1" /> Cancel invite</>}
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
