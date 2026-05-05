@@ -836,11 +836,11 @@ export default function AdminMembers() {
 
       {/* Edit invite dialog */}
       <Dialog open={!!editInvite} onOpenChange={(o) => !o && setEditInvite(null)}>
-        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-sm">
+        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-sm max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-light">Edit invite</DialogTitle>
             <DialogDescription className="text-xs">
-              Update the role assigned to this pending invite.
+              Update the role or reset the temporary password for this pending invite.
             </DialogDescription>
           </DialogHeader>
           {editInvite && (
@@ -860,6 +860,71 @@ export default function AdminMembers() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Password section */}
+              <div className="space-y-2 pt-2 border-t border-border/30">
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-1.5">
+                    <KeyRound className="h-3.5 w-3.5" /> Temporary password
+                  </Label>
+                  <button
+                    type="button"
+                    onClick={() => submitPasswordChange("regenerate")}
+                    disabled={savingPwd}
+                    className="text-[10px] text-wj-green hover:underline inline-flex items-center gap-1 disabled:opacity-50"
+                  >
+                    <RefreshCw className={cn("h-3 w-3", savingPwd && "animate-spin")} /> Regenerate
+                  </button>
+                </div>
+                <div className="relative">
+                  <Input
+                    type={showEditPwd ? "text" : "password"}
+                    placeholder="Set a new password (min 8 chars)"
+                    value={editPassword}
+                    maxLength={72}
+                    onChange={(e) => setEditPassword(e.target.value)}
+                    className="pr-9 font-mono text-xs"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowEditPwd((s) => !s)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    aria-label={showEditPwd ? "Hide password" : "Show password"}
+                  >
+                    {showEditPwd ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  </button>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => submitPasswordChange("custom")}
+                  disabled={savingPwd || editPassword.length < 8}
+                  className="w-full h-8 text-xs"
+                >
+                  {savingPwd ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Set password"}
+                </Button>
+
+                {pwdResult && (
+                  <div className="rounded-lg border border-wj-green/30 bg-wj-green/5 p-2.5 flex items-center justify-between gap-2">
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground shrink-0">New</span>
+                    <span className="font-mono text-xs truncate flex-1" title={pwdResult}>
+                      {pwdResult}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await navigator.clipboard.writeText(pwdResult);
+                        toast({ title: "Password copied" });
+                      }}
+                      className="text-wj-green hover:underline text-[10px] inline-flex items-center gap-1 shrink-0"
+                    >
+                      <Copy className="h-3 w-3" /> Copy
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <DialogFooter>
                 <Button variant="outline" onClick={() => setEditInvite(null)}>Cancel</Button>
                 <Button onClick={saveInviteRole} disabled={savingEdit} className="gradient-wj">
