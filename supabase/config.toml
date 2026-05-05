@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.admin-create-member]
 verify_jwt = false
+
+[functions.admin-revoke-member]
+verify_jwt = false

@@ -19,7 +19,9 @@ import {
   Eye,
   Send,
   XCircle,
-  Hourglass
+  Hourglass,
+  Pencil,
+  Trash2
 } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
@@ -171,6 +173,11 @@ export default function AdminMembers() {
   const [copied, setCopied] = useState<"link" | "creds" | null>(null);
   const [viewMember, setViewMember] = useState<MemberRow | null>(null);
   const [tab, setTab] = useState<"members" | "invites">("members");
+  const [editInvite, setEditInvite] = useState<InviteRow | null>(null);
+  const [editRole, setEditRole] = useState<Role>("member");
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [revokeInvite, setRevokeInvite] = useState<InviteRow | null>(null);
+  const [revoking, setRevoking] = useState(false);
 
   const loadMembers = async () => {
     setLoading(true);
@@ -268,6 +275,55 @@ export default function AdminMembers() {
     await navigator.clipboard.writeText(text);
     setCopied(kind);
     setTimeout(() => setCopied(null), 1800);
+  };
+
+  const openEditInvite = (inv: InviteRow) => {
+    setEditRole(inv.role);
+    setEditInvite(inv);
+  };
+
+  const saveInviteRole = async () => {
+    if (!editInvite) return;
+    setSavingEdit(true);
+    const { error } = await supabase
+      .from("member_invitations")
+      .update({ role: editRole })
+      .eq("id", editInvite.id);
+    if (!error && editInvite.user_id && editInvite.status === "pending") {
+      // Sync user_roles for the invited user
+      await supabase.from("user_roles").delete().eq("user_id", editInvite.user_id);
+      if (editRole !== "member") {
+        await supabase.from("user_roles").insert({ user_id: editInvite.user_id, role: editRole });
+      }
+    }
+    if (error) {
+      toast({ title: "Could not update invite", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Invite updated" });
+      setEditInvite(null);
+      await loadMembers();
+    }
+    setSavingEdit(false);
+  };
+
+  const confirmRevokeInvite = async () => {
+    if (!revokeInvite) return;
+    setRevoking(true);
+    const { data, error } = await supabase.functions.invoke("admin-revoke-member", {
+      body: { invitation_id: revokeInvite.id },
+    });
+    if (error || !(data as any)?.success) {
+      toast({
+        title: "Could not cancel invite",
+        description: error?.message || (data as any)?.error || "Unknown error",
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: "Invite cancelled" });
+      setRevokeInvite(null);
+      await loadMembers();
+    }
+    setRevoking(false);
   };
 
   if (!isAuthenticated) {
@@ -423,13 +479,14 @@ export default function AdminMembers() {
                         <TableHead className="text-muted-foreground text-xs">Status</TableHead>
                         <TableHead className="text-muted-foreground text-xs">Sent</TableHead>
                         <TableHead className="text-muted-foreground text-xs">Expires</TableHead>
+                        <TableHead className="text-muted-foreground text-xs w-10 text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {loading ? (
-                        <TableRow><TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-8">Loading…</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={6} className="text-center text-xs text-muted-foreground py-8">Loading…</TableCell></TableRow>
                       ) : invites.length === 0 ? (
-                        <TableRow><TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-8">No invites yet.</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={6} className="text-center text-xs text-muted-foreground py-8">No invites yet.</TableCell></TableRow>
                       ) : invites.map((i) => {
                         const statusMap: Record<InviteStatus, { label: string; cls: string; icon: any }> = {
                           pending: { label: "Awaiting setup", cls: "bg-amber-500/20 text-amber-400 border-amber-500/30", icon: Hourglass },
@@ -453,6 +510,33 @@ export default function AdminMembers() {
                             </TableCell>
                             <TableCell className="text-xs text-muted-foreground">
                               {new Date(i.expires_at).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 rounded-full hover:bg-muted/60"
+                                  >
+                                    <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-44">
+                                  <DropdownMenuItem
+                                    onClick={() => openEditInvite(i)}
+                                    disabled={i.status !== "pending"}
+                                  >
+                                    <Pencil className="h-3.5 w-3.5 mr-2" /> Edit role
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => setRevokeInvite(i)}
+                                    className="text-destructive focus:text-destructive"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5 mr-2" /> Cancel invite
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </TableCell>
                           </TableRow>
                         );
@@ -655,6 +739,72 @@ export default function AdminMembers() {
       </Dialog>
 
       <MemberProfileDialog member={viewMember} onClose={() => setViewMember(null)} />
+
+      {/* Edit invite dialog */}
+      <Dialog open={!!editInvite} onOpenChange={(o) => !o && setEditInvite(null)}>
+        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-light">Edit invite</DialogTitle>
+            <DialogDescription className="text-xs">
+              Update the role assigned to this pending invite.
+            </DialogDescription>
+          </DialogHeader>
+          {editInvite && (
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Email</Label>
+                <p className="text-xs font-mono truncate" title={editInvite.email}>{editInvite.email}</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Role</Label>
+                <Select value={editRole} onValueChange={(v) => setEditRole(v as Role)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="member">Member</SelectItem>
+                    <SelectItem value="staff">Staff</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setEditInvite(null)}>Cancel</Button>
+                <Button onClick={saveInviteRole} disabled={savingEdit} className="gradient-wj">
+                  {savingEdit ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Revoke invite dialog */}
+      <Dialog open={!!revokeInvite} onOpenChange={(o) => !o && setRevokeInvite(null)}>
+        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-light">Cancel invite?</DialogTitle>
+            <DialogDescription className="text-xs">
+              This permanently removes the invitation
+              {revokeInvite?.status === "pending" && " and the pre-registered user account"}.
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          {revokeInvite && (
+            <div className="rounded-lg border border-border/50 bg-muted/30 p-3 text-xs font-mono truncate" title={revokeInvite.email}>
+              {revokeInvite.email}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRevokeInvite(null)}>Keep</Button>
+            <Button
+              onClick={confirmRevokeInvite}
+              disabled={revoking}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {revoking ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Trash2 className="h-4 w-4 mr-1" /> Cancel invite</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminDashboardLayout>
   );
 }
