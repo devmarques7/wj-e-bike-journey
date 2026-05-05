@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import useEmblaCarousel from "embla-carousel-react";
 import { Bike } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import EmptyState from "./EmptyState";
 import bikeFull from "@/assets/bike-full.png";
 import bikePanel from "@/assets/bike-panel.png";
 import bikeHeadlight from "@/assets/bike-headlight.png";
@@ -86,6 +87,9 @@ export default function BikeShowcase() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [imagesLoaded, setImagesLoaded] = useState(false);
 
+  // Real authenticated users without an associated bike see an empty state.
+  const hasBike = !!user?.bikeId;
+
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: true,
     dragFree: false,
@@ -141,6 +145,33 @@ export default function BikeShowcase() {
   );
 
   const currentFeature = bikeFeatures[currentIndex];
+
+  if (!hasBike) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="relative h-full min-h-[400px] rounded-3xl overflow-hidden border border-border/40 bg-card/30 backdrop-blur-md"
+      >
+        <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4 pb-0">
+          <div className="space-y-0.5">
+            <h2 className="text-lg font-semibold text-foreground tracking-tight">My Bike</h2>
+            <p className="text-[11px] text-muted-foreground/70 font-light">Your ride at a glance</p>
+          </div>
+          <div className="p-2 rounded-full bg-background/20 backdrop-blur-sm">
+            <Bike className="h-4 w-4 text-wj-green" />
+          </div>
+        </div>
+        <div className="h-full flex items-center justify-center">
+          <EmptyState
+            icon={Bike}
+            title="No bike registered"
+            description="Once you register a WJ bike, it'll show up here."
+          />
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div

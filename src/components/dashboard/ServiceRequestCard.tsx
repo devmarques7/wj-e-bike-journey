@@ -2,9 +2,12 @@ import { useState, useRef, useEffect } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { ArrowRight, Bike, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import EmptyState from "./EmptyState";
 
 export default function ServiceRequestCard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isCompleted, setIsCompleted] = useState(false);
   const [videoOpacity, setVideoOpacity] = useState(1);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -76,6 +79,18 @@ export default function ServiceRequestCard() {
       animate(x, 0, { duration: 0.3, type: "spring", stiffness: 400, damping: 30 });
     }
   };
+
+  if (!user?.bikeId) {
+    return (
+      <div className="h-full rounded-3xl overflow-hidden border border-border/40 bg-card/30 backdrop-blur-md flex items-center justify-center min-h-[180px]">
+        <EmptyState
+          icon={Bike}
+          title="No urgent requests"
+          description="Link a bike to enable urgent service requests."
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="h-full relative group">
