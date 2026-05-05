@@ -321,86 +321,146 @@ export default function AdminMembers() {
         </div>
 
         {/* Main Content */}
-        <div className="grid grid-cols-12 gap-4 lg:gap-6">
-          {/* Staff Table - 8 columns */}
-          <div className="col-span-12 lg:col-span-8">
+        <div className="grid grid-cols-12 gap-4 lg:gap-6 items-stretch">
+          {/* Tabs Table - 8 columns */}
+          <div className="col-span-12 lg:col-span-8 flex">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl overflow-hidden"
+              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl overflow-hidden flex-1 flex flex-col w-full"
             >
-              <div className="p-4 border-b border-border/30 flex items-center justify-between">
-                <h3 className="text-sm font-medium text-foreground">Team Members</h3>
-                <span className="text-xs text-muted-foreground">{totalMembers} total</span>
-              </div>
-              
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-border/30 hover:bg-transparent">
-                      <TableHead className="text-muted-foreground text-xs">Member</TableHead>
-                      <TableHead className="text-muted-foreground text-xs">Email</TableHead>
-                      <TableHead className="text-muted-foreground text-xs">Role</TableHead>
-                      <TableHead className="text-muted-foreground text-xs">Status</TableHead>
-                      <TableHead className="text-muted-foreground text-xs">Joined</TableHead>
-                      <TableHead className="text-muted-foreground text-xs w-10 text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {loading ? (
-                      <TableRow><TableCell colSpan={6} className="text-center text-xs text-muted-foreground py-8">Loading…</TableCell></TableRow>
-                    ) : members.length === 0 ? (
-                      <TableRow><TableCell colSpan={6} className="text-center text-xs text-muted-foreground py-8">No members yet. Click "Add member" to invite the first one.</TableCell></TableRow>
-                    ) : members.map((m) => (
-                      <TableRow key={m.user_id} className="border-border/30 hover:bg-muted/30">
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-7 w-7">
-                              {m.avatar_url ? <img src={m.avatar_url} alt="" /> : (
-                                <AvatarFallback className="bg-wj-green/20 text-wj-green text-[10px] font-bold">
-                                  {initials(m.full_name, m.email)}
-                                </AvatarFallback>
-                              )}
-                            </Avatar>
-                            <span className="text-xs font-medium">{m.full_name || "—"}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{m.email || "—"}</TableCell>
-                        <TableCell>{getRoleBadge(m.role)}</TableCell>
-                        <TableCell>
-                          {m.must_complete_profile ? (
-                            <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-[10px]">Pending setup</Badge>
-                          ) : (
-                            <Badge className="bg-wj-green/20 text-wj-green border-wj-green/30 text-[10px]">Active</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">
-                          {new Date(m.created_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 rounded-full hover:bg-muted/60"
-                              >
-                                <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-44">
-                              <DropdownMenuItem onClick={() => setViewMember(m)}>
-                                <Eye className="h-3.5 w-3.5 mr-2" /> View profile
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
+              <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="flex flex-col flex-1 min-h-0">
+                <div className="p-4 border-b border-border/30 flex items-center justify-between gap-4 flex-wrap">
+                  <TabsList className="bg-muted/40 h-9">
+                    <TabsTrigger value="members" className="text-xs gap-1.5">
+                      <Users className="h-3.5 w-3.5" /> Team Members
+                      <span className="ml-1 text-[10px] text-muted-foreground">({members.length})</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="invites" className="text-xs gap-1.5">
+                      <Send className="h-3.5 w-3.5" /> Invites
+                      <span className="ml-1 text-[10px] text-muted-foreground">({invites.length})</span>
+                    </TabsTrigger>
+                  </TabsList>
+                  <span className="text-xs text-muted-foreground">
+                    {tab === "members" ? `${totalMembers} total` : `${invites.filter(i => i.status === "pending").length} pending`}
+                  </span>
+                </div>
+
+                <TabsContent value="members" className="flex-1 min-h-0 m-0 overflow-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-border/30 hover:bg-transparent">
+                        <TableHead className="text-muted-foreground text-xs">Member</TableHead>
+                        <TableHead className="text-muted-foreground text-xs">Email</TableHead>
+                        <TableHead className="text-muted-foreground text-xs">Role</TableHead>
+                        <TableHead className="text-muted-foreground text-xs">Status</TableHead>
+                        <TableHead className="text-muted-foreground text-xs">Joined</TableHead>
+                        <TableHead className="text-muted-foreground text-xs w-10 text-right">Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {loading ? (
+                        <TableRow><TableCell colSpan={6} className="text-center text-xs text-muted-foreground py-8">Loading…</TableCell></TableRow>
+                      ) : members.length === 0 ? (
+                        <TableRow><TableCell colSpan={6} className="text-center text-xs text-muted-foreground py-8">No members yet. Click "Add member" to invite the first one.</TableCell></TableRow>
+                      ) : members.map((m) => (
+                        <TableRow key={m.user_id} className="border-border/30 hover:bg-muted/30">
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-7 w-7">
+                                {m.avatar_url ? <img src={m.avatar_url} alt="" /> : (
+                                  <AvatarFallback className="bg-wj-green/20 text-wj-green text-[10px] font-bold">
+                                    {initials(m.full_name, m.email)}
+                                  </AvatarFallback>
+                                )}
+                              </Avatar>
+                              <span className="text-xs font-medium">{m.full_name || "—"}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">{m.email || "—"}</TableCell>
+                          <TableCell>{getRoleBadge(m.role)}</TableCell>
+                          <TableCell>
+                            {m.must_complete_profile ? (
+                              <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-[10px]">Pending setup</Badge>
+                            ) : (
+                              <Badge className="bg-wj-green/20 text-wj-green border-wj-green/30 text-[10px]">Active</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {new Date(m.created_at).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 rounded-full hover:bg-muted/60"
+                                >
+                                  <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-44">
+                                <DropdownMenuItem onClick={() => setViewMember(m)}>
+                                  <Eye className="h-3.5 w-3.5 mr-2" /> View profile
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TabsContent>
+
+                <TabsContent value="invites" className="flex-1 min-h-0 m-0 overflow-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-border/30 hover:bg-transparent">
+                        <TableHead className="text-muted-foreground text-xs">Email</TableHead>
+                        <TableHead className="text-muted-foreground text-xs">Role</TableHead>
+                        <TableHead className="text-muted-foreground text-xs">Status</TableHead>
+                        <TableHead className="text-muted-foreground text-xs">Sent</TableHead>
+                        <TableHead className="text-muted-foreground text-xs">Expires</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {loading ? (
+                        <TableRow><TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-8">Loading…</TableCell></TableRow>
+                      ) : invites.length === 0 ? (
+                        <TableRow><TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-8">No invites yet.</TableCell></TableRow>
+                      ) : invites.map((i) => {
+                        const statusMap: Record<InviteStatus, { label: string; cls: string; icon: any }> = {
+                          pending: { label: "Awaiting setup", cls: "bg-amber-500/20 text-amber-400 border-amber-500/30", icon: Hourglass },
+                          completed: { label: "Completed", cls: "bg-wj-green/20 text-wj-green border-wj-green/30", icon: Check },
+                          revoked: { label: "Revoked", cls: "bg-muted text-muted-foreground border-border/50", icon: XCircle },
+                          expired: { label: "Expired", cls: "bg-destructive/20 text-destructive border-destructive/30", icon: XCircle },
+                        };
+                        const s = statusMap[i.status];
+                        const Icon = s.icon;
+                        return (
+                          <TableRow key={i.id} className="border-border/30 hover:bg-muted/30">
+                            <TableCell className="text-xs font-medium">{i.email}</TableCell>
+                            <TableCell>{getRoleBadge(i.role)}</TableCell>
+                            <TableCell>
+                              <Badge className={cn("text-[10px] gap-1", s.cls)}>
+                                <Icon className="h-3 w-3" /> {s.label}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-xs text-muted-foreground">
+                              {new Date(i.created_at).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell className="text-xs text-muted-foreground">
+                              {new Date(i.expires_at).toLocaleDateString()}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </TabsContent>
+              </Tabs>
             </motion.div>
           </div>
 
