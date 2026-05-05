@@ -549,6 +549,8 @@ export default function AdminMembers() {
           )}
         </DialogContent>
       </Dialog>
+
+      <MemberProfileDialog member={viewMember} onClose={() => setViewMember(null)} />
     </AdminDashboardLayout>
   );
 }
