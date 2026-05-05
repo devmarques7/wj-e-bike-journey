@@ -16,7 +16,10 @@ import {
   Link2,
   Check,
   MoreVertical,
-  Eye
+  Eye,
+  Send,
+  XCircle,
+  Hourglass
 } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
@@ -59,6 +62,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import MemberProfileDialog from "@/components/dashboard/MemberProfileDialog";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 
 type Role = "admin" | "staff" | "member" | "guest";
@@ -71,6 +75,18 @@ interface MemberRow {
   must_complete_profile: boolean;
   role: Role;
   created_at: string;
+}
+
+type InviteStatus = "pending" | "completed" | "revoked" | "expired";
+
+interface InviteRow {
+  id: string;
+  email: string;
+  role: Role;
+  status: InviteStatus;
+  created_at: string;
+  expires_at: string;
+  user_id: string | null;
 }
 
 const staffKPIs = [
@@ -142,6 +158,7 @@ export default function AdminMembers() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [members, setMembers] = useState<MemberRow[]>([]);
+  const [invites, setInvites] = useState<InviteRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -153,6 +170,7 @@ export default function AdminMembers() {
   } | null>(null);
   const [copied, setCopied] = useState<"link" | "creds" | null>(null);
   const [viewMember, setViewMember] = useState<MemberRow | null>(null);
+  const [tab, setTab] = useState<"members" | "invites">("members");
 
   const loadMembers = async () => {
     setLoading(true);
@@ -182,6 +200,21 @@ export default function AdminMembers() {
       (profiles ?? []).map((p: any) => ({
         ...p,
         role: rolesById.get(p.user_id) ?? "member",
+      })),
+    );
+
+    // Load invitations
+    const { data: invitesData } = await supabase
+      .from("member_invitations")
+      .select("id, email, role, status, created_at, expires_at, user_id")
+      .order("created_at", { ascending: false });
+    setInvites(
+      ((invitesData ?? []) as any[]).map((i) => ({
+        ...i,
+        status:
+          i.status === "pending" && new Date(i.expires_at).getTime() < Date.now()
+            ? "expired"
+            : i.status,
       })),
     );
     setLoading(false);
