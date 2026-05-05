@@ -119,7 +119,7 @@ export default function DashboardHeader() {
                   <p className="text-xs text-muted-foreground">{user?.email || "guest@example.com"}</p>
                 </div>
                 <DropdownMenuItem asChild className="cursor-pointer">
-                  <Link to="/dashboard/profile" className="flex items-center gap-2">
+                  <Link to="/profile" className="flex items-center gap-2">
                     <User className="h-4 w-4" />
                     <span>Profile</span>
                   </Link>
