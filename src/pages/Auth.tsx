@@ -5,6 +5,7 @@ import { Eye, EyeOff, ArrowRight, Loader2, ArrowLeft, User, Mail, Lock } from "l
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +17,7 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [mode, setMode] = useState<"login" | "demo" | "register">("login");
+  const [rememberMe, setRememberMe] = useState(false);
   
   const { login, setMockUser } = useAuth();
   const navigate = useNavigate();
@@ -25,7 +27,7 @@ const Auth = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    const success = await login(email, password);
+    const success = await login(email, password, rememberMe);
 
     if (success) {
       toast({
@@ -244,6 +246,16 @@ const Auth = () => {
                 </div>
                 <div className="text-right">
                   <button type="button" className="text-sm text-muted-foreground hover:text-wj-green transition-colors">Forgot password?</button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="remember"
+                    checked={rememberMe}
+                    onCheckedChange={(c) => setRememberMe(!!c)}
+                  />
+                  <Label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer">
+                    Remember me for 30 days
+                  </Label>
                 </div>
                 <Button type="submit" disabled={isLoading} className="w-full h-12 gradient-wj text-primary-foreground font-medium">
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : (<>Sign In<ArrowRight className="h-4 w-4 ml-2" /></>)}
