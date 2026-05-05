@@ -244,18 +244,20 @@ const Auth = () => {
                     </button>
                   </div>
                 </div>
-                <div className="text-right">
-                  <button type="button" className="text-sm text-muted-foreground hover:text-wj-green transition-colors">Forgot password?</button>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="remember"
-                    checked={rememberMe}
-                    onCheckedChange={(c) => setRememberMe(!!c)}
-                  />
-                  <Label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer">
-                    Remember me for 30 days
-                  </Label>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="remember"
+                      checked={rememberMe}
+                      onCheckedChange={(c) => setRememberMe(!!c)}
+                    />
+                    <Label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer">
+                      Remember me for 30 days
+                    </Label>
+                  </div>
+                  <button type="button" className="text-sm text-muted-foreground hover:text-wj-green transition-colors">
+                    Forgot password?
+                  </button>
                 </div>
                 <Button type="submit" disabled={isLoading} className="w-full h-12 gradient-wj text-primary-foreground font-medium">
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : (<>Sign In<ArrowRight className="h-4 w-4 ml-2" /></>)}
