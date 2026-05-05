@@ -14,7 +14,9 @@ import {
   Loader2,
   Mail,
   Link2,
-  Check
+  Check,
+  MoreVertical,
+  Eye
 } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
@@ -32,6 +34,12 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -50,6 +58,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import MemberProfileDialog from "@/components/dashboard/MemberProfileDialog";
 import { useToast } from "@/hooks/use-toast";
 
 type Role = "admin" | "staff" | "member" | "guest";
@@ -143,6 +152,7 @@ export default function AdminMembers() {
     setup_link: string | null;
   } | null>(null);
   const [copied, setCopied] = useState<"link" | "creds" | null>(null);
+  const [viewMember, setViewMember] = useState<MemberRow | null>(null);
 
   const loadMembers = async () => {
     setLoading(true);
@@ -301,13 +311,14 @@ export default function AdminMembers() {
                       <TableHead className="text-muted-foreground text-xs">Role</TableHead>
                       <TableHead className="text-muted-foreground text-xs">Status</TableHead>
                       <TableHead className="text-muted-foreground text-xs">Joined</TableHead>
+                      <TableHead className="text-muted-foreground text-xs w-10 text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {loading ? (
-                      <TableRow><TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-8">Loading…</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={6} className="text-center text-xs text-muted-foreground py-8">Loading…</TableCell></TableRow>
                     ) : members.length === 0 ? (
-                      <TableRow><TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-8">No members yet. Click "Add member" to invite the first one.</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={6} className="text-center text-xs text-muted-foreground py-8">No members yet. Click "Add member" to invite the first one.</TableCell></TableRow>
                     ) : members.map((m) => (
                       <TableRow key={m.user_id} className="border-border/30 hover:bg-muted/30">
                         <TableCell>
@@ -333,6 +344,24 @@ export default function AdminMembers() {
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
                           {new Date(m.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 rounded-full hover:bg-muted/60"
+                              >
+                                <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-44">
+                              <DropdownMenuItem onClick={() => setViewMember(m)}>
+                                <Eye className="h-3.5 w-3.5 mr-2" /> View profile
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -520,6 +549,8 @@ export default function AdminMembers() {
           )}
         </DialogContent>
       </Dialog>
+
+      <MemberProfileDialog member={viewMember} onClose={() => setViewMember(null)} />
     </AdminDashboardLayout>
   );
 }
