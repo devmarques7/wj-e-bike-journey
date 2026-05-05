@@ -18,6 +18,7 @@ export interface User {
   totalKm?: number;
   avatar?: string;
   isDemo?: boolean;
+  mustCompleteProfile?: boolean;
 }
 
 interface AuthContextType {
@@ -152,7 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const [{ data: profile }, { data: roles }] = await Promise.all([
         supabase
           .from("profiles")
-          .select("full_name, email, avatar_url")
+          .select("full_name, email, avatar_url, must_complete_profile")
           .eq("user_id", authUser.id)
           .maybeSingle(),
         supabase
@@ -177,6 +178,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role,
         avatar: profile?.avatar_url || undefined,
         isDemo: false,
+        mustCompleteProfile: !!(profile as any)?.must_complete_profile,
       };
       setUser(next);
     }, 0);
