@@ -55,7 +55,7 @@ const GENDER_FILTERS: { id: Gender | "all"; label: string }[] = [
 export default function Profile() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user: mockUser, isAuthenticated } = useAuth();
+  const { user: mockUser, isAuthenticated, updateAvatar } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -158,19 +158,24 @@ export default function Profile() {
     if (!userId) return;
     if (isDemo) {
       setAvatarUrl(url);
+      updateAvatar(url);
       setPickerOpen(false);
-      toast({ title: "Demo mode", description: "Avatar shown locally only." });
+      toast({ title: "Avatar updated", description: "Saved to your demo session." });
       return;
     }
     setSavingAvatar(true);
+    // Upsert ensures the row exists even if profile wasn't auto-created
     const { error } = await supabase
       .from("profiles")
-      .update({ avatar_url: url })
-      .eq("user_id", userId);
+      .upsert(
+        { user_id: userId, avatar_url: url, email },
+        { onConflict: "user_id" }
+      );
     if (error) {
       toast({ title: "Could not save avatar", description: error.message, variant: "destructive" });
     } else {
       setAvatarUrl(url);
+      updateAvatar(url);
       setPickerOpen(false);
       toast({ title: "Avatar updated" });
     }

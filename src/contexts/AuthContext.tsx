@@ -23,6 +23,7 @@ interface AuthContextType {
   login: (email: string, password: string, remember?: boolean) => Promise<boolean>;
   logout: () => void;
   setMockUser: (role: UserRole, tier?: MemberTier, remember?: boolean) => void;
+  updateAvatar: (url: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -150,6 +151,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     persistUser(null, false);
   };
 
+  const updateAvatar = (url: string) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, avatar: url };
+      // Preserve existing expiry; just rewrite stored user object
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  };
+
   const setMockUser = (
     role: UserRole,
     tier?: MemberTier,
@@ -175,6 +190,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         logout,
         setMockUser,
+        updateAvatar,
       }}
     >
       {children}
