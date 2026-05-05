@@ -25,6 +25,7 @@ import ServiceDashboard from "./pages/ServiceDashboard";
 import UrgentService from "./pages/UrgentService";
 import MyWallet from "./pages/MyWallet";
 import EPassPage from "./pages/EPassPage";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 // Admin Pages
@@ -64,6 +65,7 @@ const App = () => (
               <Route path="/delivery" element={<Delivery />} />
               <Route path="/returns" element={<Returns />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/profile" element={<Profile />} />
               
               {/* Member Dashboard Routes */}
               <Route path="/dashboard" element={<Dashboard />} />
