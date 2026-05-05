@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Camera, Loader2, Save, Shield, User as UserIcon, Mail, Pencil, X } from "lucide-react";
+import { ArrowLeft, Loader2, Save, Shield, Smile, User as UserIcon, Mail, Pencil, X, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,15 +21,29 @@ const profileSchema = z.object({
 
 type Role = "admin" | "staff" | "member" | "guest";
 
+// Diverse human avatar options powered by DiceBear (no install needed).
+// Mixes styles + seeds to provide a wide variety of human personas.
+const AVATAR_STYLES = ["personas", "avataaars", "micah", "lorelei", "notionists", "open-peeps"] as const;
+const AVATAR_SEEDS = [
+  "Aria", "Leo", "Mia", "Noah", "Zoe", "Ethan", "Luna", "Kai",
+  "Sofia", "Liam", "Maya", "Theo", "Nora", "Felix", "Iris", "Hugo",
+  "Yara", "Ravi", "Amara", "Jin", "Chloe", "Omar", "Priya", "Diego",
+];
+const buildAvatar = (style: string, seed: string) =>
+  `https://api.dicebear.com/9.x/${style}/svg?seed=${encodeURIComponent(seed)}`;
+const AVATAR_OPTIONS: string[] = AVATAR_STYLES.flatMap((s) =>
+  AVATAR_SEEDS.map((seed) => buildAvatar(s, seed))
+);
+
 export default function Profile() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user: mockUser, isAuthenticated } = useAuth();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [savingAvatar, setSavingAvatar] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [fullName, setFullName] = useState("");
@@ -120,41 +135,27 @@ export default function Profile() {
     setSaving(false);
   };
 
-  const handleAvatar = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !userId) return;
+  const pickAvatar = async (url: string) => {
+    if (!userId) return;
     if (isDemo) {
-      toast({ title: "Demo mode", description: "Avatar upload requires a real account." });
+      setAvatarUrl(url);
+      setPickerOpen(false);
+      toast({ title: "Demo mode", description: "Avatar shown locally only." });
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast({ title: "File too large", description: "Max 5MB.", variant: "destructive" });
-      return;
-    }
-    setUploading(true);
-    const ext = file.name.split(".").pop();
-    const path = `${userId}/avatar-${Date.now()}.${ext}`;
-
-    const { error: uploadErr } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
-    if (uploadErr) {
-      toast({ title: "Upload failed", description: uploadErr.message, variant: "destructive" });
-      setUploading(false);
-      return;
-    }
-    const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
-    const url = pub.publicUrl;
-
-    const { error: updErr } = await supabase
+    setSavingAvatar(true);
+    const { error } = await supabase
       .from("profiles")
       .update({ avatar_url: url })
       .eq("user_id", userId);
-    if (updErr) {
-      toast({ title: "Could not save avatar", description: updErr.message, variant: "destructive" });
+    if (error) {
+      toast({ title: "Could not save avatar", description: error.message, variant: "destructive" });
     } else {
       setAvatarUrl(url);
+      setPickerOpen(false);
       toast({ title: "Avatar updated" });
     }
-    setUploading(false);
+    setSavingAvatar(false);
   };
 
   const initials = fullName
@@ -207,24 +208,22 @@ export default function Profile() {
                 </AvatarFallback>
               </Avatar>
               <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
+                onClick={() => setPickerOpen(true)}
+                disabled={savingAvatar}
                 className="absolute -bottom-1 -right-1 h-9 w-9 rounded-full bg-wj-green text-primary-foreground flex items-center justify-center hover:scale-105 transition disabled:opacity-60"
-                aria-label="Upload avatar"
+                aria-label="Choose avatar"
               >
-                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                {savingAvatar ? <Loader2 className="h-4 w-4 animate-spin" /> : <Smile className="h-4 w-4" />}
               </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleAvatar}
-              />
             </div>
             <div className="flex-1">
-              <p className="text-sm text-muted-foreground">Profile picture</p>
-              <p className="text-xs text-muted-foreground/70">PNG or JPG, max 5MB.</p>
+              <p className="text-sm text-muted-foreground">Profile avatar</p>
+              <button
+                onClick={() => setPickerOpen(true)}
+                className="text-xs text-wj-green hover:underline"
+              >
+                Choose from our avatar library →
+              </button>
               <div className="flex flex-wrap gap-2 mt-3">
                 {roles.length === 0 ? (
                   <Badge variant="outline">No role assigned</Badge>
@@ -329,6 +328,40 @@ export default function Profile() {
           </div>
         </motion.div>
       </div>
+
+      {/* Avatar picker */}
+      <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
+        <DialogContent className="max-w-2xl bg-card/95 backdrop-blur border-border/50">
+          <DialogHeader>
+            <DialogTitle className="font-light text-2xl">Choose your avatar</DialogTitle>
+            <DialogDescription>
+              Pick a human persona from our diverse library.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 max-h-[60vh] overflow-y-auto pr-1">
+            {AVATAR_OPTIONS.map((url) => {
+              const selected = url === avatarUrl;
+              return (
+                <button
+                  key={url}
+                  onClick={() => pickAvatar(url)}
+                  disabled={savingAvatar}
+                  className={`relative aspect-square rounded-2xl overflow-hidden border-2 transition hover:scale-105 disabled:opacity-50 ${
+                    selected ? "border-wj-green ring-2 ring-wj-green/40" : "border-border/40 hover:border-wj-green/50"
+                  } bg-muted/40`}
+                >
+                  <img src={url} alt="Avatar option" className="w-full h-full object-cover" loading="lazy" />
+                  {selected && (
+                    <span className="absolute top-1 right-1 h-5 w-5 rounded-full bg-wj-green text-primary-foreground flex items-center justify-center">
+                      <Check className="h-3 w-3" />
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
     </RoleDashboardLayout>
   );
 }
