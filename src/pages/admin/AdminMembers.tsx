@@ -588,30 +588,32 @@ export default function AdminMembers() {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-44">
-                                  <DropdownMenuItem
-                                    onClick={() => copyInviteLink(i)}
-                                    disabled={i.status !== "pending" || linkLoadingId === i.id}
-                                  >
-                                    {copiedInviteId === i.id ? (
-                                      <Check className="h-3.5 w-3.5 mr-2 text-wj-green" />
-                                    ) : linkLoadingId === i.id ? (
-                                      <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
-                                    ) : (
-                                      <Link2 className="h-3.5 w-3.5 mr-2" />
-                                    )}
-                                    {copiedInviteId === i.id ? "Copied" : "Copy invite link"}
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => openEditInvite(i)}
-                                    disabled={i.status !== "pending"}
-                                  >
-                                    <Pencil className="h-3.5 w-3.5 mr-2" /> Edit role
-                                  </DropdownMenuItem>
+                                  {i.status === "pending" && (
+                                    <>
+                                      <DropdownMenuItem
+                                        onClick={() => copyInviteLink(i)}
+                                        disabled={linkLoadingId === i.id}
+                                      >
+                                        {copiedInviteId === i.id ? (
+                                          <Check className="h-3.5 w-3.5 mr-2 text-wj-green" />
+                                        ) : linkLoadingId === i.id ? (
+                                          <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
+                                        ) : (
+                                          <Link2 className="h-3.5 w-3.5 mr-2" />
+                                        )}
+                                        {copiedInviteId === i.id ? "Copied" : "Copy invite link"}
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onClick={() => openEditInvite(i)}>
+                                        <Pencil className="h-3.5 w-3.5 mr-2" /> Edit role
+                                      </DropdownMenuItem>
+                                    </>
+                                  )}
                                   <DropdownMenuItem
                                     onClick={() => setRevokeInvite(i)}
                                     className="text-destructive focus:text-destructive"
                                   >
-                                    <Trash2 className="h-3.5 w-3.5 mr-2" /> Cancel invite
+                                    <Trash2 className="h-3.5 w-3.5 mr-2" />{" "}
+                                    {i.status === "completed" ? "Close invite" : "Cancel invite"}
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
