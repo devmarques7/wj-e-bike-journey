@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const quickNavItems = [
   { icon: LayoutDashboard, label: "Overview", href: "/dashboard/admin" },
@@ -103,6 +104,8 @@ export default function AdminHeader() {
             <span className="w-1.5 h-1.5 rounded-full bg-wj-green animate-pulse" />
             Live
           </span>
+
+          <ThemeToggle />
 
           {/* Notifications */}
           <button className="relative p-2 rounded-full hover:bg-muted/50 transition-colors">
