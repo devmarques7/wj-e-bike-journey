@@ -402,6 +402,60 @@ export default function AdminMembers() {
           </div>
         </div>
       </div>
+
+      {/* Add Member Dialog */}
+      <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setCreatedCreds(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{createdCreds ? "Member created" : "Add new member"}</DialogTitle>
+            <DialogDescription>
+              {createdCreds
+                ? "Share these credentials with the user. They'll be asked to set a personal email and password on first login."
+                : "Pre-register a user. A temporary password will be generated."}
+            </DialogDescription>
+          </DialogHeader>
+          {createdCreds ? (
+            <div className="space-y-3">
+              <div className="rounded-lg border border-border/50 bg-muted/30 p-3 text-xs space-y-2">
+                <div><span className="text-muted-foreground">Email:</span> <span className="font-mono">{createdCreds.email}</span></div>
+                <div><span className="text-muted-foreground">Password:</span> <span className="font-mono">{createdCreds.password}</span></div>
+              </div>
+              <DialogFooter className="gap-2">
+                <Button variant="outline" onClick={copyCreds}><Copy className="h-4 w-4 mr-2" /> Copy</Button>
+                <Button onClick={() => { setOpen(false); setCreatedCreds(null); }} className="gradient-wj">Done</Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <form onSubmit={onCreate} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="m-email">Email</Label>
+                <Input id="m-email" type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="user@example.com" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="m-name">Full name (optional)</Label>
+                <Input id="m-name" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} placeholder="Jane Doe" />
+              </div>
+              <div className="space-y-2">
+                <Label>Role</Label>
+                <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v as Role })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="member">Member</SelectItem>
+                    <SelectItem value="staff">Staff</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                <Button type="submit" disabled={creating} className="gradient-wj">
+                  {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Create</>}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </AdminDashboardLayout>
   );
 }
