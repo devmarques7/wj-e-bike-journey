@@ -12,7 +12,9 @@ import {
   Plus,
   Copy,
   Loader2,
-  Mail
+  Mail,
+  Link2,
+  Check
 } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
@@ -135,7 +137,12 @@ export default function AdminMembers() {
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ email: "", full_name: "", role: "member" as Role });
-  const [createdCreds, setCreatedCreds] = useState<{ email: string; password: string } | null>(null);
+  const [createdCreds, setCreatedCreds] = useState<{
+    email: string;
+    password: string;
+    setup_link: string | null;
+  } | null>(null);
+  const [copied, setCopied] = useState<"link" | "creds" | null>(null);
 
   const loadMembers = async () => {
     setLoading(true);
@@ -198,18 +205,26 @@ export default function AdminMembers() {
       setCreating(false);
       return;
     }
-    setCreatedCreds({ email: (data as any).email, password: (data as any).temp_password });
+    setCreatedCreds({
+      email: (data as any).email,
+      password: (data as any).temp_password,
+      setup_link: (data as any).setup_link ?? null,
+    });
     setForm({ email: "", full_name: "", role: "member" });
     await loadMembers();
     setCreating(false);
   };
 
-  const copyCreds = async () => {
+  const copyTo = async (kind: "link" | "creds") => {
     if (!createdCreds) return;
-    await navigator.clipboard.writeText(
-      `Email: ${createdCreds.email}\nTemporary password: ${createdCreds.password}`,
-    );
-    toast({ title: "Copied", description: "Credentials copied to clipboard." });
+    const text =
+      kind === "link"
+        ? createdCreds.setup_link ?? ""
+        : `Email: ${createdCreds.email}\nTemporary password: ${createdCreds.password}`;
+    if (!text) return;
+    await navigator.clipboard.writeText(text);
+    setCopied(kind);
+    setTimeout(() => setCopied(null), 1800);
   };
 
   if (!isAuthenticated) {
@@ -407,22 +422,71 @@ export default function AdminMembers() {
       <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setCreatedCreds(null); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{createdCreds ? "Member created" : "Add new member"}</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="font-light">
+              {createdCreds ? "Member ready" : "Add new member"}
+            </DialogTitle>
+            <DialogDescription className="text-xs">
               {createdCreds
-                ? "Share these credentials with the user. They'll be asked to set a personal email and password on first login."
-                : "Pre-register a user. A temporary password will be generated."}
+                ? "Share the magic link — it auto-signs in and opens the setup screen. Credentials are a fallback."
+                : "Pre-register a user. They'll set their final email and password on first login."}
             </DialogDescription>
           </DialogHeader>
           {createdCreds ? (
-            <div className="space-y-3">
-              <div className="rounded-lg border border-border/50 bg-muted/30 p-3 text-xs space-y-2">
-                <div><span className="text-muted-foreground">Email:</span> <span className="font-mono">{createdCreds.email}</span></div>
-                <div><span className="text-muted-foreground">Password:</span> <span className="font-mono">{createdCreds.password}</span></div>
+            <div className="space-y-4">
+              {/* Magic link block (primary) */}
+              {createdCreds.setup_link ? (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Setup link</span>
+                    <button
+                      type="button"
+                      onClick={() => copyTo("link")}
+                      className="text-[10px] text-wj-green hover:underline inline-flex items-center gap-1"
+                    >
+                      {copied === "link" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                      {copied === "link" ? "Copied" : "Copy link"}
+                    </button>
+                  </div>
+                  <div className="rounded-lg border border-wj-green/30 bg-wj-green/5 p-3 flex items-center gap-2">
+                    <Link2 className="h-3.5 w-3.5 text-wj-green shrink-0" />
+                    <p className="text-[11px] font-mono text-foreground truncate">{createdCreds.setup_link}</p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-[11px] text-muted-foreground">
+                  Magic link unavailable — share the credentials below instead.
+                </p>
+              )}
+
+              {/* Credentials fallback */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Fallback credentials</span>
+                  <button
+                    type="button"
+                    onClick={() => copyTo("creds")}
+                    className="text-[10px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+                  >
+                    {copied === "creds" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                    {copied === "creds" ? "Copied" : "Copy"}
+                  </button>
+                </div>
+                <div className="rounded-lg border border-border/50 bg-muted/30 p-3 text-[11px] space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-muted-foreground">Email</span>
+                    <span className="font-mono truncate">{createdCreds.email}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-muted-foreground">Password</span>
+                    <span className="font-mono">{createdCreds.password}</span>
+                  </div>
+                </div>
               </div>
-              <DialogFooter className="gap-2">
-                <Button variant="outline" onClick={copyCreds}><Copy className="h-4 w-4 mr-2" /> Copy</Button>
-                <Button onClick={() => { setOpen(false); setCreatedCreds(null); }} className="gradient-wj">Done</Button>
+
+              <DialogFooter>
+                <Button onClick={() => { setOpen(false); setCreatedCreds(null); }} className="gradient-wj w-full">
+                  Done
+                </Button>
               </DialogFooter>
             </div>
           ) : (

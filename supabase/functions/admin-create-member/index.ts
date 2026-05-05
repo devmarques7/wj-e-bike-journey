@@ -105,12 +105,32 @@ Deno.serve(async (req) => {
       status: "pending",
     });
 
+    // Generate a one-click magic link that auto-signs in and lands on /complete-profile
+    const origin =
+      req.headers.get("origin") ||
+      req.headers.get("referer")?.replace(/\/$/, "") ||
+      "";
+    let setupLink: string | null = null;
+    try {
+      const { data: linkData } = await admin.auth.admin.generateLink({
+        type: "magiclink",
+        email,
+        options: {
+          redirectTo: `${origin}/complete-profile`,
+        },
+      });
+      setupLink = linkData?.properties?.action_link ?? null;
+    } catch (_) {
+      setupLink = null;
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
         user_id: newUserId,
         email,
         temp_password: tempPassword,
+        setup_link: setupLink,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
