@@ -24,7 +24,11 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string, remember?: boolean) => Promise<boolean>;
+  login: (
+    email: string,
+    password: string,
+    remember?: boolean
+  ) => Promise<{ success: boolean; code?: string; message?: string }>;
   logout: () => void;
   setMockUser: (role: UserRole, tier?: MemberTier, remember?: boolean) => void;
   updateAvatar: (url: string) => void;
@@ -200,19 +204,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (
     email: string,
     password: string,
-    remember: boolean = false
-  ): Promise<boolean> => {
-    // Real Supabase authentication. The onAuthStateChange listener will hydrate the user.
+    _remember: boolean = false
+  ) => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password,
     });
     if (error || !data.session) {
-      return false;
+      return {
+        success: false,
+        code: (error as any)?.code,
+        message: error?.message,
+      };
     }
-    // Clear any demo flag so we don't mix sessions
     localStorage.removeItem(DEMO_KEY);
-    return true;
+    return { success: true };
   };
 
   const logout = () => {
