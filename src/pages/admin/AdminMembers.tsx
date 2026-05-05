@@ -771,9 +771,25 @@ export default function AdminMembers() {
                   </div>
                   <div className="flex items-center justify-between gap-2 min-w-0">
                     <span className="text-muted-foreground shrink-0">Password</span>
-                    <span className="font-mono truncate min-w-0" title={createdCreds.password}>
-                      {createdCreds.password}
-                    </span>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span
+                        className={cn(
+                          "font-mono truncate min-w-0",
+                          !showCreatedPwd && "tracking-widest"
+                        )}
+                        title={showCreatedPwd ? createdCreds.password : undefined}
+                      >
+                        {showCreatedPwd ? createdCreds.password : "••••••••••••••"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowCreatedPwd((s) => !s)}
+                        className="text-muted-foreground hover:text-foreground shrink-0"
+                        aria-label={showCreatedPwd ? "Hide password" : "Show password"}
+                      >
+                        {showCreatedPwd ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
