@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { PhoneInput } from "@/components/PhoneInput";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -18,6 +19,9 @@ const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [mode, setMode] = useState<"login" | "demo" | "register">("login");
   const [rememberMe, setRememberMe] = useState(false);
+  const [phone, setPhone] = useState<string | null>(null);
+  const [phoneValid, setPhoneValid] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
   
   const { login, setMockUser } = useAuth();
   const navigate = useNavigate();
@@ -63,12 +67,27 @@ const Auth = () => {
     e.preventDefault();
     setIsLoading(true);
 
+    if (!phone || !phoneValid) {
+      toast({ title: "Phone required", description: "Add a valid phone number.", variant: "destructive" });
+      setIsLoading(false);
+      return;
+    }
+    if (!phoneVerified) {
+      toast({
+        title: "Phone not verified",
+        description: "Please verify your phone via WhatsApp before creating the account.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: window.location.origin,
-        data: { full_name: fullName },
+        data: { full_name: fullName, phone },
       },
     });
 
@@ -79,6 +98,15 @@ const Auth = () => {
         variant: "destructive",
       });
     } else {
+      // Persist phone + verified flag onto the freshly-created profile
+      const { data: sess } = await supabase.auth.getSession();
+      const uid = sess.session?.user?.id;
+      if (uid) {
+        await supabase
+          .from("profiles")
+          .update({ phone, phone_verified: true })
+          .eq("user_id", uid);
+      }
       toast({
         title: "Account created!",
         description: "Check your email to confirm your account.",
@@ -210,6 +238,17 @@ const Auth = () => {
                     <Input id="reg-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required className="h-12 bg-muted/50 border-border/50 focus:border-wj-green pl-11" />
                   </div>
                 </div>
+                <PhoneInput
+                  required
+                  label="Phone number (WhatsApp)"
+                  defaultCountry="NL"
+                  onChange={(e164, isValid) => {
+                    setPhone(e164);
+                    setPhoneValid(isValid);
+                    setPhoneVerified(false);
+                  }}
+                  onVerified={() => setPhoneVerified(true)}
+                />
                 <div className="space-y-2">
                   <Label htmlFor="reg-password" className="text-sm font-medium">Password</Label>
                   <div className="relative">
