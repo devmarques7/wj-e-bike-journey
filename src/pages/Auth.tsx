@@ -34,19 +34,14 @@ const Auth = () => {
         title: "Welcome back",
         description: "Redirecting to your dashboard...",
       });
-      
-      // Determine redirect based on user role
-      setTimeout(() => {
-        if (email.toLowerCase().includes("admin")) {
-          navigate("/dashboard/admin");
-        } else {
-          navigate("/dashboard");
-        }
-      }, 500);
+
+      // The dashboard route itself redirects admins to /dashboard/admin
+      // once the AuthContext has hydrated the user from Supabase.
+      setTimeout(() => navigate("/dashboard"), 400);
     } else {
       toast({
         title: "Authentication failed",
-        description: "Please check your credentials or use a demo account.",
+        description: "Invalid email or password. Please try again.",
         variant: "destructive",
       });
     }
