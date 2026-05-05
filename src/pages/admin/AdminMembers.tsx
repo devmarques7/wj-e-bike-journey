@@ -479,13 +479,14 @@ export default function AdminMembers() {
                         <TableHead className="text-muted-foreground text-xs">Status</TableHead>
                         <TableHead className="text-muted-foreground text-xs">Sent</TableHead>
                         <TableHead className="text-muted-foreground text-xs">Expires</TableHead>
+                        <TableHead className="text-muted-foreground text-xs w-10 text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {loading ? (
-                        <TableRow><TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-8">Loading…</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={6} className="text-center text-xs text-muted-foreground py-8">Loading…</TableCell></TableRow>
                       ) : invites.length === 0 ? (
-                        <TableRow><TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-8">No invites yet.</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={6} className="text-center text-xs text-muted-foreground py-8">No invites yet.</TableCell></TableRow>
                       ) : invites.map((i) => {
                         const statusMap: Record<InviteStatus, { label: string; cls: string; icon: any }> = {
                           pending: { label: "Awaiting setup", cls: "bg-amber-500/20 text-amber-400 border-amber-500/30", icon: Hourglass },
@@ -509,6 +510,33 @@ export default function AdminMembers() {
                             </TableCell>
                             <TableCell className="text-xs text-muted-foreground">
                               {new Date(i.expires_at).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 rounded-full hover:bg-muted/60"
+                                  >
+                                    <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-44">
+                                  <DropdownMenuItem
+                                    onClick={() => openEditInvite(i)}
+                                    disabled={i.status !== "pending"}
+                                  >
+                                    <Pencil className="h-3.5 w-3.5 mr-2" /> Edit role
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => setRevokeInvite(i)}
+                                    className="text-destructive focus:text-destructive"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5 mr-2" /> Cancel invite
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </TableCell>
                           </TableRow>
                         );
