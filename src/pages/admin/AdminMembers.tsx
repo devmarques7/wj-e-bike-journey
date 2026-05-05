@@ -21,7 +21,10 @@ import {
   XCircle,
   Hourglass,
   Pencil,
-  Trash2
+  Trash2,
+  EyeOff,
+  RefreshCw,
+  KeyRound
 } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
@@ -180,6 +183,11 @@ export default function AdminMembers() {
   const [revoking, setRevoking] = useState(false);
   const [linkLoadingId, setLinkLoadingId] = useState<string | null>(null);
   const [copiedInviteId, setCopiedInviteId] = useState<string | null>(null);
+  const [showCreatedPwd, setShowCreatedPwd] = useState(false);
+  const [showEditPwd, setShowEditPwd] = useState(false);
+  const [editPassword, setEditPassword] = useState("");
+  const [savingPwd, setSavingPwd] = useState(false);
+  const [pwdResult, setPwdResult] = useState<string | null>(null);
 
   const loadMembers = async () => {
     setLoading(true);
@@ -282,6 +290,9 @@ export default function AdminMembers() {
   const openEditInvite = (inv: InviteRow) => {
     setEditRole(inv.role);
     setEditInvite(inv);
+    setEditPassword("");
+    setShowEditPwd(false);
+    setPwdResult(null);
   };
 
   const saveInviteRole = async () => {
@@ -351,6 +362,33 @@ export default function AdminMembers() {
     } catch {
       toast({ title: "Copy failed", description: link, variant: "destructive" });
     }
+  };
+
+  const submitPasswordChange = async (mode: "custom" | "regenerate") => {
+    if (!editInvite) return;
+    if (mode === "custom" && (editPassword.length < 8 || editPassword.length > 72)) {
+      toast({ title: "Password must be 8–72 characters", variant: "destructive" });
+      return;
+    }
+    setSavingPwd(true);
+    const { data, error } = await supabase.functions.invoke("admin-reset-invite-password", {
+      body: {
+        invitation_id: editInvite.id,
+        ...(mode === "custom" ? { password: editPassword } : {}),
+      },
+    });
+    setSavingPwd(false);
+    if (error || !(data as any)?.success) {
+      toast({
+        title: "Could not update password",
+        description: error?.message || (data as any)?.error || "Unknown error",
+        variant: "destructive",
+      });
+      return;
+    }
+    setPwdResult((data as any).password as string);
+    setEditPassword("");
+    toast({ title: "Password updated" });
   };
 
   if (!isAuthenticated) {
