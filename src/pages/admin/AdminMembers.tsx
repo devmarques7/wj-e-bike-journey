@@ -473,33 +473,34 @@ export default function AdminMembers() {
                     <TableHeader>
                       <TableRow className="border-border/30 hover:bg-transparent">
                         <TableHead className="text-muted-foreground text-xs">Member</TableHead>
-                        <TableHead className="text-muted-foreground text-xs">Email</TableHead>
                         <TableHead className="text-muted-foreground text-xs">Role</TableHead>
                         <TableHead className="text-muted-foreground text-xs">Status</TableHead>
-                        <TableHead className="text-muted-foreground text-xs">Joined</TableHead>
+                        <TableHead className="text-muted-foreground text-xs">Rating</TableHead>
                         <TableHead className="text-muted-foreground text-xs w-10 text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {loading ? (
-                        <TableRow><TableCell colSpan={6} className="text-center text-xs text-muted-foreground py-8">Loading…</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-8">Loading…</TableCell></TableRow>
                       ) : members.length === 0 ? (
-                        <TableRow><TableCell colSpan={6} className="text-center text-xs text-muted-foreground py-8">No members yet. Click "Add member" to invite the first one.</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-8">No members yet. Click "Add member" to invite the first one.</TableCell></TableRow>
                       ) : members.map((m) => (
                         <TableRow key={m.user_id} className="border-border/30 hover:bg-muted/30">
                           <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Avatar className="h-7 w-7">
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-8 w-8">
                                 {m.avatar_url ? <img src={m.avatar_url} alt="" /> : (
                                   <AvatarFallback className="bg-wj-green/20 text-wj-green text-[10px] font-bold">
                                     {initials(m.full_name, m.email)}
                                   </AvatarFallback>
                                 )}
                               </Avatar>
-                              <span className="text-xs font-medium">{m.full_name || "—"}</span>
+                              <div className="flex flex-col leading-tight min-w-0">
+                                <span className="text-xs font-medium truncate">{m.full_name || "—"}</span>
+                                <span className="text-[10px] text-muted-foreground truncate">{m.email || "—"}</span>
+                              </div>
                             </div>
                           </TableCell>
-                          <TableCell className="text-xs text-muted-foreground">{m.email || "—"}</TableCell>
                           <TableCell>{getRoleBadge(m.role)}</TableCell>
                           <TableCell>
                             {m.must_complete_profile ? (
@@ -508,8 +509,11 @@ export default function AdminMembers() {
                               <Badge className="bg-wj-green/20 text-wj-green border-wj-green/30 text-[10px]">Active</Badge>
                             )}
                           </TableCell>
-                          <TableCell className="text-xs text-muted-foreground">
-                            {new Date(m.created_at).toLocaleDateString()}
+                          <TableCell>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
+                              <span className="text-foreground font-medium">—</span>
+                            </div>
                           </TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>
