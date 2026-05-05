@@ -333,6 +333,27 @@ export default function Profile() {
                 </div>
                 <div className="grid grid-cols-3 gap-4 py-4">
                   <dt className="text-sm text-muted-foreground flex items-center gap-2">
+                    <Phone className="h-3.5 w-3.5" /> Phone
+                  </dt>
+                  <dd className="col-span-2 text-sm text-foreground flex items-center gap-2">
+                    {phone ? (
+                      <>
+                        <span>{phone}</span>
+                        {phoneVerified ? (
+                          <span className="inline-flex items-center gap-1 text-xs text-wj-green">
+                            <ShieldCheck className="h-3.5 w-3.5" /> Verified
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Not verified</span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground/60">—</span>
+                    )}
+                  </dd>
+                </div>
+                <div className="grid grid-cols-3 gap-4 py-4">
+                  <dt className="text-sm text-muted-foreground flex items-center gap-2">
                     <Shield className="h-3.5 w-3.5" /> Active role
                   </dt>
                   <dd className="col-span-2 text-sm text-foreground flex items-center gap-2">
@@ -371,6 +392,18 @@ export default function Profile() {
                     Note: this updates the profile record only. Auth email change requires re-verification.
                   </p>
                 </div>
+                <PhoneInput
+                  value={draftPhone ?? undefined}
+                  verified={draftPhoneVerified}
+                  defaultCountry="NL"
+                  label="Phone (WhatsApp)"
+                  onChange={(e164, isValid) => {
+                    setDraftPhone(e164);
+                    setDraftPhoneValid(isValid);
+                    if (e164 !== phone) setDraftPhoneVerified(false);
+                  }}
+                  onVerified={() => setDraftPhoneVerified(true)}
+                />
 
                 <div className="flex justify-end gap-2 pt-2">
                   <Button variant="ghost" onClick={cancelEdit}>Cancel</Button>
