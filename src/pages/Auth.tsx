@@ -50,6 +50,21 @@ const Auth = () => {
           "Please confirm your email before signing in. Check your inbox.";
       } else if (code === "invalid_credentials") {
         description = "Invalid email or password. Please try again.";
+        // Check if this email has a pending invite — if so, the user
+        // must use the temporary password from the invitation, not a
+        // password they made up.
+        try {
+          const { data } = await supabase.functions.invoke(
+            "check-invite-status",
+            { body: { email: email.trim().toLowerCase() } },
+          );
+          if ((data as any)?.pending) {
+            description =
+              "This email has a pending invite. Use the temporary password sent by your administrator. If you lost it, ask them to regenerate it.";
+          }
+        } catch {
+          // ignore — keep generic message
+        }
       } else if (result.message) {
         description = result.message;
       }
