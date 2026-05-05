@@ -178,6 +178,8 @@ export default function AdminMembers() {
   const [savingEdit, setSavingEdit] = useState(false);
   const [revokeInvite, setRevokeInvite] = useState<InviteRow | null>(null);
   const [revoking, setRevoking] = useState(false);
+  const [linkLoadingId, setLinkLoadingId] = useState<string | null>(null);
+  const [copiedInviteId, setCopiedInviteId] = useState<string | null>(null);
 
   const loadMembers = async () => {
     setLoading(true);
@@ -324,6 +326,31 @@ export default function AdminMembers() {
       await loadMembers();
     }
     setRevoking(false);
+  };
+
+  const copyInviteLink = async (inv: InviteRow) => {
+    setLinkLoadingId(inv.id);
+    const { data, error } = await supabase.functions.invoke("admin-invite-link", {
+      body: { invitation_id: inv.id },
+    });
+    setLinkLoadingId(null);
+    const link = (data as any)?.setup_link as string | undefined;
+    if (error || !link) {
+      toast({
+        title: "Could not generate link",
+        description: error?.message || (data as any)?.error || "Unknown error",
+        variant: "destructive",
+      });
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopiedInviteId(inv.id);
+      setTimeout(() => setCopiedInviteId((c) => (c === inv.id ? null : c)), 1800);
+      toast({ title: "Invite link copied" });
+    } catch {
+      toast({ title: "Copy failed", description: link, variant: "destructive" });
+    }
   };
 
   if (!isAuthenticated) {
