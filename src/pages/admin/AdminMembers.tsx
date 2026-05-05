@@ -739,6 +739,72 @@ export default function AdminMembers() {
       </Dialog>
 
       <MemberProfileDialog member={viewMember} onClose={() => setViewMember(null)} />
+
+      {/* Edit invite dialog */}
+      <Dialog open={!!editInvite} onOpenChange={(o) => !o && setEditInvite(null)}>
+        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-light">Edit invite</DialogTitle>
+            <DialogDescription className="text-xs">
+              Update the role assigned to this pending invite.
+            </DialogDescription>
+          </DialogHeader>
+          {editInvite && (
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Email</Label>
+                <p className="text-xs font-mono truncate" title={editInvite.email}>{editInvite.email}</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Role</Label>
+                <Select value={editRole} onValueChange={(v) => setEditRole(v as Role)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="member">Member</SelectItem>
+                    <SelectItem value="staff">Staff</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setEditInvite(null)}>Cancel</Button>
+                <Button onClick={saveInviteRole} disabled={savingEdit} className="gradient-wj">
+                  {savingEdit ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save"}
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Revoke invite dialog */}
+      <Dialog open={!!revokeInvite} onOpenChange={(o) => !o && setRevokeInvite(null)}>
+        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-light">Cancel invite?</DialogTitle>
+            <DialogDescription className="text-xs">
+              This permanently removes the invitation
+              {revokeInvite?.status === "pending" && " and the pre-registered user account"}.
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          {revokeInvite && (
+            <div className="rounded-lg border border-border/50 bg-muted/30 p-3 text-xs font-mono truncate" title={revokeInvite.email}>
+              {revokeInvite.email}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRevokeInvite(null)}>Keep</Button>
+            <Button
+              onClick={confirmRevokeInvite}
+              disabled={revoking}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {revoking ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Trash2 className="h-4 w-4 mr-1" /> Cancel invite</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminDashboardLayout>
   );
 }
