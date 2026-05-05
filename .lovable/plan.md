@@ -1,117 +1,63 @@
 
+## Diagnóstico
 
-# WJ Vision E-Bikes Platform — Implementation Plan
+Consultei `auth.users` e confirmei:
 
-## Overview
-A premium e-bike platform with minimalist Dutch luxury design, inspired by VanMoof and Cowboy. Focus on cinematic animations, scroll-driven interactions, and a seamless e-commerce experience.
+- `admin@wjvision.com` existe (id `74dd22ea-39d7-4cf1-bbd2-930708277f55`)
+- `email_confirmed_at` está `NULL` → Supabase rejeita o login com `400 email_not_confirmed`
+- `last_sign_in_at` está `NULL` → de fato nunca logou
 
----
+O log de Auth confirma: `"error":"400: Email not confirmed"` no `POST /token`.
 
-## Phase 1: Foundation & Design System
+Não é problema de senha nem de código — é configuração de confirmação de e-mail do Supabase Auth + um seed que já existe sem confirmar.
 
-### Global Configuration
-- **Color Palette**: Deep Black (#020202), Forest (#08150d), WJ Green accent (#058c42), Neutral base (#f3eff5)
-- **Typography**: Inter font family with generous tracking and high-contrast sizing
-- **Theme Engine**: Dark mode as default with smooth Light mode toggle
-- **Animation Library**: Framer Motion for scroll-triggered reveals and micro-interactions
+## Correções a aplicar
 
----
+### 1. Confirmar manualmente os e-mails dos usuários já criados (migration SQL)
 
-## Phase 2: The Interactive Entrance
+Atualizar `auth.users` setando `email_confirmed_at = now()` apenas para os e-mails seed do projeto:
 
-### Animated Loader
-- Minimalist e-bike wireframe that progressively fills with WJ Green (#058c42)
-- Loading progress bar synced with wireframe animation
-- Smooth zoom-in transition that morphs into the Hero section
+- `admin@wjvision.com`
+- `staff@wjvision.com`
+- `light@wjvision.com`
+- `plus@wjvision.com`
+- `black@wjvision.com`
 
----
+(somente onde `email_confirmed_at IS NULL`, para não sobrescrever quem já confirmou).
 
-## Phase 3: Landing Page Sections
+Isso desbloqueia o login imediatamente para o admin e demais contas demo reais.
 
-### Hero Section (Cinematic Lifestyle)
-- Full-screen video background placeholder (muted, looping Amsterdam sunrise aesthetic)
-- Transparent glassmorphism navigation bar
-- Headline: "Your journey in the Netherlands, elevated to a state of art."
-- CTA button with glass effect: "Discover My Journey"
+### 2. Desativar "Confirm email" no Supabase Auth (recomendado neste projeto)
 
-### Features Showcase Section
-- Scroll-triggered feature reveals (like Cowboy's technology showcase)
-- Split layout: text callouts on left, product detail imagery on right
-- Animated feature list that highlights on scroll
+Como esta aplicação é uma demo/portal interno e o fluxo de cadastro não envia/valida e-mail, a forma definitiva é desligar a obrigatoriedade de confirmação:
 
-### E-Pass Membership Section
-- Sleek comparison table: Basic / E-Pass Silver / E-Pass Black
-- Physical membership card visual (black matte with gold QR code mockup)
-- Glassmorphism card effects with hover animations
+- Supabase Dashboard → Authentication → Providers → Email → desmarcar **Confirm email** → Save.
 
-### Quick Actions Grid
-- Four action cards: Test Ride / Accessories / Find Store / Browse Deals
-- Subtle hover animations and icon transitions
+Vou deixar o link direto no final da resposta para o usuário fazer em 1 clique. Sem isso, qualquer novo signup futuro vai cair no mesmo erro.
 
----
+### 3. Melhorar mensagem de erro em `src/pages/Auth.tsx`
 
-## Phase 4: Product Catalog & Gallery
+Hoje o catch genérico mostra "Invalid email or password", o que esconde o motivo real (`email_not_confirmed`, `invalid_credentials`, etc.). Vou:
 
-### Product Listing Page ("The Gallery")
-- Model filter chips (like VanMoof's product selector)
-- Product cards with hover zoom and quick-view animations
-- Floating price indicators
+- Ler `error.message` / `error.code` do retorno do `signInWithPassword`
+- Exibir mensagens específicas via toast:
+  - `email_not_confirmed` → "Confirme seu e-mail antes de entrar."
+  - `invalid_credentials` → "E-mail ou senha inválidos."
+  - outros → mensagem genérica + `error.message`
 
-### Product Detail Page (Scroll-Driven Experience)
-- Bike stays centered while scrolling
-- Part zoom-ins with text callouts (Motor, Seat, Frame welds)
-- Feature tags that animate in on scroll
-- Color/variant selector with visual swatches
-- Floating purchase bar: [Model] + [E-Pass] + [Total Price]
+Isso vai evitar esse tipo de debugging às cegas no futuro.
 
----
+### 4. (opcional, só se confirmar) Garantir profile + role para o admin
 
-## Phase 5: E-Commerce Integration
+Se após confirmar o e-mail o login funcionar mas o usuário não for reconhecido como admin, é porque o trigger `handle_new_user` só roda em INSERT em `auth.users`. O admin foi criado em 19:05, o trigger atribui role `admin` por e-mail, então deve estar ok — mas vou verificar `profiles` e `user_roles` para esse `user_id` na execução e, se faltar, inserir via migration:
 
-### Shopify Connection
-- Product catalog sync with inventory management
-- Variant handling (colors, frame sizes)
-- Secure Shopify checkout integration
+- `profiles` (user_id, full_name, email)
+- `user_roles` (user_id, 'admin')
 
-### One-Step Checkout Experience
-- Clean split layout: Shipping form (left) / Order summary (right)
-- "Reserved for you" psychology messaging
-- Real-time order total updates
+## Resumo técnico das mudanças
 
----
+- **Migration SQL**: `UPDATE auth.users SET email_confirmed_at = now() WHERE email IN (...) AND email_confirmed_at IS NULL;` + INSERTs condicionais em `profiles` / `user_roles` se faltarem.
+- **Código**: ajuste de tratamento de erro em `src/pages/Auth.tsx`.
+- **Ação manual do usuário**: desligar "Confirm email" no painel Supabase (link fornecido).
 
-## Phase 6: Owner's Portal (Demo Mode)
-
-### Simulated Dashboard
-- Visual mockup of bike health widgets
-- Maintenance timeline display
-- E-ID digital passport preview (rotating 3D card effect)
-- "Sell with E-ID" feature demonstration
-
----
-
-## Design & Animation Details
-
-### Scroll Animations
-- Component fade-in reveals on scroll entry
-- Parallax effects on hero and product sections
-- Smooth 0.6s ease-in-out transitions throughout
-
-### Interactive Elements
-- Glassmorphism buttons and cards
-- Hover scale effects on products
-- Mouse-follow effects on E-ID card preview
-
-### Mobile Optimization
-- Mobile-first responsive design
-- Optimized vertical video placeholder for mobile hero
-- Touch-friendly interactions and navigation
-
----
-
-## Technology Stack
-- **React + TypeScript + Tailwind CSS**
-- **Framer Motion** for animations
-- **Shopify** for e-commerce backend
-- **Dark/Light theme** with CSS variables
-
+Após isso, o login com `admin@wjvision.com` + a senha cadastrada (a usada no signup, ex.: `123123` segundo o request) deve funcionar e redirecionar para `/dashboard/admin`.
