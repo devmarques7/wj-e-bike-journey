@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { PhoneInput } from "@/components/PhoneInput";
 
 export default function CompleteProfile() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -17,6 +18,9 @@ export default function CompleteProfile() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [phone, setPhone] = useState<string | null>(null);
+  const [phoneValid, setPhoneValid] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) navigate("/auth", { replace: true });
@@ -33,6 +37,18 @@ export default function CompleteProfile() {
       toast({ title: "Passwords don't match", variant: "destructive" });
       return;
     }
+    if (!phone || !phoneValid) {
+      toast({ title: "Phone required", description: "Add a valid phone number.", variant: "destructive" });
+      return;
+    }
+    if (!phoneVerified) {
+      toast({
+        title: "Phone not verified",
+        description: "Please verify your phone via WhatsApp before continuing.",
+        variant: "destructive",
+      });
+      return;
+    }
     setSubmitting(true);
     const { error } = await supabase.auth.updateUser({ email, password });
     if (error) {
@@ -43,12 +59,24 @@ export default function CompleteProfile() {
     if (user?.id) {
       await supabase
         .from("profiles")
-        .update({ must_complete_profile: false, email })
+        .update({
+          must_complete_profile: false,
+          email,
+          phone,
+          phone_verified: true,
+        })
         .eq("user_id", user.id);
       await supabase
         .from("member_invitations")
         .update({ status: "completed" })
         .eq("user_id", user.id);
+    }
+    // Refresh the session so AuthContext picks up the cleared
+    // must_complete_profile flag immediately, then land on the dashboard.
+    try {
+      await supabase.auth.refreshSession();
+    } catch {
+      // ignore — onAuthStateChange will still rehydrate shortly
     }
     toast({ title: "Profile completed", description: "Welcome aboard." });
     navigate("/dashboard", { replace: true });
@@ -83,6 +111,20 @@ export default function CompleteProfile() {
         <div className="space-y-2">
           <Label htmlFor="cpwd">Confirm password</Label>
           <Input id="cpwd" type="password" required minLength={8} value={confirm} onChange={(e) => setConfirm(e.target.value)} className="h-11" />
+        </div>
+        <div className="space-y-2">
+          <PhoneInput
+            value={phone ?? undefined}
+            verified={phoneVerified}
+            required
+            label="Phone number"
+            onChange={(e164, valid) => {
+              setPhone(e164);
+              setPhoneValid(valid);
+              if (!valid) setPhoneVerified(false);
+            }}
+            onVerified={() => setPhoneVerified(true)}
+          />
         </div>
         <Button type="submit" disabled={submitting} className="w-full h-11 gradient-wj">
           {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Continue <ArrowRight className="h-4 w-4 ml-2" /></>}
