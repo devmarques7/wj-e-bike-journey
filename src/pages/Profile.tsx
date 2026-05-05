@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Camera, Loader2, Save, Shield, User as UserIcon, Mail } from "lucide-react";
+import { ArrowLeft, Camera, Loader2, Save, Shield, User as UserIcon, Mail, Pencil, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +36,19 @@ export default function Profile() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
   const [isDemo, setIsDemo] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draftName, setDraftName] = useState("");
+  const [draftEmail, setDraftEmail] = useState("");
+
+  const startEdit = () => {
+    setDraftName(fullName);
+    setDraftEmail(email);
+    setEditing(true);
+  };
+
+  const cancelEdit = () => {
+    setEditing(false);
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -79,7 +92,7 @@ export default function Profile() {
   }, [navigate, isAuthenticated, mockUser]);
 
   const handleSave = async () => {
-    const parsed = profileSchema.safeParse({ full_name: fullName, email });
+    const parsed = profileSchema.safeParse({ full_name: draftName, email: draftEmail });
     if (!parsed.success) {
       toast({ title: "Invalid input", description: parsed.error.issues[0].message, variant: "destructive" });
       return;
@@ -99,6 +112,9 @@ export default function Profile() {
     if (error) {
       toast({ title: "Save failed", description: error.message, variant: "destructive" });
     } else {
+      setFullName(parsed.data.full_name);
+      setEmail(parsed.data.email);
+      setEditing(false);
       toast({ title: "Profile updated", description: "Your changes were saved." });
     }
     setSaving(false);
@@ -232,51 +248,84 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Form */}
-          <div className="rounded-3xl bg-card/50 border border-border/50 backdrop-blur p-8 space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="name">Full name</Label>
-              <div className="relative">
-                <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="name"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="h-12 pl-11 bg-muted/50 border-border/50 focus:border-wj-green"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-12 pl-11 bg-muted/50 border-border/50 focus:border-wj-green"
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Note: this updates the profile record only. Auth email change requires re-verification.
-              </p>
+          {/* Info card */}
+          <div className="rounded-3xl bg-card/50 border border-border/50 backdrop-blur p-8">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-sm uppercase tracking-wider text-muted-foreground">Account information</h2>
+              {!editing ? (
+                <Button variant="ghost" size="sm" onClick={startEdit} className="text-wj-green hover:text-wj-green hover:bg-wj-green/10">
+                  <Pencil className="h-3.5 w-3.5 mr-2" /> Edit
+                </Button>
+              ) : (
+                <Button variant="ghost" size="sm" onClick={cancelEdit} className="text-muted-foreground">
+                  <X className="h-3.5 w-3.5 mr-2" /> Cancel
+                </Button>
+              )}
             </div>
 
-            <div className="space-y-2">
-              <Label>Active role</Label>
-              <div className="h-12 flex items-center px-4 rounded-md bg-muted/30 border border-border/50 text-sm">
-                <Shield className="h-4 w-4 mr-2 text-wj-green" />
-                {primaryRole.toUpperCase()}
-                <span className="ml-auto text-xs text-muted-foreground">Managed by admin</span>
-              </div>
-            </div>
+            {!editing ? (
+              <dl className="divide-y divide-border/40">
+                <div className="grid grid-cols-3 gap-4 py-4">
+                  <dt className="text-sm text-muted-foreground flex items-center gap-2">
+                    <UserIcon className="h-3.5 w-3.5" /> Full name
+                  </dt>
+                  <dd className="col-span-2 text-sm text-foreground">{fullName || <span className="text-muted-foreground/60">—</span>}</dd>
+                </div>
+                <div className="grid grid-cols-3 gap-4 py-4">
+                  <dt className="text-sm text-muted-foreground flex items-center gap-2">
+                    <Mail className="h-3.5 w-3.5" /> Email
+                  </dt>
+                  <dd className="col-span-2 text-sm text-foreground break-all">{email || <span className="text-muted-foreground/60">—</span>}</dd>
+                </div>
+                <div className="grid grid-cols-3 gap-4 py-4">
+                  <dt className="text-sm text-muted-foreground flex items-center gap-2">
+                    <Shield className="h-3.5 w-3.5" /> Active role
+                  </dt>
+                  <dd className="col-span-2 text-sm text-foreground flex items-center gap-2">
+                    <span className="text-wj-green">{primaryRole.toUpperCase()}</span>
+                    <span className="text-xs text-muted-foreground/70">· Managed by admin</span>
+                  </dd>
+                </div>
+              </dl>
+            ) : (
+              <div className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Full name</Label>
+                  <div className="relative">
+                    <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="name"
+                      value={draftName}
+                      onChange={(e) => setDraftName(e.target.value)}
+                      className="h-12 pl-11 bg-muted/50 border-border/50 focus:border-wj-green"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="email"
+                      type="email"
+                      value={draftEmail}
+                      onChange={(e) => setDraftEmail(e.target.value)}
+                      className="h-12 pl-11 bg-muted/50 border-border/50 focus:border-wj-green"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Note: this updates the profile record only. Auth email change requires re-verification.
+                  </p>
+                </div>
 
-            <div className="flex justify-end pt-2">
-              <Button onClick={handleSave} disabled={saving} className="gradient-wj">
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : (<><Save className="h-4 w-4 mr-2" /> Save changes</>)}
-              </Button>
-            </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="ghost" onClick={cancelEdit}>Cancel</Button>
+                  <Button onClick={handleSave} disabled={saving} className="gradient-wj">
+                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : (<><Save className="h-4 w-4 mr-2" /> Save changes</>)}
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </motion.div>
       </div>
