@@ -1,12 +1,15 @@
 import { motion } from "framer-motion";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Wallet as WalletIcon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
 import { useRef, useEffect } from "react";
+import EmptyState from "./EmptyState";
 
 export default function WalletCard() {
   const { user } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  const hasMembership = !!user?.tier;
   
   // Card data based on tier
   const cardData = {
@@ -15,7 +18,7 @@ export default function WalletCard() {
     black: { tier: "BLACK", number: "4532 •••• •••• 1562", color: "from-amber-400 to-amber-600" },
   };
 
-  const data = cardData[user?.tier || "light"];
+  const data = hasMembership ? cardData[user!.tier as keyof typeof cardData] : null;
 
   useEffect(() => {
     const video = videoRef.current;
@@ -35,6 +38,23 @@ export default function WalletCard() {
     video.addEventListener("timeupdate", handleTimeUpdate);
     return () => video.removeEventListener("timeupdate", handleTimeUpdate);
   }, []);
+
+  if (!hasMembership || !data) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="h-full rounded-3xl overflow-hidden relative border border-border/40 bg-card/30 backdrop-blur-md min-h-[180px] flex items-center justify-center"
+      >
+        <EmptyState
+          icon={WalletIcon}
+          title="No active membership"
+          description="Join WJ Vision to unlock your member card."
+        />
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
