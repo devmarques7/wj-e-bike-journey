@@ -21,6 +21,7 @@ import Help from "./pages/Help";
 import Delivery from "./pages/Delivery";
 import Returns from "./pages/Returns";
 import Auth from "./pages/Auth";
+import CompleteProfile from "./pages/CompleteProfile";
 import Dashboard from "./pages/Dashboard";
 import ServiceDashboard from "./pages/ServiceDashboard";
 import UrgentService from "./pages/UrgentService";
@@ -67,6 +68,7 @@ const App = () => (
               <Route path="/delivery" element={<Delivery />} />
               <Route path="/returns" element={<Returns />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/complete-profile" element={<CompleteProfile />} />
               <Route path="/profile" element={<Profile />} />
               
               {/* Member Dashboard Routes */}
