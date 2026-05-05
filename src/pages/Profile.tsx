@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { z } from "zod";
+import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 
 const profileSchema = z.object({
   full_name: z.string().trim().min(1, "Name is required").max(120, "Max 120 chars"),
@@ -154,14 +155,16 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-wj-green" />
-      </div>
+      <RoleDashboardLayout>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-wj-green" />
+        </div>
+      </RoleDashboardLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <RoleDashboardLayout>
       <div className="max-w-3xl mx-auto px-6 py-10">
         <button
           onClick={() => navigate(-1)}
@@ -277,6 +280,6 @@ export default function Profile() {
           </div>
         </motion.div>
       </div>
-    </div>
+    </RoleDashboardLayout>
   );
 }
