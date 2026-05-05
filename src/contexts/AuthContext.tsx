@@ -30,7 +30,7 @@ interface AuthContextType {
     password: string,
     remember?: boolean
   ) => Promise<{ success: boolean; code?: string; message?: string }>;
-  logout: () => void;
+  logout: () => Promise<void>;
   setMockUser: (role: UserRole, tier?: MemberTier, remember?: boolean) => void;
   updateAvatar: (url: string) => void;
 }
@@ -223,11 +223,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { success: true };
   };
 
-  const logout = () => {
+  const logout = async () => {
     // Sign out of Supabase (no-op if there is no session)
-    supabase.auth.signOut().catch(() => {});
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // ignore — still clear local state below
+    }
     setUser(null);
     persistUser(null, false);
+    // Wipe any lingering Supabase tokens from session/local storage
+    try {
+      const wipe = (storage: Storage) => {
+        const keys: string[] = [];
+        for (let i = 0; i < storage.length; i++) {
+          const k = storage.key(i);
+          if (k && (k.startsWith("sb-") || k.includes("supabase.auth"))) keys.push(k);
+        }
+        keys.forEach((k) => storage.removeItem(k));
+      };
+      wipe(localStorage);
+      wipe(sessionStorage);
+    } catch {
+      // ignore
+    }
   };
 
   const updateAvatar = (url: string) => {
