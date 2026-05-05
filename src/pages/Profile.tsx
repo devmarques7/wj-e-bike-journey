@@ -21,28 +21,36 @@ const profileSchema = z.object({
 
 type Role = "admin" | "staff" | "member" | "guest";
 
-// Diverse human avatar options powered by DiceBear (no install needed).
-// Mixes styles + seeds to provide a wide variety of human personas.
-const AVATAR_STYLES = [
-  { id: "personas", label: "Personas" },
-  { id: "avataaars", label: "Avataaars" },
-  { id: "micah", label: "Micah" },
-  { id: "lorelei", label: "Lorelei" },
-  { id: "notionists", label: "Notionists" },
-  { id: "open-peeps", label: "Peeps" },
-] as const;
-type AvatarStyleId = typeof AVATAR_STYLES[number]["id"];
-const AVATAR_SEEDS = [
-  "Aria", "Leo", "Mia", "Noah", "Zoe", "Ethan", "Luna", "Kai",
-  "Sofia", "Liam", "Maya", "Theo", "Nora", "Felix", "Iris", "Hugo",
-  "Yara", "Ravi", "Amara", "Jin", "Chloe", "Omar", "Priya", "Diego",
+// Notionists-only avatar library (DiceBear), categorized by gender for easy filtering.
+type Gender = "female" | "male" | "neutral";
+const SEEDS_BY_GENDER: Record<Gender, string[]> = {
+  female: [
+    "Aria", "Mia", "Zoe", "Luna", "Sofia", "Maya", "Nora", "Iris",
+    "Yara", "Amara", "Chloe", "Priya", "Layla", "Olivia", "Emma", "Ava",
+    "Isabella", "Camila", "Aaliyah", "Freya", "Hana", "Mei", "Anya", "Nina",
+  ],
+  male: [
+    "Leo", "Noah", "Ethan", "Kai", "Liam", "Theo", "Felix", "Hugo",
+    "Ravi", "Jin", "Omar", "Diego", "Lucas", "Mateo", "Aiden", "Caleb",
+    "Idris", "Jasper", "Kenji", "Mason", "Oscar", "Rafael", "Samir", "Yusuf",
+  ],
+  neutral: [
+    "Sky", "River", "Sage", "Quinn", "Rowan", "Avery", "Charlie", "Elliot",
+    "Finley", "Hayden", "Jordan", "Kai-N", "Morgan", "Phoenix", "Reese", "Taylor",
+  ],
+};
+const buildAvatar = (seed: string) =>
+  `https://api.dicebear.com/9.x/notionists/svg?seed=${encodeURIComponent(seed)}`;
+type AvatarOption = { url: string; gender: Gender; seed: string };
+const AVATAR_OPTIONS: AvatarOption[] = (Object.entries(SEEDS_BY_GENDER) as [Gender, string[]][])
+  .flatMap(([gender, seeds]) => seeds.map((seed) => ({ url: buildAvatar(seed), gender, seed })));
+
+const GENDER_FILTERS: { id: Gender | "all"; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "female", label: "Female" },
+  { id: "male", label: "Male" },
+  { id: "neutral", label: "Neutral" },
 ];
-const buildAvatar = (style: string, seed: string) =>
-  `https://api.dicebear.com/9.x/${style}/svg?seed=${encodeURIComponent(seed)}`;
-type AvatarOption = { url: string; style: AvatarStyleId; seed: string };
-const AVATAR_OPTIONS: AvatarOption[] = AVATAR_STYLES.flatMap((s) =>
-  AVATAR_SEEDS.map((seed) => ({ url: buildAvatar(s.id, seed), style: s.id, seed }))
-);
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -53,7 +61,7 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [savingAvatar, setSavingAvatar] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [styleFilter, setStyleFilter] = useState<AvatarStyleId | "all">("all");
+  const [genderFilter, setGenderFilter] = useState<Gender | "all">("all");
   const [seedQuery, setSeedQuery] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
@@ -361,27 +369,17 @@ export default function Profile() {
               />
             </div>
             <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setStyleFilter("all")}
-                className={`px-3 py-1.5 rounded-full text-xs uppercase tracking-wider border transition ${
-                  styleFilter === "all"
-                    ? "bg-wj-green/20 text-wj-green border-wj-green/40"
-                    : "bg-muted/40 text-muted-foreground border-border/40 hover:border-wj-green/40 hover:text-foreground"
-                }`}
-              >
-                All
-              </button>
-              {AVATAR_STYLES.map((s) => (
+              {GENDER_FILTERS.map((f) => (
                 <button
-                  key={s.id}
-                  onClick={() => setStyleFilter(s.id)}
+                  key={f.id}
+                  onClick={() => setGenderFilter(f.id)}
                   className={`px-3 py-1.5 rounded-full text-xs uppercase tracking-wider border transition ${
-                    styleFilter === s.id
+                    genderFilter === f.id
                       ? "bg-wj-green/20 text-wj-green border-wj-green/40"
                       : "bg-muted/40 text-muted-foreground border-border/40 hover:border-wj-green/40 hover:text-foreground"
                   }`}
                 >
-                  {s.label}
+                  {f.label}
                 </button>
               ))}
             </div>
@@ -389,9 +387,9 @@ export default function Profile() {
 
           <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 max-h-[55vh] overflow-y-auto pr-1">
             {AVATAR_OPTIONS.filter((opt) => {
-              const matchStyle = styleFilter === "all" || opt.style === styleFilter;
+              const matchGender = genderFilter === "all" || opt.gender === genderFilter;
               const matchSeed = !seedQuery.trim() || opt.seed.toLowerCase().includes(seedQuery.trim().toLowerCase());
-              return matchStyle && matchSeed;
+              return matchGender && matchSeed;
             }).map((opt) => {
               const selected = opt.url === avatarUrl;
               return (
