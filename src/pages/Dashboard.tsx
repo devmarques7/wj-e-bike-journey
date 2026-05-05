@@ -20,6 +20,10 @@ export default function Dashboard() {
     return <Navigate to="/dashboard/admin" replace />;
   }
 
+  if (user?.role === "staff") {
+    return <Navigate to="/dashboard/staff" replace />;
+  }
+
   return (
     <DashboardLayout>
       <div className="p-4 lg:p-6 space-y-6">
