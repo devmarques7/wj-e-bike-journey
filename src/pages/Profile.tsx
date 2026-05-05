@@ -23,7 +23,15 @@ type Role = "admin" | "staff" | "member" | "guest";
 
 // Diverse human avatar options powered by DiceBear (no install needed).
 // Mixes styles + seeds to provide a wide variety of human personas.
-const AVATAR_STYLES = ["personas", "avataaars", "micah", "lorelei", "notionists", "open-peeps"] as const;
+const AVATAR_STYLES = [
+  { id: "personas", label: "Personas" },
+  { id: "avataaars", label: "Avataaars" },
+  { id: "micah", label: "Micah" },
+  { id: "lorelei", label: "Lorelei" },
+  { id: "notionists", label: "Notionists" },
+  { id: "open-peeps", label: "Peeps" },
+] as const;
+type AvatarStyleId = typeof AVATAR_STYLES[number]["id"];
 const AVATAR_SEEDS = [
   "Aria", "Leo", "Mia", "Noah", "Zoe", "Ethan", "Luna", "Kai",
   "Sofia", "Liam", "Maya", "Theo", "Nora", "Felix", "Iris", "Hugo",
@@ -31,8 +39,9 @@ const AVATAR_SEEDS = [
 ];
 const buildAvatar = (style: string, seed: string) =>
   `https://api.dicebear.com/9.x/${style}/svg?seed=${encodeURIComponent(seed)}`;
-const AVATAR_OPTIONS: string[] = AVATAR_STYLES.flatMap((s) =>
-  AVATAR_SEEDS.map((seed) => buildAvatar(s, seed))
+type AvatarOption = { url: string; style: AvatarStyleId; seed: string };
+const AVATAR_OPTIONS: AvatarOption[] = AVATAR_STYLES.flatMap((s) =>
+  AVATAR_SEEDS.map((seed) => ({ url: buildAvatar(s.id, seed), style: s.id, seed }))
 );
 
 export default function Profile() {
@@ -44,6 +53,8 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [savingAvatar, setSavingAvatar] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [styleFilter, setStyleFilter] = useState<AvatarStyleId | "all">("all");
+  const [seedQuery, setSeedQuery] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [fullName, setFullName] = useState("");
@@ -338,19 +349,72 @@ export default function Profile() {
               Pick a human persona from our diverse library.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 max-h-[60vh] overflow-y-auto pr-1">
-            {AVATAR_OPTIONS.map((url) => {
-              const selected = url === avatarUrl;
+
+          {/* Filters */}
+          <div className="flex flex-col gap-3 pb-2">
+            <div className="relative">
+              <Input
+                value={seedQuery}
+                onChange={(e) => setSeedQuery(e.target.value)}
+                placeholder="Search by name (Aria, Leo, Maya...)"
+                className="h-10 bg-muted/50 border-border/50 focus:border-wj-green"
+              />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setStyleFilter("all")}
+                className={`px-3 py-1.5 rounded-full text-xs uppercase tracking-wider border transition ${
+                  styleFilter === "all"
+                    ? "bg-wj-green/20 text-wj-green border-wj-green/40"
+                    : "bg-muted/40 text-muted-foreground border-border/40 hover:border-wj-green/40 hover:text-foreground"
+                }`}
+              >
+                All
+              </button>
+              {AVATAR_STYLES.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => setStyleFilter(s.id)}
+                  className={`px-3 py-1.5 rounded-full text-xs uppercase tracking-wider border transition ${
+                    styleFilter === s.id
+                      ? "bg-wj-green/20 text-wj-green border-wj-green/40"
+                      : "bg-muted/40 text-muted-foreground border-border/40 hover:border-wj-green/40 hover:text-foreground"
+                  }`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 max-h-[55vh] overflow-y-auto pr-1">
+            {AVATAR_OPTIONS.filter((opt) => {
+              const matchStyle = styleFilter === "all" || opt.style === styleFilter;
+              const matchSeed = !seedQuery.trim() || opt.seed.toLowerCase().includes(seedQuery.trim().toLowerCase());
+              return matchStyle && matchSeed;
+            }).map((opt) => {
+              const selected = opt.url === avatarUrl;
               return (
                 <button
-                  key={url}
-                  onClick={() => pickAvatar(url)}
+                  key={opt.url}
+                  onClick={() => pickAvatar(opt.url)}
                   disabled={savingAvatar}
-                  className={`relative aspect-square rounded-2xl overflow-hidden border-2 transition hover:scale-105 disabled:opacity-50 ${
-                    selected ? "border-wj-green ring-2 ring-wj-green/40" : "border-border/40 hover:border-wj-green/50"
-                  } bg-muted/40`}
+                  title={opt.seed}
+                  className={`group relative aspect-square rounded-2xl overflow-hidden border-2 transition-all duration-300 disabled:opacity-50 bg-muted/40 ${
+                    selected
+                      ? "border-wj-green ring-2 ring-wj-green/40 scale-105"
+                      : "border-border/40 hover:border-wj-green hover:scale-110 hover:shadow-[0_8px_30px_-8px_hsl(var(--wj-green)/0.6)] hover:z-10"
+                  }`}
                 >
-                  <img src={url} alt="Avatar option" className="w-full h-full object-cover" loading="lazy" />
+                  <img
+                    src={opt.url}
+                    alt={`Avatar ${opt.seed}`}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                    loading="lazy"
+                  />
+                  <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent text-[10px] text-white/90 py-1 text-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    {opt.seed}
+                  </span>
                   {selected && (
                     <span className="absolute top-1 right-1 h-5 w-5 rounded-full bg-wj-green text-primary-foreground flex items-center justify-center">
                       <Check className="h-3 w-3" />
