@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Loader2, Save, Shield, Smile, User as UserIcon, Mail, Pencil, X, Check } from "lucide-react";
+import { ArrowLeft, Loader2, Save, Shield, Smile, User as UserIcon, Mail, Pencil, X, Check, Phone, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { z } from "zod";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
+import { PhoneInput } from "@/components/PhoneInput";
 
 const profileSchema = z.object({
   full_name: z.string().trim().min(1, "Name is required").max(120, "Max 120 chars"),
@@ -73,10 +74,18 @@ export default function Profile() {
   const [editing, setEditing] = useState(false);
   const [draftName, setDraftName] = useState("");
   const [draftEmail, setDraftEmail] = useState("");
+  const [phone, setPhone] = useState<string | null>(null);
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [draftPhone, setDraftPhone] = useState<string | null>(null);
+  const [draftPhoneValid, setDraftPhoneValid] = useState(true);
+  const [draftPhoneVerified, setDraftPhoneVerified] = useState(false);
 
   const startEdit = () => {
     setDraftName(fullName);
     setDraftEmail(email);
+    setDraftPhone(phone);
+    setDraftPhoneValid(true);
+    setDraftPhoneVerified(phoneVerified);
     setEditing(true);
   };
 
@@ -118,6 +127,8 @@ export default function Profile() {
         setFullName(profile.full_name ?? "");
         setEmail(profile.email ?? session.user.email ?? "");
         setAvatarUrl(profile.avatar_url);
+        setPhone((profile as any).phone ?? null);
+        setPhoneVerified(!!(profile as any).phone_verified);
       }
       setRoles((roleRows ?? []).map((r: any) => r.role as Role));
       setLoading(false);
@@ -131,6 +142,19 @@ export default function Profile() {
       toast({ title: "Invalid input", description: parsed.error.issues[0].message, variant: "destructive" });
       return;
     }
+    if (draftPhone && !draftPhoneValid) {
+      toast({ title: "Invalid phone", description: "Check the phone format.", variant: "destructive" });
+      return;
+    }
+    const phoneChanged = draftPhone !== phone;
+    if (phoneChanged && draftPhone && !draftPhoneVerified) {
+      toast({
+        title: "Phone not verified",
+        description: "Verify your new number via WhatsApp before saving.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (!userId) return;
     if (isDemo) {
       toast({ title: "Demo mode", description: "Sign in with a real account to persist changes." });
@@ -140,7 +164,12 @@ export default function Profile() {
 
     const { error } = await supabase
       .from("profiles")
-      .update({ full_name: parsed.data.full_name, email: parsed.data.email })
+      .update({
+        full_name: parsed.data.full_name,
+        email: parsed.data.email,
+        phone: draftPhone,
+        phone_verified: phoneChanged ? draftPhoneVerified : phoneVerified,
+      })
       .eq("user_id", userId);
 
     if (error) {
@@ -148,6 +177,8 @@ export default function Profile() {
     } else {
       setFullName(parsed.data.full_name);
       setEmail(parsed.data.email);
+      setPhone(draftPhone);
+      if (phoneChanged) setPhoneVerified(draftPhoneVerified);
       setEditing(false);
       toast({ title: "Profile updated", description: "Your changes were saved." });
     }
