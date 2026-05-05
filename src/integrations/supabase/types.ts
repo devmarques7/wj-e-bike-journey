@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      phone_otps: {
+        Row: {
+          attempts: number
+          code_hash: string
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          phone: string
+          user_id: string | null
+        }
+        Insert: {
+          attempts?: number
+          code_hash: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          phone: string
+          user_id?: string | null
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          phone?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -21,6 +54,8 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          phone: string | null
+          phone_verified: boolean
           updated_at: string
           user_id: string
         }
@@ -30,6 +65,8 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          phone?: string | null
+          phone_verified?: boolean
           updated_at?: string
           user_id: string
         }
@@ -39,6 +76,8 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          phone?: string | null
+          phone_verified?: boolean
           updated_at?: string
           user_id?: string
         }
