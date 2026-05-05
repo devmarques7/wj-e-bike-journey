@@ -27,9 +27,9 @@ const Auth = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    const success = await login(email, password, rememberMe);
+    const result = await login(email, password, rememberMe);
 
-    if (success) {
+    if (result.success) {
       toast({
         title: "Welcome back",
         description: "Redirecting to your dashboard...",
@@ -39,9 +39,19 @@ const Auth = () => {
       // once the AuthContext has hydrated the user from Supabase.
       setTimeout(() => navigate("/dashboard"), 400);
     } else {
+      const code = result.code;
+      let description = "Invalid email or password. Please try again.";
+      if (code === "email_not_confirmed") {
+        description =
+          "Please confirm your email before signing in. Check your inbox.";
+      } else if (code === "invalid_credentials") {
+        description = "Invalid email or password. Please try again.";
+      } else if (result.message) {
+        description = result.message;
+      }
       toast({
         title: "Authentication failed",
-        description: "Invalid email or password. Please try again.",
+        description,
         variant: "destructive",
       });
     }
