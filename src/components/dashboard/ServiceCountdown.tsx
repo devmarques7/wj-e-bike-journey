@@ -1,15 +1,20 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
-import { ArrowRight, CheckCircle } from "lucide-react";
+import { ArrowRight, CheckCircle, Wrench } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import serviceBikeFull from "@/assets/service-bike-full.png";
+import { useAuth } from "@/contexts/AuthContext";
+import EmptyState from "./EmptyState";
 
 export default function ServiceCountdown() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
   const constraintsRef = useRef(null);
   const [isCompleted, setIsCompleted] = useState(false);
+
+  const hasBike = !!user?.bikeId;
   
   // Swipe slider motion values (same as ServiceRequestCard)
   const x = useMotionValue(0);
@@ -123,6 +128,23 @@ export default function ServiceCountdown() {
     if (isUrgent) return "text-amber-500";
     return "text-wj-green";
   };
+
+  if (!hasBike) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.3 }}
+        className="relative h-full min-h-[400px] rounded-3xl overflow-hidden border border-border/40 bg-card/30 backdrop-blur-md flex items-center justify-center"
+      >
+        <EmptyState
+          icon={Wrench}
+          title="No service scheduled"
+          description="Service insights appear once a bike is linked to your account."
+        />
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
