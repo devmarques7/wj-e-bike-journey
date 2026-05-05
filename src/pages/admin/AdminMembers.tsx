@@ -883,61 +883,62 @@ export default function AdminMembers() {
                   <Label className="flex items-center gap-1.5">
                     <KeyRound className="h-3.5 w-3.5" /> Temporary password
                   </Label>
-                  <button
-                    type="button"
-                    onClick={() => submitPasswordChange("regenerate")}
-                    disabled={savingPwd}
-                    className="text-[10px] text-wj-green hover:underline inline-flex items-center gap-1 disabled:opacity-50"
-                  >
-                    <RefreshCw className={cn("h-3 w-3", savingPwd && "animate-spin")} /> Regenerate
-                  </button>
+                  {pwdResult && (
+                    <span className="text-[10px] text-wj-green inline-flex items-center gap-1">
+                      <Check className="h-3 w-3" /> Saved
+                    </span>
+                  )}
                 </div>
                 <div className="relative">
                   <Input
                     type={showEditPwd ? "text" : "password"}
-                    placeholder="Set a new password (min 8 chars)"
-                    value={editPassword}
-                    maxLength={72}
-                    onChange={(e) => setEditPassword(e.target.value)}
-                    className="pr-9 font-mono text-xs"
+                    placeholder={pwdResult ? "" : "Click Regenerate to create a new password"}
+                    value={pwdResult ?? ""}
+                    readOnly
+                    className="pr-16 font-mono text-xs"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowEditPwd((s) => !s)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    aria-label={showEditPwd ? "Hide password" : "Show password"}
-                  >
-                    {showEditPwd ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                  </button>
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setShowEditPwd((s) => !s)}
+                      disabled={!pwdResult}
+                      className="text-muted-foreground hover:text-foreground disabled:opacity-40"
+                      aria-label={showEditPwd ? "Hide password" : "Show password"}
+                    >
+                      {showEditPwd ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!pwdResult) return;
+                        await navigator.clipboard.writeText(pwdResult);
+                        toast({ title: "Password copied" });
+                      }}
+                      disabled={!pwdResult}
+                      className="text-muted-foreground hover:text-wj-green disabled:opacity-40"
+                      aria-label="Copy password"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => submitPasswordChange("custom")}
-                  disabled={savingPwd || editPassword.length < 8}
+                  onClick={() => submitPasswordChange("regenerate")}
+                  disabled={savingPwd}
                   className="w-full h-8 text-xs"
                 >
-                  {savingPwd ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Set password"}
+                  {savingPwd ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <>
+                      <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+                      {pwdResult ? "Regenerate again" : "Regenerate password"}
+                    </>
+                  )}
                 </Button>
-
-                {pwdResult && (
-                  <div className="rounded-lg border border-wj-green/30 bg-wj-green/5 p-2.5 flex items-center justify-between gap-2">
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground shrink-0">New</span>
-                    <span className="font-mono text-xs truncate flex-1" title={pwdResult}>
-                      {pwdResult}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        await navigator.clipboard.writeText(pwdResult);
-                        toast({ title: "Password copied" });
-                      }}
-                      className="text-wj-green hover:underline text-[10px] inline-flex items-center gap-1 shrink-0"
-                    >
-                      <Copy className="h-3 w-3" /> Copy
-                    </button>
-                  </div>
                 )}
               </div>
 
