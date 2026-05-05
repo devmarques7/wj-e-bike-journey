@@ -238,6 +238,17 @@ const Auth = () => {
                     <Input id="reg-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required className="h-12 bg-muted/50 border-border/50 focus:border-wj-green pl-11" />
                   </div>
                 </div>
+                <PhoneInput
+                  required
+                  label="Phone number (WhatsApp)"
+                  defaultCountry="NL"
+                  onChange={(e164, isValid) => {
+                    setPhone(e164);
+                    setPhoneValid(isValid);
+                    setPhoneVerified(false);
+                  }}
+                  onVerified={() => setPhoneVerified(true)}
+                />
                 <div className="space-y-2">
                   <Label htmlFor="reg-password" className="text-sm font-medium">Password</Label>
                   <div className="relative">
