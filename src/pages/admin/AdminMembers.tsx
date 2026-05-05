@@ -19,7 +19,9 @@ import {
   Eye,
   Send,
   XCircle,
-  Hourglass
+  Hourglass,
+  Pencil,
+  Trash2
 } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
@@ -171,6 +173,11 @@ export default function AdminMembers() {
   const [copied, setCopied] = useState<"link" | "creds" | null>(null);
   const [viewMember, setViewMember] = useState<MemberRow | null>(null);
   const [tab, setTab] = useState<"members" | "invites">("members");
+  const [editInvite, setEditInvite] = useState<InviteRow | null>(null);
+  const [editRole, setEditRole] = useState<Role>("member");
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [revokeInvite, setRevokeInvite] = useState<InviteRow | null>(null);
+  const [revoking, setRevoking] = useState(false);
 
   const loadMembers = async () => {
     setLoading(true);
@@ -268,6 +275,55 @@ export default function AdminMembers() {
     await navigator.clipboard.writeText(text);
     setCopied(kind);
     setTimeout(() => setCopied(null), 1800);
+  };
+
+  const openEditInvite = (inv: InviteRow) => {
+    setEditRole(inv.role);
+    setEditInvite(inv);
+  };
+
+  const saveInviteRole = async () => {
+    if (!editInvite) return;
+    setSavingEdit(true);
+    const { error } = await supabase
+      .from("member_invitations")
+      .update({ role: editRole })
+      .eq("id", editInvite.id);
+    if (!error && editInvite.user_id && editInvite.status === "pending") {
+      // Sync user_roles for the invited user
+      await supabase.from("user_roles").delete().eq("user_id", editInvite.user_id);
+      if (editRole !== "member") {
+        await supabase.from("user_roles").insert({ user_id: editInvite.user_id, role: editRole });
+      }
+    }
+    if (error) {
+      toast({ title: "Could not update invite", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Invite updated" });
+      setEditInvite(null);
+      await loadMembers();
+    }
+    setSavingEdit(false);
+  };
+
+  const confirmRevokeInvite = async () => {
+    if (!revokeInvite) return;
+    setRevoking(true);
+    const { data, error } = await supabase.functions.invoke("admin-revoke-member", {
+      body: { invitation_id: revokeInvite.id },
+    });
+    if (error || !(data as any)?.success) {
+      toast({
+        title: "Could not cancel invite",
+        description: error?.message || (data as any)?.error || "Unknown error",
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: "Invite cancelled" });
+      setRevokeInvite(null);
+      await loadMembers();
+    }
+    setRevoking(false);
   };
 
   if (!isAuthenticated) {
