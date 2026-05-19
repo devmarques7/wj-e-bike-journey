@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, ArrowRight, Loader2, ArrowLeft, User, Mail, Lock } from "lucide-react";
@@ -26,6 +26,21 @@ const Auth = () => {
   const { login, setMockUser, user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Once AuthContext has a hydrated real (non-demo) user after a login,
+  // redirect to the correct dashboard for their role.
+  useEffect(() => {
+    if (authLoading || !user || user.isDemo) return;
+    if (user.mustCompleteProfile) {
+      navigate("/complete-profile", { replace: true });
+    } else if (user.role === "admin") {
+      navigate("/dashboard/admin", { replace: true });
+    } else if (user.role === "staff") {
+      navigate("/dashboard/staff", { replace: true });
+    } else {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [user, authLoading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
