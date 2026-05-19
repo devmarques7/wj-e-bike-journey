@@ -145,9 +145,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setUser(null);
       }
+      setIsLoading(false);
       return;
     }
     const authUser = session.user;
+    setIsLoading(true);
     // Defer DB calls so onAuthStateChange stays sync-safe
     setTimeout(async () => {
       const [{ data: profile }, { data: roles }] = await Promise.all([
@@ -181,6 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         mustCompleteProfile: !!(profile as any)?.must_complete_profile,
       };
       setUser(next);
+      setIsLoading(false);
     }, 0);
   };
 
@@ -195,8 +198,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         hydrateFromSession(session);
       } else if (localStorage.getItem(DEMO_KEY) === "1") {
         setUser(readStoredUser());
+        setIsLoading(false);
+      } else {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     });
 
     return () => sub.subscription.unsubscribe();
