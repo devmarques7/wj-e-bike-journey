@@ -163,6 +163,23 @@ function initials(name: string | null | undefined, email: string | null | undefi
   return (a + b).toUpperCase();
 }
 
+function DetailItem({
+  label,
+  children,
+  className,
+}: {
+  label: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn("flex flex-col gap-1 min-w-0", className)}>
+      <span className="text-[9px] uppercase tracking-wider text-muted-foreground">{label}</span>
+      <div className="text-xs min-w-0 truncate">{children}</div>
+    </div>
+  );
+}
+
 export default function AdminMembers() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
