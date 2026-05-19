@@ -31,6 +31,7 @@ import { AnimatePresence } from "framer-motion";
 import { Fragment } from "react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
+import KPICarousel from "@/components/dashboard/KPICarousel";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
@@ -456,13 +457,11 @@ export default function AdminMembers() {
         </motion.div>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-12 gap-4 lg:gap-6">
+        <KPICarousel>
           {dynamicKPIs.map((kpi, index) => (
-            <div key={kpi.label} className="col-span-6 lg:col-span-3">
-              <AdminKPICard {...kpi} index={index} />
-            </div>
+            <AdminKPICard key={kpi.label} {...kpi} index={index} />
           ))}
-        </div>
+        </KPICarousel>
 
         {/* Main Content */}
         <div className="grid grid-cols-12 gap-4 lg:gap-6 items-stretch">
