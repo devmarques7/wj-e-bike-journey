@@ -41,8 +41,9 @@ const kpiData = [
 ];
 
 export default function AdminOverview() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
+  if (isLoading) return null;
   if (!isAuthenticated) {
     return <Navigate to="/auth" replace />;
   }

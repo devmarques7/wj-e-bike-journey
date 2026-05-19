@@ -10,8 +10,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 
 export default function ServiceDashboard() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 
+  if (authLoading) return null;
   if (!isAuthenticated) {
     return <Navigate to="/auth" replace />;
   }

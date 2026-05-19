@@ -88,9 +88,10 @@ const getStatusBadge = (status: string) => {
 };
 
 export default function AdminWorkshop() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState("day");
 
+  if (authLoading) return null;
   if (!isAuthenticated) {
     return <Navigate to="/auth" replace />;
   }

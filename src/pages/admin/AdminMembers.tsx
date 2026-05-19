@@ -160,7 +160,7 @@ function initials(name: string | null | undefined, email: string | null | undefi
 }
 
 export default function AdminMembers() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [invites, setInvites] = useState<InviteRow[]>([]);
@@ -391,6 +391,7 @@ export default function AdminMembers() {
     toast({ title: "Password updated" });
   };
 
+  if (authLoading) return null;
   if (!isAuthenticated) {
     return <Navigate to="/auth" replace />;
   }

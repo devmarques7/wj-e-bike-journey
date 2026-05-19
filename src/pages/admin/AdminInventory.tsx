@@ -86,8 +86,9 @@ const getStatusBadge = (status: string) => {
 };
 
 export default function AdminInventory() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 
+  if (authLoading) return null;
   if (!isAuthenticated) {
     return <Navigate to="/auth" replace />;
   }
