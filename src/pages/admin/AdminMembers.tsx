@@ -24,8 +24,11 @@ import {
   Trash2,
   EyeOff,
   RefreshCw,
-  KeyRound
+  KeyRound,
+  ChevronDown
 } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
+import { Fragment } from "react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
 import { useAuth } from "@/contexts/AuthContext";
@@ -189,6 +192,7 @@ export default function AdminMembers() {
   const [editPassword, setEditPassword] = useState("");
   const [savingPwd, setSavingPwd] = useState(false);
   const [pwdResult, setPwdResult] = useState<string | null>(null);
+  const [expandedMember, setExpandedMember] = useState<string | null>(null);
 
   const loadMembers = async () => {
     setLoading(true);
