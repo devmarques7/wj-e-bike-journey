@@ -11,6 +11,7 @@ import {
   Trash2,
   Save,
   PowerOff,
+  Star,
 } from "lucide-react";
 import {
   Dialog,
@@ -190,6 +191,7 @@ export default function MemberProfileDialog({ member, onClose, onChanged }: Prop
                   {member.full_name || "—"}
                 </p>
                 <p className="text-xs text-muted-foreground truncate">{member.email || "—"}</p>
+                <RatingStars value={(member as any).rating ?? 0} />
               </div>
             </div>
 
