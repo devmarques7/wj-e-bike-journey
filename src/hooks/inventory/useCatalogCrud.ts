@@ -32,6 +32,7 @@ export type Product = {
   short_description: string | null;
   description: string | null;
   sku_prefix: string | null;
+  color_hex: string | null;
 };
 
 export type Variant = {
@@ -122,7 +123,7 @@ export function useProducts() {
     const { data } = await supabase
       .from("products")
       .select(
-        "id, name, slug, product_type, base_price, sale_price, category_id, is_active, is_featured, short_description, description, sku_prefix",
+        "id, name, slug, product_type, base_price, sale_price, category_id, is_active, is_featured, short_description, description, sku_prefix, color_hex",
       )
       .order("created_at", { ascending: false });
     setData((data as Product[]) ?? []);

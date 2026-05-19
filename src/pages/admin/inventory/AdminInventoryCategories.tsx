@@ -3,7 +3,6 @@ import { Navigate } from "react-router-dom";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useCategories, upsertCategory, deleteCategory, type Category } from "@/hooks/inventory/useCatalogCrud";
 import { toast } from "@/hooks/use-toast";
+import FieldLabel from "@/components/dashboard/inventory/FieldLabel";
 
 const TYPES = ["bike", "accessory", "service", "part", "insurance"];
 const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -106,22 +106,22 @@ export default function AdminInventoryCategories() {
           </DialogHeader>
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
-              <Label className="text-xs">Name</Label>
+              <FieldLabel label="Name" required hint="Display name of the category as shown in the navigation and on the storefront (e.g. 'Helmets', 'Urban Bikes')." />
               <Input value={form.name ?? ""} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className="bg-background/60" />
             </div>
             <div>
-              <Label className="text-xs">Slug</Label>
+              <FieldLabel label="Slug" hint="URL identifier (e.g. /categories/helmets). Lowercase, numbers and dashes only. Leave empty to auto-generate from the name." />
               <Input value={form.slug ?? ""} onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))} className="bg-background/60" placeholder="auto" />
             </div>
             <div>
-              <Label className="text-xs">Type</Label>
+              <FieldLabel label="Type" required hint="High-level group this category belongs to. Used to scope filters in the storefront and admin reports." />
               <Select value={form.type} onValueChange={(v) => setForm((f) => ({ ...f, type: v as any }))}>
                 <SelectTrigger className="bg-background/60"><SelectValue /></SelectTrigger>
                 <SelectContent>{TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="text-xs">Parent</Label>
+              <FieldLabel label="Parent" hint="Optional parent category to build a hierarchy (e.g. 'Helmets' under 'Safety'). Leave as None for a top-level category." />
               <Select value={form.parent_id ?? "none"} onValueChange={(v) => setForm((f) => ({ ...f, parent_id: v === "none" ? null : v }))}>
                 <SelectTrigger className="bg-background/60"><SelectValue placeholder="None" /></SelectTrigger>
                 <SelectContent>
@@ -133,12 +133,12 @@ export default function AdminInventoryCategories() {
               </Select>
             </div>
             <div>
-              <Label className="text-xs">Display order</Label>
+              <FieldLabel label="Display order" hint="Lower numbers appear first in menus and lists. Use multiples of 10 (10, 20, 30) to leave room for reordering later." />
               <Input type="number" value={form.display_order ?? 0} onChange={(e) => setForm((f) => ({ ...f, display_order: Number(e.target.value) }))} className="bg-background/60" />
             </div>
             <div className="flex items-center gap-2">
               <Switch checked={!!form.is_active} onCheckedChange={(v) => setForm((f) => ({ ...f, is_active: v }))} />
-              <Label className="text-xs">Active</Label>
+              <FieldLabel label="Active" hint="Inactive categories are hidden from the storefront menus but kept for historical data." />
             </div>
           </div>
           <div className="flex justify-end gap-2 mt-2">

@@ -3,7 +3,6 @@ import { Navigate } from "react-router-dom";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useLocations, upsertLocation, deleteLocation, type Location } from "@/hooks/inventory/useCatalogCrud";
 import { toast } from "@/hooks/use-toast";
+import FieldLabel from "@/components/dashboard/inventory/FieldLabel";
 
 const TYPES = ["warehouse", "store_floor", "virtual"];
 
@@ -105,23 +105,23 @@ export default function AdminInventoryLocations() {
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label className="text-xs">Name</Label>
+              <FieldLabel label="Name" required hint="Internal name for this stock location (e.g. 'Amsterdam Warehouse', 'Rotterdam Store Floor')." />
               <Input value={form.name ?? ""} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className="bg-background/60" />
             </div>
             <div>
-              <Label className="text-xs">Type</Label>
+              <FieldLabel label="Type" required hint="Warehouse = backstock, Store floor = customer-facing display, Virtual = digital or drop-shipped stock not physically held." />
               <Select value={form.location_type} onValueChange={(v) => setForm((f) => ({ ...f, location_type: v as any }))}>
                 <SelectTrigger className="bg-background/60"><SelectValue /></SelectTrigger>
                 <SelectContent>{TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div>
-              <Label className="text-xs">Address</Label>
+              <FieldLabel label="Address" hint="Optional physical address. Used by the workshop for routing, transfers and pickup instructions." />
               <Input value={form.address ?? ""} onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))} className="bg-background/60" />
             </div>
             <div className="flex items-center gap-2">
               <Switch checked={!!form.is_active} onCheckedChange={(v) => setForm((f) => ({ ...f, is_active: v }))} />
-              <Label className="text-xs">Active</Label>
+              <FieldLabel label="Active" hint="When inactive, this location stops appearing in stock adjustment, receive and transfer dialogs." />
             </div>
           </div>
           <div className="flex justify-end gap-2">
