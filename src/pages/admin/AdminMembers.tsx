@@ -505,7 +505,9 @@ export default function AdminMembers() {
                           </TableCell>
                           <TableCell>{getRoleBadge(m.role)}</TableCell>
                           <TableCell>
-                            {m.must_complete_profile ? (
+                            {m.is_active === false ? (
+                              <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-[10px]">Deactivated</Badge>
+                            ) : m.must_complete_profile ? (
                               <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-[10px]">Pending setup</Badge>
                             ) : (
                               <Badge className="bg-wj-green/20 text-wj-green border-wj-green/30 text-[10px]">Active</Badge>
