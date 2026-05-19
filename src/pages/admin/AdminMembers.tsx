@@ -791,35 +791,64 @@ export default function AdminMembers() {
               </div>
               
               <div className="space-y-3">
-                {topPerformersFallback.map((performer, index) => (
-                  <motion.div
-                    key={performer.name}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4 + index * 0.1 }}
-                    className="flex items-center gap-3 p-2 rounded-lg bg-muted/30"
-                  >
-                    <div className={cn(
-                      "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold",
-                      index === 0 ? "bg-amber-400/20 text-amber-400" :
-                      index === 1 ? "bg-zinc-400/20 text-zinc-400" :
-                      index === 2 ? "bg-orange-400/20 text-orange-400" :
-                      "bg-muted text-muted-foreground"
-                    )}>
-                      {index + 1}
-                    </div>
-                    <Avatar className="h-7 w-7">
-                      <AvatarFallback className="bg-wj-green/20 text-wj-green text-[10px] font-bold">
-                        {performer.avatar}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-foreground truncate">{performer.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{performer.metric}</p>
-                    </div>
-                    <span className="text-[10px] text-wj-green font-medium">{performer.value}</span>
-                  </motion.div>
-                ))}
+                {loading && (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  </div>
+                )}
+                {!loading && topPerformers.length === 0 && (
+                  <p className="text-[11px] text-muted-foreground text-center py-4">
+                    No members yet.
+                  </p>
+                )}
+                {!loading && topPerformers.map(({ member, rating }, index) => {
+                  const name = member.full_name || member.email || "Unknown";
+                  return (
+                    <motion.button
+                      key={member.user_id}
+                      type="button"
+                      onClick={() => setViewMember(member)}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.4 + index * 0.08 }}
+                      className="w-full flex items-center gap-3 p-2 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors text-left"
+                    >
+                      <div className={cn(
+                        "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0",
+                        index === 0 ? "bg-amber-400/20 text-amber-400" :
+                        index === 1 ? "bg-zinc-400/20 text-zinc-400" :
+                        index === 2 ? "bg-orange-400/20 text-orange-400" :
+                        "bg-muted text-muted-foreground"
+                      )}>
+                        {index + 1}
+                      </div>
+                      <Avatar className="h-7 w-7 shrink-0">
+                        <AvatarFallback className="bg-wj-green/20 text-wj-green text-[10px] font-bold">
+                          {initials(member.full_name, member.email)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-foreground truncate">{name}</p>
+                        <div className="flex items-center gap-0.5 mt-0.5">
+                          {[1, 2, 3, 4, 5].map((i) => (
+                            <Star
+                              key={i}
+                              className={cn(
+                                "h-2.5 w-2.5",
+                                i <= Math.round(rating)
+                                  ? "fill-amber-400 text-amber-400"
+                                  : "text-muted-foreground/40"
+                              )}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <span className="text-[10px] text-wj-green font-medium shrink-0">
+                        {rating.toFixed(1)}
+                      </span>
+                    </motion.button>
+                  );
+                })}
               </div>
             </motion.div>
 
@@ -838,13 +867,23 @@ export default function AdminMembers() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 rounded-xl bg-muted/30 text-center">
                   <ThumbsUp className="h-5 w-5 text-wj-green mx-auto mb-1" />
-                  <p className="text-lg font-bold text-foreground">94%</p>
-                  <p className="text-[10px] text-muted-foreground">Satisfaction</p>
+                  <p className="text-lg font-bold text-foreground">{completionRate}%</p>
+                  <p className="text-[10px] text-muted-foreground">Completion</p>
                 </div>
                 <div className="p-3 rounded-xl bg-muted/30 text-center">
                   <Calendar className="h-5 w-5 text-wj-green mx-auto mb-1" />
-                  <p className="text-lg font-bold text-foreground">87</p>
-                  <p className="text-[10px] text-muted-foreground">Appointments</p>
+                  <p className="text-lg font-bold text-foreground">{newThisWeek}</p>
+                  <p className="text-[10px] text-muted-foreground">New this week</p>
+                </div>
+                <div className="p-3 rounded-xl bg-muted/30 text-center">
+                  <UserCheck className="h-5 w-5 text-wj-green mx-auto mb-1" />
+                  <p className="text-lg font-bold text-foreground">{activeCount}</p>
+                  <p className="text-[10px] text-muted-foreground">Active</p>
+                </div>
+                <div className="p-3 rounded-xl bg-muted/30 text-center">
+                  <Mail className="h-5 w-5 text-wj-green mx-auto mb-1" />
+                  <p className="text-lg font-bold text-foreground">{pending}</p>
+                  <p className="text-[10px] text-muted-foreground">Pending setup</p>
                 </div>
               </div>
             </motion.div>
