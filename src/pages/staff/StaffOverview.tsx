@@ -40,8 +40,9 @@ const kpiData = [
 ];
 
 export default function StaffOverview() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
+  if (isLoading) return null;
   if (!isAuthenticated) {
     return <Navigate to="/auth" replace />;
   }
