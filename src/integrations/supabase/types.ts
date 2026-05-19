@@ -514,6 +514,7 @@ export type Database = {
         Row: {
           base_price: number
           category_id: string
+          color_hex: string | null
           created_at: string
           currency: string
           description: string | null
@@ -540,6 +541,7 @@ export type Database = {
         Insert: {
           base_price: number
           category_id: string
+          color_hex?: string | null
           created_at?: string
           currency?: string
           description?: string | null
@@ -566,6 +568,7 @@ export type Database = {
         Update: {
           base_price?: number
           category_id?: string
+          color_hex?: string | null
           created_at?: string
           currency?: string
           description?: string | null
