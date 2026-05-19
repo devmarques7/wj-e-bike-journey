@@ -25,7 +25,8 @@ import {
   EyeOff,
   RefreshCw,
   KeyRound,
-  ChevronDown
+  ChevronDown,
+  UserCheck
 } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { Fragment } from "react";
