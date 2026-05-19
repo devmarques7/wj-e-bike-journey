@@ -8,14 +8,20 @@ import {
   History,
   Lock,
   Settings2,
+  ArrowLeftRight,
+  ShoppingCart,
+  Download,
+  FolderTree,
+  MapPin,
 } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
 import KPICarousel from "@/components/dashboard/KPICarousel";
 import { useAuth } from "@/contexts/AuthContext";
-import { Navigate } from "react-router-dom";
+import { Navigate, Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Table,
@@ -31,8 +37,15 @@ import {
   useInventoryKPIs,
   useMovements,
   type InventoryRow,
+  type MovementRow,
 } from "@/hooks/inventory/useInventoryData";
 import AdjustStockModal from "@/components/dashboard/inventory/AdjustStockModal";
+import ReceiveStockModal from "@/components/dashboard/inventory/ReceiveStockModal";
+import TransferStockModal from "@/components/dashboard/inventory/TransferStockModal";
+import ReorderModal from "@/components/dashboard/inventory/ReorderModal";
+import MovementDetailDrawer from "@/components/dashboard/inventory/MovementDetailDrawer";
+import { usePermissions } from "@/hooks/usePermissions";
+import { downloadCSV } from "@/lib/csv";
 
 const fmtEur = (n: number) =>
   new Intl.NumberFormat("en-EU", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(
@@ -50,13 +63,18 @@ const statusOf = (r: InventoryRow) => {
 };
 
 export default function AdminInventory() {
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { can } = usePermissions();
   const { rows, loading } = useInventoryRows();
   const kpi = useInventoryKPIs(rows);
   const { movements } = useMovements(80);
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<"all" | "low" | "incoming" | "movements">("all");
   const [adjustRow, setAdjustRow] = useState<InventoryRow | null>(null);
+  const [receiveRow, setReceiveRow] = useState<InventoryRow | null>(null);
+  const [transferRow, setTransferRow] = useState<InventoryRow | null>(null);
+  const [reorderOpen, setReorderOpen] = useState(false);
+  const [movementSel, setMovementSel] = useState<MovementRow | null>(null);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -74,7 +92,7 @@ export default function AdminInventory() {
 
   if (authLoading) return null;
   if (!isAuthenticated) return <Navigate to="/auth" replace />;
-  if (user?.role !== "admin") return <Navigate to="/dashboard" replace />;
+  if (!can("inventory.view")) return <Navigate to="/dashboard" replace />;
 
   const kpiCards = [
     { label: "Total SKUs", value: String(kpi.skus), change: `${rows.length} rows`, trend: "up" as const, icon: Package },
@@ -91,12 +109,62 @@ export default function AdminInventory() {
     { label: "Movements", value: String(movements.length), change: "recent", trend: "up" as const, icon: History },
   ];
 
+  const exportStock = () =>
+    downloadCSV(
+      `inventory-${new Date().toISOString().slice(0, 10)}.csv`,
+      rows.map((r) => ({
+        sku: r.variant.sku,
+        product: r.variant.product.name,
+        variant: r.variant.name,
+        location: r.location.name,
+        qty_available: r.qty_available,
+        qty_reserved: r.qty_reserved,
+        qty_incoming: r.qty_incoming,
+        low_stock_threshold: r.low_stock_threshold,
+        reorder_point: r.reorder_point,
+      })),
+    );
+
   return (
     <AdminDashboardLayout>
       <div className="p-4 lg:p-6 space-y-6">
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-          <h1 className="text-xl sm:text-2xl font-light text-foreground">Inventory</h1>
-          <p className="text-sm text-muted-foreground mt-1">Stock levels, movements and replenishment</p>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3"
+        >
+          <div>
+            <h1 className="text-xl sm:text-2xl font-light text-foreground">Inventory</h1>
+            <p className="text-sm text-muted-foreground mt-1">Stock levels, movements and replenishment</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {can("product.view") && (
+              <Button asChild variant="outline" size="sm">
+                <Link to="/dashboard/admin/inventory/products"><Package className="h-4 w-4 mr-1" /> Products</Link>
+              </Button>
+            )}
+            {can("category.manage") && (
+              <Button asChild variant="outline" size="sm">
+                <Link to="/dashboard/admin/inventory/categories"><FolderTree className="h-4 w-4 mr-1" /> Categories</Link>
+              </Button>
+            )}
+            {can("location.manage") && (
+              <Button asChild variant="outline" size="sm">
+                <Link to="/dashboard/admin/inventory/locations"><MapPin className="h-4 w-4 mr-1" /> Locations</Link>
+              </Button>
+            )}
+            {can("inventory.reorder") && (
+              <Button size="sm" onClick={() => setReorderOpen(true)} className="bg-wj-green hover:bg-wj-green/90">
+                <ShoppingCart className="h-4 w-4 mr-1" /> Reorder
+              </Button>
+            )}
+            {can("inventory.export") && (
+              <Button size="sm" variant="outline" onClick={exportStock}>
+                <Download className="h-4 w-4 mr-1" /> Export
+              </Button>
+            )}
+          </div>
         </motion.div>
 
         {/* KPIs */}
@@ -201,12 +269,23 @@ export default function AdminInventory() {
                           <Badge className={cn("text-[10px]", s.c)}>{s.l}</Badge>
                         </TableCell>
                         <TableCell className="text-right hidden lg:table-cell">
-                          <button
-                            onClick={() => setAdjustRow(r)}
-                            className="text-xs text-wj-green hover:underline inline-flex items-center gap-1"
-                          >
-                            <Settings2 className="h-3 w-3" /> Adjust
-                          </button>
+                          <div className="inline-flex items-center gap-2">
+                            {can("inventory.receive") && (
+                              <button onClick={() => setReceiveRow(r)} className="text-xs text-wj-green hover:underline inline-flex items-center gap-1">
+                                <ArrowDownToLine className="h-3 w-3" /> Receive
+                              </button>
+                            )}
+                            {can("inventory.transfer") && (
+                              <button onClick={() => setTransferRow(r)} className="text-xs text-foreground/80 hover:underline inline-flex items-center gap-1">
+                                <ArrowLeftRight className="h-3 w-3" /> Move
+                              </button>
+                            )}
+                            {can("inventory.adjust") && (
+                              <button onClick={() => setAdjustRow(r)} className="text-xs text-muted-foreground hover:underline inline-flex items-center gap-1">
+                                <Settings2 className="h-3 w-3" /> Adjust
+                              </button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -240,7 +319,7 @@ export default function AdminInventory() {
                     </TableRow>
                   )}
                   {movements.map((m) => (
-                    <TableRow key={m.id} className="border-border/30 hover:bg-muted/30">
+                    <TableRow key={m.id} onClick={() => setMovementSel(m)} className="border-border/30 hover:bg-muted/30 cursor-pointer">
                       <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                         {new Date(m.created_at).toLocaleString()}
                       </TableCell>
@@ -279,6 +358,10 @@ export default function AdminInventory() {
       </div>
 
       <AdjustStockModal row={adjustRow} onClose={() => setAdjustRow(null)} />
+      <ReceiveStockModal row={receiveRow} onClose={() => setReceiveRow(null)} />
+      <TransferStockModal row={transferRow} onClose={() => setTransferRow(null)} />
+      <ReorderModal open={reorderOpen} rows={rows} onClose={() => setReorderOpen(false)} />
+      <MovementDetailDrawer movement={movementSel} onClose={() => setMovementSel(null)} />
     </AdminDashboardLayout>
   );
 }
