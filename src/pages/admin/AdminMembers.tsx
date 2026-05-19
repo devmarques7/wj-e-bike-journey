@@ -382,22 +382,12 @@ export default function AdminMembers() {
   const admins = members.filter((m) => m.role === "admin").length;
   const staffCount = members.filter((m) => m.role === "staff").length;
 
-  // Derive a deterministic 0–5 star rating per member from real profile signals.
-  // Higher score = active + completed profile + has avatar + older account.
-  const scoreMember = (m: MemberRow) => {
-    let s = 0;
-    if (m.is_active !== false) s += 2;
-    if (!m.must_complete_profile) s += 2;
-    if (m.avatar_url) s += 0.5;
-    const ageDays = (Date.now() - new Date(m.created_at).getTime()) / 864e5;
-    if (ageDays > 30) s += 0.5;
-    return Math.max(0, Math.min(5, s));
-  };
-
+  // Ratings are not yet tracked in the API → every member shows 0.
+  // Sort by most recent so admins still see real, recognizable members.
   const topPerformers = [...members]
-    .map((m) => ({ member: m, rating: scoreMember(m) }))
-    .sort((a, b) => b.rating - a.rating || (a.member.full_name ?? "").localeCompare(b.member.full_name ?? ""))
-    .slice(0, 5);
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 5)
+    .map((member) => ({ member, rating: 0 }));
 
   const weekMs = 7 * 864e5;
   const newThisWeek = members.filter((m) => Date.now() - new Date(m.created_at).getTime() < weekMs).length;
