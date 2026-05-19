@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -14,6 +13,7 @@ import {
 import { adjustStock, type InventoryRow } from "@/hooks/inventory/useInventoryData";
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import FieldLabel from "./FieldLabel";
 
 interface Props {
   row: InventoryRow | null;
@@ -79,7 +79,7 @@ export default function AdjustStockModal({ row, onClose }: Props) {
 
         <div className="grid grid-cols-2 gap-3 mt-2">
           <div>
-            <Label className="text-xs">Delta (+/-)</Label>
+            <FieldLabel label="Delta (+/-)" required hint="Quantity to add or subtract. Use a positive number to add stock and a negative number to remove (e.g. -2 for shrinkage)." />
             <Input
               type="number"
               value={delta}
@@ -88,7 +88,7 @@ export default function AdjustStockModal({ row, onClose }: Props) {
             />
           </div>
           <div>
-            <Label className="text-xs">Movement Type</Label>
+            <FieldLabel label="Movement Type" required hint="Reason for the change. Adjustment = manual correction, Incoming = supplier delivery, Sale = customer purchase, Return = customer return, Transfer = inter-location move. Picked here for the audit log." />
             <Select value={type} onValueChange={(v) => setType(v as any)}>
               <SelectTrigger className="bg-background/60">
                 <SelectValue />
@@ -105,7 +105,7 @@ export default function AdjustStockModal({ row, onClose }: Props) {
         </div>
 
         <div>
-          <Label className="text-xs">Notes (optional)</Label>
+          <FieldLabel label="Notes (optional)" hint="Short context attached to the movement — e.g. 'Damaged box', 'Counted during stocktake'. Visible in the audit trail." />
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
