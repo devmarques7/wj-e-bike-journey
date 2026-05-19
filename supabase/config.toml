@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.check-invite-status]
 verify_jwt = false
+
+[functions.admin-update-member]
+verify_jwt = false
