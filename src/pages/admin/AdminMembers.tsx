@@ -554,7 +554,7 @@ export default function AdminMembers() {
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-7 w-7 rounded-full hover:bg-muted/60"
+                                    className="h-7 w-7 rounded-full hover:bg-muted/60 hidden md:inline-flex"
                                   >
                                     <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
                                   </Button>
