@@ -4,7 +4,6 @@ import {
   Users, 
   Star, 
   Trophy,
-  Clock,
   Calendar,
   ThumbsUp,
   Wrench,
