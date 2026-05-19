@@ -117,6 +117,7 @@ export default function AdminInventoryProductDetail() {
       {product && (
         <VariantEditDialog
           productId={product.id}
+          productType={product.product_type}
           variant={editVariant === "new" ? null : editVariant}
           open={!!editVariant}
           onClose={() => setEditVariant(null)}

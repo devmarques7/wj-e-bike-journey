@@ -2,21 +2,22 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { upsertVariant, type Variant } from "@/hooks/inventory/useCatalogCrud";
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import FieldLabel from "./FieldLabel";
 
 interface Props {
   productId: string;
+  productType?: string;
   variant: Variant | null;
   open: boolean;
   onClose: () => void;
   onSaved: () => void;
 }
 
-export default function VariantEditDialog({ productId, variant, open, onClose, onSaved }: Props) {
+export default function VariantEditDialog({ productId, productType, variant, open, onClose, onSaved }: Props) {
   const [form, setForm] = useState<Partial<Variant>>({});
   const [busy, setBusy] = useState(false);
 
@@ -51,6 +52,11 @@ export default function VariantEditDialog({ productId, variant, open, onClose, o
     }
   };
 
+  const isBike = productType === "bike";
+  const color = (form.attributes as any)?.color ?? "";
+  const setColor = (v: string) =>
+    setForm((f) => ({ ...f, attributes: { ...(f.attributes ?? {}), color: v || undefined } }));
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="bg-background/95 backdrop-blur-xl border-border/40">
@@ -59,28 +65,59 @@ export default function VariantEditDialog({ productId, variant, open, onClose, o
         </DialogHeader>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label className="text-xs">SKU</Label>
+            <FieldLabel
+              label="SKU"
+              required
+              hint="Unique stock-keeping unit code used in inventory, picking lists and invoices. Must be unique across all variants (e.g. 'VIS-BLK-L')."
+            />
             <Input value={form.sku ?? ""} onChange={(e) => setForm((f) => ({ ...f, sku: e.target.value }))} className="bg-background/60" />
           </div>
           <div>
-            <Label className="text-xs">Name</Label>
+            <FieldLabel
+              label="Name"
+              required
+              hint="Variant label shown next to the product (e.g. 'Black / Large'). Combine color, size or capacity here."
+            />
             <Input value={form.name ?? ""} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className="bg-background/60" />
           </div>
           <div>
-            <Label className="text-xs">Price override (EUR)</Label>
+            <FieldLabel
+              label="Price override (EUR)"
+              hint="If set, this variant uses this price instead of the product base price. Leave empty to inherit the base price."
+            />
             <Input type="number" step="0.01" value={form.price_override ?? ""} onChange={(e) => setForm((f) => ({ ...f, price_override: e.target.value ? Number(e.target.value) : null }))} className="bg-background/60" />
           </div>
           <div>
-            <Label className="text-xs">Weight (g)</Label>
+            <FieldLabel
+              label="Weight (g)"
+              hint="Shipping weight in grams. Used by the checkout to calculate shipping cost and by the workshop for handling."
+            />
             <Input type="number" value={form.weight_grams ?? ""} onChange={(e) => setForm((f) => ({ ...f, weight_grams: e.target.value ? Number(e.target.value) : null }))} className="bg-background/60" />
           </div>
+          {isBike && (
+            <div className="col-span-2">
+              <FieldLabel
+                label="Color"
+                hint="Variant frame color. Renders as a swatch on the PDP and matches the bike's visual preview in the dashboard."
+              />
+              <div className="flex items-center gap-3 bg-background/60 border border-input rounded-md px-3 py-2">
+                <input
+                  type="color"
+                  value={color || "#058c42"}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="h-8 w-12 rounded cursor-pointer bg-transparent border-0 p-0"
+                />
+                <Input value={color} onChange={(e) => setColor(e.target.value)} placeholder="#058c42" className="bg-transparent border-0 h-8 px-0 focus-visible:ring-0" />
+              </div>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <Switch checked={!!form.is_active} onCheckedChange={(v) => setForm((f) => ({ ...f, is_active: v }))} />
-            <Label className="text-xs">Active</Label>
+            <FieldLabel label="Active" hint="Inactive variants are hidden from the storefront but kept in inventory and past orders." />
           </div>
           <div className="flex items-center gap-2">
             <Switch checked={!!form.is_default} onCheckedChange={(v) => setForm((f) => ({ ...f, is_default: v }))} />
-            <Label className="text-xs">Default variant</Label>
+            <FieldLabel label="Default variant" hint="The variant pre-selected on the product page. Only one variant per product should be marked default." />
           </div>
         </div>
         <div className="flex justify-end gap-2 mt-2">

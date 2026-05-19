@@ -2,11 +2,11 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { adjustStock, type InventoryRow } from "@/hooks/inventory/useInventoryData";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, ArrowDownToLine } from "lucide-react";
+import FieldLabel from "./FieldLabel";
 
 interface Props {
   row: InventoryRow | null;
@@ -63,16 +63,16 @@ export default function ReceiveStockModal({ row, onClose }: Props) {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label className="text-xs">Qty received</Label>
+            <FieldLabel label="Qty received" required hint="Number of units physically received in this delivery. Must be greater than zero." />
             <Input type="number" min={1} value={qty} onChange={(e) => setQty(Number(e.target.value))} className="bg-background/60" />
           </div>
           <div>
-            <Label className="text-xs">PO reference</Label>
+            <FieldLabel label="PO reference" hint="Purchase order number from the supplier (e.g. PO-2026-0001). Linked to the movement for reconciliation." />
             <Input value={poRef} onChange={(e) => setPoRef(e.target.value)} className="bg-background/60" placeholder="PO-2026-0001" />
           </div>
         </div>
         <div>
-          <Label className="text-xs">Notes</Label>
+          <FieldLabel label="Notes" hint="Optional context — supplier, condition, lot number, expiry. Stored in the audit log." />
           <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="bg-background/60" />
         </div>
         <div className="flex justify-end gap-2">

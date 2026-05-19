@@ -2,12 +2,12 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { adjustStock, type InventoryRow } from "@/hooks/inventory/useInventoryData";
 import { useLocations } from "@/hooks/inventory/useCatalogCrud";
 import { toast } from "@/hooks/use-toast";
 import { ArrowLeftRight, Loader2 } from "lucide-react";
+import FieldLabel from "./FieldLabel";
 
 interface Props {
   row: InventoryRow | null;
@@ -73,7 +73,7 @@ export default function TransferStockModal({ row, onClose }: Props) {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label className="text-xs">Destination</Label>
+            <FieldLabel label="Destination" required hint="Where the units will arrive. The source location is fixed and shown above; only active locations other than the source appear here." />
             <Select value={destLoc} onValueChange={setDestLoc}>
               <SelectTrigger className="bg-background/60"><SelectValue placeholder="Choose location" /></SelectTrigger>
               <SelectContent>
@@ -84,7 +84,7 @@ export default function TransferStockModal({ row, onClose }: Props) {
             </Select>
           </div>
           <div>
-            <Label className="text-xs">Qty</Label>
+            <FieldLabel label="Qty" required hint="Units to move. Cannot exceed currently available stock at the source location." />
             <Input type="number" min={1} max={row.qty_available} value={qty} onChange={(e) => setQty(Number(e.target.value))} className="bg-background/60" />
           </div>
         </div>
