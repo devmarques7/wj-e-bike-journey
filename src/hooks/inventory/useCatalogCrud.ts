@@ -69,7 +69,7 @@ export function useCategories() {
 }
 
 export async function upsertCategory(c: Partial<Category> & { name: string; slug: string; type: string }) {
-  const { error, data } = await supabase.from("categories").upsert(c).select().single();
+  const { error, data } = await supabase.from("categories").upsert(c as any).select().single();
   if (error) throw error;
   return data as Category;
 }
@@ -102,7 +102,7 @@ export function useLocations() {
 }
 
 export async function upsertLocation(l: Partial<Location> & { name: string; location_type: string }) {
-  const { error, data } = await supabase.from("locations").upsert(l).select().single();
+  const { error, data } = await supabase.from("locations").upsert(l as any).select().single();
   if (error) throw error;
   return data as Location;
 }
@@ -165,7 +165,7 @@ export function useProduct(productId: string | undefined) {
 }
 
 export async function upsertProduct(p: Partial<Product> & { name: string; slug: string; product_type: string; base_price: number; category_id: string }) {
-  const { error, data } = await supabase.from("products").upsert(p).select().single();
+  const { error, data } = await supabase.from("products").upsert(p as any).select().single();
   if (error) throw error;
   return data as Product;
 }
@@ -177,7 +177,7 @@ export async function deleteProduct(id: string) {
 
 /* -------------------- VARIANTS -------------------- */
 export async function upsertVariant(v: Partial<Variant> & { product_id: string; sku: string; name: string }) {
-  const { error, data } = await supabase.from("product_variants").upsert(v).select().single();
+  const { error, data } = await supabase.from("product_variants").upsert(v as any).select().single();
   if (error) throw error;
   return data as Variant;
 }
