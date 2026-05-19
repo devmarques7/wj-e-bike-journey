@@ -18,8 +18,9 @@ const mockUserBikes = [
 ];
 
 export default function EPassPage() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 
+  if (authLoading) return null;
   if (!isAuthenticated) {
     return <Navigate to="/auth" replace />;
   }

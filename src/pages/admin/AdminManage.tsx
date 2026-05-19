@@ -47,11 +47,12 @@ const defaultHours = {
 };
 
 export default function AdminManage() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [showSettings, setShowSettings] = useState(false);
   const [hours, setHours] = useState(defaultHours);
 
+  if (authLoading) return null;
   if (!isAuthenticated) {
     return <Navigate to="/auth" replace />;
   }

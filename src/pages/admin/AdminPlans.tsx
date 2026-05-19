@@ -121,8 +121,9 @@ const getPlanBadge = (plan: string) => {
 };
 
 export default function AdminPlans() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
 
+  if (authLoading) return null;
   if (!isAuthenticated) {
     return <Navigate to="/auth" replace />;
   }
