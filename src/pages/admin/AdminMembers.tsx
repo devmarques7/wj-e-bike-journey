@@ -429,6 +429,30 @@ export default function AdminMembers() {
   const admins = members.filter((m) => m.role === "admin").length;
   const staffCount = members.filter((m) => m.role === "staff").length;
 
+  // Derive a deterministic 0–5 star rating per member from real profile signals.
+  // Higher score = active + completed profile + has avatar + older account.
+  const scoreMember = (m: MemberRow) => {
+    let s = 0;
+    if (m.is_active !== false) s += 2;
+    if (!m.must_complete_profile) s += 2;
+    if (m.avatar_url) s += 0.5;
+    const ageDays = (Date.now() - new Date(m.created_at).getTime()) / 864e5;
+    if (ageDays > 30) s += 0.5;
+    return Math.max(0, Math.min(5, s));
+  };
+
+  const topPerformers = [...members]
+    .map((m) => ({ member: m, rating: scoreMember(m) }))
+    .sort((a, b) => b.rating - a.rating || (a.member.full_name ?? "").localeCompare(b.member.full_name ?? ""))
+    .slice(0, 5);
+
+  const weekMs = 7 * 864e5;
+  const newThisWeek = members.filter((m) => Date.now() - new Date(m.created_at).getTime() < weekMs).length;
+  const activeCount = members.filter((m) => m.is_active !== false).length;
+  const completionRate = totalMembers
+    ? Math.round(((totalMembers - pending) / totalMembers) * 100)
+    : 0;
+
   const dynamicKPIs = [
     { label: "Total Members", value: String(totalMembers), change: `+${members.filter(m => Date.now() - new Date(m.created_at).getTime() < 7*864e5).length} this week`, trend: "up" as const, icon: Users },
     { label: "Pending Setup", value: String(pending), change: pending ? "needs action" : "all set", trend: "up" as const, icon: Mail },
