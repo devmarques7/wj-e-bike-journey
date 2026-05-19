@@ -100,53 +100,6 @@ interface InviteRow {
   user_id: string | null;
 }
 
-const staffKPIs = [
-  {
-    label: "Team Members",
-    value: "12",
-    change: "+2",
-    trend: "up" as const,
-    icon: Users,
-  },
-  {
-    label: "Avg. Rating",
-    value: "4.8",
-    change: "+0.2",
-    trend: "up" as const,
-    icon: Star,
-  },
-  {
-    label: "Services This Week",
-    value: "87",
-    change: "+15%",
-    trend: "up" as const,
-    icon: Wrench,
-  },
-  {
-    label: "Avg. Service Time",
-    value: "2.1h",
-    change: "-12min",
-    trend: "up" as const,
-    icon: Clock,
-  },
-];
-
-const staffMembers = [
-  { id: 1, name: "Tom Hendriks", role: "Senior Mechanic", rating: 4.9, reviews: 156, servicesWeek: 12, appointmentsWeek: 15, hoursWeek: 42, avatar: "TH" },
-  { id: 2, name: "Lisa van Dijk", role: "Mechanic", rating: 4.8, reviews: 124, servicesWeek: 10, appointmentsWeek: 12, hoursWeek: 40, avatar: "LV" },
-  { id: 3, name: "Mark de Boer", role: "Junior Mechanic", rating: 4.7, reviews: 89, servicesWeek: 8, appointmentsWeek: 10, hoursWeek: 38, avatar: "MB" },
-  { id: 4, name: "Eva Bakker", role: "Trainee", rating: 4.6, reviews: 45, servicesWeek: 5, appointmentsWeek: 6, hoursWeek: 32, avatar: "EB" },
-  { id: 5, name: "Jan Smit", role: "Sales Manager", rating: 4.9, reviews: 98, servicesWeek: 0, appointmentsWeek: 8, hoursWeek: 45, avatar: "JS" },
-  { id: 6, name: "Anna de Jong", role: "Customer Service", rating: 4.8, reviews: 210, servicesWeek: 0, appointmentsWeek: 25, hoursWeek: 40, avatar: "AJ" },
-];
-
-const topPerformersFallback = [
-  { name: "Tom Hendriks", metric: "Most Services", value: "12 this week", avatar: "TH" },
-  { name: "Anna de Jong", metric: "Best Feedback", value: "4.9 rating", avatar: "AJ" },
-  { name: "Jan Smit", metric: "Most Hours", value: "45h worked", avatar: "JS" },
-  { name: "Lisa van Dijk", metric: "Most Appointments", value: "15 scheduled", avatar: "LV" },
-];
-
 const getRoleBadge = (role: Role) => {
   const map: Record<Role, string> = {
     admin: "bg-amber-500/20 text-amber-400 border-amber-500/30",
