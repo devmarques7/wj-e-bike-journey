@@ -390,3 +390,29 @@ function Row({
     </div>
   );
 }
+
+function RatingStars({ value }: { value: number }) {
+  const rating = Math.max(0, Math.min(5, Number(value) || 0));
+  const hasRating = rating > 0;
+  return (
+    <div className="flex items-center gap-1 mt-1">
+      <div className="flex items-center gap-0.5">
+        {[1, 2, 3, 4, 5].map((i) => {
+          const filled = hasRating && i <= Math.round(rating);
+          return (
+            <Star
+              key={i}
+              className={cn(
+                "h-3 w-3",
+                filled ? "text-amber-400 fill-amber-400" : "text-muted-foreground/40",
+              )}
+            />
+          );
+        })}
+      </div>
+      <span className="text-[10px] text-muted-foreground ml-1">
+        {hasRating ? rating.toFixed(1) : "No ratings yet"}
+      </span>
+    </div>
+  );
+}
