@@ -1,18 +1,22 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { 
-  Package, 
-  AlertTriangle, 
-  TrendingUp,
-  ShoppingCart,
-  Bike,
-  Settings
+import {
+  Package,
+  AlertTriangle,
+  ArrowDownToLine,
+  Wallet,
+  History,
+  Lock,
+  Settings2,
 } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
+import KPICarousel from "@/components/dashboard/KPICarousel";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -22,216 +26,259 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import {
+  useInventoryRows,
+  useInventoryKPIs,
+  useMovements,
+  type InventoryRow,
+} from "@/hooks/inventory/useInventoryData";
+import AdjustStockModal from "@/components/dashboard/inventory/AdjustStockModal";
 
-const inventoryKPIs = [
-  {
-    label: "Total SKUs",
-    value: "847",
-    change: "+24",
-    trend: "up" as const,
-    icon: Package,
-  },
-  {
-    label: "Low Stock Items",
-    value: "12",
-    change: "-3",
-    trend: "up" as const,
-    icon: AlertTriangle,
-  },
-  {
-    label: "Monthly Turnover",
-    value: "€142k",
-    change: "+18%",
-    trend: "up" as const,
-    icon: TrendingUp,
-  },
-  {
-    label: "Pending Orders",
-    value: "34",
-    change: "+8",
-    trend: "down" as const,
-    icon: ShoppingCart,
-  },
-];
+const fmtEur = (n: number) =>
+  new Intl.NumberFormat("en-EU", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(
+    n,
+  );
 
-const inventoryItems = [
-  { id: 1, name: "V8 Sport Frame", category: "Frames", stock: 24, minStock: 10, price: "€1,299", status: "in_stock" },
-  { id: 2, name: "V8 Urban Frame", category: "Frames", stock: 18, minStock: 10, price: "€1,099", status: "in_stock" },
-  { id: 3, name: "Premium Battery Pack", category: "Electronics", stock: 5, minStock: 15, price: "€599", status: "low_stock" },
-  { id: 4, name: "Carbon Fork Set", category: "Components", stock: 32, minStock: 8, price: "€349", status: "in_stock" },
-  { id: 5, name: "Display Unit V3", category: "Electronics", stock: 2, minStock: 10, price: "€189", status: "critical" },
-  { id: 6, name: "Hydraulic Brakes Set", category: "Components", stock: 45, minStock: 20, price: "€129", status: "in_stock" },
-  { id: 7, name: "Premium Chain Kit", category: "Components", stock: 8, minStock: 15, price: "€89", status: "low_stock" },
-  { id: 8, name: "Motor Unit 750W", category: "Electronics", stock: 15, minStock: 10, price: "€449", status: "in_stock" },
-];
-
-const categories = [
-  { name: "Frames", items: 124, value: "€158,400" },
-  { name: "Electronics", items: 256, value: "€89,200" },
-  { name: "Components", items: 312, value: "€45,600" },
-  { name: "Accessories", items: 155, value: "€12,800" },
-];
-
-const getStatusBadge = (status: string) => {
-  switch (status) {
-    case "in_stock":
-      return <Badge className="bg-wj-green/20 text-wj-green border-wj-green/30 text-[10px]">In Stock</Badge>;
-    case "low_stock":
-      return <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-[10px]">Low Stock</Badge>;
-    case "critical":
-      return <Badge className="bg-red-500/20 text-red-400 border-red-500/30 text-[10px]">Critical</Badge>;
-    default:
-      return <Badge variant="outline" className="text-[10px]">{status}</Badge>;
-  }
+const statusOf = (r: InventoryRow) => {
+  const real = r.qty_available - r.qty_reserved;
+  if (real <= 0) return { l: "Out", c: "bg-red-500/20 text-red-400 border-red-500/30" };
+  if (real <= r.low_stock_threshold * 0.5)
+    return { l: "Critical", c: "bg-red-500/20 text-red-400 border-red-500/30" };
+  if (real <= r.low_stock_threshold)
+    return { l: "Low Stock", c: "bg-amber-500/20 text-amber-400 border-amber-500/30" };
+  return { l: "In Stock", c: "bg-wj-green/20 text-wj-green border-wj-green/30" };
 };
 
 export default function AdminInventory() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { rows, loading } = useInventoryRows();
+  const kpi = useInventoryKPIs(rows);
+  const { movements } = useMovements(80);
+  const [search, setSearch] = useState("");
+  const [tab, setTab] = useState<"all" | "low" | "incoming" | "movements">("all");
+  const [adjustRow, setAdjustRow] = useState<InventoryRow | null>(null);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return rows.filter((r) => {
+      if (q) {
+        const hay = `${r.variant.sku} ${r.variant.name} ${r.variant.product.name}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      const real = r.qty_available - r.qty_reserved;
+      if (tab === "low" && real > r.low_stock_threshold) return false;
+      if (tab === "incoming" && r.qty_incoming <= 0) return false;
+      return true;
+    });
+  }, [rows, search, tab]);
 
   if (authLoading) return null;
-  if (!isAuthenticated) {
-    return <Navigate to="/auth" replace />;
-  }
+  if (!isAuthenticated) return <Navigate to="/auth" replace />;
+  if (user?.role !== "admin") return <Navigate to="/dashboard" replace />;
 
-  if (user?.role !== "admin") {
-    return <Navigate to="/dashboard" replace />;
-  }
+  const kpiCards = [
+    { label: "Total SKUs", value: String(kpi.skus), change: `${rows.length} rows`, trend: "up" as const, icon: Package },
+    {
+      label: "Low Stock",
+      value: String(kpi.lowStock),
+      change: kpi.lowStock > 0 ? "Action" : "OK",
+      trend: kpi.lowStock > 0 ? ("down" as const) : ("up" as const),
+      icon: AlertTriangle,
+    },
+    { label: "Incoming", value: String(kpi.incoming), change: "units", trend: "up" as const, icon: ArrowDownToLine },
+    { label: "Stock Value", value: fmtEur(kpi.value), change: "live", trend: "up" as const, icon: Wallet },
+    { label: "Reserved", value: String(kpi.reserved), change: "units", trend: "up" as const, icon: Lock },
+    { label: "Movements", value: String(movements.length), change: "recent", trend: "up" as const, icon: History },
+  ];
 
   return (
     <AdminDashboardLayout>
       <div className="p-4 lg:p-6 space-y-6">
-        {/* Page Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
           <h1 className="text-xl sm:text-2xl font-light text-foreground">Inventory</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Stock levels and parts management
-          </p>
+          <p className="text-sm text-muted-foreground mt-1">Stock levels, movements and replenishment</p>
         </motion.div>
 
-        {/* KPI Cards */}
-        <div className="grid grid-cols-12 gap-4 lg:gap-6">
-          {inventoryKPIs.map((kpi, index) => (
-            <div key={kpi.label} className="col-span-6 lg:col-span-3">
-              <AdminKPICard {...kpi} index={index} />
-            </div>
+        {/* KPIs */}
+        <KPICarousel desktopGridClassName="md:grid md:grid-cols-3 lg:grid-cols-6 md:gap-4 lg:gap-6">
+          {kpiCards.map((k, i) => (
+            <AdminKPICard key={k.label} {...k} index={i} />
           ))}
-        </div>
+        </KPICarousel>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-12 gap-4 lg:gap-6">
-          {/* Inventory Table - 8 columns */}
-          <div className="col-span-12 lg:col-span-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl overflow-hidden"
-            >
-              <div className="p-4 border-b border-border/30">
-                <h3 className="text-sm font-medium text-foreground">Stock Overview</h3>
-              </div>
-              
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-border/30 hover:bg-transparent">
-                      <TableHead className="text-muted-foreground text-xs">Item</TableHead>
-                      <TableHead className="text-muted-foreground text-xs">Category</TableHead>
-                      <TableHead className="text-muted-foreground text-xs">Stock</TableHead>
-                      <TableHead className="text-muted-foreground text-xs">Min. Stock</TableHead>
-                      <TableHead className="text-muted-foreground text-xs">Price</TableHead>
-                      <TableHead className="text-muted-foreground text-xs">Status</TableHead>
+        {/* Tabs + Search */}
+        <div className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl overflow-hidden">
+          <div className="p-4 border-b border-border/30 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+            <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
+              <TabsList className="bg-muted/40">
+                <TabsTrigger value="all" className="text-xs">All Stock</TabsTrigger>
+                <TabsTrigger value="low" className="text-xs">
+                  Low Stock {kpi.lowStock > 0 && <span className="ml-1 text-amber-400">·{kpi.lowStock}</span>}
+                </TabsTrigger>
+                <TabsTrigger value="incoming" className="text-xs">Incoming</TabsTrigger>
+                <TabsTrigger value="movements" className="text-xs">Movements</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            {tab !== "movements" && (
+              <Input
+                placeholder="Search SKU or product..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="bg-background/60 max-w-xs"
+              />
+            )}
+          </div>
+
+          {/* Stock tables */}
+          {tab !== "movements" && (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border/30 hover:bg-transparent">
+                    <TableHead className="text-muted-foreground text-xs">Product</TableHead>
+                    <TableHead className="text-muted-foreground text-xs hidden sm:table-cell">SKU</TableHead>
+                    <TableHead className="text-muted-foreground text-xs hidden md:table-cell">Location</TableHead>
+                    <TableHead className="text-muted-foreground text-xs text-right">Avail.</TableHead>
+                    <TableHead className="text-muted-foreground text-xs text-right hidden sm:table-cell">Reserved</TableHead>
+                    <TableHead className="text-muted-foreground text-xs text-right hidden md:table-cell">Incoming</TableHead>
+                    <TableHead className="text-muted-foreground text-xs text-right hidden lg:table-cell">Threshold</TableHead>
+                    <TableHead className="text-muted-foreground text-xs">Status</TableHead>
+                    <TableHead className="text-muted-foreground text-xs text-right hidden lg:table-cell">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loading && (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center text-xs text-muted-foreground py-8">
+                        Loading...
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {inventoryItems.map((item) => (
-                      <TableRow key={item.id} className="border-border/30 hover:bg-muted/30">
-                        <TableCell className="text-xs font-medium">{item.name}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{item.category}</TableCell>
-                        <TableCell>
-                          <span className={cn(
-                            "text-xs font-medium",
-                            item.stock <= item.minStock * 0.3 ? "text-red-400" :
-                            item.stock <= item.minStock ? "text-amber-400" :
-                            "text-foreground"
-                          )}>
-                            {item.stock}
-                          </span>
+                  )}
+                  {!loading && filtered.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center text-xs text-muted-foreground py-8">
+                        No inventory yet. Add products and variants to get started.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {filtered.map((r) => {
+                    const s = statusOf(r);
+                    const real = r.qty_available - r.qty_reserved;
+                    return (
+                      <TableRow key={r.id} className="border-border/30 hover:bg-muted/30">
+                        <TableCell className="text-xs">
+                          <div className="font-medium text-foreground">{r.variant.product.name}</div>
+                          <div className="text-[10px] text-muted-foreground">{r.variant.name}</div>
                         </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{item.minStock}</TableCell>
-                        <TableCell className="text-xs">{item.price}</TableCell>
-                        <TableCell>{getStatusBadge(item.status)}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground hidden sm:table-cell">
+                          {r.variant.sku}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground hidden md:table-cell">
+                          {r.location.name}
+                        </TableCell>
+                        <TableCell
+                          className={cn(
+                            "text-xs text-right font-medium",
+                            real <= 0
+                              ? "text-red-400"
+                              : real <= r.low_stock_threshold
+                              ? "text-amber-400"
+                              : "text-foreground",
+                          )}
+                        >
+                          {r.qty_available}
+                        </TableCell>
+                        <TableCell className="text-xs text-right text-muted-foreground hidden sm:table-cell">
+                          {r.qty_reserved}
+                        </TableCell>
+                        <TableCell className="text-xs text-right text-muted-foreground hidden md:table-cell">
+                          {r.qty_incoming}
+                        </TableCell>
+                        <TableCell className="text-xs text-right text-muted-foreground hidden lg:table-cell">
+                          {r.low_stock_threshold}
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={cn("text-[10px]", s.c)}>{s.l}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right hidden lg:table-cell">
+                          <button
+                            onClick={() => setAdjustRow(r)}
+                            className="text-xs text-wj-green hover:underline inline-flex items-center gap-1"
+                          >
+                            <Settings2 className="h-3 w-3" /> Adjust
+                          </button>
+                        </TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </motion.div>
-          </div>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
 
-          {/* Categories - 4 columns */}
-          <div className="col-span-12 lg:col-span-4 space-y-4">
-            {/* Categories Overview */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4"
-            >
-              <div className="flex items-center gap-2 mb-4">
-                <Package className="h-4 w-4 text-wj-green" />
-                <h3 className="text-sm font-medium text-foreground">Categories</h3>
-              </div>
-              
-              <div className="space-y-3">
-                {categories.map((cat, index) => (
-                  <motion.div
-                    key={cat.name}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4 + index * 0.1 }}
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/30"
-                  >
-                    <div>
-                      <p className="text-xs font-medium text-foreground">{cat.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{cat.items} items</p>
-                    </div>
-                    <span className="text-xs text-wj-green font-medium">{cat.value}</span>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-
-            {/* Quick Actions */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4"
-            >
-              <div className="flex items-center gap-2 mb-4">
-                <Settings className="h-4 w-4 text-wj-green" />
-                <h3 className="text-sm font-medium text-foreground">Quick Actions</h3>
-              </div>
-              
-              <div className="space-y-2">
-                <button className="w-full p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors text-left">
-                  <p className="text-xs font-medium text-foreground">Reorder Low Stock</p>
-                  <p className="text-[10px] text-muted-foreground">12 items need attention</p>
-                </button>
-                <button className="w-full p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors text-left">
-                  <p className="text-xs font-medium text-foreground">Export Inventory</p>
-                  <p className="text-[10px] text-muted-foreground">Download as CSV</p>
-                </button>
-              </div>
-            </motion.div>
-          </div>
+          {/* Movements log */}
+          {tab === "movements" && (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border/30 hover:bg-transparent">
+                    <TableHead className="text-muted-foreground text-xs">When</TableHead>
+                    <TableHead className="text-muted-foreground text-xs">Type</TableHead>
+                    <TableHead className="text-muted-foreground text-xs">Product</TableHead>
+                    <TableHead className="text-muted-foreground text-xs hidden sm:table-cell">SKU</TableHead>
+                    <TableHead className="text-muted-foreground text-xs hidden md:table-cell">Location</TableHead>
+                    <TableHead className="text-muted-foreground text-xs text-right">Δ</TableHead>
+                    <TableHead className="text-muted-foreground text-xs hidden lg:table-cell">Notes</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {movements.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center text-xs text-muted-foreground py-8">
+                        No movements yet.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {movements.map((m) => (
+                    <TableRow key={m.id} className="border-border/30 hover:bg-muted/30">
+                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                        {new Date(m.created_at).toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        <Badge variant="outline" className="text-[10px] capitalize">
+                          {m.movement_type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-xs text-foreground">
+                        {m.variant?.product?.name ?? "—"}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground hidden sm:table-cell">
+                        {m.variant?.sku ?? "—"}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground hidden md:table-cell">
+                        {m.location?.name ?? "—"}
+                      </TableCell>
+                      <TableCell
+                        className={cn(
+                          "text-xs text-right font-medium",
+                          m.qty_delta > 0 ? "text-wj-green" : "text-red-400",
+                        )}
+                      >
+                        {m.qty_delta > 0 ? `+${m.qty_delta}` : m.qty_delta}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground hidden lg:table-cell">
+                        {m.notes ?? "—"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </div>
       </div>
+
+      <AdjustStockModal row={adjustRow} onClose={() => setAdjustRow(null)} />
     </AdminDashboardLayout>
   );
 }
