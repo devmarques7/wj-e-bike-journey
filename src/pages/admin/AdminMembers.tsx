@@ -510,7 +510,7 @@ export default function AdminMembers() {
                           <TableCell className="hidden lg:table-cell">
                             <div className="flex items-center gap-1 text-xs text-muted-foreground">
                               <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
-                              <span className="text-foreground font-medium">—</span>
+                              <span className="text-foreground font-medium">0.0</span>
                             </div>
                           </TableCell>
                           <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
@@ -574,7 +574,7 @@ export default function AdminMembers() {
                                     <DetailItem label="Rating">
                                       <span className="inline-flex items-center gap-1 text-foreground">
                                         <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
-                                        <span className="font-medium">—</span>
+                                        <span className="font-medium">0.0</span>
                                       </span>
                                     </DetailItem>
                                     <DetailItem label="Joined">
