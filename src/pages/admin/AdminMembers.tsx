@@ -479,10 +479,10 @@ export default function AdminMembers() {
                     <TableHeader>
                       <TableRow className="border-border/30 hover:bg-transparent">
                         <TableHead className="text-muted-foreground text-xs">Member</TableHead>
-                        <TableHead className="text-muted-foreground text-xs">Role</TableHead>
-                        <TableHead className="text-muted-foreground text-xs">Status</TableHead>
-                        <TableHead className="text-muted-foreground text-xs">Rating</TableHead>
-                        <TableHead className="text-muted-foreground text-xs w-10 text-right">Actions</TableHead>
+                        <TableHead className="text-muted-foreground text-xs hidden md:table-cell">Role</TableHead>
+                        <TableHead className="text-muted-foreground text-xs hidden md:table-cell">Status</TableHead>
+                        <TableHead className="text-muted-foreground text-xs hidden lg:table-cell">Rating</TableHead>
+                        <TableHead className="text-muted-foreground text-xs w-20 text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -490,8 +490,15 @@ export default function AdminMembers() {
                         <TableRow><TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-8">Loading…</TableCell></TableRow>
                       ) : members.length === 0 ? (
                         <TableRow><TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-8">No members yet. Click "Add member" to invite the first one.</TableCell></TableRow>
-                      ) : members.map((m) => (
-                        <TableRow key={m.user_id} className="border-border/30 hover:bg-muted/30">
+                      ) : members.map((m) => {
+                        const isExpanded = expandedMember === m.user_id;
+                        const toggle = () => setExpandedMember((curr) => (curr === m.user_id ? null : m.user_id));
+                        return (
+                        <Fragment key={m.user_id}>
+                        <TableRow
+                          className="border-border/30 hover:bg-muted/30 cursor-pointer"
+                          onClick={toggle}
+                        >
                           <TableCell>
                             <div className="flex items-center gap-3">
                               <Avatar className="h-8 w-8">
@@ -507,8 +514,8 @@ export default function AdminMembers() {
                               </div>
                             </div>
                           </TableCell>
-                          <TableCell>{getRoleBadge(m.role)}</TableCell>
-                          <TableCell>
+                          <TableCell className="hidden md:table-cell">{getRoleBadge(m.role)}</TableCell>
+                          <TableCell className="hidden md:table-cell">
                             {m.is_active === false ? (
                               <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-[10px]">Deactivated</Badge>
                             ) : m.must_complete_profile ? (
@@ -517,32 +524,110 @@ export default function AdminMembers() {
                               <Badge className="bg-wj-green/20 text-wj-green border-wj-green/30 text-[10px]">Active</Badge>
                             )}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden lg:table-cell">
                             <div className="flex items-center gap-1 text-xs text-muted-foreground">
                               <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
                               <span className="text-foreground font-medium">—</span>
                             </div>
                           </TableCell>
-                          <TableCell className="text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 rounded-full hover:bg-muted/60"
+                          <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-end gap-1">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 rounded-full hover:bg-muted/60"
+                                  >
+                                    <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-44">
+                                  <DropdownMenuItem onClick={() => setViewMember(m)}>
+                                    <Eye className="h-3.5 w-3.5 mr-2" /> View profile
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 rounded-full hover:bg-muted/60"
+                                onClick={toggle}
+                                aria-label={isExpanded ? "Collapse row" : "Expand row"}
+                              >
+                                <motion.span
+                                  animate={{ rotate: isExpanded ? 180 : 0 }}
+                                  transition={{ duration: 0.25, ease: "easeOut" }}
+                                  className="inline-flex"
                                 >
-                                  <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-44">
-                                <DropdownMenuItem onClick={() => setViewMember(m)}>
-                                  <Eye className="h-3.5 w-3.5 mr-2" /> View profile
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                                </motion.span>
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
-                      ))}
+                        <AnimatePresence initial={false}>
+                          {isExpanded && (
+                            <TableRow className="border-border/30 hover:bg-transparent bg-muted/10">
+                              <TableCell colSpan={5} className="p-0">
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: "auto", opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ duration: 0.25, ease: "easeOut" }}
+                                  className="overflow-hidden"
+                                >
+                                  <div className="px-4 py-3 grid grid-cols-2 md:grid-cols-4 gap-3 text-[11px]">
+                                    <DetailItem label="Role">{getRoleBadge(m.role)}</DetailItem>
+                                    <DetailItem label="Status">
+                                      {m.is_active === false ? (
+                                        <Badge className="bg-destructive/20 text-destructive border-destructive/30 text-[10px]">Deactivated</Badge>
+                                      ) : m.must_complete_profile ? (
+                                        <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 text-[10px]">Pending setup</Badge>
+                                      ) : (
+                                        <Badge className="bg-wj-green/20 text-wj-green border-wj-green/30 text-[10px]">Active</Badge>
+                                      )}
+                                    </DetailItem>
+                                    <DetailItem label="Rating">
+                                      <span className="inline-flex items-center gap-1 text-foreground">
+                                        <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
+                                        <span className="font-medium">—</span>
+                                      </span>
+                                    </DetailItem>
+                                    <DetailItem label="Joined">
+                                      <span className="text-foreground">
+                                        {new Date(m.created_at).toLocaleDateString()}
+                                      </span>
+                                    </DetailItem>
+                                    <DetailItem label="Email" className="col-span-2 md:col-span-2">
+                                      <span className="text-foreground truncate" title={m.email || ""}>
+                                        {m.email || "—"}
+                                      </span>
+                                    </DetailItem>
+                                    <DetailItem label="User ID" className="col-span-2 md:col-span-2">
+                                      <span className="font-mono text-[10px] text-muted-foreground truncate" title={m.user_id}>
+                                        {m.user_id}
+                                      </span>
+                                    </DetailItem>
+                                  </div>
+                                  <div className="px-4 pb-3">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-7 text-[11px]"
+                                      onClick={() => setViewMember(m)}
+                                    >
+                                      <Eye className="h-3 w-3 mr-1.5" /> Open full profile
+                                    </Button>
+                                  </div>
+                                </motion.div>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </AnimatePresence>
+                        </Fragment>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </TabsContent>
