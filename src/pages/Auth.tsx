@@ -23,7 +23,7 @@ const Auth = () => {
   const [phoneValid, setPhoneValid] = useState(false);
   const [phoneVerified, setPhoneVerified] = useState(false);
   
-  const { login, setMockUser } = useAuth();
+  const { login, setMockUser, user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -38,10 +38,8 @@ const Auth = () => {
         title: "Welcome back",
         description: "Redirecting to your dashboard...",
       });
-
-      // The dashboard route itself redirects admins to /dashboard/admin
-      // once the AuthContext has hydrated the user from Supabase.
-      setTimeout(() => navigate("/dashboard"), 400);
+      // Don't navigate yet — wait for AuthContext to hydrate `user`
+      // (profile + roles). A useEffect below handles role-based redirect.
     } else {
       const code = result.code;
       let description = "Invalid email or password. Please try again.";
