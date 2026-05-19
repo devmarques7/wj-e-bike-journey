@@ -850,7 +850,16 @@ export default function AdminMembers() {
         </DialogContent>
       </Dialog>
 
-      <MemberProfileDialog member={viewMember} onClose={() => setViewMember(null)} />
+      <MemberProfileDialog
+        member={viewMember}
+        onClose={() => setViewMember(null)}
+        onChanged={async () => {
+          await loadMembers();
+          setViewMember((curr) =>
+            curr ? (members.find((m) => m.user_id === curr.user_id) ?? curr) : curr,
+          );
+        }}
+      />
 
       {/* Edit invite dialog */}
       <Dialog open={!!editInvite} onOpenChange={(o) => !o && setEditInvite(null)}>
