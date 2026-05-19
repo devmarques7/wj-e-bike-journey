@@ -80,6 +80,7 @@ interface MemberRow {
   must_complete_profile: boolean;
   role: Role;
   created_at: string;
+  is_active?: boolean;
 }
 
 type InviteStatus = "pending" | "completed" | "revoked" | "expired";
@@ -193,7 +194,7 @@ export default function AdminMembers() {
     setLoading(true);
     const { data: profiles, error } = await supabase
       .from("profiles")
-      .select("user_id, full_name, email, avatar_url, must_complete_profile, created_at")
+      .select("user_id, full_name, email, avatar_url, must_complete_profile, created_at, is_active")
       .order("created_at", { ascending: false });
     if (error) {
       toast({ title: "Failed to load members", description: error.message, variant: "destructive" });
