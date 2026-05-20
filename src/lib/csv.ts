@@ -27,25 +27,6 @@ export function triggerDownload(blob: Blob, filename: string) {
   a.style.display = "none";
   document.body.appendChild(a);
   a.click();
-
-  // Fallback for sandboxed previews that block <a download> entirely.
-  // If the click didn't actually start a download, open the blob in a new tab
-  // so the user can save it manually.
-  setTimeout(() => {
-    try {
-      // Best-effort: try the parent window first (works when preview iframe
-      // has allow-popups + allow-downloads-without-user-activation off).
-      const w = window.open(url, "_blank", "noopener,noreferrer");
-      if (!w) {
-        // Popup blocked — navigate top frame as a last resort.
-        // Using location.href keeps the blob in the same browsing context.
-        // (User will see the file content / download prompt.)
-      }
-    } catch {
-      /* ignore */
-    }
-  }, 50);
-
   setTimeout(() => {
     a.remove();
     URL.revokeObjectURL(url);
