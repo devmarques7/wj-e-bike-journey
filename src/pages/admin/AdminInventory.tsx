@@ -39,6 +39,7 @@ import {
   type InventoryRow,
   type MovementRow,
 } from "@/hooks/inventory/useInventoryData";
+import { useProducts, useCategories, useLocations } from "@/hooks/inventory/useCatalogCrud";
 import AdjustStockModal from "@/components/dashboard/inventory/AdjustStockModal";
 import ReceiveStockModal from "@/components/dashboard/inventory/ReceiveStockModal";
 import TransferStockModal from "@/components/dashboard/inventory/TransferStockModal";
@@ -46,6 +47,7 @@ import ReorderModal from "@/components/dashboard/inventory/ReorderModal";
 import MovementDetailDrawer from "@/components/dashboard/inventory/MovementDetailDrawer";
 import { usePermissions } from "@/hooks/usePermissions";
 import { downloadCSV } from "@/lib/csv";
+import { ArrowUpRight, Plus, Upload } from "lucide-react";
 
 const fmtEur = (n: number) =>
   new Intl.NumberFormat("en-EU", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(
@@ -68,6 +70,9 @@ export default function AdminInventory() {
   const { rows, loading } = useInventoryRows();
   const kpi = useInventoryKPIs(rows);
   const { movements } = useMovements(80);
+  const { data: products } = useProducts();
+  const { data: categories } = useCategories();
+  const { data: locations } = useLocations();
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<"all" | "low" | "incoming" | "movements">("all");
   const [adjustRow, setAdjustRow] = useState<InventoryRow | null>(null);
@@ -105,8 +110,8 @@ export default function AdminInventory() {
     },
     { label: "Incoming", value: String(kpi.incoming), change: "units", trend: "up" as const, icon: ArrowDownToLine },
     { label: "Stock Value", value: fmtEur(kpi.value), change: "live", trend: "up" as const, icon: Wallet },
-    { label: "Reserved", value: String(kpi.reserved), change: "units", trend: "up" as const, icon: Lock },
-    { label: "Movements", value: String(movements.length), change: "recent", trend: "up" as const, icon: History },
+    { label: "Products", value: String(products.length), change: `${products.filter((p: any) => p.is_active).length} active`, trend: "up" as const, icon: Package },
+    { label: "Categories", value: String(categories.length), change: `${locations.length} locations`, trend: "up" as const, icon: FolderTree },
   ];
 
   const exportStock = () =>
@@ -173,6 +178,108 @@ export default function AdminInventory() {
             <AdminKPICard key={k.label} {...k} index={i} />
           ))}
         </KPICarousel>
+
+        {/* Catalog quick panels */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            {
+              key: "products",
+              icon: Package,
+              title: "Products",
+              count: products.length,
+              sub: `${products.filter((p: any) => p.is_active).length} active · ${products.filter((p: any) => p.is_featured).length} featured`,
+              href: "/dashboard/admin/inventory/products",
+              can: can("product.view"),
+              recent: products.slice(0, 3).map((p: any) => ({ id: p.id, label: p.name, meta: p.product_type })),
+            },
+            {
+              key: "categories",
+              icon: FolderTree,
+              title: "Categories",
+              count: categories.length,
+              sub: `${new Set(categories.map((c: any) => c.type)).size} types`,
+              href: "/dashboard/admin/inventory/categories",
+              can: can("category.manage"),
+              recent: categories.slice(0, 3).map((c: any) => ({ id: c.id, label: c.name, meta: c.type })),
+            },
+            {
+              key: "locations",
+              icon: MapPin,
+              title: "Locations",
+              count: locations.length,
+              sub: `${locations.filter((l: any) => l.is_active).length} active`,
+              href: "/dashboard/admin/inventory/locations",
+              can: can("location.manage"),
+              recent: locations.slice(0, 3).map((l: any) => ({ id: l.id, label: l.name, meta: l.location_type })),
+            },
+          ]
+            .filter((p) => p.can)
+            .map((p, i) => (
+              <motion.div
+                key={p.key}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, delay: i * 0.05 }}
+                className="group relative bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-5 hover:border-wj-green/40 transition-all"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-xl bg-wj-green/10 border border-wj-green/20 flex items-center justify-center">
+                      <p.icon className="h-4 w-4 text-wj-green" />
+                    </div>
+                    <div>
+                      <div className="text-xs uppercase tracking-wider text-muted-foreground">{p.title}</div>
+                      <div className="text-2xl font-light text-foreground leading-tight">{p.count}</div>
+                    </div>
+                  </div>
+                  <Link
+                    to={p.href}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+                    aria-label={`Open ${p.title}`}
+                  >
+                    <ArrowUpRight className="h-4 w-4" />
+                  </Link>
+                </div>
+
+                <div className="text-[11px] text-muted-foreground mt-2">{p.sub}</div>
+
+                <div className="mt-4 space-y-1.5 min-h-[72px]">
+                  {p.recent.length === 0 && (
+                    <div className="text-[11px] text-muted-foreground/70 italic">No entries yet</div>
+                  )}
+                  {p.recent.map((r) => (
+                    <div
+                      key={r.id}
+                      className="flex items-center justify-between text-xs border-b border-border/20 last:border-0 pb-1.5"
+                    >
+                      <span className="truncate text-foreground/90">{r.label}</span>
+                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground ml-2 shrink-0">
+                        {r.meta}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border/20">
+                  <Button asChild size="sm" variant="ghost" className="h-7 text-[11px] px-2">
+                    <Link to={p.href}>
+                      <ArrowUpRight className="h-3 w-3 mr-1" /> Manage
+                    </Link>
+                  </Button>
+                  <Button asChild size="sm" variant="ghost" className="h-7 text-[11px] px-2 text-wj-green hover:text-wj-green">
+                    <Link to={p.href}>
+                      <Plus className="h-3 w-3 mr-1" /> New
+                    </Link>
+                  </Button>
+                  <Button asChild size="sm" variant="ghost" className="h-7 text-[11px] px-2 ml-auto">
+                    <Link to={p.href}>
+                      <Upload className="h-3 w-3 mr-1" /> Import
+                    </Link>
+                  </Button>
+                </div>
+              </motion.div>
+            ))}
+        </div>
 
         {/* Tabs + Search */}
         <div className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl overflow-hidden">
