@@ -407,10 +407,11 @@ export default function ImportProductsDialog({ open, onClose, onImported }: Prop
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-border/30">
+            <div className="flex justify-between items-center gap-2 pt-2 border-t border-border/30">
               <Button variant="ghost" size="sm" onClick={() => setTemplateOpen(false)}>
                 Cancel
               </Button>
+              <div className="flex gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -427,6 +428,7 @@ export default function ImportProductsDialog({ open, onClose, onImported }: Prop
               >
                 <FileSpreadsheet className="h-3 w-3 mr-1" /> CSV
               </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
