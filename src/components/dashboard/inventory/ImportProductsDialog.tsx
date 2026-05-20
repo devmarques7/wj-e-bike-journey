@@ -3,7 +3,7 @@ import { z } from "zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Upload, FileText, CheckCircle2, AlertTriangle, Download, Loader2, X } from "lucide-react";
+import { Upload, FileText, CheckCircle2, AlertTriangle, Download, Loader2, X, FileSpreadsheet, FileJson } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCategories } from "@/hooks/inventory/useCatalogCrud";
@@ -11,6 +11,16 @@ import { parseCsv } from "@/lib/parseCsv";
 import { downloadCSV } from "@/lib/csv";
 
 const TYPES = ["bike", "accessory", "service", "insurance", "bundle", "subscription_addon"] as const;
+type ProductType = typeof TYPES[number];
+
+const TYPE_LABELS: Record<ProductType, string> = {
+  bike: "Bike",
+  accessory: "Accessory",
+  service: "Service",
+  insurance: "Insurance",
+  bundle: "Bundle",
+  subscription_addon: "Subscription add-on",
+};
 
 const slugify = (s: string) =>
   s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -47,36 +57,106 @@ interface RowResult {
 
 const REQUIRED_HEADERS = ["name", "product_type", "category", "base_price"];
 
-const TEMPLATE: Record<string, string>[] = [
-  {
-    name: "WJ Vision One — Black",
-    slug: "wj-vision-one-black",
-    product_type: "bike",
-    category: "bikes",
-    base_price: "2999",
-    sale_price: "",
-    sku_prefix: "VIS",
-    short_description: "Flagship urban e-bike",
-    description: "Hand-built aluminium frame, smart connectivity, 90km range.",
-    color_hex: "#058c42",
-    is_active: "true",
-    is_featured: "true",
-  },
-  {
-    name: "Carbon Helmet L",
-    slug: "",
-    product_type: "accessory",
-    category: "helmets",
-    base_price: "149",
-    sale_price: "129",
-    sku_prefix: "HLM",
-    short_description: "Lightweight certified carbon helmet",
-    description: "",
-    color_hex: "",
-    is_active: "true",
-    is_featured: "false",
-  },
-];
+/* Example seed rows per product type. `category` slug is replaced at download time
+   using the latest categories fetched from Supabase. */
+const TEMPLATE_SEEDS: Record<ProductType, Record<string, string>[]> = {
+  bike: [
+    {
+      name: "WJ Vision One — Black",
+      slug: "wj-vision-one-black",
+      product_type: "bike",
+      category: "",
+      base_price: "2999",
+      sale_price: "",
+      sku_prefix: "VIS",
+      short_description: "Flagship urban e-bike",
+      description: "Hand-built aluminium frame, smart connectivity, 90km range.",
+      color_hex: "#058c42",
+      is_active: "true",
+      is_featured: "true",
+    },
+  ],
+  accessory: [
+    {
+      name: "Carbon Helmet L",
+      slug: "",
+      product_type: "accessory",
+      category: "",
+      base_price: "149",
+      sale_price: "129",
+      sku_prefix: "HLM",
+      short_description: "Lightweight certified carbon helmet",
+      description: "",
+      color_hex: "",
+      is_active: "true",
+      is_featured: "false",
+    },
+  ],
+  service: [
+    {
+      name: "Annual Tune-up",
+      slug: "",
+      product_type: "service",
+      category: "",
+      base_price: "89",
+      sale_price: "",
+      sku_prefix: "SRV",
+      short_description: "Full diagnostic & brake adjustment",
+      description: "",
+      color_hex: "",
+      is_active: "true",
+      is_featured: "false",
+    },
+  ],
+  insurance: [
+    {
+      name: "Theft Protection — 12m",
+      slug: "",
+      product_type: "insurance",
+      category: "",
+      base_price: "129",
+      sale_price: "",
+      sku_prefix: "INS",
+      short_description: "12-month theft cover",
+      description: "",
+      color_hex: "",
+      is_active: "true",
+      is_featured: "false",
+    },
+  ],
+  bundle: [
+    {
+      name: "Starter Bundle",
+      slug: "",
+      product_type: "bundle",
+      category: "",
+      base_price: "199",
+      sale_price: "",
+      sku_prefix: "BND",
+      short_description: "Helmet + lock + lights",
+      description: "",
+      color_hex: "",
+      is_active: "true",
+      is_featured: "false",
+    },
+  ],
+  subscription_addon: [
+    {
+      name: "Priority Service",
+      slug: "",
+      product_type: "subscription_addon",
+      category: "",
+      base_price: "9",
+      sale_price: "",
+      sku_prefix: "ADD",
+      short_description: "Skip the queue add-on",
+      description: "",
+      color_hex: "",
+      is_active: "true",
+      is_featured: "false",
+    },
+  ],
+};
 
 interface Props {
   open: boolean;
@@ -91,6 +171,8 @@ export default function ImportProductsDialog({ open, onClose, onImported }: Prop
   const [fileError, setFileError] = useState<string | null>(null);
   const [rows, setRows] = useState<RowResult[]>([]);
   const [importing, setImporting] = useState(false);
+  const [templateOpen, setTemplateOpen] = useState(false);
+  const [templateType, setTemplateType] = useState<ProductType>("bike");
 
   /* ----- category lookup (by id, slug or name, case-insensitive) ----- */
   const catLookup = useMemo(() => {
@@ -226,18 +308,48 @@ export default function ImportProductsDialog({ open, onClose, onImported }: Prop
     }
   };
 
+  /** Build a template tailored to one product_type, using a real category
+   *  fetched from the DB (matching that type when possible). */
+  const buildTemplate = (type: ProductType): Record<string, string>[] => {
+    const seeds = TEMPLATE_SEEDS[type];
+    // Pick a real category. Prefer one whose `type` matches, fall back to any.
+    const match =
+      categories.find((c) => (c as any).type === type && c.is_active) ??
+      categories.find((c) => c.is_active) ??
+      categories[0];
+    const catSlug = match?.slug ?? "";
+    return seeds.map((r) => ({ ...r, category: catSlug }));
+  };
+
   const downloadTemplate = (fmt: "csv" | "json") => {
+    const rowsOut = buildTemplate(templateType);
+    if (rowsOut.length === 0 || !rowsOut[0].category) {
+      toast({
+        title: "No categories found",
+        description: "Create at least one category before downloading a template.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const base = `products-template-${templateType}`;
     if (fmt === "csv") {
-      downloadCSV("products-template.csv", TEMPLATE);
+      downloadCSV(`${base}.csv`, rowsOut);
     } else {
-      const blob = new Blob([JSON.stringify(TEMPLATE, null, 2)], { type: "application/json" });
+      const blob = new Blob([JSON.stringify(rowsOut, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "products-template.json";
+      a.download = `${base}.json`;
+      document.body.appendChild(a);
       a.click();
+      a.remove();
       URL.revokeObjectURL(url);
     }
+    setTemplateOpen(false);
+    toast({
+      title: "Template downloaded",
+      description: `${TYPE_LABELS[templateType]} · ${fmt.toUpperCase()}`,
+    });
   };
 
   return (
@@ -255,13 +367,75 @@ export default function ImportProductsDialog({ open, onClose, onImported }: Prop
         </DialogHeader>
 
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => downloadTemplate("csv")}>
-            <Download className="h-3 w-3 mr-1" /> CSV template
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => downloadTemplate("json")}>
-            <Download className="h-3 w-3 mr-1" /> JSON template
+          <Button variant="outline" size="sm" onClick={() => setTemplateOpen(true)}>
+            <Download className="h-3 w-3 mr-1" /> Download template
           </Button>
         </div>
+
+        {/* Template picker (asks type + format, then downloads from live query) */}
+        <Dialog open={templateOpen} onOpenChange={setTemplateOpen}>
+          <DialogContent className="bg-background/95 backdrop-blur-xl border-border/40 max-w-md">
+            <DialogHeader>
+              <DialogTitle className="font-light">Generate template</DialogTitle>
+              <DialogDescription className="text-xs">
+                Choose the product type. The template will use a real category from your
+                database so the file is ready to import.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-2">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Product type</p>
+              <div className="grid grid-cols-2 gap-2">
+                {TYPES.map((t) => {
+                  const active = templateType === t;
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setTemplateType(t)}
+                      className={`rounded-lg border px-3 py-2 text-left text-xs transition-colors ${
+                        active
+                          ? "border-wj-green bg-wj-green/10 text-wj-green"
+                          : "border-border/40 hover:border-wj-green/40 text-foreground/80"
+                      }`}
+                    >
+                      {TYPE_LABELS[t]}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="rounded-lg bg-background/60 border border-border/30 p-2 text-[11px] text-muted-foreground">
+                Categories available: <span className="text-foreground">{categories.length}</span>
+                {categories.length === 0 && (
+                  <span className="text-red-300"> · create a category first</span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-border/30">
+              <Button variant="ghost" size="sm" onClick={() => setTemplateOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => downloadTemplate("json")}
+                disabled={categories.length === 0}
+              >
+                <FileJson className="h-3 w-3 mr-1" /> JSON
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => downloadTemplate("csv")}
+                disabled={categories.length === 0}
+                className="bg-wj-green hover:bg-wj-green/90"
+              >
+                <FileSpreadsheet className="h-3 w-3 mr-1" /> CSV
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Dropzone */}
         <button
