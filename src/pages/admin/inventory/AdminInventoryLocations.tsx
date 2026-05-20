@@ -14,6 +14,7 @@ import { useLocations, upsertLocation, deleteLocation, type Location } from "@/h
 import { toast } from "@/hooks/use-toast";
 import FieldLabel from "@/components/dashboard/inventory/FieldLabel";
 import ImportLocationsDialog from "@/components/dashboard/inventory/ImportLocationsDialog";
+import ExportDataButton from "@/components/dashboard/inventory/ExportDataButton";
 
 const TYPES = ["warehouse", "store_floor", "virtual"];
 
@@ -73,6 +74,7 @@ export default function AdminInventoryLocations() {
             <Button variant="outline" onClick={() => setImportOpen(true)}>
               <Upload className="h-4 w-4 mr-2" /> Import
             </Button>
+            <ExportDataButton table="locations" filename="locations" />
             <Button onClick={() => open("new")} className="bg-wj-green hover:bg-wj-green/90">
               <Plus className="h-4 w-4 mr-2" /> New location
             </Button>
