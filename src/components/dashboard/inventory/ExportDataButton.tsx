@@ -42,7 +42,7 @@ export default function ExportDataButton({
         .select(select)
         .range(from, from + pageSize - 1);
       if (error) throw error;
-      const chunk = (data ?? []) as Record<string, unknown>[];
+      const chunk = (data ?? []) as unknown as Record<string, unknown>[];
       rows.push(...chunk);
       if (chunk.length < pageSize) break;
       from += pageSize;
