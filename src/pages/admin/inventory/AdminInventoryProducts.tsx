@@ -4,12 +4,13 @@ import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, Package } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, Upload } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useProducts, deleteProduct } from "@/hooks/inventory/useCatalogCrud";
 import { toast } from "@/hooks/use-toast";
 import ProductEditDialog from "@/components/dashboard/inventory/ProductEditDialog";
+import ImportProductsDialog from "@/components/dashboard/inventory/ImportProductsDialog";
 import type { Product } from "@/hooks/inventory/useCatalogCrud";
 
 export default function AdminInventoryProducts() {
@@ -18,6 +19,7 @@ export default function AdminInventoryProducts() {
   const { data, loading, refetch } = useProducts();
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<Product | "new" | null>(null);
+  const [importing, setImporting] = useState(false);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -48,9 +50,14 @@ export default function AdminInventoryProducts() {
             <p className="text-sm text-muted-foreground">Catalog management</p>
           </div>
           {can("product.create") && (
-            <Button onClick={() => setEditing("new")} className="bg-wj-green hover:bg-wj-green/90">
-              <Plus className="h-4 w-4 mr-2" /> New product
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setImporting(true)}>
+                <Upload className="h-4 w-4 mr-2" /> Import CSV / JSON
+              </Button>
+              <Button onClick={() => setEditing("new")} className="bg-wj-green hover:bg-wj-green/90">
+                <Plus className="h-4 w-4 mr-2" /> New product
+              </Button>
+            </div>
           )}
         </div>
 
@@ -101,6 +108,11 @@ export default function AdminInventoryProducts() {
         open={!!editing}
         onClose={() => setEditing(null)}
         onSaved={refetch}
+      />
+      <ImportProductsDialog
+        open={importing}
+        onClose={() => setImporting(false)}
+        onImported={refetch}
       />
     </AdminDashboardLayout>
   );

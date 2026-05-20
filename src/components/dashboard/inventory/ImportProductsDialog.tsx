@@ -8,7 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCategories } from "@/hooks/inventory/useCatalogCrud";
 import { parseCsv } from "@/lib/parseCsv";
-import { downloadCsv } from "@/lib/csv";
+import { downloadCSV } from "@/lib/csv";
 
 const TYPES = ["bike", "accessory", "service", "insurance", "bundle", "subscription_addon"] as const;
 
@@ -228,7 +228,7 @@ export default function ImportProductsDialog({ open, onClose, onImported }: Prop
 
   const downloadTemplate = (fmt: "csv" | "json") => {
     if (fmt === "csv") {
-      downloadCsv("products-template.csv", TEMPLATE);
+      downloadCSV("products-template.csv", TEMPLATE);
     } else {
       const blob = new Blob([JSON.stringify(TEMPLATE, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
