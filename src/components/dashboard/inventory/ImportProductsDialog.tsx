@@ -8,7 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCategories } from "@/hooks/inventory/useCatalogCrud";
 import { parseCsv } from "@/lib/parseCsv";
-import { downloadCSV } from "@/lib/csv";
+import { downloadCSV, triggerDownload } from "@/lib/csv";
 
 const TYPES = ["bike", "accessory", "service", "insurance", "bundle", "subscription_addon"] as const;
 type ProductType = typeof TYPES[number];
@@ -336,16 +336,10 @@ export default function ImportProductsDialog({ open, onClose, onImported }: Prop
       downloadCSV(`${base}.csv`, rowsOut);
     } else {
       const blob = new Blob([JSON.stringify(rowsOut, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${base}.json`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      triggerDownload(blob, `${base}.json`);
     }
-    setTemplateOpen(false);
+    // Close after the browser has had time to start the download.
+    setTimeout(() => setTemplateOpen(false), 300);
     toast({
       title: "Template downloaded",
       description: `${TYPE_LABELS[templateType]} · ${fmt.toUpperCase()}`,
