@@ -14,6 +14,7 @@ import { useCategories, upsertCategory, deleteCategory, type Category } from "@/
 import { toast } from "@/hooks/use-toast";
 import FieldLabel from "@/components/dashboard/inventory/FieldLabel";
 import ImportCategoriesDialog from "@/components/dashboard/inventory/ImportCategoriesDialog";
+import ExportDataButton from "@/components/dashboard/inventory/ExportDataButton";
 
 const TYPES = ["bike", "accessory", "service", "part", "insurance"];
 const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -74,6 +75,7 @@ export default function AdminInventoryCategories() {
             <Button variant="outline" onClick={() => setImportOpen(true)}>
               <Upload className="h-4 w-4 mr-2" /> Import
             </Button>
+            <ExportDataButton table="categories" filename="categories" />
             <Button onClick={() => open("new")} className="bg-wj-green hover:bg-wj-green/90">
               <Plus className="h-4 w-4 mr-2" /> New category
             </Button>

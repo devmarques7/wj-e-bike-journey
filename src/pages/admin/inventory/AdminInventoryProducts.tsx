@@ -11,6 +11,7 @@ import { useProducts, deleteProduct } from "@/hooks/inventory/useCatalogCrud";
 import { toast } from "@/hooks/use-toast";
 import ProductEditDialog from "@/components/dashboard/inventory/ProductEditDialog";
 import ImportProductsDialog from "@/components/dashboard/inventory/ImportProductsDialog";
+import ExportDataButton from "@/components/dashboard/inventory/ExportDataButton";
 import type { Product } from "@/hooks/inventory/useCatalogCrud";
 
 export default function AdminInventoryProducts() {
@@ -54,6 +55,7 @@ export default function AdminInventoryProducts() {
               <Button variant="outline" onClick={() => setImporting(true)}>
                 <Upload className="h-4 w-4 mr-2" /> Import CSV / JSON
               </Button>
+              <ExportDataButton table="products" filename="products" />
               <Button onClick={() => setEditing("new")} className="bg-wj-green hover:bg-wj-green/90">
                 <Plus className="h-4 w-4 mr-2" /> New product
               </Button>
