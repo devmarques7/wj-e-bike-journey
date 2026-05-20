@@ -7,12 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, FolderTree, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, FolderTree, Loader2, Upload } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useCategories, upsertCategory, deleteCategory, type Category } from "@/hooks/inventory/useCatalogCrud";
 import { toast } from "@/hooks/use-toast";
 import FieldLabel from "@/components/dashboard/inventory/FieldLabel";
+import ImportCategoriesDialog from "@/components/dashboard/inventory/ImportCategoriesDialog";
 
 const TYPES = ["bike", "accessory", "service", "part", "insurance"];
 const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -24,6 +25,7 @@ export default function AdminInventoryCategories() {
   const [editing, setEditing] = useState<Category | "new" | null>(null);
   const [form, setForm] = useState<Partial<Category>>({});
   const [busy, setBusy] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   if (isLoading) return null;
   if (!isAuthenticated) return <Navigate to="/auth" replace />;
@@ -68,9 +70,14 @@ export default function AdminInventoryCategories() {
             <h1 className="text-xl sm:text-2xl font-light">Categories</h1>
             <p className="text-sm text-muted-foreground">Catalog hierarchy</p>
           </div>
-          <Button onClick={() => open("new")} className="bg-wj-green hover:bg-wj-green/90">
-            <Plus className="h-4 w-4 mr-2" /> New category
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
+              <Upload className="h-4 w-4 mr-2" /> Import
+            </Button>
+            <Button onClick={() => open("new")} className="bg-wj-green hover:bg-wj-green/90">
+              <Plus className="h-4 w-4 mr-2" /> New category
+            </Button>
+          </div>
         </div>
 
         <div className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl divide-y divide-border/20">
@@ -149,6 +156,12 @@ export default function AdminInventoryCategories() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ImportCategoriesDialog
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImported={refetch}
+      />
     </AdminDashboardLayout>
   );
 }
