@@ -7,6 +7,7 @@ import { upsertVariant, type Variant } from "@/hooks/inventory/useCatalogCrud";
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import FieldLabel from "./FieldLabel";
+import BikeColorPicker from "./BikeColorPicker";
 
 interface Props {
   productId: string;
@@ -100,15 +101,7 @@ export default function VariantEditDialog({ productId, productType, variant, ope
                 label="Color"
                 hint="Variant frame color. Renders as a swatch on the PDP and matches the bike's visual preview in the dashboard."
               />
-              <div className="flex items-center gap-3 bg-background/60 border border-input rounded-md px-3 py-2">
-                <input
-                  type="color"
-                  value={color || "#058c42"}
-                  onChange={(e) => setColor(e.target.value)}
-                  className="h-8 w-12 rounded cursor-pointer bg-transparent border-0 p-0"
-                />
-                <Input value={color} onChange={(e) => setColor(e.target.value)} placeholder="#058c42" className="bg-transparent border-0 h-8 px-0 focus-visible:ring-0" />
-              </div>
+              <BikeColorPicker value={color} onChange={(hex) => setColor(hex ?? "")} />
             </div>
           )}
           <div className="flex items-center gap-2">
