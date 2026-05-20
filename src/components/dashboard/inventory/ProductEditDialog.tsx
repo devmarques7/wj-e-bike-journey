@@ -10,6 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import FieldLabel from "./FieldLabel";
 import ProductImagesManager from "./ProductImagesManager";
+import BikeColorPicker from "./BikeColorPicker";
 
 const TYPES = ["bike", "accessory", "service", "insurance", "bundle", "subscription_addon"];
 
@@ -138,25 +139,10 @@ export default function ProductEditDialog({ product, open, onClose, onSaved }: P
                 label="Bike color"
                 hint="Primary frame color of this bike. Used to render color swatches, the 3D bike preview tint and to match V-ID identity. Choose a hex value or pick from the palette."
               />
-              <div className="flex items-center gap-3 bg-background/60 border border-input rounded-md px-3 py-2">
-                <input
-                  type="color"
-                  value={form.color_hex ?? "#058c42"}
-                  onChange={(e) => update("color_hex", e.target.value)}
-                  className="h-8 w-12 rounded cursor-pointer bg-transparent border-0 p-0"
-                />
-                <Input
-                  value={form.color_hex ?? ""}
-                  onChange={(e) => update("color_hex", e.target.value)}
-                  placeholder="#058c42"
-                  className="bg-transparent border-0 h-8 px-0 focus-visible:ring-0"
-                />
-                {form.color_hex && (
-                  <Button type="button" size="sm" variant="ghost" className="text-[10px] h-7" onClick={() => update("color_hex", null as any)}>
-                    Clear
-                  </Button>
-                )}
-              </div>
+              <BikeColorPicker
+                value={form.color_hex}
+                onChange={(hex) => update("color_hex", hex as any)}
+              />
             </div>
           )}
           <div className="col-span-2">
