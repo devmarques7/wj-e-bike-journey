@@ -476,7 +476,7 @@ export default function ImportProductsDialog({ open, onClose, onImported }: Prop
 
         {/* Template PREVIEW (same selector → renders the file as copyable text) */}
         <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-          <DialogContent className="bg-background/95 backdrop-blur-xl border-border/40 max-w-2xl">
+          <DialogContent className="bg-background/95 backdrop-blur-xl border-border/40 w-[95vw] max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
             <DialogHeader>
               <DialogTitle className="font-light">Preview template</DialogTitle>
               <DialogDescription className="text-xs">
@@ -485,10 +485,10 @@ export default function ImportProductsDialog({ open, onClose, onImported }: Prop
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-3">
+            <div className="space-y-3 min-w-0">
               <div className="space-y-2">
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Product type</p>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {TYPES.map((t) => {
                     const active = previewType === t;
                     return (
@@ -509,7 +509,7 @@ export default function ImportProductsDialog({ open, onClose, onImported }: Prop
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="inline-flex rounded-lg border border-border/40 p-0.5">
                   <button
                     type="button"
@@ -549,13 +549,15 @@ export default function ImportProductsDialog({ open, onClose, onImported }: Prop
                 </Button>
               </div>
 
-              <pre className="rounded-lg border border-border/30 bg-background/60 p-3 text-[11px] leading-relaxed max-h-80 overflow-auto whitespace-pre font-mono">
-                {previewText || "// No categories available — create one first."}
-              </pre>
+              <div className="rounded-lg border border-border/30 bg-background/60 max-h-[50vh] sm:max-h-80 overflow-auto">
+                <pre className="p-3 text-[11px] leading-relaxed font-mono whitespace-pre min-w-max">
+{previewText || "// No categories available — create one first."}
+                </pre>
+              </div>
             </div>
 
-            <div className="flex justify-between items-center gap-2 pt-2 border-t border-border/30">
-              <Button variant="ghost" size="sm" onClick={() => setPreviewOpen(false)}>
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-2 pt-2 border-t border-border/30">
+              <Button variant="ghost" size="sm" onClick={() => setPreviewOpen(false)} className="w-full sm:w-auto">
                 Close
               </Button>
               <Button
@@ -566,7 +568,7 @@ export default function ImportProductsDialog({ open, onClose, onImported }: Prop
                   setTimeout(() => downloadTemplate(previewFmt), 50);
                 }}
                 disabled={!previewText}
-                className="bg-wj-green hover:bg-wj-green/90"
+                className="bg-wj-green hover:bg-wj-green/90 w-full sm:w-auto"
               >
                 <Download className="h-3 w-3 mr-1" /> Download this template
               </Button>
