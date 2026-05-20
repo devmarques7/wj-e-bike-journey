@@ -7,12 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Pencil, Trash2, MapPin, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, MapPin, Loader2, Upload } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useLocations, upsertLocation, deleteLocation, type Location } from "@/hooks/inventory/useCatalogCrud";
 import { toast } from "@/hooks/use-toast";
 import FieldLabel from "@/components/dashboard/inventory/FieldLabel";
+import ImportLocationsDialog from "@/components/dashboard/inventory/ImportLocationsDialog";
 
 const TYPES = ["warehouse", "store_floor", "virtual"];
 
@@ -23,6 +24,7 @@ export default function AdminInventoryLocations() {
   const [editing, setEditing] = useState<Location | "new" | null>(null);
   const [form, setForm] = useState<Partial<Location>>({});
   const [busy, setBusy] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   if (isLoading) return null;
   if (!isAuthenticated) return <Navigate to="/auth" replace />;
@@ -67,9 +69,14 @@ export default function AdminInventoryLocations() {
             <h1 className="text-xl sm:text-2xl font-light">Locations</h1>
             <p className="text-sm text-muted-foreground">Warehouses, store floor, virtual</p>
           </div>
-          <Button onClick={() => open("new")} className="bg-wj-green hover:bg-wj-green/90">
-            <Plus className="h-4 w-4 mr-2" /> New location
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
+              <Upload className="h-4 w-4 mr-2" /> Import
+            </Button>
+            <Button onClick={() => open("new")} className="bg-wj-green hover:bg-wj-green/90">
+              <Plus className="h-4 w-4 mr-2" /> New location
+            </Button>
+          </div>
         </div>
 
         <div className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl divide-y divide-border/20">
@@ -132,6 +139,12 @@ export default function AdminInventoryLocations() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ImportLocationsDialog
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImported={refetch}
+      />
     </AdminDashboardLayout>
   );
 }
