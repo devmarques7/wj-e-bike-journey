@@ -3,7 +3,7 @@ import { z } from "zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Upload, FileText, CheckCircle2, AlertTriangle, Download, Loader2, X, FileSpreadsheet, FileJson } from "lucide-react";
+import { Upload, FileText, CheckCircle2, AlertTriangle, Download, Loader2, X, FileSpreadsheet, FileJson, Eye, Copy, Check } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCategories } from "@/hooks/inventory/useCatalogCrud";
@@ -173,6 +173,10 @@ export default function ImportProductsDialog({ open, onClose, onImported }: Prop
   const [importing, setImporting] = useState(false);
   const [templateOpen, setTemplateOpen] = useState(false);
   const [templateType, setTemplateType] = useState<ProductType>("bike");
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewType, setPreviewType] = useState<ProductType>("bike");
+  const [previewFmt, setPreviewFmt] = useState<"csv" | "json">("csv");
+  const [copied, setCopied] = useState(false);
 
   /* ----- category lookup (by id, slug or name, case-insensitive) ----- */
   const catLookup = useMemo(() => {
@@ -346,6 +350,40 @@ export default function ImportProductsDialog({ open, onClose, onImported }: Prop
     });
   };
 
+  /** Render the in-memory template as a CSV or JSON string for previewing. */
+  const renderTemplateText = (type: ProductType, fmt: "csv" | "json"): string => {
+    const rowsOut = buildTemplate(type);
+    if (rowsOut.length === 0) return "";
+    if (fmt === "json") return JSON.stringify(rowsOut, null, 2);
+    const headers = Object.keys(rowsOut[0]);
+    const esc = (v: unknown) => {
+      if (v === null || v === undefined) return "";
+      const s = String(v).replace(/"/g, '""');
+      return /[",\n]/.test(s) ? `"${s}"` : s;
+    };
+    return [
+      headers.join(","),
+      ...rowsOut.map((r) => headers.map((h) => esc((r as any)[h])).join(",")),
+    ].join("\n");
+  };
+
+  const previewText = useMemo(
+    () => renderTemplateText(previewType, previewFmt),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [previewType, previewFmt, categories],
+  );
+
+  const handleCopyPreview = async () => {
+    try {
+      await navigator.clipboard.writeText(previewText);
+      setCopied(true);
+      toast({ title: "Copied to clipboard" });
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast({ title: "Copy failed", variant: "destructive" });
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
       <DialogContent className="bg-background/95 backdrop-blur-xl border-border/40 max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -363,6 +401,9 @@ export default function ImportProductsDialog({ open, onClose, onImported }: Prop
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => setTemplateOpen(true)}>
             <Download className="h-3 w-3 mr-1" /> Download template
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setPreviewOpen(true)}>
+            <Eye className="h-3 w-3 mr-1" /> Preview template
           </Button>
         </div>
 
@@ -429,6 +470,106 @@ export default function ImportProductsDialog({ open, onClose, onImported }: Prop
                 <FileSpreadsheet className="h-3 w-3 mr-1" /> CSV
               </Button>
               </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Template PREVIEW (same selector → renders the file as copyable text) */}
+        <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+          <DialogContent className="bg-background/95 backdrop-blur-xl border-border/40 max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="font-light">Preview template</DialogTitle>
+              <DialogDescription className="text-xs">
+                Choose a product type and format. The content below is built from your live
+                categories and can be copied straight into a file.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Product type</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {TYPES.map((t) => {
+                    const active = previewType === t;
+                    return (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setPreviewType(t)}
+                        className={`rounded-lg border px-3 py-2 text-left text-xs transition-colors ${
+                          active
+                            ? "border-wj-green bg-wj-green/10 text-wj-green"
+                            : "border-border/40 hover:border-wj-green/40 text-foreground/80"
+                        }`}
+                      >
+                        {TYPE_LABELS[t]}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="inline-flex rounded-lg border border-border/40 p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setPreviewFmt("csv")}
+                    className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                      previewFmt === "csv" ? "bg-wj-green text-background" : "text-foreground/70"
+                    }`}
+                  >
+                    <FileSpreadsheet className="h-3 w-3 inline mr-1" /> CSV
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewFmt("json")}
+                    className={`px-3 py-1 text-xs rounded-md transition-colors ${
+                      previewFmt === "json" ? "bg-wj-green text-background" : "text-foreground/70"
+                    }`}
+                  >
+                    <FileJson className="h-3 w-3 inline mr-1" /> JSON
+                  </button>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyPreview}
+                  disabled={!previewText}
+                >
+                  {copied ? (
+                    <>
+                      <Check className="h-3 w-3 mr-1 text-wj-green" /> Copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3 w-3 mr-1" /> Copy
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              <pre className="rounded-lg border border-border/30 bg-background/60 p-3 text-[11px] leading-relaxed max-h-80 overflow-auto whitespace-pre font-mono">
+                {previewText || "// No categories available — create one first."}
+              </pre>
+            </div>
+
+            <div className="flex justify-between items-center gap-2 pt-2 border-t border-border/30">
+              <Button variant="ghost" size="sm" onClick={() => setPreviewOpen(false)}>
+                Close
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => {
+                  setTemplateType(previewType);
+                  setPreviewOpen(false);
+                  setTimeout(() => downloadTemplate(previewFmt), 50);
+                }}
+                disabled={!previewText}
+                className="bg-wj-green hover:bg-wj-green/90"
+              >
+                <Download className="h-3 w-3 mr-1" /> Download this template
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
