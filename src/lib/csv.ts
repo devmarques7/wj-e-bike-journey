@@ -21,12 +21,14 @@ export function triggerDownload(blob: Blob, filename: string) {
   a.href = url;
   a.download = filename;
   a.rel = "noopener";
+  // target=_blank lets sandboxed iframes (like the Lovable preview) hand
+  // the download off to the top-level browser context.
+  a.target = "_blank";
   a.style.display = "none";
   document.body.appendChild(a);
   a.click();
-  // Defer cleanup so the browser has time to start the download
   setTimeout(() => {
     a.remove();
     URL.revokeObjectURL(url);
-  }, 1000);
+  }, 4000);
 }
