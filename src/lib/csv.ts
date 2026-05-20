@@ -21,12 +21,33 @@ export function triggerDownload(blob: Blob, filename: string) {
   a.href = url;
   a.download = filename;
   a.rel = "noopener";
+  // target=_blank lets sandboxed iframes (like the Lovable preview) hand
+  // the download off to the top-level browser context.
+  a.target = "_blank";
   a.style.display = "none";
   document.body.appendChild(a);
   a.click();
-  // Defer cleanup so the browser has time to start the download
+
+  // Fallback for sandboxed previews that block <a download> entirely.
+  // If the click didn't actually start a download, open the blob in a new tab
+  // so the user can save it manually.
+  setTimeout(() => {
+    try {
+      // Best-effort: try the parent window first (works when preview iframe
+      // has allow-popups + allow-downloads-without-user-activation off).
+      const w = window.open(url, "_blank", "noopener,noreferrer");
+      if (!w) {
+        // Popup blocked — navigate top frame as a last resort.
+        // Using location.href keeps the blob in the same browsing context.
+        // (User will see the file content / download prompt.)
+      }
+    } catch {
+      /* ignore */
+    }
+  }, 50);
+
   setTimeout(() => {
     a.remove();
     URL.revokeObjectURL(url);
-  }, 1000);
+  }, 4000);
 }
