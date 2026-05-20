@@ -5,8 +5,6 @@ import {
   AlertTriangle,
   ArrowDownToLine,
   Wallet,
-  History,
-  Lock,
   Settings2,
   ArrowLeftRight,
   ShoppingCart,
