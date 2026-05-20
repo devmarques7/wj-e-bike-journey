@@ -1,6 +1,6 @@
 import { Info } from "lucide-react";
+import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { Label } from "@/components/ui/label";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Props {
   label: string;
@@ -17,18 +17,26 @@ export default function FieldLabel({ label, hint, required, className }: Props) 
         {label}
         {required && <span className="text-red-400 ml-0.5">*</span>}
       </Label>
-      <TooltipProvider delayDuration={120}>
-        <Tooltip>
-          <TooltipTrigger asChild>
+      <TooltipPrimitive.Provider delayDuration={120}>
+        <TooltipPrimitive.Root>
+          <TooltipPrimitive.Trigger asChild>
             <button type="button" className="text-muted-foreground/60 hover:text-wj-green transition-colors">
               <Info className="h-3 w-3" />
             </button>
-          </TooltipTrigger>
-          <TooltipContent side="top" className="max-w-[260px] text-[11px] leading-relaxed bg-background/95 backdrop-blur-md border-border/40">
-            {hint}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+          </TooltipPrimitive.Trigger>
+          <TooltipPrimitive.Portal>
+            <TooltipPrimitive.Content
+              side="top"
+              sideOffset={6}
+              collisionPadding={12}
+              avoidCollisions
+              className="z-[200] max-w-[260px] rounded-md border border-border/40 bg-background/95 backdrop-blur-md px-3 py-1.5 text-[11px] leading-relaxed text-popover-foreground shadow-lg animate-in fade-in-0 zoom-in-95"
+            >
+              {hint}
+            </TooltipPrimitive.Content>
+          </TooltipPrimitive.Portal>
+        </TooltipPrimitive.Root>
+      </TooltipPrimitive.Provider>
     </div>
   );
 }
