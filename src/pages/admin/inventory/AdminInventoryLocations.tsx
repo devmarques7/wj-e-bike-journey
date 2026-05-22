@@ -15,6 +15,7 @@ import { toast } from "@/hooks/use-toast";
 import FieldLabel from "@/components/dashboard/inventory/FieldLabel";
 import ImportLocationsDialog from "@/components/dashboard/inventory/ImportLocationsDialog";
 import ExportDataButton from "@/components/dashboard/inventory/ExportDataButton";
+import InventoryBackHeader from "@/components/dashboard/inventory/InventoryBackHeader";
 
 const TYPES = ["warehouse", "store_floor", "virtual"];
 
@@ -65,6 +66,7 @@ export default function AdminInventoryLocations() {
   return (
     <AdminDashboardLayout>
       <div className="p-4 lg:p-6 space-y-6">
+        <InventoryBackHeader current="Locations" />
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl sm:text-2xl font-light">Locations</h1>
