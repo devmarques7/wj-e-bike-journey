@@ -77,23 +77,45 @@ export default function AdminHeader() {
             </span>
           </Link>
           
-          {/* Quick Nav Pills */}
+          {/* Quick Nav — animated icon pills with expanding label */}
           <div className="hidden lg:flex items-center gap-1 ml-4 pl-4 border-l border-border/30">
-            {quickNavItems.map((item) => (
-              <Link
-                key={item.href}
-                to={item.href}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-colors",
-                  isActive(item.href)
-                    ? "bg-wj-green/20 text-wj-green font-medium"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                )}
-              >
-                <item.icon className="h-3.5 w-3.5" />
-                <span>{item.label}</span>
-              </Link>
-            ))}
+            {quickNavItems.map((item) => {
+              const active = isActive(item.href);
+              const Icon = item.icon;
+              return (
+                <Link key={item.href} to={item.href} aria-label={item.label}>
+                  <motion.div
+                    whileTap={{ scale: 0.96 }}
+                    className={cn(
+                      "flex items-center h-9 rounded-full px-2.5 transition-colors duration-200 relative overflow-hidden",
+                      active
+                        ? "bg-wj-green/15 text-wj-green"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                    )}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <motion.div
+                      initial={false}
+                      animate={{
+                        width: active ? 80 : 0,
+                        opacity: active ? 1 : 0,
+                        marginLeft: active ? 8 : 0,
+                      }}
+                      transition={{
+                        width: { type: "spring", stiffness: 350, damping: 32 },
+                        opacity: { duration: 0.18 },
+                        marginLeft: { duration: 0.18 },
+                      }}
+                      className="overflow-hidden flex items-center"
+                    >
+                      <span className="text-xs font-medium whitespace-nowrap">
+                        {item.label}
+                      </span>
+                    </motion.div>
+                  </motion.div>
+                </Link>
+              );
+            })}
           </div>
         </div>
 
