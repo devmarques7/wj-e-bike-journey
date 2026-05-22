@@ -12,6 +12,7 @@ import { toast } from "@/hooks/use-toast";
 import ProductEditDialog from "@/components/dashboard/inventory/ProductEditDialog";
 import ImportProductsDialog from "@/components/dashboard/inventory/ImportProductsDialog";
 import ExportDataButton from "@/components/dashboard/inventory/ExportDataButton";
+import InventoryBackHeader from "@/components/dashboard/inventory/InventoryBackHeader";
 import type { Product } from "@/hooks/inventory/useCatalogCrud";
 
 export default function AdminInventoryProducts() {
@@ -45,6 +46,7 @@ export default function AdminInventoryProducts() {
   return (
     <AdminDashboardLayout>
       <div className="p-4 lg:p-6 space-y-6">
+        <InventoryBackHeader current="Products" />
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl sm:text-2xl font-light">Products</h1>
