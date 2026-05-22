@@ -1,0 +1,73 @@
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Navigate, Link } from "react-router-dom";
+import { Plus, Users, Euro, ArrowRight } from "lucide-react";
+import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { usePlans, type PlanWithActiveVersion } from "@/hooks/plans/usePlansData";
+import PlanFormModal from "@/components/dashboard/plans/PlanFormModal";
+
+export default function AdminPlansManage() {
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const { plans, refetch, loading } = usePlans();
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<PlanWithActiveVersion | null>(null);
+
+  if (isLoading) return null;
+  if (!isAuthenticated) return <Navigate to="/auth" replace />;
+  if (user?.role !== "admin") return <Navigate to="/dashboard" replace />;
+
+  return (
+    <AdminDashboardLayout>
+      <div className="p-4 lg:p-6 space-y-6">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-light text-foreground">Manage Plans</h1>
+            <p className="text-sm text-muted-foreground mt-1">Create, edit and archive subscription plans</p>
+          </div>
+          <Button onClick={() => { setEditing(null); setOpen(true); }} className="bg-wj-green hover:bg-wj-green/90 gap-2">
+            <Plus className="h-4 w-4" /> New Plan
+          </Button>
+        </div>
+
+        {loading ? (
+          <div className="text-sm text-muted-foreground">Loading…</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {plans.map((p, i) => (
+              <motion.div key={p.id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-5 flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full" style={{ background: p.color_hex ?? "#666" }} />
+                    <h3 className="font-medium">{p.name}</h3>
+                  </div>
+                  {p.is_active ? <Badge className="bg-wj-green/20 text-wj-green">Active</Badge> : <Badge variant="outline">Archived</Badge>}
+                </div>
+                {p.description && <p className="text-xs text-muted-foreground line-clamp-2">{p.description}</p>}
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl font-light">€{Number(p.activeVersion?.price ?? 0).toFixed(2)}</span>
+                  <span className="text-xs text-muted-foreground">/ {p.activeVersion?.interval ?? "—"}</span>
+                </div>
+                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {p.activeSubs} subs</span>
+                  <span className="flex items-center gap-1"><Euro className="h-3 w-3" /> v{p.activeVersion?.version_number ?? 0}</span>
+                </div>
+                <div className="flex gap-2 mt-auto pt-2">
+                  <Button size="sm" variant="outline" className="flex-1" onClick={() => { setEditing(p); setOpen(true); }}>Edit</Button>
+                  <Link to={`/dashboard/admin/plans/${p.id}`} className="flex-1">
+                    <Button size="sm" variant="outline" className="w-full gap-1">View <ArrowRight className="h-3 w-3" /></Button>
+                  </Link>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+
+        <PlanFormModal open={open} onOpenChange={setOpen} plan={editing} onSaved={refetch} />
+      </div>
+    </AdminDashboardLayout>
+  );
+}
