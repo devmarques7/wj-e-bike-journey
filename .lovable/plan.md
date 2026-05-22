@@ -1,176 +1,202 @@
-# Plano Estratégico — Página de Inventory WJ Ecossistema
+# Plano — Subscription Plans (Híbrido Stripe + Manual, Versionado)
 
-## 1. Análise do Documento (essencial para Inventory)
+## 1. Visão Geral
 
-O domínio Inventory do WJ envolve **6 tabelas + 1 view + enums** que precisam ser criadas no Supabase antes da UI:
-
-**Tabelas core (Migration 002–004):**
-- `categories` + `category_closure` — hierarquia (bikes, accessories, services, parts, insurance)
-- `products` — produto pai (nome, slug, preço base, tipo, multilingual NL/EN/PT)
-- `product_variants` — SKU real com stock (cor/tamanho/bateria)
-- `product_images` / `product_specifications` / `tags` / `product_tag_map`
-- `locations` — Armazém Rotterdam, Loja Floor, Virtual
-- `inventory` — qty_available / qty_reserved / qty_incoming / low_stock_threshold / reorder_point **por variant × location**
-- `inventory_movements` — **append-only** audit trail (sale, return, adjustment, transfer, incoming, reservation)
-
-**Enums críticos:** `product_type_enum`, `category_type_enum`, `location_type_enum`, `movement_type_enum`.
-
-**View essencial:** `v_product_stock` — agrega stock por produto/variante (já consumível pelo frontend).
-
-**Regras de negócio (não-negociáveis):**
-- `inventory_movements` NUNCA pode ser UPDATE/DELETE (RLS bloqueia).
-- Ajustar stock = INSERT em `movements` + UPDATE em `inventory` (idealmente via RPC transacional).
-- `qty_real = qty_available - qty_reserved` é o que importa para "low stock".
-- Acesso restrito a `admin` e `staff` (via `has_role`).
+Construir um módulo completo de Subscription Plans dentro de `/dashboard/admin/plans`, mantendo o layout actual (KPIs + charts + tabela) como **página principal**, e adicionando subpáginas de CRUD, detalhe de plano e detalhe de subscriber. Pagamentos são processados via **Stripe** (online, recorrente) **ou** registados **manualmente** (cash/transferência/cartão presencial). Cada plano é **versionado** — alterar o preço não afecta subscribers existentes (grandfathering).
 
 ---
 
-## 2. Arquitetura de Páginas e Modais
+## 2. Arquitectura de Páginas
 
 ```text
-/dashboard/admin/inventory                      ← Hub principal (lista + KPIs)
-  ├─ ?tab=stock        Tabela completa de variantes × locations
-  ├─ ?tab=low-stock    Filtro: itens abaixo do threshold
-  ├─ ?tab=incoming     Itens com qty_incoming > 0
-  └─ ?tab=movements    Histórico append-only de movimentações
+/dashboard/admin/plans                         ← Hub (layout actual mantido)
+  └─ KPIs (MRR, ARPU, Churn, Active Subs) + Charts + Tabela global de subscribers
 
-/dashboard/admin/inventory/products             ← Catálogo (CRUD produtos)
-/dashboard/admin/inventory/products/:id         ← Detalhe do produto + variantes + imagens + specs
-/dashboard/admin/inventory/products/new         ← Wizard criar produto
+/dashboard/admin/plans/manage                  ← CRUD de planos (lista + criar)
+/dashboard/admin/plans/:planId                 ← Detalhe do plano + editor inline
+  ├─ KPIs específicos do plano
+  ├─ Gráficos de evolução
+  ├─ Lista de subscribers desse plano
+  └─ Histórico de versões (preço/features)
 
-/dashboard/admin/inventory/locations            ← Gerir armazéns
-/dashboard/admin/inventory/categories           ← Gerir hierarquia de categorias
+/dashboard/admin/plans/subscriber/:subscriberId
+  ├─ Header: nome, plano actual, status, MRR contribution, LTV, churn risk
+  ├─ Tabs: Pagamentos | Histórico de Planos | Faturas | Métodos | Notas
+  └─ Acções: registar pagamento manual, mudar plano, cancelar, refund
 
-Modais (sobre a página principal):
-  • AdjustStockModal          (ajuste manual + razão)
-  • ReceiveStockModal         (entrada — wizard PO simplificado)
-  • TransferStockModal        (mover entre locations)
-  • ReorderModal              (sugestão de reposição baseada em reorder_point)
-  • VariantQuickEditModal     (preço, threshold, ativar/desativar)
-  • MovementDetailDrawer      (ver detalhes de uma movimentação)
+Modais:
+  • PlanFormModal           (criar/editar plano — gera nova versão)
+  • RegisterManualPaymentModal
+  • ChangePlanModal         (upgrade/downgrade com proration opcional)
+  • CancelSubscriptionModal
+  • RefundModal
 ```
 
 ---
 
-## 3. Fluxo de UX (sequência de modais)
+## 3. Modelo de Dados (Supabase)
 
-**Fluxo 1 — Ajuste rápido de stock (ação mais comum):**
-```
-Tabela → clica linha → swipe-action "Adjust" → AdjustStockModal
-  (qty delta + motivo + notes) → confirma → toast + linha atualiza em real-time
-```
-
-**Fluxo 2 — Receber stock novo (Incoming → Available):**
-```
-KPI "Incoming" → Click → Lista incoming → "Receive" →
-  ReceiveStockModal (confirma qty recebida vs esperada) →
-  cria movement type='incoming' + zera qty_incoming + soma qty_available
-```
-
-**Fluxo 3 — Reorder inteligente:**
-```
-KPI "Low Stock" pulsa → Click → Lista filtrada por threshold →
-  Botão "Generate Reorder" → ReorderModal com qty sugerida
-  (reorder_point - qty_available) → exporta CSV/email fornecedor
-```
-
-**Fluxo 4 — Auditoria (append-only):**
-```
-Tab "Movements" → filtros (date range, type, location, variant) →
-  Click linha → MovementDetailDrawer (mostra ref order/return/user)
-```
-
----
-
-## 4. KPIs da Página (dados reais via Supabase)
-
-| KPI | Query |
-|---|---|
-| Total SKUs | `count(product_variants where is_active)` |
-| Low Stock | `count(inventory where qty_available - qty_reserved <= low_stock_threshold)` |
-| Incoming | `sum(qty_incoming)` |
-| Stock Value | `sum(qty_available × variant.price)` |
-| Movements (7d) | `count(inventory_movements where created_at > now() - 7d)` |
-| Reserved | `sum(qty_reserved)` |
-
-Mobile: usar o `KPICarousel` reutilizável já existente.
-
----
-
-## 5. Plano de Execução (fases)
-
-### **Fase 1 — Backend (migrations Supabase)**
-1. Migration A: enums + `categories` + `category_closure` + trigger + seed
-2. Migration B: `products` + `product_variants` + `product_images` + `product_specifications` + `tags` + `product_tag_map` + seed tags
-3. Migration C: `locations` + `inventory` + `inventory_movements` + trigger + seed locations
-4. Migration D: RLS (admin/staff read+write, movements INSERT-only)
-5. Migration E: View `v_product_stock` + RPC `fn_adjust_stock(variant_id, location_id, delta, type, ref)` transacional
-6. Migration F: Realtime publication em `inventory` e `inventory_movements`
-
-### **Fase 2 — Hooks de dados**
-- `src/hooks/inventory/useInventoryKPIs.ts`
-- `src/hooks/inventory/useInventoryList.ts` (com filtros + paginação)
-- `src/hooks/inventory/useMovements.ts`
-- `src/hooks/inventory/useAdjustStock.ts` (mutation que chama RPC)
-- `src/hooks/inventory/useRealtimeInventory.ts` (Supabase channel)
-
-### **Fase 3 — UI Refactor `AdminInventory.tsx`**
-- Remover todo o mock (`inventoryKPIs`, `inventoryItems`, `categories`)
-- Conectar KPIs reais + `KPICarousel` no mobile
-- Tabela: variant_name, SKU, location, qty_available, qty_reserved, threshold, status badge, ações
-- Tabs: Stock / Low Stock / Incoming / Movements
-- Realtime: animação verde quando linha muda
-
-### **Fase 4 — Modais e ações**
-- AdjustStock, ReceiveStock, Transfer, Reorder, VariantQuickEdit, MovementDetailDrawer
-- Padrão swipe-to-confirm consistente com Service Request
-
-### **Fase 5 — Subpáginas**
-- `/products` (CRUD), `/products/:id`, `/locations`, `/categories`
-
-### **Fase 6 — Polimento**
-- Empty states, skeletons, error boundaries
-- Export CSV (stock atual + histórico de movimentos)
-- Search global (`pg_trgm` em product.name)
-- Filtros sticky por location + categoria
-
----
-
-## 6. Detalhes Técnicos
-
-**RPC transacional para ajuste (evita race condition):**
+### Enums
 ```sql
-fn_adjust_stock(p_variant uuid, p_location uuid, p_delta int,
-                p_type movement_type_enum, p_ref_type text, p_ref_id uuid, p_notes text)
-→ INSERT movement + UPDATE inventory atomicamente
-→ Retorna inventory row atualizado
+plan_interval_enum    : monthly | quarterly | yearly | lifetime
+plan_status_enum      : draft | active | archived
+subscription_status   : trialing | active | past_due | canceled | paused
+payment_method_enum   : stripe_card | stripe_sepa | cash | bank_transfer | pos_card | other
+payment_status_enum   : pending | succeeded | failed | refunded
 ```
 
-**Realtime channels:**
-```ts
-supabase.channel('inventory')
-  .on('postgres_changes', { event: '*', table: 'inventory' }, refetch)
-  .on('postgres_changes', { event: 'INSERT', table: 'inventory_movements' }, prepend)
-```
+### Tabelas principais
 
-**Permissões:** todos os endpoints exigem `has_role(auth.uid(),'admin')` OR `has_role('staff')`.
+**`plans`** — definição base (sem preço, sem features detalhadas)
+- name, slug, tier_level (int), description, color_hex, icon
+- is_active, display_order, stripe_product_id
+
+**`plan_versions`** — versionamento (grandfathering)
+- plan_id, version_number, price, currency, interval, trial_days
+- features (jsonb: array de strings ou objects)
+- stripe_price_id, status (draft/active/archived), effective_from
+- Sempre uma versão `active` por plan; ao editar, nova versão é criada e a anterior fica `archived` mas subscribers antigos continuam ligados a ela.
+
+**`subscriptions`** — uma por subscriber
+- user_id, plan_version_id (FK — preserva preço grandfathered), status
+- started_at, current_period_start, current_period_end, canceled_at
+- stripe_subscription_id (nullable), payment_method (enum)
+- cancel_at_period_end (bool)
+
+**`subscription_events`** — audit append-only
+- subscription_id, event_type (created|upgraded|downgraded|paused|canceled|reactivated|payment_failed)
+- from_plan_version_id, to_plan_version_id, metadata jsonb, created_by
+
+**`payments`** — todos os pagamentos (Stripe + manuais)
+- subscription_id, user_id, amount, currency, status
+- method (enum), stripe_payment_intent_id (nullable)
+- paid_at, period_start, period_end
+- recorded_by (nullable — staff que registou manual), notes
+- invoice_url (Stripe-hosted ou PDF gerado)
+
+**`payment_methods`** — métodos guardados (só Stripe)
+- user_id, stripe_payment_method_id, brand, last4, exp_month, exp_year, is_default
+
+### Views
+- `v_plan_kpis` — MRR, ARPU, active_subs, churn_30d por plano
+- `v_subscriber_summary` — LTV, total_paid, payments_count, current_mrr, churn_risk_score por user
+- `v_mrr_timeseries` — MRR mensal agregado (para charts)
+
+### RPCs
+- `fn_create_plan_version(plan_id, price, features, ...)` — cria versão + arquiva anterior + cria Stripe Price (via edge function trigger)
+- `fn_change_subscription_plan(sub_id, new_plan_version_id, proration_mode)`
+- `fn_register_manual_payment(sub_id, amount, method, period_start, period_end, notes)`
+- `fn_cancel_subscription(sub_id, at_period_end bool)`
+
+### RLS
+- `plans`, `plan_versions` — read público (necessário para `/membership-plans`), write `admin`
+- `subscriptions`, `payments` — read próprio + `admin`/`staff`, write admin
+- `subscription_events`, `payment_methods` — admin only para escrita
 
 ---
 
-## 7. Entregáveis por iteração
+## 4. Integração Stripe (Híbrida)
 
-1. **Iter 1** → Migrations Fase 1 (peço aprovação antes de executar)
-2. **Iter 2** → Hooks + UI principal de Inventory ligada a dados reais
-3. **Iter 3** → AdjustStock + ReceiveStock + realtime
-4. **Iter 4** → Tab Movements + filtros + drawer
-5. **Iter 5** → Subpáginas Products / Locations / Categories
-6. **Iter 6** → Reorder modal + export + polimento
+### Edge Functions
+- `stripe-create-checkout-session` — gera Checkout Session para nova subscrição
+- `stripe-customer-portal` — link para o portal do cliente (gerir cartão, faturas)
+- `stripe-webhook` — recebe `customer.subscription.*`, `invoice.payment_succeeded`, `invoice.payment_failed`, `charge.refunded` e sincroniza com `subscriptions` e `payments`
+- `stripe-sync-plan-version` — quando admin cria/edita plan_version, cria Stripe Product + Price
+
+### Segredos necessários
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+
+### Fluxo manual
+Admin abre subscriber → "Registar pagamento manual" → escolhe método (cash/transfer/POS) + valor + período coberto → INSERT em `payments` com `method != stripe_*` + UPDATE `subscriptions.current_period_end`. Não toca em Stripe.
+
+> **Decisão de recomendar Lovable Payments (seamless Stripe) em vez de BYOK**: vou usar `enable_stripe_payments` para não pedir API key e ter compliance handling configurável por sessão. (Confirmar antes de avançar.)
+
+---
+
+## 5. Página Hub — `/dashboard/admin/plans`
+
+**Mantém o layout actual.** Apenas substitui os dados mock por dados reais:
+
+- KPIs ligados a `v_plan_kpis` (agregado): MRR, Active Subscribers, Churn Rate, ARPU
+- Chart "Revenue & Growth" → `v_mrr_timeseries`
+- "Bike Model Adoption" → renomear para "Plan Adoption" (subscribers por plan)
+- Tabela "All Subscribers" → query real com filtros (plan, status, payment method)
+- Adicionar botão "Manage Plans" → `/dashboard/admin/plans/manage`
+- Cada linha clicável → `/dashboard/admin/plans/subscriber/:id`
+
+---
+
+## 6. Página Plan Detail — `/dashboard/admin/plans/:planId`
+
+Grid 12-col, glassmorphism, tumbler-style:
+
+- **Row 1 (col-span 12)**: Header com nome do plano, badge de status, versão actual, preço, CTA "Edit" (abre PlanFormModal — gera nova versão)
+- **Row 2 (col-span 8)**: Chart de evolução de subscribers + MRR
+- **Row 2 (col-span 4)**: KPIs específicos (MRR, Subs, Churn, ARPU, Trial→Paid conversion)
+- **Row 3 (col-span 12)**: Tabs
+  - **Subscribers** — tabela filtrável (status, version, payment method)
+  - **Versions** — histórico (preço antigo, qtos subs ainda em cada versão)
+  - **Features** — editor inline tipo bullet list
+- **Editor inline** num drawer lateral para preço/descrição/features com preview ao vivo da pricing card.
+
+---
+
+## 7. Página Subscriber Detail — `/dashboard/admin/plans/subscriber/:id`
+
+- Header glass card: avatar, nome, email, phone, status badge, current plan, started_at, MRR contribution, LTV total, churn risk (computado: dias desde último pagamento / falhas)
+- Quick actions row: Register Manual Payment | Change Plan | Pause | Cancel | Refund Last
+- Tabs:
+  - **Payments** — tabela ordenada desc (data, valor, método, status, período coberto, recorded_by, notas, link fatura)
+  - **Plan History** — timeline de `subscription_events`
+  - **Invoices** — links Stripe + PDFs manuais
+  - **Methods** — cartões Stripe guardados (read-only)
+  - **Notes** — campo livre (staff)
+
+---
+
+## 8. CRUD `/dashboard/admin/plans/manage`
+
+- Lista todos os planos em cards (estilo Inventory): nome, preço actual, subs activos, MRR, status toggle
+- Botão "+ New Plan" → modal wizard (name, tier, interval, price, features, trial_days)
+- Editar abre o mesmo modal → ao guardar, cria nova `plan_version` e arquiva a anterior (subscribers ficam grandfathered)
+- Toggle archive → impede novas subscrições mas mantém existentes
+
+---
+
+## 9. Hooks (React Query)
+
+```text
+src/hooks/plans/
+  usePlans.ts                  — lista + CRUD
+  usePlanVersions.ts           — histórico de versões
+  usePlanDetail.ts             — KPIs + subscribers de um plano
+  useSubscriptions.ts          — lista global filtrável
+  useSubscriberDetail.ts       — dados completos de 1 subscriber
+  usePayments.ts               — pagamentos de uma subscription
+  useRegisterManualPayment.ts  — mutation
+  useChangePlan.ts             — mutation
+  useStripeCheckout.ts         — chama edge function
+  useMRRTimeseries.ts          — gráfico
+```
+
+---
+
+## 10. Fases de Execução
+
+1. **Fase 1 — Migrations**: enums + tabelas + views + RLS + RPCs (sem Stripe ainda)
+2. **Fase 2 — Hooks + página Hub** ligada a dados reais (mantém layout, troca mocks)
+3. **Fase 3 — CRUD `/manage` + PlanFormModal** com versionamento
+4. **Fase 4 — Plan Detail `/plans/:id`** com editor inline, KPIs, subscribers tab, versions tab
+5. **Fase 5 — Subscriber Detail `/plans/subscriber/:id`** + RegisterManualPaymentModal + ChangePlanModal + CancelModal
+6. **Fase 6 — Integração Stripe**: enable_stripe_payments → edge functions checkout/portal/webhook + sync plan_versions
+7. **Fase 7 — Polimento**: charts reais, export CSV, empty states, realtime em `payments`
 
 ---
 
 ## Perguntas antes de começar
 
-1. Posso criar **todas** as migrations da Fase 1 de uma vez (ou preferes fase por fase)?
-2. Queres dados **seed de exemplo** (5–10 produtos demo) para popular a página visualmente desde já?
-3. O catálogo deve ser **multilingual desde já** (NL/EN/PT) ou só EN inicialmente?
-4. Confirmar: **staff** também pode ajustar stock, ou só **admin**?
+1. Confirmas **Lovable Payments (seamless Stripe)** em vez de BYOK? (Recomendo seamless — sem precisar de conta Stripe própria nesta fase, mas eligibility check é feito antes de activar.)
+2. Posso criar **todas as migrations da Fase 1 numa só** (com seed dos 3 tiers actuais Light/Plus/Black como `plan_versions` iniciais)?
+3. Para o cálculo de **churn risk score** queres algo simples (dias desde último pagamento > período × 1.5) ou um score 0-100 ponderado (falhas + downgrade + atraso)?
+4. As **faturas manuais** devem gerar PDF automático no momento do registo, ou só guardar o registo e o PDF é opcional/anexado depois?
