@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Table,
   TableBody,
@@ -147,16 +148,38 @@ export default function AdminInventory() {
   if (!can("inventory.view")) return <Navigate to="/dashboard" replace />;
 
   const kpiCards = [
-    { label: "Stock Value", value: fmtEur(kpi.value), change: "live", trend: "up" as const, icon: Wallet },
-    { label: "Total SKUs", value: String(kpi.skus), change: `${rows.length} rows`, trend: "up" as const, icon: Package },
+    {
+      label: "Stock Value",
+      value: fmtEur(kpi.value),
+      change: "live",
+      trend: "up" as const,
+      icon: Wallet,
+      info: "Valor total do estoque a preço de venda — soma de (qty disponível × preço da variante ou preço base do produto) para todos os locais. Atualiza em tempo real via Supabase.",
+    },
+    {
+      label: "Total SKUs",
+      value: String(kpi.skus),
+      change: `${rows.length} rows`,
+      trend: "up" as const,
+      icon: Package,
+      info: "Número de variantes únicas com registro em inventário. Cada SKU é uma combinação produto + opção (ex: cor/tamanho). O contador de 'rows' inclui o mesmo SKU em múltiplos locais.",
+    },
     {
       label: "Low Stock",
       value: String(kpi.lowStock),
       change: kpi.lowStock > 0 ? "Action" : "OK",
       trend: kpi.lowStock > 0 ? ("down" as const) : ("up" as const),
       icon: AlertTriangle,
+      info: "Linhas onde (disponível − reservado) ≤ limite mínimo configurado por SKU/local (low_stock_threshold). Ação recomendada: receber estoque ou usar o botão Reorder.",
     },
-    { label: "Incoming", value: String(kpi.incoming), change: "units", trend: "up" as const, icon: ArrowDownToLine },
+    {
+      label: "Incoming",
+      value: String(kpi.incoming),
+      change: "units",
+      trend: "up" as const,
+      icon: ArrowDownToLine,
+      info: "Unidades já pedidas a fornecedores e em trânsito, ainda não recebidas (qty_incoming somado em todos os locais). Quando entram via 'Receive', viram disponíveis.",
+    },
   ];
 
   const exportStock = () =>
@@ -191,9 +214,18 @@ export default function AdminInventory() {
           </div>
           <div className="flex flex-wrap gap-2">
             {can("inventory.reorder") && (
-              <Button size="sm" onClick={() => setReorderOpen(true)} className="bg-wj-green hover:bg-wj-green/90">
-                <ShoppingCart className="h-4 w-4 mr-1" /> Reorder
-              </Button>
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button size="sm" onClick={() => setReorderOpen(true)} className="bg-wj-green hover:bg-wj-green/90">
+                      <ShoppingCart className="h-4 w-4 mr-1" /> Reorder
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-[260px] text-xs leading-relaxed">
+                    Lista todos os SKUs abaixo do ponto de reposição (reorder_point) e sugere a quantidade a comprar por local. Exportável em CSV para enviar ao fornecedor — não cria pedido automático.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
             {can("inventory.export") && (
               <Button size="sm" variant="outline" onClick={exportStock}>
