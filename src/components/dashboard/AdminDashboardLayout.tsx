@@ -1,7 +1,7 @@
 import { ReactNode, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import AdminHeader from "./AdminHeader";
-import AdminFooterNav from "./AdminFooterNav";
+import AdminFloatingNav from "./AdminFloatingNav";
 
 interface AdminDashboardLayoutProps {
   children: ReactNode;
@@ -75,9 +75,9 @@ export default function AdminDashboardLayout({ children }: AdminDashboardLayoutP
           </motion.div>
         </main>
 
-        {/* Mobile Footer Navigation */}
+        {/* Mobile Floating Navigation */}
         <div className="lg:hidden">
-          <AdminFooterNav />
+          <AdminFloatingNav />
         </div>
       </div>
     </div>
