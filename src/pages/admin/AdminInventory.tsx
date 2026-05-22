@@ -93,23 +93,6 @@ export default function AdminInventory() {
     });
   }, [rows, search, tab]);
 
-  if (authLoading) return null;
-  if (!isAuthenticated) return <Navigate to="/auth" replace />;
-  if (!can("inventory.view")) return <Navigate to="/dashboard" replace />;
-
-  const kpiCards = [
-    { label: "Stock Value", value: fmtEur(kpi.value), change: "live", trend: "up" as const, icon: Wallet },
-    { label: "Total SKUs", value: String(kpi.skus), change: `${rows.length} rows`, trend: "up" as const, icon: Package },
-    {
-      label: "Low Stock",
-      value: String(kpi.lowStock),
-      change: kpi.lowStock > 0 ? "Action" : "OK",
-      trend: kpi.lowStock > 0 ? ("down" as const) : ("up" as const),
-      icon: AlertTriangle,
-    },
-    { label: "Incoming", value: String(kpi.incoming), change: "units", trend: "up" as const, icon: ArrowDownToLine },
-  ];
-
   // Top selling products inferred from outgoing movements (negative qty_delta)
   const topProducts = useMemo(() => {
     const map = new Map<string, { id: string; name: string; type?: string; outQty: number }>();
@@ -158,6 +141,23 @@ export default function AdminInventory() {
       .sort((a, b) => b.count - a.count)
       .slice(0, 4);
   }, [products, categories]);
+
+  if (authLoading) return null;
+  if (!isAuthenticated) return <Navigate to="/auth" replace />;
+  if (!can("inventory.view")) return <Navigate to="/dashboard" replace />;
+
+  const kpiCards = [
+    { label: "Stock Value", value: fmtEur(kpi.value), change: "live", trend: "up" as const, icon: Wallet },
+    { label: "Total SKUs", value: String(kpi.skus), change: `${rows.length} rows`, trend: "up" as const, icon: Package },
+    {
+      label: "Low Stock",
+      value: String(kpi.lowStock),
+      change: kpi.lowStock > 0 ? "Action" : "OK",
+      trend: kpi.lowStock > 0 ? ("down" as const) : ("up" as const),
+      icon: AlertTriangle,
+    },
+    { label: "Incoming", value: String(kpi.incoming), change: "units", trend: "up" as const, icon: ArrowDownToLine },
+  ];
 
   const exportStock = () =>
     downloadCSV(
