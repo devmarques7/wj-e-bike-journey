@@ -60,9 +60,9 @@ export default function AdminFloatingNav() {
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", damping: 22, stiffness: 220 }}
-        className="lg:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50"
+        className="lg:hidden fixed bottom-4 inset-x-0 z-50 flex justify-center pointer-events-none px-4"
       >
-        <div className="flex items-center gap-1 rounded-full border border-border/40 bg-background/80 backdrop-blur-xl px-2 py-2 shadow-2xl shadow-black/30">
+        <div className="pointer-events-auto flex items-center gap-1 rounded-full border border-border/40 bg-background/80 backdrop-blur-xl px-2 py-2 shadow-2xl shadow-black/30 max-w-[calc(100vw-2rem)]">
           {primary.slice(0, 2).map((item) => (
             <NavBtn key={item.href} item={item} active={isActive(item.href)} onClick={() => navigate(item.href)} />
           ))}
