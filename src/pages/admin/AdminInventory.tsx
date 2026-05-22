@@ -110,38 +110,54 @@ export default function AdminInventory() {
     { label: "Incoming", value: String(kpi.incoming), change: "units", trend: "up" as const, icon: ArrowDownToLine },
   ];
 
-  const catalogPanels = [
-    {
-      key: "products",
-      icon: Package,
-      title: "Products",
-      count: products.length,
-      sub: `${products.filter((p: any) => p.is_active).length} active · ${products.filter((p: any) => p.is_featured).length} featured`,
-      href: "/dashboard/admin/inventory/products",
-      can: can("product.view"),
-      recent: products.slice(0, 3).map((p: any) => ({ id: p.id, label: p.name, meta: p.product_type })),
-    },
-    {
-      key: "categories",
-      icon: FolderTree,
-      title: "Categories",
-      count: categories.length,
-      sub: `${new Set(categories.map((c: any) => c.type)).size} types`,
-      href: "/dashboard/admin/inventory/categories",
-      can: can("category.manage"),
-      recent: categories.slice(0, 3).map((c: any) => ({ id: c.id, label: c.name, meta: c.type })),
-    },
-    {
-      key: "locations",
-      icon: MapPin,
-      title: "Locations",
-      count: locations.length,
-      sub: `${locations.filter((l: any) => l.is_active).length} active`,
-      href: "/dashboard/admin/inventory/locations",
-      can: can("location.manage"),
-      recent: locations.slice(0, 3).map((l: any) => ({ id: l.id, label: l.name, meta: l.location_type })),
-    },
-  ].filter((p) => p.can);
+  // Top selling products inferred from outgoing movements (negative qty_delta)
+  const topProducts = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; type?: string; outQty: number }>();
+    for (const m of movements) {
+      if (m.qty_delta >= 0) continue;
+      const pid = m.variant?.product?.id;
+      const pname = m.variant?.product?.name;
+      if (!pid || !pname) continue;
+      const cur = map.get(pid) ?? { id: pid, name: pname, outQty: 0 };
+      cur.outQty += Math.abs(m.qty_delta);
+      map.set(pid, cur);
+    }
+    // Enrich with product_type
+    for (const [id, entry] of map) {
+      const p = products.find((x: any) => x.id === id);
+      if (p) entry.type = p.product_type;
+    }
+    const ranked = Array.from(map.values()).sort((a, b) => b.outQty - a.outQty).slice(0, 4);
+    // Fallback: if no movements yet, show featured then active
+    if (ranked.length === 0) {
+      return products
+        .slice()
+        .sort((a: any, b: any) => Number(b.is_featured) - Number(a.is_featured))
+        .slice(0, 4)
+        .map((p: any) => ({ id: p.id, name: p.name, type: p.product_type, outQty: 0 }));
+    }
+    return ranked;
+  }, [movements, products]);
+
+  // Inventory aggregated per location
+  const stockByLocation = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const r of rows) m.set(r.location.id, (m.get(r.location.id) ?? 0) + r.qty_available);
+    return m;
+  }, [rows]);
+
+  // Top categories by product count
+  const topCategories = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const p of products as any[]) {
+      if (!p.category_id) continue;
+      counts.set(p.category_id, (counts.get(p.category_id) ?? 0) + 1);
+    }
+    return (categories as any[])
+      .map((c) => ({ id: c.id, name: c.name, type: c.type, count: counts.get(c.id) ?? 0 }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 4);
+  }, [products, categories]);
 
   const exportStock = () =>
     downloadCSV(
@@ -338,59 +354,172 @@ export default function AdminInventory() {
             )}
           </div>
 
-          {/* Right: Catalog panels */}
-          <div className="space-y-4">
-            <div className="text-[11px] uppercase tracking-wider text-muted-foreground px-1">Catalog</div>
-            {catalogPanels.map((p, i) => (
+          {/* Right: Catalog — Row 1 (Products) full / Row 2 (Categories + Locations) split */}
+          <div className="grid grid-cols-2 gap-4 content-start">
+            <div className="col-span-2 flex items-center justify-between px-1">
+              <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Catalog</div>
+              <Link to="/dashboard/admin/inventory/products" className="text-[10px] uppercase tracking-wider text-muted-foreground hover:text-foreground">
+                View all →
+              </Link>
+            </div>
+
+            {/* Row 1 — Top Products */}
+            {can("product.view") && (
               <motion.div
-                key={p.key}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35, delay: i * 0.05 }}
-                className="group relative bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4 hover:border-wj-green/40 transition-all"
+                transition={{ duration: 0.35 }}
+                className="col-span-2 bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-5 hover:border-wj-green/40 transition-all"
               >
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="h-9 w-9 rounded-xl bg-wj-green/10 border border-wj-green/20 flex items-center justify-center">
-                      <p.icon className="h-4 w-4 text-wj-green" />
+                      <Package className="h-4 w-4 text-wj-green" />
                     </div>
                     <div>
-                      <div className="text-xs uppercase tracking-wider text-muted-foreground">{p.title}</div>
-                      <div className="text-2xl font-light text-foreground leading-tight">{p.count}</div>
+                      <div className="text-[11px] uppercase tracking-wider text-muted-foreground">Top Products</div>
+                      <div className="text-2xl font-light text-foreground leading-tight">{products.length}</div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {products.filter((p: any) => p.is_active).length} active · {products.filter((p: any) => p.is_featured).length} featured
+                      </div>
                     </div>
                   </div>
-                  <Link to={p.href} className="text-muted-foreground hover:text-foreground" aria-label={`Open ${p.title}`}>
+                  <Link to="/dashboard/admin/inventory/products" className="text-muted-foreground hover:text-foreground">
                     <ArrowUpRight className="h-4 w-4" />
                   </Link>
                 </div>
 
-                <div className="text-[11px] text-muted-foreground mt-2">{p.sub}</div>
-
-                <div className="mt-3 space-y-1.5">
-                  {p.recent.length === 0 && (
-                    <div className="text-[11px] text-muted-foreground/70 italic">No entries yet</div>
+                <div className="space-y-2">
+                  {topProducts.length === 0 && (
+                    <div className="text-[11px] text-muted-foreground/70 italic">No products yet</div>
                   )}
-                  {p.recent.map((r) => (
-                    <div key={r.id} className="flex items-center justify-between text-xs border-b border-border/20 last:border-0 pb-1.5">
-                      <span className="truncate text-foreground/90">{r.label}</span>
-                      <span className="text-[10px] uppercase tracking-wide text-muted-foreground ml-2 shrink-0">{r.meta}</span>
+                  {topProducts.map((p, i) => (
+                    <Link
+                      key={p.id}
+                      to={`/dashboard/admin/inventory/products/${p.id}`}
+                      className="flex items-center justify-between gap-3 text-xs border-b border-border/20 last:border-0 pb-2 group/item"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-[10px] text-muted-foreground tabular-nums w-4">{String(i + 1).padStart(2, "0")}</span>
+                        <span className="truncate text-foreground/90 group-hover/item:text-wj-green transition-colors">{p.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {p.type && <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{p.type}</span>}
+                        <span className="text-[10px] tabular-nums text-wj-green">
+                          {p.outQty > 0 ? `${p.outQty} out` : "—"}
+                        </span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border/20">
+                  <Button asChild size="sm" variant="ghost" className="h-7 text-[11px] px-2">
+                    <Link to="/dashboard/admin/inventory/products"><ArrowUpRight className="h-3 w-3 mr-1" /> Manage</Link>
+                  </Button>
+                  <Button asChild size="sm" variant="ghost" className="h-7 text-[11px] px-2 text-wj-green hover:text-wj-green">
+                    <Link to="/dashboard/admin/inventory/products"><Plus className="h-3 w-3 mr-1" /> New</Link>
+                  </Button>
+                  <Button asChild size="sm" variant="ghost" className="h-7 text-[11px] px-2 ml-auto">
+                    <Link to="/dashboard/admin/inventory/products"><Upload className="h-3 w-3 mr-1" /> Import</Link>
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Row 2 — Categories */}
+            {can("category.manage") && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, delay: 0.05 }}
+                className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4 hover:border-wj-green/40 transition-all"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-wj-green/10 border border-wj-green/20 flex items-center justify-center">
+                      <FolderTree className="h-3.5 w-3.5 text-wj-green" />
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Categories</div>
+                      <div className="text-xl font-light text-foreground leading-tight">{categories.length}</div>
+                    </div>
+                  </div>
+                  <Link to="/dashboard/admin/inventory/categories" className="text-muted-foreground hover:text-foreground">
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+
+                <div className="space-y-1.5 min-h-[88px]">
+                  {topCategories.length === 0 && (
+                    <div className="text-[10px] text-muted-foreground/70 italic">No categories</div>
+                  )}
+                  {topCategories.map((c) => (
+                    <div key={c.id} className="flex items-center justify-between text-[11px] border-b border-border/20 last:border-0 pb-1">
+                      <span className="truncate text-foreground/90">{c.name}</span>
+                      <span className="text-[10px] tabular-nums text-muted-foreground ml-2 shrink-0">{c.count}</span>
                     </div>
                   ))}
                 </div>
 
-                <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/20">
-                  <Button asChild size="sm" variant="ghost" className="h-7 text-[11px] px-2">
-                    <Link to={p.href}><ArrowUpRight className="h-3 w-3 mr-1" /> Manage</Link>
+                <div className="flex items-center gap-1 mt-3 pt-2 border-t border-border/20">
+                  <Button asChild size="sm" variant="ghost" className="h-6 text-[10px] px-1.5 text-wj-green hover:text-wj-green">
+                    <Link to="/dashboard/admin/inventory/categories"><Plus className="h-3 w-3 mr-0.5" /> New</Link>
                   </Button>
-                  <Button asChild size="sm" variant="ghost" className="h-7 text-[11px] px-2 text-wj-green hover:text-wj-green">
-                    <Link to={p.href}><Plus className="h-3 w-3 mr-1" /> New</Link>
-                  </Button>
-                  <Button asChild size="sm" variant="ghost" className="h-7 text-[11px] px-2 ml-auto">
-                    <Link to={p.href}><Upload className="h-3 w-3 mr-1" /> Import</Link>
+                  <Button asChild size="sm" variant="ghost" className="h-6 text-[10px] px-1.5 ml-auto">
+                    <Link to="/dashboard/admin/inventory/categories"><Upload className="h-3 w-3 mr-0.5" /> Import</Link>
                   </Button>
                 </div>
               </motion.div>
-            ))}
+            )}
+
+            {/* Row 2 — Locations */}
+            {can("location.manage") && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, delay: 0.1 }}
+                className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4 hover:border-wj-green/40 transition-all"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-8 rounded-lg bg-wj-green/10 border border-wj-green/20 flex items-center justify-center">
+                      <MapPin className="h-3.5 w-3.5 text-wj-green" />
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Locations</div>
+                      <div className="text-xl font-light text-foreground leading-tight">{locations.length}</div>
+                    </div>
+                  </div>
+                  <Link to="/dashboard/admin/inventory/locations" className="text-muted-foreground hover:text-foreground">
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+
+                <div className="space-y-1.5 min-h-[88px]">
+                  {locations.length === 0 && (
+                    <div className="text-[10px] text-muted-foreground/70 italic">No locations</div>
+                  )}
+                  {(locations as any[]).slice(0, 4).map((l) => (
+                    <div key={l.id} className="flex items-center justify-between text-[11px] border-b border-border/20 last:border-0 pb-1">
+                      <span className="truncate text-foreground/90">{l.name}</span>
+                      <span className="text-[10px] tabular-nums text-muted-foreground ml-2 shrink-0">
+                        {stockByLocation.get(l.id) ?? 0}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex items-center gap-1 mt-3 pt-2 border-t border-border/20">
+                  <Button asChild size="sm" variant="ghost" className="h-6 text-[10px] px-1.5 text-wj-green hover:text-wj-green">
+                    <Link to="/dashboard/admin/inventory/locations"><Plus className="h-3 w-3 mr-0.5" /> New</Link>
+                  </Button>
+                  <Button asChild size="sm" variant="ghost" className="h-6 text-[10px] px-1.5 ml-auto">
+                    <Link to="/dashboard/admin/inventory/locations"><Upload className="h-3 w-3 mr-0.5" /> Import</Link>
+                  </Button>
+                </div>
+              </motion.div>
+            )}
           </div>
         </div>
       </div>
