@@ -24,7 +24,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Table,
   TableBody,
@@ -148,38 +147,16 @@ export default function AdminInventory() {
   if (!can("inventory.view")) return <Navigate to="/dashboard" replace />;
 
   const kpiCards = [
-    {
-      label: "Stock Value",
-      value: fmtEur(kpi.value),
-      change: "live",
-      trend: "up" as const,
-      icon: Wallet,
-      info: "Total stock value at sale price — sum of (available qty × variant price or product base price) across all locations. Updates in real time via Supabase.",
-    },
-    {
-      label: "Total SKUs",
-      value: String(kpi.skus),
-      change: `${rows.length} rows`,
-      trend: "up" as const,
-      icon: Package,
-      info: "Number of unique variants tracked in inventory. Each SKU is a product + option combo (e.g. color/size). The 'rows' counter includes the same SKU across multiple locations.",
-    },
+    { label: "Stock Value", value: fmtEur(kpi.value), change: "live", trend: "up" as const, icon: Wallet },
+    { label: "Total SKUs", value: String(kpi.skus), change: `${rows.length} rows`, trend: "up" as const, icon: Package },
     {
       label: "Low Stock",
       value: String(kpi.lowStock),
       change: kpi.lowStock > 0 ? "Action" : "OK",
       trend: kpi.lowStock > 0 ? ("down" as const) : ("up" as const),
       icon: AlertTriangle,
-      info: "Rows where (available − reserved) ≤ the per-SKU/location minimum threshold (low_stock_threshold). Recommended action: receive stock or use the Reorder button.",
     },
-    {
-      label: "Incoming",
-      value: String(kpi.incoming),
-      change: "units",
-      trend: "up" as const,
-      icon: ArrowDownToLine,
-      info: "Units already ordered from suppliers and in transit, not yet received (qty_incoming summed across all locations). They become available once registered via 'Receive'.",
-    },
+    { label: "Incoming", value: String(kpi.incoming), change: "units", trend: "up" as const, icon: ArrowDownToLine },
   ];
 
   const exportStock = () =>
@@ -214,23 +191,9 @@ export default function AdminInventory() {
           </div>
           <div className="flex flex-wrap gap-2">
             {can("inventory.reorder") && (
-              <TooltipProvider delayDuration={150}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button size="sm" onClick={() => setReorderOpen(true)} className="bg-wj-green hover:bg-wj-green/90">
-                      <ShoppingCart className="h-4 w-4 mr-1" /> Reorder
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent
-                    side="bottom"
-                    align="end"
-                    sideOffset={6}
-                    className="z-[100] max-w-[260px] text-xs leading-relaxed"
-                  >
-                    Lists every SKU below its reorder point and suggests the quantity to purchase per location. Exportable as CSV to send to the supplier — does not place an order automatically.
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Button size="sm" onClick={() => setReorderOpen(true)} className="bg-wj-green hover:bg-wj-green/90">
+                <ShoppingCart className="h-4 w-4 mr-1" /> Reorder
+              </Button>
             )}
             {can("inventory.export") && (
               <Button size="sm" variant="outline" onClick={exportStock}>
