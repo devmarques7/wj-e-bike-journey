@@ -3,12 +3,13 @@ import { Navigate, useParams, Link } from "react-router-dom";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useProduct, deleteVariant, type Variant } from "@/hooks/inventory/useCatalogCrud";
 import ProductEditDialog from "@/components/dashboard/inventory/ProductEditDialog";
 import VariantEditDialog from "@/components/dashboard/inventory/VariantEditDialog";
+import InventoryBackHeader from "@/components/dashboard/inventory/InventoryBackHeader";
 import { toast } from "@/hooks/use-toast";
 
 export default function AdminInventoryProductDetail() {
@@ -37,9 +38,11 @@ export default function AdminInventoryProductDetail() {
   return (
     <AdminDashboardLayout>
       <div className="p-4 lg:p-6 space-y-6">
-        <Link to="/dashboard/admin/inventory/products" className="inline-flex items-center text-xs text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-3 w-3 mr-1" /> Back
-        </Link>
+        <InventoryBackHeader
+          current={product?.name ?? "Product"}
+          to="/dashboard/admin/inventory/products"
+          parentLabel="Products"
+        />
 
         {loading && <p className="text-xs text-muted-foreground">Loading...</p>}
         {!loading && !product && <p className="text-xs text-muted-foreground">Product not found.</p>}
