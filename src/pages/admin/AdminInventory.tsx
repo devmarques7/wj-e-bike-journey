@@ -23,6 +23,12 @@ import { Navigate, Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -147,16 +153,38 @@ export default function AdminInventory() {
   if (!can("inventory.view")) return <Navigate to="/dashboard" replace />;
 
   const kpiCards = [
-    { label: "Stock Value", value: fmtEur(kpi.value), change: "live", trend: "up" as const, icon: Wallet },
-    { label: "Total SKUs", value: String(kpi.skus), change: `${rows.length} rows`, trend: "up" as const, icon: Package },
+    {
+      label: "Stock Value",
+      value: fmtEur(kpi.value),
+      change: "live",
+      trend: "up" as const,
+      icon: Wallet,
+      info: "Total retail value of stock on hand. Calculated as qty_available × unit price (variant override or product base price) across all locations.",
+    },
+    {
+      label: "Total SKUs",
+      value: String(kpi.skus),
+      change: `${rows.length} rows`,
+      trend: "up" as const,
+      icon: Package,
+      info: "Number of unique product variants (SKUs) tracked. The 'rows' counter is the same SKU stocked across multiple locations.",
+    },
     {
       label: "Low Stock",
       value: String(kpi.lowStock),
       change: kpi.lowStock > 0 ? "Action" : "OK",
       trend: kpi.lowStock > 0 ? ("down" as const) : ("up" as const),
       icon: AlertTriangle,
+      info: "SKUs where (qty_available − qty_reserved) is at or below the low_stock_threshold. These trigger the Reorder suggestions.",
     },
-    { label: "Incoming", value: String(kpi.incoming), change: "units", trend: "up" as const, icon: ArrowDownToLine },
+    {
+      label: "Incoming",
+      value: String(kpi.incoming),
+      change: "units",
+      trend: "up" as const,
+      icon: ArrowDownToLine,
+      info: "Total units expected from open purchase orders / transfers (qty_incoming). Updated when stock is received.",
+    },
   ];
 
   const exportStock = () =>
@@ -191,9 +219,22 @@ export default function AdminInventory() {
           </div>
           <div className="flex flex-wrap gap-2">
             {can("inventory.reorder") && (
-              <Button size="sm" onClick={() => setReorderOpen(true)} className="bg-wj-green hover:bg-wj-green/90">
-                <ShoppingCart className="h-4 w-4 mr-1" /> Reorder
-              </Button>
+              <TooltipProvider delayDuration={120}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button size="sm" onClick={() => setReorderOpen(true)} className="bg-wj-green hover:bg-wj-green/90">
+                      <ShoppingCart className="h-4 w-4 mr-1" /> Reorder
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="bottom"
+                    sideOffset={6}
+                    className="z-[200] max-w-[280px] rounded-md border border-border/40 bg-background/95 backdrop-blur-md text-[11px] leading-relaxed text-popover-foreground shadow-lg"
+                  >
+                    Opens the suggested reorder list: every SKU below its reorder point with a suggested purchase quantity. Exportable as CSV to send to suppliers.
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
             {can("inventory.export") && (
               <Button size="sm" variant="outline" onClick={exportStock}>
