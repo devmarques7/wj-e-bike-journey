@@ -41,6 +41,9 @@ import AdminInventoryProducts from "./pages/admin/inventory/AdminInventoryProduc
 import AdminInventoryProductDetail from "./pages/admin/inventory/AdminInventoryProductDetail";
 import AdminInventoryLocations from "./pages/admin/inventory/AdminInventoryLocations";
 import AdminInventoryCategories from "./pages/admin/inventory/AdminInventoryCategories";
+import AdminPlansManage from "./pages/admin/plans/AdminPlansManage";
+import AdminPlanDetail from "./pages/admin/plans/AdminPlanDetail";
+import AdminSubscriberDetail from "./pages/admin/plans/AdminSubscriberDetail";
 
 // Staff Pages
 import StaffOverview from "./pages/staff/StaffOverview";
@@ -87,6 +90,9 @@ const App = () => (
               <Route path="/dashboard/admin/workshop" element={<AdminWorkshop />} />
               <Route path="/dashboard/admin/manage" element={<AdminManage />} />
               <Route path="/dashboard/admin/plans" element={<AdminPlans />} />
+              <Route path="/dashboard/admin/plans/manage" element={<AdminPlansManage />} />
+              <Route path="/dashboard/admin/plans/subscriber/:subscriberId" element={<AdminSubscriberDetail />} />
+              <Route path="/dashboard/admin/plans/:planId" element={<AdminPlanDetail />} />
               <Route path="/dashboard/admin/members" element={<AdminMembers />} />
               <Route path="/dashboard/admin/inventory" element={<AdminInventory />} />
               <Route path="/dashboard/admin/inventory/products" element={<AdminInventoryProducts />} />
