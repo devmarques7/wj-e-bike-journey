@@ -39,7 +39,7 @@ export type MovementRow = {
   notes: string | null;
   created_by: string | null;
   created_at: string;
-  variant?: { sku: string; name: string; product?: { name: string } };
+  variant?: { sku: string; name: string; product?: { id: string; name: string } };
   location?: { name: string };
 };
 
@@ -112,7 +112,7 @@ export function useMovements(limit = 50) {
       .select(
         `id, variant_id, location_id, movement_type, qty_delta, reference_type,
          reference_id, notes, created_by, created_at,
-         variant:product_variants(sku, name, product:products(name)),
+         variant:product_variants(sku, name, product:products(id, name)),
          location:locations(name)`
       )
       .order("created_at", { ascending: false })
