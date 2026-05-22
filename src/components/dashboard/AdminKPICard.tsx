@@ -38,7 +38,7 @@ export default function AdminKPICard({ label, value, change, trend, icon: Icon, 
                     <Info className="h-3.5 w-3.5" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="top" sideOffset={6} className="z-[100] max-w-[240px] text-xs leading-relaxed">
+                <TooltipContent side="top" className="max-w-[240px] text-xs leading-relaxed">
                   {info}
                 </TooltipContent>
               </Tooltip>

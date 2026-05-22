@@ -154,7 +154,7 @@ export default function AdminInventory() {
       change: "live",
       trend: "up" as const,
       icon: Wallet,
-      info: "Total stock value at sale price — sum of (qty available × variant price or product base price) across all locations. Updates in real time via Supabase.",
+      info: "Valor total do estoque a preço de venda — soma de (qty disponível × preço da variante ou preço base do produto) para todos os locais. Atualiza em tempo real via Supabase.",
     },
     {
       label: "Total SKUs",
@@ -162,7 +162,7 @@ export default function AdminInventory() {
       change: `${rows.length} rows`,
       trend: "up" as const,
       icon: Package,
-      info: "Number of unique variants tracked in inventory. Each SKU is a product + option combination (e.g. color/size). The 'rows' counter includes the same SKU across multiple locations.",
+      info: "Número de variantes únicas com registro em inventário. Cada SKU é uma combinação produto + opção (ex: cor/tamanho). O contador de 'rows' inclui o mesmo SKU em múltiplos locais.",
     },
     {
       label: "Low Stock",
@@ -170,7 +170,7 @@ export default function AdminInventory() {
       change: kpi.lowStock > 0 ? "Action" : "OK",
       trend: kpi.lowStock > 0 ? ("down" as const) : ("up" as const),
       icon: AlertTriangle,
-      info: "Rows where (available − reserved) ≤ minimum threshold configured per SKU/location (low_stock_threshold). Recommended action: receive stock or use the Reorder button.",
+      info: "Linhas onde (disponível − reservado) ≤ limite mínimo configurado por SKU/local (low_stock_threshold). Ação recomendada: receber estoque ou usar o botão Reorder.",
     },
     {
       label: "Incoming",
@@ -178,7 +178,7 @@ export default function AdminInventory() {
       change: "units",
       trend: "up" as const,
       icon: ArrowDownToLine,
-      info: "Units already ordered from suppliers and in transit, not yet received (qty_incoming summed across all locations). They become available once logged via 'Receive'.",
+      info: "Unidades já pedidas a fornecedores e em trânsito, ainda não recebidas (qty_incoming somado em todos os locais). Quando entram via 'Receive', viram disponíveis.",
     },
   ];
 
@@ -221,8 +221,8 @@ export default function AdminInventory() {
                       <ShoppingCart className="h-4 w-4 mr-1" /> Reorder
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom" className="z-[100] max-w-[260px] text-xs leading-relaxed">
-                    Lists all SKUs below the reorder point and suggests the quantity to purchase per location. Exportable as CSV to send to the supplier — does not place an automatic order.
+                  <TooltipContent side="bottom" className="max-w-[260px] text-xs leading-relaxed">
+                    Lista todos os SKUs abaixo do ponto de reposição (reorder_point) e sugere a quantidade a comprar por local. Exportável em CSV para enviar ao fornecedor — não cria pedido automático.
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
