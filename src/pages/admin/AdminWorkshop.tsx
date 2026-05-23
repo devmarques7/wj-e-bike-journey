@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { 
   Calendar, 
@@ -6,8 +6,9 @@ import {
   Clock, 
   CheckCircle2, 
   AlertTriangle,
-  TrendingUp,
-  Bike
+  Loader2,
+  PlayCircle,
+  CheckCircle,
 } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
@@ -15,6 +16,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -23,65 +25,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-const workshopKPIs = [
-  {
-    label: "Today's Appointments",
-    value: "24",
-    change: "+4",
-    trend: "up" as const,
-    icon: Calendar,
-  },
-  {
-    label: "In Progress",
-    value: "8",
-    change: "+2",
-    trend: "up" as const,
-    icon: Wrench,
-  },
-  {
-    label: "Completed Today",
-    value: "12",
-    change: "+3",
-    trend: "up" as const,
-    icon: CheckCircle2,
-  },
-  {
-    label: "Avg. Service Time",
-    value: "2.4h",
-    change: "-15min",
-    trend: "up" as const,
-    icon: Clock,
-  },
-];
-
-const appointments = [
-  { id: 1, customer: "Jan van der Berg", bike: "V8 Sport", service: "Full Tune-Up", status: "in_progress", time: "09:00", mechanic: "Tom" },
-  { id: 2, customer: "Emma de Vries", bike: "V8 Comfort", service: "Brake Replacement", status: "pending", time: "10:30", mechanic: "Lisa" },
-  { id: 3, customer: "Lucas Jansen", bike: "V8 Urban", service: "Chain & Gear", status: "completed", time: "08:00", mechanic: "Mark" },
-  { id: 4, customer: "Sophie Bakker", bike: "V8 Sport", service: "Battery Check", status: "pending", time: "11:00", mechanic: "Tom" },
-  { id: 5, customer: "Daan Visser", bike: "V8 Cargo", service: "Wheel Alignment", status: "in_progress", time: "09:30", mechanic: "Lisa" },
-  { id: 6, customer: "Fleur Smit", bike: "V8 Urban", service: "Full Tune-Up", status: "completed", time: "07:30", mechanic: "Mark" },
-  { id: 7, customer: "Sem de Jong", bike: "V8 Sport", service: "Motor Service", status: "pending", time: "13:00", mechanic: "Tom" },
-  { id: 8, customer: "Lotte Mulder", bike: "V8 Comfort", service: "Display Repair", status: "pending", time: "14:00", mechanic: "Lisa" },
-];
-
-const bikeProblems = [
-  { type: "Brake Issues", count: 45, percentage: 28, trend: "up" },
-  { type: "Chain & Gear", count: 38, percentage: 24, trend: "stable" },
-  { type: "Battery Problems", count: 32, percentage: 20, trend: "down" },
-  { type: "Motor Service", count: 25, percentage: 16, trend: "up" },
-  { type: "Display/Electronics", count: 20, percentage: 12, trend: "stable" },
-];
+import { useSchedulingData } from "@/hooks/scheduling/useSchedulingData";
 
 const getStatusBadge = (status: string) => {
   switch (status) {
     case "completed":
-      return <Badge className="bg-wj-green/20 text-wj-green border-wj-green/30">Completed</Badge>;
+      return <Badge className="bg-wj-green/20 text-wj-green border-wj-green/30">Concluído</Badge>;
     case "in_progress":
-      return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">In Progress</Badge>;
+      return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Em curso</Badge>;
     case "pending":
-      return <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">Pending</Badge>;
+      return <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">Pendente</Badge>;
+    case "confirmed":
+      return <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30">Confirmado</Badge>;
+    case "canceled":
+      return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Cancelado</Badge>;
+    case "no_show":
+      return <Badge className="bg-zinc-500/20 text-zinc-400 border-zinc-500/30">No-show</Badge>;
     default:
       return <Badge variant="outline">{status}</Badge>;
   }
@@ -90,15 +49,44 @@ const getStatusBadge = (status: string) => {
 export default function AdminWorkshop() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState("day");
+  const { loading, appointments, serviceTypes, updateAppointmentStatus } = useSchedulingData();
+
+  // Service type usage ranking (today) — must be before any early returns
+  const serviceUsage = useMemo(() => {
+    const counts = new Map<string, number>();
+    appointments.forEach((a) => {
+      if (!a.service_type_id) return;
+      counts.set(a.service_type_id, (counts.get(a.service_type_id) ?? 0) + 1);
+    });
+    const total = Array.from(counts.values()).reduce((a, b) => a + b, 0) || 1;
+    return serviceTypes
+      .map((st) => {
+        const count = counts.get(st.id) ?? 0;
+        return { id: st.id, name: st.name, color: st.color, count, percentage: Math.round((count / total) * 100) };
+      })
+      .filter((s) => s.count > 0)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+  }, [appointments, serviceTypes]);
 
   if (authLoading) return null;
-  if (!isAuthenticated) {
-    return <Navigate to="/auth" replace />;
-  }
+  if (!isAuthenticated) return <Navigate to="/auth" replace />;
+  if (user?.role !== "admin") return <Navigate to="/dashboard" replace />;
 
-  if (user?.role !== "admin") {
-    return <Navigate to="/dashboard" replace />;
-  }
+  const totalToday = appointments.length;
+  const inProgress = appointments.filter((a) => a.status === "in_progress").length;
+  const completed = appointments.filter((a) => a.status === "completed").length;
+  const durs = appointments.filter((a) => a.duration_minutes);
+  const avgDuration = durs.length
+    ? durs.reduce((acc, a) => acc + (a.duration_minutes ?? 0), 0) / durs.length
+    : 0;
+
+  const workshopKPIs = [
+    { label: "Agendamentos Hoje", value: String(totalToday), change: "", trend: "up" as const, icon: Calendar },
+    { label: "Em Curso", value: String(inProgress), change: "", trend: "up" as const, icon: Wrench },
+    { label: "Concluídos Hoje", value: String(completed), change: "", trend: "up" as const, icon: CheckCircle2 },
+    { label: "Duração Média", value: `${Math.round(avgDuration)}m`, change: "", trend: "up" as const, icon: Clock },
+  ];
 
   return (
     <AdminDashboardLayout>
@@ -109,9 +97,9 @@ export default function AdminWorkshop() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <h1 className="text-xl sm:text-2xl font-light text-foreground">Workshop</h1>
+          <h1 className="text-xl sm:text-2xl font-light text-foreground">Oficina</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Service appointments and bike diagnostics
+            Agendamentos de serviço e diagnóstico em tempo real
           </p>
         </motion.div>
 
@@ -137,47 +125,92 @@ export default function AdminWorkshop() {
               <div className="p-4 border-b border-border/30">
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-foreground">Appointments</h3>
+                    <h3 className="text-sm font-medium text-foreground">Agendamentos</h3>
                     <TabsList className="bg-muted/50">
-                      <TabsTrigger value="day" className="text-xs">Day</TabsTrigger>
-                      <TabsTrigger value="week" className="text-xs">Week</TabsTrigger>
-                      <TabsTrigger value="month" className="text-xs">Month</TabsTrigger>
-                      <TabsTrigger value="year" className="text-xs">Year</TabsTrigger>
+                      <TabsTrigger value="day" className="text-xs">Hoje</TabsTrigger>
+                      <TabsTrigger value="week" className="text-xs" disabled>Semana</TabsTrigger>
+                      <TabsTrigger value="month" className="text-xs" disabled>Mês</TabsTrigger>
                     </TabsList>
                   </div>
                 </Tabs>
               </div>
-              
+
               <div className="overflow-x-auto">
+                {loading ? (
+                  <div className="flex items-center justify-center py-12 gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" /> A carregar agendamentos…
+                  </div>
+                ) : appointments.length === 0 ? (
+                  <div className="py-12 text-center text-sm text-muted-foreground">
+                    Sem agendamentos para hoje.
+                  </div>
+                ) : (
                 <Table>
                   <TableHeader>
                     <TableRow className="border-border/30 hover:bg-transparent">
-                      <TableHead className="text-muted-foreground text-xs">Time</TableHead>
-                      <TableHead className="text-muted-foreground text-xs">Customer</TableHead>
-                      <TableHead className="text-muted-foreground text-xs">Bike</TableHead>
-                      <TableHead className="text-muted-foreground text-xs">Service</TableHead>
-                      <TableHead className="text-muted-foreground text-xs">Mechanic</TableHead>
-                      <TableHead className="text-muted-foreground text-xs">Status</TableHead>
+                      <TableHead className="text-muted-foreground text-xs">Hora</TableHead>
+                      <TableHead className="text-muted-foreground text-xs">Cliente</TableHead>
+                      <TableHead className="text-muted-foreground text-xs">Serviço</TableHead>
+                      <TableHead className="text-muted-foreground text-xs">Mecânico</TableHead>
+                      <TableHead className="text-muted-foreground text-xs">Estado</TableHead>
+                      <TableHead className="text-muted-foreground text-xs text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {appointments.map((apt) => (
                       <TableRow key={apt.id} className="border-border/30 hover:bg-muted/30">
-                        <TableCell className="text-xs font-medium">{apt.time}</TableCell>
-                        <TableCell className="text-xs">{apt.customer}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{apt.bike}</TableCell>
-                        <TableCell className="text-xs">{apt.service}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{apt.mechanic}</TableCell>
+                        <TableCell className="text-xs font-medium">
+                          {apt.scheduled_start_time.slice(0, 5)}
+                          {apt.priority === "vip" && (
+                            <Badge className="ml-1 text-[9px] bg-amber-500/20 text-amber-400 border-amber-500/30">VIP</Badge>
+                          )}
+                          {apt.priority === "emergency" && (
+                            <Badge className="ml-1 text-[9px] bg-red-500/20 text-red-400 border-red-500/30">!</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {apt.customer_name ?? apt.customer_email ?? "—"}
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          <span
+                            className="inline-block w-2 h-2 rounded-full mr-2 align-middle"
+                            style={{ backgroundColor: apt.service_color ?? "#9ca3af" }}
+                          />
+                          {apt.service_name ?? "—"}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">{apt.mechanic_name ?? "—"}</TableCell>
                         <TableCell>{getStatusBadge(apt.status)}</TableCell>
+                        <TableCell className="text-right">
+                          {apt.status === "confirmed" || apt.status === "pending" ? (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 px-2 text-[10px]"
+                              onClick={() => updateAppointmentStatus(apt.id, "in_progress")}
+                            >
+                              <PlayCircle className="h-3 w-3 mr-1" /> Iniciar
+                            </Button>
+                          ) : apt.status === "in_progress" ? (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 px-2 text-[10px] text-wj-green"
+                              onClick={() => updateAppointmentStatus(apt.id, "completed")}
+                            >
+                              <CheckCircle className="h-3 w-3 mr-1" /> Concluir
+                            </Button>
+                          ) : null}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
+                )}
               </div>
             </motion.div>
           </div>
 
-          {/* Bike Problems Ranking - 4 columns */}
+          {/* Service usage ranking - 4 columns */}
           <div className="col-span-12 lg:col-span-4">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -187,43 +220,46 @@ export default function AdminWorkshop() {
             >
               <div className="flex items-center gap-2 mb-4">
                 <AlertTriangle className="h-4 w-4 text-amber-400" />
-                <h3 className="text-sm font-medium text-foreground">Common Issues</h3>
-              </div>
-              
-              <div className="space-y-3">
-                {bikeProblems.map((problem, index) => (
-                  <div key={problem.type} className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-wj-green/20 text-wj-green text-[10px] font-bold flex items-center justify-center">
-                          {index + 1}
-                        </span>
-                        <span className="text-xs text-foreground">{problem.type}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">{problem.count}</span>
-                        {problem.trend === "up" && (
-                          <TrendingUp className="h-3 w-3 text-red-400" />
-                        )}
-                      </div>
-                    </div>
-                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${problem.percentage}%` }}
-                        transition={{ delay: 0.4 + index * 0.1, duration: 0.5 }}
-                        className="h-full bg-gradient-to-r from-wj-green to-wj-green/60 rounded-full"
-                      />
-                    </div>
-                  </div>
-                ))}
+                <h3 className="text-sm font-medium text-foreground">Serviços do Dia</h3>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-border/30">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Bike className="h-4 w-4" />
-                  <span>V8 Sport most serviced this month</span>
+              {serviceUsage.length === 0 ? (
+                <p className="text-xs text-muted-foreground">Sem dados para hoje.</p>
+              ) : (
+                <div className="space-y-3">
+                  {serviceUsage.map((problem, index) => (
+                    <div key={problem.id} className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-full bg-wj-green/20 text-wj-green text-[10px] font-bold flex items-center justify-center">
+                            {index + 1}
+                          </span>
+                          <span className="text-xs text-foreground">{problem.name}</span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">{problem.count}</span>
+                      </div>
+                      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${problem.percentage}%` }}
+                          transition={{ delay: 0.4 + index * 0.1, duration: 0.5 }}
+                          className="h-full rounded-full"
+                          style={{ backgroundColor: problem.color ?? "hsl(var(--primary))" }}
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
+              )}
+
+              <div className="mt-6 pt-4 border-t border-border/30">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                  Catálogo de serviços
+                </p>
+                <p className="text-sm text-foreground">
+                  <span className="text-2xl font-light">{serviceTypes.length}</span>{" "}
+                  <span className="text-xs text-muted-foreground">tipos ativos</span>
+                </p>
               </div>
             </motion.div>
           </div>

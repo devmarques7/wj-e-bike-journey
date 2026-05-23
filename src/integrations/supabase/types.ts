@@ -14,6 +14,349 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointment_notifications: {
+        Row: {
+          appointment_id: string | null
+          channel: string
+          created_at: string
+          delivered_at: string | null
+          failed_at: string | null
+          failure_reason: string | null
+          id: string
+          notification_type: string
+          recipient_email: string | null
+          recipient_phone: string | null
+          sent_at: string | null
+          template_id: string | null
+          waitlist_id: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          channel: string
+          created_at?: string
+          delivered_at?: string | null
+          failed_at?: string | null
+          failure_reason?: string | null
+          id?: string
+          notification_type: string
+          recipient_email?: string | null
+          recipient_phone?: string | null
+          sent_at?: string | null
+          template_id?: string | null
+          waitlist_id?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          channel?: string
+          created_at?: string
+          delivered_at?: string | null
+          failed_at?: string | null
+          failure_reason?: string | null
+          id?: string
+          notification_type?: string
+          recipient_email?: string | null
+          recipient_phone?: string | null
+          sent_at?: string | null
+          template_id?: string | null
+          waitlist_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_notifications_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_notifications_waitlist_id_fkey"
+            columns: ["waitlist_id"]
+            isOneToOne: false
+            referencedRelation: "appointment_waitlist"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      appointment_waitlist: {
+        Row: {
+          booked_appointment_id: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          notified_at: string | null
+          preferred_date_from: string
+          preferred_date_until: string | null
+          preferred_days: number[] | null
+          preferred_time_from: string | null
+          preferred_time_until: string | null
+          priority_score: number
+          service_type_id: string
+          status: string
+          subscription_id: string | null
+          user_id: string
+        }
+        Insert: {
+          booked_appointment_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          notified_at?: string | null
+          preferred_date_from: string
+          preferred_date_until?: string | null
+          preferred_days?: number[] | null
+          preferred_time_from?: string | null
+          preferred_time_until?: string | null
+          priority_score?: number
+          service_type_id: string
+          status?: string
+          subscription_id?: string | null
+          user_id: string
+        }
+        Update: {
+          booked_appointment_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          notified_at?: string | null
+          preferred_date_from?: string
+          preferred_date_until?: string | null
+          preferred_days?: number[] | null
+          preferred_time_from?: string | null
+          preferred_time_until?: string | null
+          priority_score?: number
+          service_type_id?: string
+          status?: string
+          subscription_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_waitlist_booked_appointment_id_fkey"
+            columns: ["booked_appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_waitlist_service_type_id_fkey"
+            columns: ["service_type_id"]
+            isOneToOne: false
+            referencedRelation: "service_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_waitlist_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_waitlist_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "v_subscriber_summary"
+            referencedColumns: ["subscription_id"]
+          },
+        ]
+      }
+      appointments: {
+        Row: {
+          actual_duration_minutes: number | null
+          assigned_mechanic_id: string | null
+          booked_via: string
+          confirmation_sent_at: string | null
+          created_at: string
+          duration_minutes: number | null
+          extra_charge_eur: number | null
+          id: string
+          is_covered_by_plan: boolean
+          notes: string | null
+          priority: string
+          priority_score: number
+          reminder_24h_sent_at: string | null
+          reschedule_count: number
+          reschedule_of: string | null
+          scheduled_date: string
+          scheduled_end_time: string | null
+          scheduled_start_time: string
+          service_type_id: string | null
+          status: Database["public"]["Enums"]["appointment_status_enum"]
+          subscription_id: string | null
+          subscription_plan_level: number | null
+          updated_at: string
+          user_id: string
+          work_ended_at: string | null
+          work_started_at: string | null
+        }
+        Insert: {
+          actual_duration_minutes?: number | null
+          assigned_mechanic_id?: string | null
+          booked_via?: string
+          confirmation_sent_at?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          extra_charge_eur?: number | null
+          id?: string
+          is_covered_by_plan?: boolean
+          notes?: string | null
+          priority?: string
+          priority_score?: number
+          reminder_24h_sent_at?: string | null
+          reschedule_count?: number
+          reschedule_of?: string | null
+          scheduled_date: string
+          scheduled_end_time?: string | null
+          scheduled_start_time: string
+          service_type_id?: string | null
+          status?: Database["public"]["Enums"]["appointment_status_enum"]
+          subscription_id?: string | null
+          subscription_plan_level?: number | null
+          updated_at?: string
+          user_id: string
+          work_ended_at?: string | null
+          work_started_at?: string | null
+        }
+        Update: {
+          actual_duration_minutes?: number | null
+          assigned_mechanic_id?: string | null
+          booked_via?: string
+          confirmation_sent_at?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          extra_charge_eur?: number | null
+          id?: string
+          is_covered_by_plan?: boolean
+          notes?: string | null
+          priority?: string
+          priority_score?: number
+          reminder_24h_sent_at?: string | null
+          reschedule_count?: number
+          reschedule_of?: string | null
+          scheduled_date?: string
+          scheduled_end_time?: string | null
+          scheduled_start_time?: string
+          service_type_id?: string | null
+          status?: Database["public"]["Enums"]["appointment_status_enum"]
+          subscription_id?: string | null
+          subscription_plan_level?: number | null
+          updated_at?: string
+          user_id?: string
+          work_ended_at?: string | null
+          work_started_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_reschedule_of_fkey"
+            columns: ["reschedule_of"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_service_type_id_fkey"
+            columns: ["service_type_id"]
+            isOneToOne: false
+            referencedRelation: "service_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "v_subscriber_summary"
+            referencedColumns: ["subscription_id"]
+          },
+        ]
+      }
+      business_hour_exceptions: {
+        Row: {
+          close_time: string | null
+          created_at: string
+          exception_date: string
+          exception_type: string
+          id: string
+          is_open: boolean
+          is_public_holiday: boolean
+          max_parallel_services: number | null
+          open_time: string | null
+          reason: string
+        }
+        Insert: {
+          close_time?: string | null
+          created_at?: string
+          exception_date: string
+          exception_type: string
+          id?: string
+          is_open?: boolean
+          is_public_holiday?: boolean
+          max_parallel_services?: number | null
+          open_time?: string | null
+          reason: string
+        }
+        Update: {
+          close_time?: string | null
+          created_at?: string
+          exception_date?: string
+          exception_type?: string
+          id?: string
+          is_open?: boolean
+          is_public_holiday?: boolean
+          max_parallel_services?: number | null
+          open_time?: string | null
+          reason?: string
+        }
+        Relationships: []
+      }
+      business_hours: {
+        Row: {
+          buffer_minutes: number
+          close_time: string | null
+          created_at: string
+          day_of_week: number
+          id: string
+          is_open: boolean
+          max_parallel_services: number
+          notes: string | null
+          open_time: string | null
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          buffer_minutes?: number
+          close_time?: string | null
+          created_at?: string
+          day_of_week: number
+          id?: string
+          is_open?: boolean
+          max_parallel_services?: number
+          notes?: string | null
+          open_time?: string | null
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          buffer_minutes?: number
+          close_time?: string | null
+          created_at?: string
+          day_of_week?: number
+          id?: string
+          is_open?: boolean
+          max_parallel_services?: number
+          notes?: string | null
+          open_time?: string | null
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
@@ -854,6 +1197,144 @@ export type Database = {
         }
         Relationships: []
       }
+      service_types: {
+        Row: {
+          base_price: number | null
+          buffer_minutes_override: number | null
+          color: string | null
+          covered_by_plan_levels: number[] | null
+          created_at: string
+          description: string | null
+          display_order: number
+          duration_minutes: number
+          icon: string | null
+          id: string
+          is_active: boolean
+          is_emergency: boolean
+          name: string
+          name_en: string | null
+          name_nl: string | null
+          priority_score: number
+          required_specializations: string[] | null
+          slug: string
+        }
+        Insert: {
+          base_price?: number | null
+          buffer_minutes_override?: number | null
+          color?: string | null
+          covered_by_plan_levels?: number[] | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          duration_minutes: number
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          is_emergency?: boolean
+          name: string
+          name_en?: string | null
+          name_nl?: string | null
+          priority_score?: number
+          required_specializations?: string[] | null
+          slug: string
+        }
+        Update: {
+          base_price?: number | null
+          buffer_minutes_override?: number | null
+          color?: string | null
+          covered_by_plan_levels?: number[] | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          duration_minutes?: number
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          is_emergency?: boolean
+          name?: string
+          name_en?: string | null
+          name_nl?: string | null
+          priority_score?: number
+          required_specializations?: string[] | null
+          slug?: string
+        }
+        Relationships: []
+      }
+      staff_schedule_exceptions: {
+        Row: {
+          created_at: string
+          end_time: string | null
+          exception_date: string
+          exception_type: string
+          id: string
+          is_working: boolean
+          reason: string | null
+          staff_id: string
+          start_time: string | null
+        }
+        Insert: {
+          created_at?: string
+          end_time?: string | null
+          exception_date: string
+          exception_type: string
+          id?: string
+          is_working?: boolean
+          reason?: string | null
+          staff_id: string
+          start_time?: string | null
+        }
+        Update: {
+          created_at?: string
+          end_time?: string | null
+          exception_date?: string
+          exception_type?: string
+          id?: string
+          is_working?: boolean
+          reason?: string | null
+          staff_id?: string
+          start_time?: string | null
+        }
+        Relationships: []
+      }
+      staff_schedules: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          end_time: string | null
+          id: string
+          is_working: boolean
+          max_concurrent: number
+          staff_id: string
+          start_time: string | null
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          end_time?: string | null
+          id?: string
+          is_working?: boolean
+          max_concurrent?: number
+          staff_id: string
+          start_time?: string | null
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          end_time?: string | null
+          id?: string
+          is_working?: boolean
+          max_concurrent?: number
+          staff_id?: string
+          start_time?: string | null
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
       subscription_events: {
         Row: {
           created_at: string
@@ -1038,6 +1519,42 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      vip_slot_rules: {
+        Row: {
+          created_at: string
+          day_of_week: number | null
+          id: string
+          is_active: boolean
+          plan_level: number
+          release_hours_before: number
+          reserved_slots: number
+          time_from: string | null
+          time_until: string | null
+        }
+        Insert: {
+          created_at?: string
+          day_of_week?: number | null
+          id?: string
+          is_active?: boolean
+          plan_level: number
+          release_hours_before?: number
+          reserved_slots?: number
+          time_from?: string | null
+          time_until?: string | null
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number | null
+          id?: string
+          is_active?: boolean
+          plan_level?: number
+          release_hours_before?: number
+          reserved_slots?: number
+          time_from?: string | null
+          time_until?: string | null
         }
         Relationships: []
       }
@@ -1278,6 +1795,14 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "staff" | "member" | "guest"
+      appointment_status_enum:
+        | "pending"
+        | "confirmed"
+        | "in_progress"
+        | "completed"
+        | "canceled"
+        | "no_show"
+        | "rescheduled"
       category_type_enum:
         | "bike"
         | "accessory"
@@ -1461,6 +1986,15 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "staff", "member", "guest"],
+      appointment_status_enum: [
+        "pending",
+        "confirmed",
+        "in_progress",
+        "completed",
+        "canceled",
+        "no_show",
+        "rescheduled",
+      ],
       category_type_enum: ["bike", "accessory", "service", "insurance", "part"],
       location_type_enum: ["warehouse", "store_floor", "virtual"],
       movement_type_enum: [

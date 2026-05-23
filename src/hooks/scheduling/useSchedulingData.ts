@@ -1,0 +1,317 @@
+import { useCallback, useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
+/* ------------------------------------------------------------------ */
+/* Types                                                              */
+/* ------------------------------------------------------------------ */
+
+export type BusinessHour = {
+  id: string;
+  day_of_week: number;
+  is_open: boolean;
+  open_time: string | null;
+  close_time: string | null;
+  max_parallel_services: number;
+  buffer_minutes: number;
+  valid_from: string;
+  valid_until: string | null;
+};
+
+export type BusinessHourException = {
+  id: string;
+  exception_date: string;
+  exception_type: "closed" | "reduced_hours" | "extended_hours" | "special_event";
+  is_open: boolean;
+  open_time: string | null;
+  close_time: string | null;
+  reason: string;
+  is_public_holiday: boolean;
+};
+
+export type ServiceType = {
+  id: string;
+  name: string;
+  slug: string;
+  duration_minutes: number;
+  base_price: number | null;
+  priority_score: number;
+  icon: string | null;
+  color: string | null;
+  covered_by_plan_levels: number[] | null;
+  is_emergency: boolean;
+  is_active: boolean;
+};
+
+export type Mechanic = {
+  user_id: string;
+  full_name: string | null;
+  email: string | null;
+  avatar_url: string | null;
+  weekly_appointments: number;
+  weekly_capacity: number;
+};
+
+export type AppointmentRow = {
+  id: string;
+  user_id: string;
+  service_type_id: string | null;
+  assigned_mechanic_id: string | null;
+  scheduled_date: string;
+  scheduled_start_time: string;
+  scheduled_end_time: string | null;
+  duration_minutes: number | null;
+  status:
+    | "pending"
+    | "confirmed"
+    | "in_progress"
+    | "completed"
+    | "canceled"
+    | "no_show"
+    | "rescheduled";
+  priority: "normal" | "vip" | "emergency";
+  priority_score: number;
+  customer_name: string | null;
+  customer_email: string | null;
+  mechanic_name: string | null;
+  service_name: string | null;
+  service_color: string | null;
+};
+
+/* ------------------------------------------------------------------ */
+/* Helpers                                                             */
+/* ------------------------------------------------------------------ */
+
+const todayISO = () => new Date().toISOString().slice(0, 10);
+
+/** Keep the most recent currently-valid row per day_of_week. */
+function pickLatestPerDay(rows: BusinessHour[]): BusinessHour[] {
+  const today = todayISO();
+  const valid = rows.filter(
+    (r) => r.valid_from <= today && (r.valid_until === null || r.valid_until >= today),
+  );
+  const map = new Map<number, BusinessHour>();
+  for (const r of valid) {
+    const existing = map.get(r.day_of_week);
+    if (!existing || existing.valid_from < r.valid_from) map.set(r.day_of_week, r);
+  }
+  return Array.from(map.values()).sort((a, b) => a.day_of_week - b.day_of_week);
+}
+
+/* ------------------------------------------------------------------ */
+/* Hook                                                               */
+/* ------------------------------------------------------------------ */
+
+export function useSchedulingData(opts?: { date?: string }) {
+  const date = opts?.date ?? todayISO();
+
+  const [businessHours, setBusinessHours] = useState<BusinessHour[]>([]);
+  const [exceptions, setExceptions] = useState<BusinessHourException[]>([]);
+  const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
+  const [mechanics, setMechanics] = useState<Mechanic[]>([]);
+  const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchAll = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [bhRes, exRes, stRes, rolesRes] = await Promise.all([
+        supabase.from("business_hours").select("*"),
+        supabase
+          .from("business_hour_exceptions")
+          .select("*")
+          .gte("exception_date", todayISO())
+          .order("exception_date", { ascending: true }),
+        supabase
+          .from("service_types")
+          .select("*")
+          .eq("is_active", true)
+          .order("display_order", { ascending: true }),
+        supabase.from("user_roles").select("user_id").eq("role", "staff"),
+      ]);
+
+      if (bhRes.error) throw bhRes.error;
+      if (exRes.error) throw exRes.error;
+      if (stRes.error) throw stRes.error;
+      if (rolesRes.error) throw rolesRes.error;
+
+      setBusinessHours(pickLatestPerDay((bhRes.data ?? []) as BusinessHour[]));
+      setExceptions((exRes.data ?? []) as BusinessHourException[]);
+      setServiceTypes((stRes.data ?? []) as ServiceType[]);
+
+      const staffIds = (rolesRes.data ?? []).map((r) => r.user_id);
+      let mechs: Mechanic[] = [];
+      if (staffIds.length) {
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("user_id, full_name, email, avatar_url")
+          .in("user_id", staffIds);
+
+        // weekly counts
+        const weekStart = new Date();
+        weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+
+        const { data: weekAppts } = await supabase
+          .from("appointments")
+          .select("assigned_mechanic_id")
+          .gte("scheduled_date", weekStart.toISOString().slice(0, 10))
+          .lte("scheduled_date", weekEnd.toISOString().slice(0, 10))
+          .in("status", ["pending", "confirmed", "in_progress", "completed"]);
+
+        const counts = new Map<string, number>();
+        (weekAppts ?? []).forEach((a) => {
+          if (!a.assigned_mechanic_id) return;
+          counts.set(a.assigned_mechanic_id, (counts.get(a.assigned_mechanic_id) ?? 0) + 1);
+        });
+
+        mechs = (profs ?? []).map((p) => ({
+          user_id: p.user_id,
+          full_name: p.full_name,
+          email: p.email,
+          avatar_url: p.avatar_url,
+          weekly_appointments: counts.get(p.user_id) ?? 0,
+          weekly_capacity: 40, // 8 slots/day × 5 days
+        }));
+      }
+      setMechanics(mechs);
+
+      // appointments for selected date + denormalised joins
+      const { data: appts, error: aerr } = await supabase
+        .from("appointments")
+        .select("*")
+        .eq("scheduled_date", date)
+        .order("scheduled_start_time", { ascending: true });
+      if (aerr) throw aerr;
+
+      const userIds = Array.from(new Set((appts ?? []).map((a) => a.user_id)));
+      const mechIds = Array.from(
+        new Set((appts ?? []).map((a) => a.assigned_mechanic_id).filter(Boolean) as string[]),
+      );
+      const svcIds = Array.from(
+        new Set((appts ?? []).map((a) => a.service_type_id).filter(Boolean) as string[]),
+      );
+
+      const [profsRes, mechProfsRes, svcRes] = await Promise.all([
+        userIds.length
+          ? supabase.from("profiles").select("user_id, full_name, email").in("user_id", userIds)
+          : Promise.resolve({ data: [] as any[] }),
+        mechIds.length
+          ? supabase.from("profiles").select("user_id, full_name").in("user_id", mechIds)
+          : Promise.resolve({ data: [] as any[] }),
+        svcIds.length
+          ? supabase.from("service_types").select("id, name, color").in("id", svcIds)
+          : Promise.resolve({ data: [] as any[] }),
+      ]);
+
+      const profMap = new Map((profsRes.data ?? []).map((p: any) => [p.user_id, p]));
+      const mechMap = new Map((mechProfsRes.data ?? []).map((p: any) => [p.user_id, p]));
+      const svcMap = new Map((svcRes.data ?? []).map((s: any) => [s.id, s]));
+
+      setAppointments(
+        (appts ?? []).map((a) => {
+          const p = profMap.get(a.user_id);
+          const m = a.assigned_mechanic_id ? mechMap.get(a.assigned_mechanic_id) : null;
+          const s = a.service_type_id ? svcMap.get(a.service_type_id) : null;
+          return {
+            ...a,
+            customer_name: p?.full_name ?? null,
+            customer_email: p?.email ?? null,
+            mechanic_name: m?.full_name ?? null,
+            service_name: s?.name ?? null,
+            service_color: s?.color ?? null,
+          } as AppointmentRow;
+        }),
+      );
+    } catch (err: any) {
+      console.error("[scheduling] fetch error", err);
+      toast.error(err.message ?? "Falha ao carregar agendamento");
+    } finally {
+      setLoading(false);
+    }
+  }, [date]);
+
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
+
+  /* ------------------- mutations ------------------- */
+
+  /** Save a new version of business hours for a day (never edits past rows). */
+  const saveBusinessHourForDay = useCallback(
+    async (input: {
+      day_of_week: number;
+      is_open: boolean;
+      open_time: string | null;
+      close_time: string | null;
+      max_parallel_services?: number;
+      buffer_minutes?: number;
+    }) => {
+      const valid_from = todayISO();
+      const { error } = await supabase
+        .from("business_hours")
+        .upsert(
+          {
+            day_of_week: input.day_of_week,
+            is_open: input.is_open,
+            open_time: input.is_open ? input.open_time : null,
+            close_time: input.is_open ? input.close_time : null,
+            max_parallel_services: input.max_parallel_services ?? 3,
+            buffer_minutes: input.buffer_minutes ?? 15,
+            valid_from,
+          },
+          { onConflict: "day_of_week,valid_from" },
+        );
+      if (error) {
+        toast.error(error.message);
+        return false;
+      }
+      return true;
+    },
+    [],
+  );
+
+  const saveAllBusinessHours = useCallback(
+    async (rows: Pick<BusinessHour, "day_of_week" | "is_open" | "open_time" | "close_time">[]) => {
+      const results = await Promise.all(rows.map((r) => saveBusinessHourForDay(r)));
+      const ok = results.every(Boolean);
+      if (ok) {
+        toast.success("Horários atualizados");
+        fetchAll();
+      }
+      return ok;
+    },
+    [saveBusinessHourForDay, fetchAll],
+  );
+
+  const updateAppointmentStatus = useCallback(
+    async (id: string, status: AppointmentRow["status"]) => {
+      const patch: any = { status };
+      if (status === "in_progress") patch.work_started_at = new Date().toISOString();
+      if (status === "completed") patch.work_ended_at = new Date().toISOString();
+      const { error } = await supabase.from("appointments").update(patch).eq("id", id);
+      if (error) {
+        toast.error(error.message);
+        return false;
+      }
+      toast.success("Estado atualizado");
+      fetchAll();
+      return true;
+    },
+    [fetchAll],
+  );
+
+  return {
+    loading,
+    businessHours,
+    exceptions,
+    serviceTypes,
+    mechanics,
+    appointments,
+    refetch: fetchAll,
+    saveBusinessHourForDay,
+    saveAllBusinessHours,
+    updateAppointmentStatus,
+  };
+}
