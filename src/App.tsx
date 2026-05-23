@@ -29,6 +29,7 @@ import MyWallet from "./pages/MyWallet";
 import EPassPage from "./pages/EPassPage";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import GlobalBreadcrumbs from "@/components/GlobalBreadcrumbs";
 
 // Admin Pages
 import AdminOverview from "./pages/admin/AdminOverview";
@@ -59,6 +60,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <GlobalBreadcrumbs />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/gallery" element={<Gallery />} />
