@@ -7,6 +7,7 @@ import {
   Clock,
   Loader2,
   CalendarOff,
+  ChevronRight,
 } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,6 +25,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useSchedulingData, type BusinessHour } from "@/hooks/scheduling/useSchedulingData";
+import StaffScheduleDialog from "@/components/dashboard/scheduling/StaffScheduleDialog";
 
 const DAY_LABELS_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const DAY_LABELS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
@@ -35,6 +37,13 @@ export default function AdminManage() {
   const [showSettings, setShowSettings] = useState(false);
   const [draft, setDraft] = useState<Record<number, BusinessHour>>({});
   const [saving, setSaving] = useState(false);
+  const [staffDetail, setStaffDetail] = useState<{
+    id: string;
+    name: string;
+    email: string | null;
+    weekly: number;
+    capacity: number;
+  } | null>(null);
 
   const dateStr = (selectedDate ?? new Date()).toISOString().slice(0, 10);
   const {
@@ -208,7 +217,7 @@ export default function AdminManage() {
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.3 + index * 0.1 }}
-                      className="bg-muted/30 rounded-xl p-3"
+                      className="bg-muted/30 rounded-xl p-3 hover:bg-muted/50 transition-colors"
                     >
                       <div className="flex items-center gap-3 mb-2">
                         <div className="w-8 h-8 rounded-full bg-wj-green/20 text-wj-green text-xs font-bold flex items-center justify-center">
@@ -237,6 +246,21 @@ export default function AdminManage() {
                           style={{ width: `${memberLoad}%` }}
                         />
                       </div>
+                      <button
+                        onClick={() =>
+                          setStaffDetail({
+                            id: member.user_id,
+                            name: member.full_name ?? member.email ?? "Mecânico",
+                            email: member.email,
+                            weekly: member.weekly_appointments,
+                            capacity: member.weekly_capacity,
+                          })
+                        }
+                        className="mt-2 w-full flex items-center justify-between text-[11px] text-wj-green hover:text-wj-green/80 transition-colors"
+                      >
+                        <span>Ver detalhes & horário</span>
+                        <ChevronRight className="h-3 w-3" />
+                      </button>
                     </motion.div>
                   );
                 })}
@@ -439,6 +463,18 @@ export default function AdminManage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {staffDetail && (
+        <StaffScheduleDialog
+          open={!!staffDetail}
+          onOpenChange={(v) => !v && setStaffDetail(null)}
+          staffId={staffDetail.id}
+          staffName={staffDetail.name}
+          staffEmail={staffDetail.email}
+          weeklyAppointments={staffDetail.weekly}
+          weeklyCapacity={staffDetail.capacity}
+        />
+      )}
     </AdminDashboardLayout>
   );
 }
