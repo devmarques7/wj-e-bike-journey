@@ -51,6 +51,9 @@ const LABELS: Record<string, string> = {
 /** Routes where breadcrumbs should NOT appear. */
 const HIDDEN_ROUTES = ["/", "/auth", "/complete-profile"];
 
+/** Segments to strip from the trail (not shown, not linked). */
+const HIDDEN_SEGMENTS = new Set(["dashboard", "admin", "staff"]);
+
 function prettify(segment: string) {
   if (LABELS[segment]) return LABELS[segment];
   // ids / uuids → "#abc123"
@@ -69,13 +72,23 @@ export default function AutoBreadcrumbs({ className }: AutoBreadcrumbsProps) {
 
   if (HIDDEN_ROUTES.includes(pathname)) return null;
 
-  const segments = pathname.split("/").filter(Boolean);
-  if (segments.length === 0) return null;
+  const rawSegments = pathname.split("/").filter(Boolean);
 
-  const crumbs = segments.map((seg, i) => ({
+  // Build full hrefs first (so links keep working), then filter out hidden segments.
+  const allCrumbs = rawSegments.map((seg, i) => ({
+    seg,
     label: prettify(seg),
-    href: "/" + segments.slice(0, i + 1).join("/"),
-    isLast: i === segments.length - 1,
+    href: "/" + rawSegments.slice(0, i + 1).join("/"),
+  }));
+
+  const visible = allCrumbs.filter((c) => !HIDDEN_SEGMENTS.has(c.seg));
+
+  // Only show breadcrumbs on subpages (need at least a parent + current).
+  if (visible.length < 2) return null;
+
+  const crumbs = visible.map((c, i) => ({
+    ...c,
+    isLast: i === visible.length - 1,
   }));
 
   return (
@@ -89,17 +102,9 @@ export default function AutoBreadcrumbs({ className }: AutoBreadcrumbsProps) {
     >
       <Breadcrumb>
         <BreadcrumbList className="text-xs">
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to="/" className="flex items-center gap-1">
-                <Home className="h-3.5 w-3.5" />
-                <span className="sr-only">Home</span>
-              </Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          {crumbs.map((c) => (
+          {crumbs.map((c, i) => (
             <span key={c.href} className="flex items-center gap-1.5">
-              <BreadcrumbSeparator />
+              {i > 0 && <BreadcrumbSeparator />}
               <BreadcrumbItem>
                 {c.isLast ? (
                   <BreadcrumbPage className="uppercase tracking-[0.14em] text-[11px]">
