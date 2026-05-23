@@ -51,30 +51,7 @@ export default function AdminWorkshop() {
   const [activeTab, setActiveTab] = useState("day");
   const { loading, appointments, serviceTypes, updateAppointmentStatus } = useSchedulingData();
 
-  if (authLoading) return null;
-  if (!isAuthenticated) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  if (user?.role !== "admin") {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  const totalToday = appointments.length;
-  const inProgress = appointments.filter((a) => a.status === "in_progress").length;
-  const completed = appointments.filter((a) => a.status === "completed").length;
-  const avgDuration =
-    appointments.filter((a) => a.duration_minutes).reduce((acc, a) => acc + (a.duration_minutes ?? 0), 0) /
-      Math.max(1, appointments.filter((a) => a.duration_minutes).length) || 0;
-
-  const workshopKPIs = [
-    { label: "Agendamentos Hoje", value: String(totalToday), change: "", trend: "up" as const, icon: Calendar },
-    { label: "Em Curso", value: String(inProgress), change: "", trend: "up" as const, icon: Wrench },
-    { label: "Concluídos Hoje", value: String(completed), change: "", trend: "up" as const, icon: CheckCircle2 },
-    { label: "Duração Média", value: `${Math.round(avgDuration)}m`, change: "", trend: "up" as const, icon: Clock },
-  ];
-
-  // Service type usage ranking (today)
+  // Service type usage ranking (today) — must be before any early returns
   const serviceUsage = useMemo(() => {
     const counts = new Map<string, number>();
     appointments.forEach((a) => {
@@ -91,6 +68,25 @@ export default function AdminWorkshop() {
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
   }, [appointments, serviceTypes]);
+
+  if (authLoading) return null;
+  if (!isAuthenticated) return <Navigate to="/auth" replace />;
+  if (user?.role !== "admin") return <Navigate to="/dashboard" replace />;
+
+  const totalToday = appointments.length;
+  const inProgress = appointments.filter((a) => a.status === "in_progress").length;
+  const completed = appointments.filter((a) => a.status === "completed").length;
+  const durs = appointments.filter((a) => a.duration_minutes);
+  const avgDuration = durs.length
+    ? durs.reduce((acc, a) => acc + (a.duration_minutes ?? 0), 0) / durs.length
+    : 0;
+
+  const workshopKPIs = [
+    { label: "Agendamentos Hoje", value: String(totalToday), change: "", trend: "up" as const, icon: Calendar },
+    { label: "Em Curso", value: String(inProgress), change: "", trend: "up" as const, icon: Wrench },
+    { label: "Concluídos Hoje", value: String(completed), change: "", trend: "up" as const, icon: CheckCircle2 },
+    { label: "Duração Média", value: `${Math.round(avgDuration)}m`, change: "", trend: "up" as const, icon: Clock },
+  ];
 
   return (
     <AdminDashboardLayout>
