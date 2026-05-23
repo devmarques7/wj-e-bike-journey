@@ -1,15 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Calendar as CalendarIcon, 
   Settings, 
   Users, 
   Clock,
-  ChevronLeft,
-  ChevronRight,
-  X,
-  Plus,
-  Minus
+  Loader2,
+  CalendarOff,
 } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,58 +23,77 @@ import {
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { useSchedulingData, type BusinessHour } from "@/hooks/scheduling/useSchedulingData";
 
-const teamMembers = [
-  { id: 1, name: "Tom Hendriks", role: "Senior Mechanic", appointments: 8, capacity: 10, avatar: "TH" },
-  { id: 2, name: "Lisa van Dijk", role: "Mechanic", appointments: 6, capacity: 8, avatar: "LV" },
-  { id: 3, name: "Mark de Boer", role: "Junior Mechanic", appointments: 5, capacity: 6, avatar: "MB" },
-  { id: 4, name: "Eva Bakker", role: "Trainee", appointments: 3, capacity: 4, avatar: "EB" },
-];
-
-const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-const defaultHours = {
-  monday: { open: true, start: "09:00", end: "18:00" },
-  tuesday: { open: true, start: "09:00", end: "18:00" },
-  wednesday: { open: true, start: "09:00", end: "18:00" },
-  thursday: { open: true, start: "09:00", end: "21:00" },
-  friday: { open: true, start: "09:00", end: "18:00" },
-  saturday: { open: true, start: "10:00", end: "17:00" },
-  sunday: { open: false, start: "10:00", end: "16:00" },
-};
+const DAY_LABELS_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+const DAY_LABELS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+const trimHm = (t: string | null) => (t ? t.slice(0, 5) : "");
 
 export default function AdminManage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [showSettings, setShowSettings] = useState(false);
-  const [hours, setHours] = useState(defaultHours);
+  const [draft, setDraft] = useState<Record<number, BusinessHour>>({});
+  const [saving, setSaving] = useState(false);
+
+  const dateStr = (selectedDate ?? new Date()).toISOString().slice(0, 10);
+  const {
+    loading,
+    businessHours,
+    exceptions,
+    mechanics,
+    appointments,
+    saveAllBusinessHours,
+  } = useSchedulingData({ date: dateStr });
+
+  useEffect(() => {
+    if (!businessHours.length) return;
+    const next: Record<number, BusinessHour> = {};
+    for (const h of businessHours) next[h.day_of_week] = h;
+    setDraft(next);
+  }, [businessHours]);
 
   if (authLoading) return null;
-  if (!isAuthenticated) {
-    return <Navigate to="/auth" replace />;
-  }
+  if (!isAuthenticated) return <Navigate to="/auth" replace />;
+  if (user?.role !== "admin") return <Navigate to="/dashboard" replace />;
 
-  if (user?.role !== "admin") {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  const toggleDay = (day: keyof typeof hours) => {
-    setHours(prev => ({
-      ...prev,
-      [day]: { ...prev[day], open: !prev[day].open }
+  const toggleDay = (dow: number) => {
+    setDraft((p) => ({
+      ...p,
+      [dow]: { ...(p[dow] ?? ({} as BusinessHour)), day_of_week: dow, is_open: !p[dow]?.is_open },
     }));
   };
 
-  const updateTime = (day: keyof typeof hours, field: 'start' | 'end', value: string) => {
-    setHours(prev => ({
-      ...prev,
-      [day]: { ...prev[day], [field]: value }
+  const updateTime = (dow: number, field: "open_time" | "close_time", value: string) => {
+    setDraft((p) => ({
+      ...p,
+      [dow]: { ...(p[dow] ?? ({} as BusinessHour)), day_of_week: dow, [field]: value },
     }));
   };
 
-  const totalCapacity = teamMembers.reduce((acc, m) => acc + m.capacity, 0);
-  const totalAppointments = teamMembers.reduce((acc, m) => acc + m.appointments, 0);
-  const workloadPercentage = Math.round((totalAppointments / totalCapacity) * 100);
+  const handleSaveHours = async () => {
+    setSaving(true);
+    const rows = Object.values(draft).map((d) => ({
+      day_of_week: d.day_of_week,
+      is_open: d.is_open,
+      open_time: d.open_time,
+      close_time: d.close_time,
+    }));
+    const ok = await saveAllBusinessHours(rows);
+    setSaving(false);
+    if (ok) setShowSettings(false);
+  };
+
+  const totalCapacity = mechanics.reduce((a, m) => a + m.weekly_capacity, 0) || 1;
+  const totalAppointments = mechanics.reduce((a, m) => a + m.weekly_appointments, 0);
+  const workloadPercentage = Math.min(100, Math.round((totalAppointments / totalCapacity) * 100));
+
+  // weekly appointment counts per day-of-week for week-overview
+  const weeklyByDow = appointments.reduce<Record<number, number>>((acc, a) => {
+    const d = new Date(a.scheduled_date).getDay();
+    acc[d] = (acc[d] ?? 0) + 1;
+    return acc;
+  }, {});
 
   return (
     <AdminDashboardLayout>
@@ -90,9 +106,9 @@ export default function AdminManage() {
           className="flex items-center justify-between"
         >
           <div>
-            <h1 className="text-xl sm:text-2xl font-light text-foreground">Schedule Management</h1>
+            <h1 className="text-xl sm:text-2xl font-light text-foreground">Gestão de Horários</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Team workload and opening hours
+              Carga da equipa, horário de funcionamento e feriados
             </p>
           </div>
           <Button 
@@ -102,7 +118,7 @@ export default function AdminManage() {
             className="gap-2"
           >
             <Settings className="h-4 w-4" />
-            <span className="hidden sm:inline">Opening Hours</span>
+            <span className="hidden sm:inline">Horário de Funcionamento</span>
           </Button>
         </motion.div>
 
@@ -120,7 +136,7 @@ export default function AdminManage() {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-wj-green" />
-                  <h3 className="text-sm font-medium text-foreground">Weekly Workload</h3>
+                  <h3 className="text-sm font-medium text-foreground">Carga Semanal</h3>
                 </div>
                 <Badge className={cn(
                   "text-xs",
@@ -130,7 +146,7 @@ export default function AdminManage() {
                     ? "bg-amber-500/20 text-amber-400 border-amber-500/30"
                     : "bg-wj-green/20 text-wj-green border-wj-green/30"
                 )}>
-                  {workloadPercentage}% Capacity
+                  {workloadPercentage}% da capacidade
                 </Badge>
               </div>
               
@@ -151,8 +167,8 @@ export default function AdminManage() {
               </div>
               
               <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-                <span>{totalAppointments} appointments</span>
-                <span>{totalCapacity} capacity</span>
+                <span>{totalAppointments} agendamentos</span>
+                <span>{totalCapacity} capacidade</span>
               </div>
             </motion.div>
 
@@ -165,15 +181,30 @@ export default function AdminManage() {
             >
               <div className="flex items-center gap-2 mb-4">
                 <Users className="h-4 w-4 text-wj-green" />
-                <h3 className="text-sm font-medium text-foreground">Team Workload</h3>
+                <h3 className="text-sm font-medium text-foreground">Mecânicos</h3>
               </div>
-              
+
+              {loading ? (
+                <div className="flex items-center justify-center py-8 text-muted-foreground text-sm gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" /> A carregar…
+                </div>
+              ) : mechanics.length === 0 ? (
+                <div className="text-center py-8 text-sm text-muted-foreground">
+                  Sem mecânicos registados. Crie utilizadores com a função "staff".
+                </div>
+              ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {teamMembers.map((member, index) => {
-                  const memberLoad = Math.round((member.appointments / member.capacity) * 100);
+                {mechanics.map((member, index) => {
+                  const memberLoad = Math.min(100, Math.round((member.weekly_appointments / member.weekly_capacity) * 100));
+                  const initials = (member.full_name ?? member.email ?? "??")
+                    .split(" ")
+                    .map((s) => s[0])
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase();
                   return (
                     <motion.div
-                      key={member.id}
+                      key={member.user_id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.3 + index * 0.1 }}
@@ -181,14 +212,16 @@ export default function AdminManage() {
                     >
                       <div className="flex items-center gap-3 mb-2">
                         <div className="w-8 h-8 rounded-full bg-wj-green/20 text-wj-green text-xs font-bold flex items-center justify-center">
-                          {member.avatar}
+                          {initials}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">{member.name}</p>
-                          <p className="text-[10px] text-muted-foreground">{member.role}</p>
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {member.full_name ?? member.email}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground">Mecânico</p>
                         </div>
                         <Badge variant="outline" className="text-[10px]">
-                          {member.appointments}/{member.capacity}
+                          {member.weekly_appointments}/{member.weekly_capacity}
                         </Badge>
                       </div>
                       <div className="h-1.5 bg-muted rounded-full overflow-hidden">
@@ -208,6 +241,7 @@ export default function AdminManage() {
                   );
                 })}
               </div>
+              )}
             </motion.div>
 
             {/* Weekly Schedule Grid */}
@@ -217,51 +251,96 @@ export default function AdminManage() {
               transition={{ delay: 0.3 }}
               className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4"
             >
-              <h3 className="text-sm font-medium text-foreground mb-4">Week Overview</h3>
+              <h3 className="text-sm font-medium text-foreground mb-4">Visão da Semana</h3>
               <div className="grid grid-cols-7 gap-2">
-                {weekDays.map((day, index) => {
-                  const dayKey = day.toLowerCase() === "mon" ? "monday" 
-                    : day.toLowerCase() === "tue" ? "tuesday"
-                    : day.toLowerCase() === "wed" ? "wednesday"
-                    : day.toLowerCase() === "thu" ? "thursday"
-                    : day.toLowerCase() === "fri" ? "friday"
-                    : day.toLowerCase() === "sat" ? "saturday"
-                    : "sunday";
-                  const dayHours = hours[dayKey as keyof typeof hours];
-                  const appointments = [3, 5, 4, 6, 4, 2, 0][index];
-                  
+                {[1, 2, 3, 4, 5, 6, 0].map((dow) => {
+                  const dh = draft[dow];
+                  const apptCount = weeklyByDow[dow] ?? 0;
                   return (
                     <div 
-                      key={day}
+                      key={dow}
                       className={cn(
                         "p-3 rounded-xl text-center transition-all",
-                        dayHours.open 
+                        dh?.is_open
                           ? "bg-muted/50 hover:bg-muted/70" 
                           : "bg-muted/20 opacity-50"
                       )}
                     >
-                      <p className="text-xs font-medium text-foreground">{day}</p>
-                      {dayHours.open ? (
+                      <p className="text-xs font-medium text-foreground">{DAY_LABELS_SHORT[dow]}</p>
+                      {dh?.is_open ? (
                         <>
                           <p className="text-[10px] text-muted-foreground mt-1">
-                            {dayHours.start.replace(":00", "")}-{dayHours.end.replace(":00", "")}
+                            {trimHm(dh.open_time).replace(":00", "")}-{trimHm(dh.close_time).replace(":00", "")}
                           </p>
                           <div className="mt-2 flex flex-col items-center gap-1">
-                            {[...Array(Math.min(appointments, 4))].map((_, i) => (
+                            {[...Array(Math.min(apptCount, 4))].map((_, i) => (
                               <div key={i} className="w-2 h-2 rounded-full bg-wj-green" />
                             ))}
-                            {appointments > 4 && (
-                              <span className="text-[8px] text-muted-foreground">+{appointments - 4}</span>
+                            {apptCount > 4 && (
+                              <span className="text-[8px] text-muted-foreground">+{apptCount - 4}</span>
                             )}
                           </div>
                         </>
                       ) : (
-                        <p className="text-[10px] text-muted-foreground mt-1">Closed</p>
+                        <p className="text-[10px] text-muted-foreground mt-1">Fechado</p>
                       )}
                     </div>
                   );
                 })}
               </div>
+            </motion.div>
+
+            {/* Upcoming exceptions / holidays */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4"
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <CalendarOff className="h-4 w-4 text-wj-green" />
+                <h3 className="text-sm font-medium text-foreground">Próximos Feriados & Exceções</h3>
+              </div>
+              {exceptions.length === 0 ? (
+                <p className="text-xs text-muted-foreground">Sem exceções marcadas.</p>
+              ) : (
+                <div className="space-y-2">
+                  {exceptions.slice(0, 6).map((ex) => (
+                    <div
+                      key={ex.id}
+                      className="flex items-center justify-between p-2.5 rounded-lg bg-muted/30"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-wj-green/10 flex items-center justify-center">
+                          <span className="text-xs font-bold text-wj-green">
+                            {new Date(ex.exception_date).getDate()}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-foreground">{ex.reason}</p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {new Date(ex.exception_date).toLocaleDateString("pt-PT", {
+                              weekday: "long",
+                              day: "numeric",
+                              month: "long",
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge
+                        className={cn(
+                          "text-[10px]",
+                          ex.exception_type === "closed"
+                            ? "bg-red-500/20 text-red-400 border-red-500/30"
+                            : "bg-amber-500/20 text-amber-400 border-amber-500/30",
+                        )}
+                      >
+                        {ex.exception_type === "closed" ? "Fechado" : "Especial"}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
             </motion.div>
           </div>
 
@@ -275,14 +354,23 @@ export default function AdminManage() {
             >
               <div className="flex items-center gap-2 mb-4">
                 <CalendarIcon className="h-4 w-4 text-wj-green" />
-                <h3 className="text-sm font-medium text-foreground">Calendar</h3>
+                <h3 className="text-sm font-medium text-foreground">Calendário</h3>
               </div>
               <Calendar
                 mode="single"
                 selected={selectedDate}
                 onSelect={setSelectedDate}
-                className="rounded-lg"
+                className="rounded-lg pointer-events-auto"
               />
+              <div className="mt-4 pt-4 border-t border-border/30">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
+                  {selectedDate?.toLocaleDateString("pt-PT", { weekday: "long", day: "numeric", month: "long" })}
+                </p>
+                <p className="text-sm text-foreground">
+                  <span className="text-2xl font-light">{appointments.length}</span>{" "}
+                  <span className="text-xs text-muted-foreground">agendamento(s)</span>
+                </p>
+              </div>
             </motion.div>
           </div>
         </div>
@@ -292,57 +380,61 @@ export default function AdminManage() {
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
         <DialogContent className="max-w-md bg-background/95 backdrop-blur-xl border-border/50">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Opening Hours</DialogTitle>
+            <DialogTitle className="text-foreground">Horário de Funcionamento</DialogTitle>
             <DialogDescription>
-              Configure workshop operating hours for each day
+              Configure o horário da oficina. Cada alteração cria uma nova versão a partir de hoje.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-3 mt-4">
-            {Object.entries(hours).map(([day, config]) => (
-              <div 
-                key={day} 
-                className={cn(
-                  "flex items-center gap-4 p-3 rounded-xl transition-all",
-                  config.open ? "bg-muted/50" : "bg-muted/20"
-                )}
-              >
-                <Switch
-                  checked={config.open}
-                  onCheckedChange={() => toggleDay(day as keyof typeof hours)}
-                />
-                <span className="w-24 text-sm font-medium capitalize text-foreground">
-                  {day}
-                </span>
-                {config.open ? (
-                  <div className="flex items-center gap-2 flex-1">
-                    <input
-                      type="time"
-                      value={config.start}
-                      onChange={(e) => updateTime(day as keyof typeof hours, 'start', e.target.value)}
-                      className="bg-muted px-2 py-1 rounded text-xs text-foreground"
-                    />
-                    <span className="text-muted-foreground text-xs">to</span>
-                    <input
-                      type="time"
-                      value={config.end}
-                      onChange={(e) => updateTime(day as keyof typeof hours, 'end', e.target.value)}
-                      className="bg-muted px-2 py-1 rounded text-xs text-foreground"
-                    />
-                  </div>
-                ) : (
-                  <span className="text-sm text-muted-foreground">Closed</span>
-                )}
-              </div>
-            ))}
+            {[1, 2, 3, 4, 5, 6, 0].map((dow) => {
+              const config = draft[dow];
+              if (!config) return null;
+              return (
+                <div
+                  key={dow}
+                  className={cn(
+                    "flex items-center gap-4 p-3 rounded-xl transition-all",
+                    config.is_open ? "bg-muted/50" : "bg-muted/20",
+                  )}
+                >
+                  <Switch checked={config.is_open} onCheckedChange={() => toggleDay(dow)} />
+                  <span className="w-24 text-sm font-medium text-foreground">{DAY_LABELS[dow]}</span>
+                  {config.is_open ? (
+                    <div className="flex items-center gap-2 flex-1">
+                      <input
+                        type="time"
+                        value={trimHm(config.open_time) || "09:00"}
+                        onChange={(e) => updateTime(dow, "open_time", e.target.value)}
+                        className="bg-muted px-2 py-1 rounded text-xs text-foreground"
+                      />
+                      <span className="text-muted-foreground text-xs">até</span>
+                      <input
+                        type="time"
+                        value={trimHm(config.close_time) || "18:00"}
+                        onChange={(e) => updateTime(dow, "close_time", e.target.value)}
+                        className="bg-muted px-2 py-1 rounded text-xs text-foreground"
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">Fechado</span>
+                  )}
+                </div>
+              );
+            })}
           </div>
-          
+
           <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" size="sm" onClick={() => setShowSettings(false)}>
-              Cancel
+            <Button variant="outline" size="sm" onClick={() => setShowSettings(false)} disabled={saving}>
+              Cancelar
             </Button>
-            <Button size="sm" className="bg-wj-green hover:bg-wj-green/90" onClick={() => setShowSettings(false)}>
-              Save Changes
+            <Button
+              size="sm"
+              className="bg-wj-green hover:bg-wj-green/90"
+              onClick={handleSaveHours}
+              disabled={saving}
+            >
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar Alterações"}
             </Button>
           </div>
         </DialogContent>
