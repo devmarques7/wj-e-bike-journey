@@ -10,6 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { usePlanDetail, usePlans } from "@/hooks/plans/usePlansData";
 import PlanFormModal from "@/components/dashboard/plans/PlanFormModal";
+import PlanSpatialHero from "@/components/dashboard/plans/PlanSpatialHero";
 
 export default function AdminPlanDetail() {
   const { user, isAuthenticated, isLoading } = useAuth();
