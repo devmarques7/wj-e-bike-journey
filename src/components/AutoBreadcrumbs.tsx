@@ -70,7 +70,7 @@ export default function AutoBreadcrumbs({ className }: AutoBreadcrumbsProps) {
   if (HIDDEN_ROUTES.includes(pathname)) return null;
 
   const segments = pathname.split("/").filter(Boolean);
-  if (segments.length === 0) return null;
+  if (segments.length <= 1) return null;
 
   const crumbs = segments.map((seg, i) => ({
     label: prettify(seg),
