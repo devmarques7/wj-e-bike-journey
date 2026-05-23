@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import DashboardHeader from "./DashboardHeader";
 import MobileFooterNav from "./MobileFooterNav";
 import ThemeToggle from "@/components/ThemeToggle";
+import AutoBreadcrumbs from "@/components/AutoBreadcrumbs";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -73,6 +74,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             transition={{ duration: 0.4 }}
             className="lg:m-4 lg:rounded-3xl lg:bg-background/40 lg:backdrop-blur-md lg:border lg:border-border/30 lg:overflow-hidden min-h-[calc(100vh-5rem)]"
           >
+            <div className="px-4 lg:px-6 pt-4">
+              <AutoBreadcrumbs />
+            </div>
             {children}
           </motion.div>
         </main>
