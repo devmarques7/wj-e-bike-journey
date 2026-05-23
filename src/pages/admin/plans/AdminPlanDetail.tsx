@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Navigate, useNavigate, useParams, Link } from "react-router-dom";
-import { ArrowLeft, Edit3, CheckCircle2, Users, Euro, History } from "lucide-react";
+import { ArrowLeft, Edit3, CheckCircle2, Users, Euro, History, Sparkles, TrendingUp, Layers } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { usePlanDetail, usePlans } from "@/hooks/plans/usePlansData";
 import PlanFormModal from "@/components/dashboard/plans/PlanFormModal";
+import PlanSpatialHero from "@/components/dashboard/plans/PlanSpatialHero";
 
 export default function AdminPlanDetail() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -44,46 +45,14 @@ export default function AdminPlanDetail() {
           <div className="text-sm text-muted-foreground">Loading…</div>
         ) : (
           <>
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl p-6">
-              <div className="flex items-start justify-between flex-wrap gap-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: `${plan.color_hex}20`, border: `1px solid ${plan.color_hex}40` }}>
-                    <CheckCircle2 className="h-5 w-5" style={{ color: plan.color_hex ?? undefined }} />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h1 className="text-2xl font-light">{plan.name}</h1>
-                      {plan.is_active ? <Badge className="bg-wj-green/20 text-wj-green">Active</Badge> : <Badge variant="outline">Archived</Badge>}
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
-                    {activeVersion && (
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Current version v{activeVersion.version_number} · €{Number(activeVersion.price).toFixed(2)} / {activeVersion.interval} · Trial {activeVersion.trial_days}d
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <Button onClick={() => setEditOpen(true)} className="gap-2 bg-wj-green hover:bg-wj-green/90">
-                  <Edit3 className="h-4 w-4" /> Edit (new version)
-                </Button>
-              </div>
-            </motion.div>
-
-            <div className="grid grid-cols-12 gap-4 lg:gap-6">
-              <div className="col-span-12 lg:col-span-4 bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-5">
-                <p className="text-xs text-muted-foreground">MRR</p>
-                <p className="text-2xl font-light mt-1">€{mrr.toFixed(2)}</p>
-              </div>
-              <div className="col-span-6 lg:col-span-4 bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-5">
-                <p className="text-xs text-muted-foreground">Active Subscribers</p>
-                <p className="text-2xl font-light mt-1">{activeSubs.length}</p>
-              </div>
-              <div className="col-span-6 lg:col-span-4 bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-5">
-                <p className="text-xs text-muted-foreground">Total Versions</p>
-                <p className="text-2xl font-light mt-1">{versions.length}</p>
-              </div>
-            </div>
+            <PlanSpatialHero
+              plan={plan}
+              activeVersion={activeVersion}
+              mrr={mrr}
+              activeSubsCount={activeSubs.length}
+              versionsCount={versions.length}
+              onEdit={() => setEditOpen(true)}
+            />
 
             <Tabs defaultValue="subscribers">
               <TabsList>
