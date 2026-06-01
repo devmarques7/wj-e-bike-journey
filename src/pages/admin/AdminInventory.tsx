@@ -14,6 +14,7 @@ import {
   ArrowUpRight,
   Plus,
   Upload,
+  Zap,
 } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
@@ -46,6 +47,7 @@ import ReceiveStockModal from "@/components/dashboard/inventory/ReceiveStockModa
 import TransferStockModal from "@/components/dashboard/inventory/TransferStockModal";
 import ReorderModal from "@/components/dashboard/inventory/ReorderModal";
 import MovementDetailDrawer from "@/components/dashboard/inventory/MovementDetailDrawer";
+import QuickStockModal from "@/components/dashboard/inventory/QuickStockModal";
 import { usePermissions } from "@/hooks/usePermissions";
 import { downloadCSV } from "@/lib/csv";
 
@@ -77,6 +79,7 @@ export default function AdminInventory() {
   const [receiveRow, setReceiveRow] = useState<InventoryRow | null>(null);
   const [transferRow, setTransferRow] = useState<InventoryRow | null>(null);
   const [reorderOpen, setReorderOpen] = useState(false);
+  const [quickStockOpen, setQuickStockOpen] = useState(false);
   const [movementSel, setMovementSel] = useState<MovementRow | null>(null);
 
   const filtered = useMemo(() => {
@@ -190,8 +193,17 @@ export default function AdminInventory() {
             <p className="text-sm text-muted-foreground mt-1">Stock levels, movements and replenishment</p>
           </div>
           <div className="flex flex-wrap gap-2">
+            {can("inventory.receive") && (
+              <Button
+                size="sm"
+                onClick={() => setQuickStockOpen(true)}
+                className="bg-wj-green hover:bg-wj-green/90"
+              >
+                <Zap className="h-4 w-4 mr-1" /> Quick Stock
+              </Button>
+            )}
             {can("inventory.reorder") && (
-              <Button size="sm" onClick={() => setReorderOpen(true)} className="bg-wj-green hover:bg-wj-green/90">
+              <Button size="sm" variant="outline" onClick={() => setReorderOpen(true)}>
                 <ShoppingCart className="h-4 w-4 mr-1" /> Reorder
               </Button>
             )}
