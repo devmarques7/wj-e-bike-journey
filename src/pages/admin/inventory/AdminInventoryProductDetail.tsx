@@ -37,11 +37,6 @@ export default function AdminInventoryProductDetail() {
   return (
     <AdminDashboardLayout>
       <div className="p-4 lg:p-6 space-y-6">
-        <InventoryBackHeader
-          current={product?.name ?? "Product"}
-          to="/dashboard/admin/inventory/products"
-          parentLabel="Products"
-        />
 
         {loading && <p className="text-xs text-muted-foreground">Loading...</p>}
         {!loading && !product && <p className="text-xs text-muted-foreground">Product not found.</p>}
