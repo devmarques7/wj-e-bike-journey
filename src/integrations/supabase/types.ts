@@ -443,6 +443,317 @@ export type Database = {
           },
         ]
       }
+      customer_bikes: {
+        Row: {
+          color: string | null
+          created_at: string
+          customer_id: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+          km: number
+          last_service_at: string | null
+          model: string
+          next_service_at: string | null
+          purchased_at: string | null
+          serial: string | null
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          customer_id: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          km?: number
+          last_service_at?: string | null
+          model: string
+          next_service_at?: string | null
+          purchased_at?: string | null
+          serial?: string | null
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          customer_id?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          km?: number
+          last_service_at?: string | null
+          model?: string
+          next_service_at?: string | null
+          purchased_at?: string | null
+          serial?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_bikes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_health_snapshots: {
+        Row: {
+          created_at: string
+          customer_id: string
+          health_score: number
+          id: string
+          lifecycle_stage: Database["public"]["Enums"]["lifecycle_stage_enum"]
+          snapshot_date: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          health_score: number
+          id?: string
+          lifecycle_stage: Database["public"]["Enums"]["lifecycle_stage_enum"]
+          snapshot_date: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          health_score?: number
+          id?: string
+          lifecycle_stage?: Database["public"]["Enums"]["lifecycle_stage_enum"]
+          snapshot_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_health_snapshots_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_interactions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          direction: Database["public"]["Enums"]["interaction_direction_enum"]
+          duration_min: number | null
+          id: string
+          outcome: string | null
+          subject: string | null
+          summary: string | null
+          type: Database["public"]["Enums"]["interaction_type_enum"]
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          direction?: Database["public"]["Enums"]["interaction_direction_enum"]
+          duration_min?: number | null
+          id?: string
+          outcome?: string | null
+          subject?: string | null
+          summary?: string | null
+          type: Database["public"]["Enums"]["interaction_type_enum"]
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          direction?: Database["public"]["Enums"]["interaction_direction_enum"]
+          duration_min?: number | null
+          id?: string
+          outcome?: string | null
+          subject?: string | null
+          summary?: string | null
+          type?: Database["public"]["Enums"]["interaction_type_enum"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_interactions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_notes: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          followup_date: string | null
+          followup_done: boolean
+          id: string
+          is_pinned: boolean
+          linked_appointment_id: string | null
+          linked_order_id: string | null
+          note_type: Database["public"]["Enums"]["note_type_enum"]
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          followup_date?: string | null
+          followup_done?: boolean
+          id?: string
+          is_pinned?: boolean
+          linked_appointment_id?: string | null
+          linked_order_id?: string | null
+          note_type?: Database["public"]["Enums"]["note_type_enum"]
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          followup_date?: string | null
+          followup_done?: boolean
+          id?: string
+          is_pinned?: boolean
+          linked_appointment_id?: string | null
+          linked_order_id?: string | null
+          note_type?: Database["public"]["Enums"]["note_type_enum"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_notes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_profiles: {
+        Row: {
+          assigned_to: string | null
+          churn_risk_score: number
+          created_at: string
+          health_score: number
+          id: string
+          last_contact_at: string | null
+          lifecycle_stage: Database["public"]["Enums"]["lifecycle_stage_enum"]
+          ltv_estimated: number
+          notes_count: number
+          rfm_score: number
+          tags: string[]
+          total_spent: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          churn_risk_score?: number
+          created_at?: string
+          health_score?: number
+          id?: string
+          last_contact_at?: string | null
+          lifecycle_stage?: Database["public"]["Enums"]["lifecycle_stage_enum"]
+          ltv_estimated?: number
+          notes_count?: number
+          rfm_score?: number
+          tags?: string[]
+          total_spent?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          churn_risk_score?: number
+          created_at?: string
+          health_score?: number
+          id?: string
+          last_contact_at?: string | null
+          lifecycle_stage?: Database["public"]["Enums"]["lifecycle_stage_enum"]
+          ltv_estimated?: number
+          notes_count?: number
+          rfm_score?: number
+          tags?: string[]
+          total_spent?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      customer_segment_members: {
+        Row: {
+          added_at: string
+          customer_id: string
+          segment_id: string
+        }
+        Insert: {
+          added_at?: string
+          customer_id: string
+          segment_id: string
+        }
+        Update: {
+          added_at?: string
+          customer_id?: string
+          segment_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_segment_members_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customer_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_segment_members_segment_id_fkey"
+            columns: ["segment_id"]
+            isOneToOne: false
+            referencedRelation: "customer_segments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_segments: {
+        Row: {
+          color: string
+          conditions: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+          segment_type: Database["public"]["Enums"]["segment_type_enum"]
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          conditions?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          segment_type?: Database["public"]["Enums"]["segment_type_enum"]
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          conditions?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          segment_type?: Database["public"]["Enums"]["segment_type_enum"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       inventory: {
         Row: {
           id: string
@@ -1752,6 +2063,66 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      fn_log_customer_note: {
+        Args: {
+          p_content: string
+          p_customer_id: string
+          p_followup_date?: string
+          p_is_pinned?: boolean
+          p_linked_appointment_id?: string
+          p_linked_order_id?: string
+          p_note_type?: Database["public"]["Enums"]["note_type_enum"]
+        }
+        Returns: {
+          content: string
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          followup_date: string | null
+          followup_done: boolean
+          id: string
+          is_pinned: boolean
+          linked_appointment_id: string | null
+          linked_order_id: string | null
+          note_type: Database["public"]["Enums"]["note_type_enum"]
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "customer_notes"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      fn_register_contact: {
+        Args: {
+          p_customer_id: string
+          p_direction: Database["public"]["Enums"]["interaction_direction_enum"]
+          p_duration_min?: number
+          p_outcome?: string
+          p_subject?: string
+          p_summary?: string
+          p_type: Database["public"]["Enums"]["interaction_type_enum"]
+        }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          direction: Database["public"]["Enums"]["interaction_direction_enum"]
+          duration_min: number | null
+          id: string
+          outcome: string | null
+          subject: string | null
+          summary: string | null
+          type: Database["public"]["Enums"]["interaction_type_enum"]
+        }
+        SetofOptions: {
+          from: "*"
+          to: "customer_interactions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       fn_register_manual_payment: {
         Args: {
           p_amount: number
@@ -1809,6 +2180,20 @@ export type Database = {
         | "service"
         | "insurance"
         | "part"
+      interaction_direction_enum: "inbound" | "outbound"
+      interaction_type_enum:
+        | "call"
+        | "whatsapp"
+        | "email"
+        | "in_person"
+        | "other"
+      lifecycle_stage_enum:
+        | "lead"
+        | "new"
+        | "active_subscriber"
+        | "loyal"
+        | "at_risk"
+        | "churned"
       location_type_enum: "warehouse" | "store_floor" | "virtual"
       movement_type_enum:
         | "sale"
@@ -1818,6 +2203,12 @@ export type Database = {
         | "incoming"
         | "reservation"
         | "reservation_release"
+      note_type_enum:
+        | "general"
+        | "complaint"
+        | "compliment"
+        | "followup"
+        | "opportunity"
       payment_method_enum:
         | "stripe_card"
         | "stripe_sepa"
@@ -1835,6 +2226,7 @@ export type Database = {
         | "bundle"
         | "subscription_addon"
         | "insurance"
+      segment_type_enum: "dynamic" | "static"
       subscription_event_enum:
         | "created"
         | "upgraded"
@@ -1996,6 +2388,22 @@ export const Constants = {
         "rescheduled",
       ],
       category_type_enum: ["bike", "accessory", "service", "insurance", "part"],
+      interaction_direction_enum: ["inbound", "outbound"],
+      interaction_type_enum: [
+        "call",
+        "whatsapp",
+        "email",
+        "in_person",
+        "other",
+      ],
+      lifecycle_stage_enum: [
+        "lead",
+        "new",
+        "active_subscriber",
+        "loyal",
+        "at_risk",
+        "churned",
+      ],
       location_type_enum: ["warehouse", "store_floor", "virtual"],
       movement_type_enum: [
         "sale",
@@ -2005,6 +2413,13 @@ export const Constants = {
         "incoming",
         "reservation",
         "reservation_release",
+      ],
+      note_type_enum: [
+        "general",
+        "complaint",
+        "compliment",
+        "followup",
+        "opportunity",
       ],
       payment_method_enum: [
         "stripe_card",
@@ -2025,6 +2440,7 @@ export const Constants = {
         "subscription_addon",
         "insurance",
       ],
+      segment_type_enum: ["dynamic", "static"],
       subscription_event_enum: [
         "created",
         "upgraded",
