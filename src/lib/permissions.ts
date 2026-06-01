@@ -26,7 +26,12 @@ export type PermissionAction =
   | "variant.delete"
   // Master data
   | "category.manage"
-  | "location.manage";
+  | "location.manage"
+  // CRM
+  | "crm.view"
+  | "crm.edit"
+  | "crm.contact"
+  | "crm.segment.manage";
 
 const MATRIX: Record<PermissionAction, UserRole[]> = {
   "inventory.view":   ["admin", "staff"],
@@ -47,6 +52,11 @@ const MATRIX: Record<PermissionAction, UserRole[]> = {
 
   "category.manage":  ["admin"],
   "location.manage":  ["admin"],
+
+  "crm.view":            ["admin", "staff"],
+  "crm.edit":            ["admin"],
+  "crm.contact":         ["admin", "staff"],
+  "crm.segment.manage":  ["admin"],
 };
 
 export function canRoleDo(role: UserRole | undefined, action: PermissionAction): boolean {
