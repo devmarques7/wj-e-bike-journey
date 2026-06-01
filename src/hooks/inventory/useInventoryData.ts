@@ -21,6 +21,7 @@ export type InventoryRow = {
       name: string;
       slug: string;
       base_price: number;
+      sale_price: number | null;
       product_type: string;
       category_id: string;
     };
@@ -57,7 +58,7 @@ export function useInventoryRows() {
         `id, variant_id, location_id, qty_available, qty_reserved, qty_incoming,
          low_stock_threshold, reorder_point, updated_at,
          variant:product_variants!inner(sku, name, price_override, is_active,
-           product:products!inner(id, name, slug, base_price, product_type, category_id)
+           product:products!inner(id, name, slug, base_price, sale_price, product_type, category_id)
          ),
          location:locations!inner(id, name, location_type)`
       )
@@ -94,8 +95,13 @@ export function useInventoryKPIs(rows: InventoryRow[]) {
       if (real <= r.low_stock_threshold) lowStock += 1;
       incoming += r.qty_incoming;
       reserved += r.qty_reserved;
-      const unitPrice = r.variant.price_override ?? r.variant.product.base_price ?? 0;
-      value += r.qty_available * Number(unitPrice);
+      const unitPrice =
+        r.variant.price_override ??
+        r.variant.product.sale_price ??
+        r.variant.product.base_price ??
+        0;
+      const sellable = Math.max(0, r.qty_available - r.qty_reserved);
+      value += sellable * Number(unitPrice);
     }
     return { skus, lowStock, incoming, reserved, value };
   }, [rows]);
