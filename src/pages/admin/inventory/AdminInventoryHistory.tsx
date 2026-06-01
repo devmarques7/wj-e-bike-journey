@@ -11,6 +11,7 @@ import {
   Users,
   Layers,
   RotateCcw,
+  CalendarRange,
 } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
@@ -48,6 +49,16 @@ const MOVEMENT_TYPES = [
   "reservation",
   "reservation_release",
 ] as const;
+
+const QUICK_RANGES: { key: string; label: string; days: number | null }[] = [
+  { key: "today", label: "Today", days: 0 },
+  { key: "7d", label: "7D", days: 7 },
+  { key: "1m", label: "1M", days: 30 },
+  { key: "3m", label: "3M", days: 90 },
+  { key: "6m", label: "6M", days: 180 },
+  { key: "12m", label: "12M", days: 365 },
+  { key: "all", label: "All", days: null },
+];
 
 const typeColor = (t: string) => {
   switch (t) {
@@ -95,6 +106,7 @@ export default function AdminInventoryHistory() {
   const [actorId, setActorId] = useState<string>("all");
   const [from, setFrom] = useState<string>("");
   const [to, setTo] = useState<string>("");
+  const [quickRange, setQuickRange] = useState<string>("all");
   const [selected, setSelected] = useState<MovementHistoryRow | null>(null);
 
   const { rows, loading, summary, refetch } = useMovementHistory({
@@ -128,6 +140,23 @@ export default function AdminInventoryHistory() {
     setActorId("all");
     setFrom("");
     setTo("");
+    setQuickRange("all");
+  };
+
+  const applyQuickRange = (key: string) => {
+    setQuickRange(key);
+    const cfg = QUICK_RANGES.find((r) => r.key === key);
+    if (!cfg || cfg.days === null) {
+      setFrom("");
+      setTo("");
+      return;
+    }
+    const today = new Date();
+    const start = new Date();
+    start.setDate(today.getDate() - cfg.days);
+    const iso = (d: Date) => d.toISOString().slice(0, 10);
+    setFrom(iso(start));
+    setTo(iso(today));
   };
 
   const exportCSV = () =>
