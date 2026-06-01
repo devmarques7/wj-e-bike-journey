@@ -11,7 +11,8 @@ import {
   Wrench,
   Calendar,
   CreditCard,
-  Package
+  Package,
+  Contact,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -32,6 +33,7 @@ const quickNavItems = [
   { icon: CreditCard, label: "Plans", href: "/dashboard/admin/plans" },
   { icon: Users, label: "Staff", href: "/dashboard/admin/members" },
   { icon: Package, label: "Inventory", href: "/dashboard/admin/inventory" },
+  { icon: Contact, label: "CRM", href: "/dashboard/admin/crm" },
 ];
 
 export default function AdminHeader() {
