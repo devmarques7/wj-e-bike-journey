@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Search, Bike, CalendarDays, Clock, UserCheck, CheckCircle2 } from "lucide-react";
+import { Loader2, Search, Bike, CalendarDays, Clock, UserCheck, CheckCircle2, ChevronsUpDown, Check } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -33,6 +42,13 @@ type Customer = {
   user_id: string;
   full_name: string | null;
   email: string | null;
+};
+
+type BikeModel = {
+  id: string;
+  name: string;
+  color_hex: string | null;
+  short_description: string | null;
 };
 
 type Slot = {
@@ -77,6 +93,10 @@ export default function BookAppointmentDialog({
   const [bikeModel, setBikeModel] = useState("");
   const [bikeSerial, setBikeSerial] = useState("");
   const [notes, setNotes] = useState("");
+  const [bikeModels, setBikeModels] = useState<BikeModel[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(false);
+  const [modelOpen, setModelOpen] = useState(false);
+  const [modelSearch, setModelSearch] = useState("");
 
   // Service & date
   const [serviceId, setServiceId] = useState<string>("");
@@ -107,7 +127,31 @@ export default function BookAppointmentDialog({
       setDate(todayISO());
       setSlot(null);
       setSlots([]);
+      setModelSearch("");
+      setModelOpen(false);
     }
+  }, [open]);
+
+  /* ---------- bike models (catalog) ---------- */
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    (async () => {
+      setModelsLoading(true);
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, name, color_hex, short_description")
+        .eq("product_type", "bike")
+        .eq("is_active", true)
+        .order("name", { ascending: true })
+        .limit(50);
+      if (cancelled) return;
+      if (!error) setBikeModels((data ?? []) as BikeModel[]);
+      setModelsLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [open]);
 
   /* ---------- customer search ---------- */
