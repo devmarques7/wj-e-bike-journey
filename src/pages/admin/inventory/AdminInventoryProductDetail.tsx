@@ -9,7 +9,6 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useProduct, deleteVariant, type Variant } from "@/hooks/inventory/useCatalogCrud";
 import ProductEditDialog from "@/components/dashboard/inventory/ProductEditDialog";
 import VariantEditDialog from "@/components/dashboard/inventory/VariantEditDialog";
-import InventoryBackHeader from "@/components/dashboard/inventory/InventoryBackHeader";
 import { toast } from "@/hooks/use-toast";
 
 export default function AdminInventoryProductDetail() {
