@@ -15,7 +15,6 @@ import { toast } from "@/hooks/use-toast";
 import FieldLabel from "@/components/dashboard/inventory/FieldLabel";
 import ImportCategoriesDialog from "@/components/dashboard/inventory/ImportCategoriesDialog";
 import ExportDataButton from "@/components/dashboard/inventory/ExportDataButton";
-import InventoryBackHeader from "@/components/dashboard/inventory/InventoryBackHeader";
 
 const TYPES = ["bike", "accessory", "service", "part", "insurance"];
 const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -67,7 +66,6 @@ export default function AdminInventoryCategories() {
   return (
     <AdminDashboardLayout>
       <div className="p-4 lg:p-6 space-y-6">
-        <InventoryBackHeader current="Categories" />
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl sm:text-2xl font-light">Categories</h1>
