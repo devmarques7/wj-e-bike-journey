@@ -9,6 +9,7 @@ import {
   Loader2,
   PlayCircle,
   CheckCircle,
+  Plus,
 } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
@@ -26,6 +27,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useSchedulingData } from "@/hooks/scheduling/useSchedulingData";
+import BookAppointmentDialog from "@/components/dashboard/scheduling/BookAppointmentDialog";
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -49,7 +51,8 @@ const getStatusBadge = (status: string) => {
 export default function AdminWorkshop() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState("day");
-  const { loading, appointments, serviceTypes, updateAppointmentStatus } = useSchedulingData();
+  const [bookOpen, setBookOpen] = useState(false);
+  const { loading, appointments, serviceTypes, updateAppointmentStatus, refetch } = useSchedulingData();
 
   // Service type usage ranking (today) — must be before any early returns
   const serviceUsage = useMemo(() => {
@@ -96,11 +99,22 @@ export default function AdminWorkshop() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
+          className="flex items-start justify-between gap-4 flex-wrap"
         >
-          <h1 className="text-xl sm:text-2xl font-light text-foreground">Oficina</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Agendamentos de serviço e diagnóstico em tempo real
-          </p>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-light text-foreground">Oficina</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Agendamentos de serviço e diagnóstico em tempo real
+            </p>
+          </div>
+          <Button
+            onClick={() => setBookOpen(true)}
+            className="bg-wj-green hover:bg-wj-green/90 text-black h-9"
+            size="sm"
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            Novo Agendamento
+          </Button>
         </motion.div>
 
         {/* KPI Cards */}
@@ -264,6 +278,13 @@ export default function AdminWorkshop() {
             </motion.div>
           </div>
         </div>
+
+        <BookAppointmentDialog
+          open={bookOpen}
+          onOpenChange={setBookOpen}
+          serviceTypes={serviceTypes}
+          onCreated={refetch}
+        />
       </div>
     </AdminDashboardLayout>
   );
