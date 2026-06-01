@@ -9,7 +9,6 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { useProduct, deleteVariant, type Variant } from "@/hooks/inventory/useCatalogCrud";
 import ProductEditDialog from "@/components/dashboard/inventory/ProductEditDialog";
 import VariantEditDialog from "@/components/dashboard/inventory/VariantEditDialog";
-import InventoryBackHeader from "@/components/dashboard/inventory/InventoryBackHeader";
 import { toast } from "@/hooks/use-toast";
 
 export default function AdminInventoryProductDetail() {
@@ -38,11 +37,6 @@ export default function AdminInventoryProductDetail() {
   return (
     <AdminDashboardLayout>
       <div className="p-4 lg:p-6 space-y-6">
-        <InventoryBackHeader
-          current={product?.name ?? "Product"}
-          to="/dashboard/admin/inventory/products"
-          parentLabel="Products"
-        />
 
         {loading && <p className="text-xs text-muted-foreground">Loading...</p>}
         {!loading && !product && <p className="text-xs text-muted-foreground">Product not found.</p>}
