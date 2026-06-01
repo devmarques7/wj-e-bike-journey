@@ -242,11 +242,35 @@ export default function AdminInventoryHistory() {
 
         {/* Filters */}
         <div className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4 space-y-3">
-          <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted-foreground">
-            <Filter className="h-3.5 w-3.5" /> Filters
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted-foreground">
+              <Filter className="h-3.5 w-3.5" /> Filters
+            </div>
+            {/* Quick date range chips */}
+            <div className="flex items-center gap-1 flex-wrap">
+              <CalendarRange className="h-3.5 w-3.5 text-muted-foreground mr-1" />
+              {QUICK_RANGES.map((r) => {
+                const active = quickRange === r.key;
+                return (
+                  <button
+                    key={r.key}
+                    type="button"
+                    onClick={() => applyQuickRange(r.key)}
+                    className={cn(
+                      "text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full border transition-colors",
+                      active
+                        ? "bg-wj-green/15 border-wj-green/40 text-wj-green"
+                        : "bg-background/40 border-border/30 text-muted-foreground hover:text-foreground hover:border-border/60"
+                    )}
+                  >
+                    {r.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
-            <div className="relative lg:col-span-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3">
+            <div className="relative sm:col-span-2 lg:col-span-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <Input
                 placeholder="Search SKU, product, notes, user…"
@@ -256,7 +280,7 @@ export default function AdminInventoryHistory() {
               />
             </div>
             <Select value={movementType} onValueChange={setMovementType}>
-              <SelectTrigger className="bg-background/60">
+              <SelectTrigger className="bg-background/60 lg:col-span-2">
                 <SelectValue placeholder="Type" />
               </SelectTrigger>
               <SelectContent>
@@ -269,7 +293,7 @@ export default function AdminInventoryHistory() {
               </SelectContent>
             </Select>
             <Select value={locationId} onValueChange={setLocationId}>
-              <SelectTrigger className="bg-background/60">
+              <SelectTrigger className="bg-background/60 lg:col-span-2">
                 <SelectValue placeholder="Location" />
               </SelectTrigger>
               <SelectContent>
@@ -282,7 +306,7 @@ export default function AdminInventoryHistory() {
               </SelectContent>
             </Select>
             <Select value={actorId} onValueChange={setActorId}>
-              <SelectTrigger className="bg-background/60">
+              <SelectTrigger className="bg-background/60 lg:col-span-2">
                 <SelectValue placeholder="Actor" />
               </SelectTrigger>
               <SelectContent>
@@ -294,18 +318,24 @@ export default function AdminInventoryHistory() {
                 ))}
               </SelectContent>
             </Select>
-            <div className="flex gap-2">
+            <div className="flex gap-2 sm:col-span-2 lg:col-span-2">
               <Input
                 type="date"
                 value={from}
-                onChange={(e) => setFrom(e.target.value)}
-                className="bg-background/60"
+                onChange={(e) => {
+                  setFrom(e.target.value);
+                  setQuickRange("custom");
+                }}
+                className="bg-background/60 min-w-0 flex-1"
               />
               <Input
                 type="date"
                 value={to}
-                onChange={(e) => setTo(e.target.value)}
-                className="bg-background/60"
+                onChange={(e) => {
+                  setTo(e.target.value);
+                  setQuickRange("custom");
+                }}
+                className="bg-background/60 min-w-0 flex-1"
               />
             </div>
           </div>
