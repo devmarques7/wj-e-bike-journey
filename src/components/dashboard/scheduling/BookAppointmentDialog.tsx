@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Search, Bike, CalendarDays, Clock, UserCheck, CheckCircle2 } from "lucide-react";
+import { Loader2, Search, Bike, CalendarDays, Clock, UserCheck, CheckCircle2, ChevronsUpDown, Check } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -33,6 +42,13 @@ type Customer = {
   user_id: string;
   full_name: string | null;
   email: string | null;
+};
+
+type BikeModel = {
+  id: string;
+  name: string;
+  color_hex: string | null;
+  short_description: string | null;
 };
 
 type Slot = {
@@ -77,6 +93,10 @@ export default function BookAppointmentDialog({
   const [bikeModel, setBikeModel] = useState("");
   const [bikeSerial, setBikeSerial] = useState("");
   const [notes, setNotes] = useState("");
+  const [bikeModels, setBikeModels] = useState<BikeModel[]>([]);
+  const [modelsLoading, setModelsLoading] = useState(false);
+  const [modelOpen, setModelOpen] = useState(false);
+  const [modelSearch, setModelSearch] = useState("");
 
   // Service & date
   const [serviceId, setServiceId] = useState<string>("");
@@ -107,7 +127,31 @@ export default function BookAppointmentDialog({
       setDate(todayISO());
       setSlot(null);
       setSlots([]);
+      setModelSearch("");
+      setModelOpen(false);
     }
+  }, [open]);
+
+  /* ---------- bike models (catalog) ---------- */
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    (async () => {
+      setModelsLoading(true);
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, name, color_hex, short_description")
+        .eq("product_type", "bike")
+        .eq("is_active", true)
+        .order("name", { ascending: true })
+        .limit(50);
+      if (cancelled) return;
+      if (!error) setBikeModels((data ?? []) as BikeModel[]);
+      setModelsLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [open]);
 
   /* ---------- customer search ---------- */
@@ -388,12 +432,93 @@ export default function BookAppointmentDialog({
                 <Label className="text-xs flex items-center gap-1">
                   <Bike className="h-3 w-3" /> Modelo da bicicleta
                 </Label>
-                <Input
-                  value={bikeModel}
-                  onChange={(e) => setBikeModel(e.target.value)}
-                  placeholder="WJ Vision Black"
-                  className="mt-1 text-sm"
-                />
+                <Popover open={modelOpen} onOpenChange={setModelOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={modelOpen}
+                      className="mt-1 w-full justify-between text-sm font-normal h-9 px-3"
+                    >
+                      <span className={cn("truncate", !bikeModel && "text-muted-foreground")}>
+                        {bikeModel || "Selecionar modelo…"}
+                      </span>
+                      <ChevronsUpDown className="h-3.5 w-3.5 opacity-50 shrink-0 ml-2" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="p-0 w-[var(--radix-popover-trigger-width)] bg-background/95 backdrop-blur-xl border-border/40"
+                    align="start"
+                  >
+                    <Command shouldFilter={false}>
+                      <CommandInput
+                        placeholder="Procurar modelo…"
+                        value={modelSearch}
+                        onValueChange={setModelSearch}
+                        className="h-9 text-sm"
+                      />
+                      <CommandList className="max-h-56">
+                        {modelsLoading ? (
+                          <div className="py-4 text-center text-xs text-muted-foreground flex items-center justify-center gap-1">
+                            <Loader2 className="h-3 w-3 animate-spin" /> A carregar…
+                          </div>
+                        ) : (
+                          <>
+                            <CommandEmpty>
+                              <div className="py-2 text-xs text-muted-foreground">
+                                Sem modelos. Pode escrever manualmente:
+                                <button
+                                  type="button"
+                                  className="block mt-1 text-wj-green hover:underline"
+                                  onClick={() => {
+                                    setBikeModel(modelSearch.trim());
+                                    setModelOpen(false);
+                                  }}
+                                >
+                                  Usar "{modelSearch}"
+                                </button>
+                              </div>
+                            </CommandEmpty>
+                            <CommandGroup>
+                              {bikeModels
+                                .filter((m) =>
+                                  modelSearch
+                                    ? m.name.toLowerCase().includes(modelSearch.toLowerCase())
+                                    : true,
+                                )
+                                .map((m) => (
+                                  <CommandItem
+                                    key={m.id}
+                                    value={m.name}
+                                    onSelect={() => {
+                                      setBikeModel(m.name);
+                                      setModelOpen(false);
+                                    }}
+                                    className="text-sm"
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-3.5 w-3.5",
+                                        bikeModel === m.name ? "opacity-100" : "opacity-0",
+                                      )}
+                                    />
+                                    {m.color_hex && (
+                                      <span
+                                        className="inline-block w-2 h-2 rounded-full mr-2"
+                                        style={{ backgroundColor: m.color_hex }}
+                                      />
+                                    )}
+                                    <span className="flex-1 truncate">{m.name}</span>
+                                  </CommandItem>
+                                ))}
+                            </CommandGroup>
+                          </>
+                        )}
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               <div>
                 <Label className="text-xs">Nº série / matrícula</Label>
