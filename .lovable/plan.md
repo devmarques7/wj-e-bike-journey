@@ -1,202 +1,135 @@
-# Plano — Subscription Plans (Híbrido Stripe + Manual, Versionado)
+# CRM & Membership Admin — Plano de Construção
 
-## 1. Visão Geral
-
-Construir um módulo completo de Subscription Plans dentro de `/dashboard/admin/plans`, mantendo o layout actual (KPIs + charts + tabela) como **página principal**, e adicionando subpáginas de CRUD, detalhe de plano e detalhe de subscriber. Pagamentos são processados via **Stripe** (online, recorrente) **ou** registados **manualmente** (cash/transferência/cartão presencial). Cada plano é **versionado** — alterar o preço não afecta subscribers existentes (grandfathering).
+Funcionalidade muito grande. Vou entregar em **3 fases**, cada uma testável de forma independente, para evitar uma migração gigante + dezenas de ficheiros num só commit.
 
 ---
 
-## 2. Arquitectura de Páginas
+## Fase 1 — Fundação de dados (migração Supabase)
 
-```text
-/dashboard/admin/plans                         ← Hub (layout actual mantido)
-  └─ KPIs (MRR, ARPU, Churn, Active Subs) + Charts + Tabela global de subscribers
+Sem dados, o CRM mostra apenas mocks. Esta fase cria todo o schema necessário.
 
-/dashboard/admin/plans/manage                  ← CRUD de planos (lista + criar)
-/dashboard/admin/plans/:planId                 ← Detalhe do plano + editor inline
-  ├─ KPIs específicos do plano
-  ├─ Gráficos de evolução
-  ├─ Lista de subscribers desse plano
-  └─ Histórico de versões (preço/features)
+### Novas tabelas (todas em `public`, com GRANTs e RLS admin/staff)
 
-/dashboard/admin/plans/subscriber/:subscriberId
-  ├─ Header: nome, plano actual, status, MRR contribution, LTV, churn risk
-  ├─ Tabs: Pagamentos | Histórico de Planos | Faturas | Métodos | Notas
-  └─ Acções: registar pagamento manual, mudar plano, cancelar, refund
+- **`customer_profiles`** — vista enriquecida por utilizador
+  - `user_id`, `assigned_to` (staff), `lifecycle_stage` (enum: lead, new, active_subscriber, loyal, at_risk, churned), `health_score` (0–100), `churn_risk_score` (0–100), `ltv_estimated`, `total_spent`, `rfm_score`, `last_contact_at`, `tags` (text[])
+- **`customer_interactions`** — contactos registados (call, whatsapp, email, in_person)
+  - `customer_id`, `type`, `direction` (inbound/outbound), `duration_min`, `subject`, `summary`, `outcome`, `created_by`, `created_at`
+- **`customer_notes`** — notas internas com follow-up
+  - `customer_id`, `note_type`, `content`, `is_pinned`, `followup_date`, `followup_done`, `linked_appointment_id`, `linked_order_id`, `created_by`
+- **`customer_segments`** — segmentos dinâmicos/estáticos
+  - `name`, `description`, `segment_type` (dynamic/static), `conditions` (jsonb), `color`, `created_by`
+- **`customer_segment_members`** — para segmentos estáticos (`segment_id`, `customer_id`)
+- **`customer_health_snapshots`** — snapshot mensal para sparklines/evolução (`customer_id`, `snapshot_date`, `health_score`, `lifecycle_stage`)
+- **`customer_bikes`** — bikes registadas (`customer_id`, `model`, `serial`, `color`, `purchased_at`, `km`, `last_service_at`, `next_service_at`, `is_active`)
 
-Modais:
-  • PlanFormModal           (criar/editar plano — gera nova versão)
-  • RegisterManualPaymentModal
-  • ChangePlanModal         (upgrade/downgrade com proration opcional)
-  • CancelSubscriptionModal
-  • RefundModal
+### RPC
+- `fn_register_contact(...)` — insere interaction + atualiza `last_contact_at`
+- `fn_recompute_customer_segment(segment_id)` — recalcula membros dinamicamente
+- `fn_log_customer_note(...)` — insere nota + opcionalmente cria follow-up
+
+### Seed mínimo
+Popula `customer_profiles` a partir das `profiles` existentes (membros activos) com health/churn fake mas realistas, para a UI ter algo para mostrar de imediato.
+
+---
+
+## Fase 2 — Página `/admin/crm` (4 tabs)
+
+### Estrutura de ficheiros
+
+```
+src/pages/admin/AdminCrm.tsx                       (shell com Tabs)
+src/pages/admin/crm/CrmOverview.tsx                (Tab 1)
+src/pages/admin/crm/CrmCustomers.tsx               (Tab 2)
+src/pages/admin/crm/CrmSegments.tsx                (Tab 3)
+src/pages/admin/crm/CrmMembership.tsx              (Tab 4)
+src/pages/admin/crm/AdminCrmCustomerDetail.tsx     (perfil)
+src/hooks/crm/useCrmData.ts                        (queries)
+src/hooks/crm/useCustomerProfile.ts
+src/components/dashboard/crm/
+  ├── KpiTrendCard.tsx
+  ├── CustomersTable.tsx          (TanStack Table)
+  ├── CustomerEvolutionChart.tsx  (AreaChart stacked)
+  ├── PlanHealthRadar.tsx         (RadarChart)
+  ├── RiskCustomersList.tsx
+  ├── FollowupsList.tsx
+  ├── SegmentList.tsx
+  ├── SegmentDetail.tsx
+  ├── SegmentBuilderDialog.tsx
+  ├── MembershipHealthChart.tsx   (ComposedChart)
+  ├── LtvFunnelChart.tsx
+  └── sheets/
+      ├── LogContactSheet.tsx
+      ├── AddNoteSheet.tsx
+      └── SendMessageSheet.tsx
 ```
 
----
+### Rotas
+- `/dashboard/admin/crm` → `AdminCrm` com Tabs internas (overview default)
+- `/dashboard/admin/crm/:customerId` → `AdminCrmCustomerDetail`
 
-## 3. Modelo de Dados (Supabase)
+### Tab 1 — Overview
+- 6 KPI cards (clientes, health médio, churn, LTV médio, alto risco, follow-ups atrasados) usando reciclagem do `AdminKPICard` (estender com slot opcional para deltas)
+- AreaChart 12 meses (4 stacked areas) a partir de `customer_health_snapshots`
+- RadarChart por plano (agrega health por plano)
+- Risk list (top 5 por churn_risk) + Followups list (followup_date <= today, !done)
 
-### Enums
-```sql
-plan_interval_enum    : monthly | quarterly | yearly | lifetime
-plan_status_enum      : draft | active | archived
-subscription_status   : trialing | active | past_due | canceled | paused
-payment_method_enum   : stripe_card | stripe_sepa | cash | bank_transfer | pos_card | other
-payment_status_enum   : pending | succeeded | failed | refunded
-```
+### Tab 2 — Customers (TanStack Table)
+- Adicionar deps: `@tanstack/react-table`
+- 9 colunas conforme spec, filtros (Select plano, etapa, tag; Slider health min), search debounced 300ms
+- Bulk actions banner quando há linhas seleccionadas
+- Exportar CSV reaproveitando `lib/csv.ts`
+- Click na row → navega para perfil
 
-### Tabelas principais
+### Tab 3 — Segments
+- 2 colunas: lista (ScrollArea) + detalhe
+- `SegmentBuilderDialog` com builder condicional simples (campo / operador / valor + AND/OR), preview live com debounce
 
-**`plans`** — definição base (sem preço, sem features detalhadas)
-- name, slug, tier_level (int), description, color_hex, icon
-- is_active, display_order, stripe_product_id
-
-**`plan_versions`** — versionamento (grandfathering)
-- plan_id, version_number, price, currency, interval, trial_days
-- features (jsonb: array de strings ou objects)
-- stripe_price_id, status (draft/active/archived), effective_from
-- Sempre uma versão `active` por plan; ao editar, nova versão é criada e a anterior fica `archived` mas subscribers antigos continuam ligados a ela.
-
-**`subscriptions`** — uma por subscriber
-- user_id, plan_version_id (FK — preserva preço grandfathered), status
-- started_at, current_period_start, current_period_end, canceled_at
-- stripe_subscription_id (nullable), payment_method (enum)
-- cancel_at_period_end (bool)
-
-**`subscription_events`** — audit append-only
-- subscription_id, event_type (created|upgraded|downgraded|paused|canceled|reactivated|payment_failed)
-- from_plan_version_id, to_plan_version_id, metadata jsonb, created_by
-
-**`payments`** — todos os pagamentos (Stripe + manuais)
-- subscription_id, user_id, amount, currency, status
-- method (enum), stripe_payment_intent_id (nullable)
-- paid_at, period_start, period_end
-- recorded_by (nullable — staff que registou manual), notes
-- invoice_url (Stripe-hosted ou PDF gerado)
-
-**`payment_methods`** — métodos guardados (só Stripe)
-- user_id, stripe_payment_method_id, brand, last4, exp_month, exp_year, is_default
-
-### Views
-- `v_plan_kpis` — MRR, ARPU, active_subs, churn_30d por plano
-- `v_subscriber_summary` — LTV, total_paid, payments_count, current_mrr, churn_risk_score por user
-- `v_mrr_timeseries` — MRR mensal agregado (para charts)
-
-### RPCs
-- `fn_create_plan_version(plan_id, price, features, ...)` — cria versão + arquiva anterior + cria Stripe Price (via edge function trigger)
-- `fn_change_subscription_plan(sub_id, new_plan_version_id, proration_mode)`
-- `fn_register_manual_payment(sub_id, amount, method, period_start, period_end, notes)`
-- `fn_cancel_subscription(sub_id, at_period_end bool)`
-
-### RLS
-- `plans`, `plan_versions` — read público (necessário para `/membership-plans`), write `admin`
-- `subscriptions`, `payments` — read próprio + `admin`/`staff`, write admin
-- `subscription_events`, `payment_methods` — admin only para escrita
+### Tab 4 — Membership
+- `ComposedChart` (barras agrupadas + linha health avg) por plano
+- `BarChart` horizontal de LTV
+- Tabela resumo por plano com mini-sparklines (`LineChart` 60×20 sem eixos)
 
 ---
 
-## 4. Integração Stripe (Híbrida)
+## Fase 3 — Página de perfil do cliente
 
-### Edge Functions
-- `stripe-create-checkout-session` — gera Checkout Session para nova subscrição
-- `stripe-customer-portal` — link para o portal do cliente (gerir cartão, faturas)
-- `stripe-webhook` — recebe `customer.subscription.*`, `invoice.payment_succeeded`, `invoice.payment_failed`, `charge.refunded` e sincroniza com `subscriptions` e `payments`
-- `stripe-sync-plan-version` — quando admin cria/edita plan_version, cria Stripe Product + Price
+### Layout 30/70 (em desktop; empilha em mobile)
 
-### Segredos necessários
-- `STRIPE_SECRET_KEY`
-- `STRIPE_WEBHOOK_SECRET`
+**Sidebar (30%)**
+- Identity card (Avatar grande + nome + plano + lifecycle)
+- 4 botões de acção rápida (2 default, 2 outline)
+- Scores card com mini RadarChart (160px alto) + Health/Churn/RFM
+- Métricas rápidas
+- Tags com Popover + Command para adicionar
 
-### Fluxo manual
-Admin abre subscriber → "Registar pagamento manual" → escolhe método (cash/transfer/POS) + valor + período coberto → INSERT em `payments` com `method != stripe_*` + UPDATE `subscriptions.current_period_end`. Não toca em Stripe.
+**Conteúdo (70%) — Tabs internas**
+- **Timeline**: scroll cronológico unificado (interactions + notes + appointments + payments + orders), filtro `ToggleGroup`
+- **Bikes**: grid de cards a partir de `customer_bikes`
+- **Assinatura**: subscription actual + benefícios + histórico de eventos (`subscription_events` já existe)
+- **Financeiro**: 2 gráficos + tabela de payments
+- **Notas**: lista filtrável + Dialog inline para adicionar
 
-> **Decisão de recomendar Lovable Payments (seamless Stripe) em vez de BYOK**: vou usar `enable_stripe_payments` para não pedir API key e ter compliance handling configurável por sessão. (Confirmar antes de avançar.)
-
----
-
-## 5. Página Hub — `/dashboard/admin/plans`
-
-**Mantém o layout actual.** Apenas substitui os dados mock por dados reais:
-
-- KPIs ligados a `v_plan_kpis` (agregado): MRR, Active Subscribers, Churn Rate, ARPU
-- Chart "Revenue & Growth" → `v_mrr_timeseries`
-- "Bike Model Adoption" → renomear para "Plan Adoption" (subscribers por plan)
-- Tabela "All Subscribers" → query real com filtros (plan, status, payment method)
-- Adicionar botão "Manage Plans" → `/dashboard/admin/plans/manage`
-- Cada linha clicável → `/dashboard/admin/plans/subscriber/:id`
+### Sheets (drawer direito `max-w-md`)
+- `LogContactSheet` (com follow-up opcional → cria também `customer_notes`)
+- `AddNoteSheet`
+- `SendMessageSheet` (Email/WhatsApp tabs — UI apenas; envio real fica para depois, com toast informativo)
 
 ---
 
-## 6. Página Plan Detail — `/dashboard/admin/plans/:planId`
+## Detalhes técnicos chave
 
-Grid 12-col, glassmorphism, tumbler-style:
-
-- **Row 1 (col-span 12)**: Header com nome do plano, badge de status, versão actual, preço, CTA "Edit" (abre PlanFormModal — gera nova versão)
-- **Row 2 (col-span 8)**: Chart de evolução de subscribers + MRR
-- **Row 2 (col-span 4)**: KPIs específicos (MRR, Subs, Churn, ARPU, Trial→Paid conversion)
-- **Row 3 (col-span 12)**: Tabs
-  - **Subscribers** — tabela filtrável (status, version, payment method)
-  - **Versions** — histórico (preço antigo, qtos subs ainda em cada versão)
-  - **Features** — editor inline tipo bullet list
-- **Editor inline** num drawer lateral para preço/descrição/features com preview ao vivo da pricing card.
-
----
-
-## 7. Página Subscriber Detail — `/dashboard/admin/plans/subscriber/:id`
-
-- Header glass card: avatar, nome, email, phone, status badge, current plan, started_at, MRR contribution, LTV total, churn risk (computado: dias desde último pagamento / falhas)
-- Quick actions row: Register Manual Payment | Change Plan | Pause | Cancel | Refund Last
-- Tabs:
-  - **Payments** — tabela ordenada desc (data, valor, método, status, período coberto, recorded_by, notas, link fatura)
-  - **Plan History** — timeline de `subscription_events`
-  - **Invoices** — links Stripe + PDFs manuais
-  - **Methods** — cartões Stripe guardados (read-only)
-  - **Notes** — campo livre (staff)
+- **Charts**: usar `recharts` (já no projecto via `src/components/ui/chart.tsx`)
+- **Tabela**: `@tanstack/react-table` (instalar). Virtualização (`@tanstack/react-virtual`) só se >100 clientes — adicionar como melhoria futura, não bloqueia
+- **Permissões**: novas chaves em `lib/permissions.ts`: `crm.view`, `crm.edit`, `crm.contact`, `crm.segment.manage` — `admin` tem todas, `staff` tem view + contact
+- **Sidebar admin**: adicionar item "CRM" no `AdminSidebar` com ícone `Users`
+- **Cores**: usar tokens HSL semânticos do `index.css` para tudo excepto as cores fixas dos gráficos (especificadas no prompt — adiciono como constantes em `crm/colors.ts`)
+- **Realtime**: subscrever `customer_interactions` e `customer_notes` para refresh automático da timeline
+- **Loading**: `Skeleton` shadcn em todos os fetches
+- **Empty states**: componente `EmptyState` já existe — reaproveitar
+- **Sonner**: já configurado para toasts
 
 ---
 
-## 8. CRUD `/dashboard/admin/plans/manage`
+## Aprovação
 
-- Lista todos os planos em cards (estilo Inventory): nome, preço actual, subs activos, MRR, status toggle
-- Botão "+ New Plan" → modal wizard (name, tier, interval, price, features, trial_days)
-- Editar abre o mesmo modal → ao guardar, cria nova `plan_version` e arquiva a anterior (subscribers ficam grandfathered)
-- Toggle archive → impede novas subscrições mas mantém existentes
-
----
-
-## 9. Hooks (React Query)
-
-```text
-src/hooks/plans/
-  usePlans.ts                  — lista + CRUD
-  usePlanVersions.ts           — histórico de versões
-  usePlanDetail.ts             — KPIs + subscribers de um plano
-  useSubscriptions.ts          — lista global filtrável
-  useSubscriberDetail.ts       — dados completos de 1 subscriber
-  usePayments.ts               — pagamentos de uma subscription
-  useRegisterManualPayment.ts  — mutation
-  useChangePlan.ts             — mutation
-  useStripeCheckout.ts         — chama edge function
-  useMRRTimeseries.ts          — gráfico
-```
-
----
-
-## 10. Fases de Execução
-
-1. **Fase 1 — Migrations**: enums + tabelas + views + RLS + RPCs (sem Stripe ainda)
-2. **Fase 2 — Hooks + página Hub** ligada a dados reais (mantém layout, troca mocks)
-3. **Fase 3 — CRUD `/manage` + PlanFormModal** com versionamento
-4. **Fase 4 — Plan Detail `/plans/:id`** com editor inline, KPIs, subscribers tab, versions tab
-5. **Fase 5 — Subscriber Detail `/plans/subscriber/:id`** + RegisterManualPaymentModal + ChangePlanModal + CancelModal
-6. **Fase 6 — Integração Stripe**: enable_stripe_payments → edge functions checkout/portal/webhook + sync plan_versions
-7. **Fase 7 — Polimento**: charts reais, export CSV, empty states, realtime em `payments`
-
----
-
-## Perguntas antes de começar
-
-1. Confirmas **Lovable Payments (seamless Stripe)** em vez de BYOK? (Recomendo seamless — sem precisar de conta Stripe própria nesta fase, mas eligibility check é feito antes de activar.)
-2. Posso criar **todas as migrations da Fase 1 numa só** (com seed dos 3 tiers actuais Light/Plus/Black como `plan_versions` iniciais)?
-3. Para o cálculo de **churn risk score** queres algo simples (dias desde último pagamento > período × 1.5) ou um score 0-100 ponderado (falhas + downgrade + atraso)?
-4. As **faturas manuais** devem gerar PDF automático no momento do registo, ou só guardar o registo e o PDF é opcional/anexado depois?
+Aprovas avançar com a **Fase 1 (migração Supabase)** primeiro? Após aprovação da migração executo Fases 2 e 3 em sequência sem novas pausas, exceto para instalar dependências (`@tanstack/react-table`).
