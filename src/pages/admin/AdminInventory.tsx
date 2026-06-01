@@ -541,6 +541,7 @@ export default function AdminInventory() {
       <TransferStockModal row={transferRow} onClose={() => setTransferRow(null)} />
       <ReorderModal open={reorderOpen} rows={rows} onClose={() => setReorderOpen(false)} />
       <MovementDetailDrawer movement={movementSel} onClose={() => setMovementSel(null)} />
+      <QuickStockModal open={quickStockOpen} onClose={() => setQuickStockOpen(false)} />
     </AdminDashboardLayout>
   );
 }
