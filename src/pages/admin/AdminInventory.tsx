@@ -14,7 +14,6 @@ import {
   ArrowUpRight,
   Plus,
   Upload,
-  Zap,
   MoreVertical,
   History,
 } from "lucide-react";
@@ -55,7 +54,6 @@ import ReceiveStockModal from "@/components/dashboard/inventory/ReceiveStockModa
 import TransferStockModal from "@/components/dashboard/inventory/TransferStockModal";
 import ReorderModal from "@/components/dashboard/inventory/ReorderModal";
 import MovementDetailDrawer from "@/components/dashboard/inventory/MovementDetailDrawer";
-import QuickStockModal from "@/components/dashboard/inventory/QuickStockModal";
 import { usePermissions } from "@/hooks/usePermissions";
 import { downloadCSV } from "@/lib/csv";
 
@@ -87,7 +85,6 @@ export default function AdminInventory() {
   const [receiveRow, setReceiveRow] = useState<InventoryRow | null>(null);
   const [transferRow, setTransferRow] = useState<InventoryRow | null>(null);
   const [reorderOpen, setReorderOpen] = useState(false);
-  const [quickStockOpen, setQuickStockOpen] = useState(false);
   const [movementSel, setMovementSel] = useState<MovementRow | null>(null);
 
   const filtered = useMemo(() => {
@@ -206,17 +203,12 @@ export default function AdminInventory() {
                 <History className="h-4 w-4 mr-1" /> History
               </Link>
             </Button>
-            {can("inventory.receive") && (
+            {(can("inventory.reorder") || can("inventory.receive")) && (
               <Button
                 size="sm"
-                onClick={() => setQuickStockOpen(true)}
+                onClick={() => setReorderOpen(true)}
                 className="bg-wj-green hover:bg-wj-green/90"
               >
-                <Zap className="h-4 w-4 mr-1" /> Quick Stock
-              </Button>
-            )}
-            {can("inventory.reorder") && (
-              <Button size="sm" variant="outline" onClick={() => setReorderOpen(true)}>
                 <ShoppingCart className="h-4 w-4 mr-1" /> Reorder
               </Button>
             )}
@@ -564,7 +556,6 @@ export default function AdminInventory() {
       <TransferStockModal row={transferRow} onClose={() => setTransferRow(null)} />
       <ReorderModal open={reorderOpen} rows={rows} onClose={() => setReorderOpen(false)} />
       <MovementDetailDrawer movement={movementSel} onClose={() => setMovementSel(null)} />
-      <QuickStockModal open={quickStockOpen} onClose={() => setQuickStockOpen(false)} />
     </AdminDashboardLayout>
   );
 }
