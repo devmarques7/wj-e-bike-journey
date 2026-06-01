@@ -432,12 +432,93 @@ export default function BookAppointmentDialog({
                 <Label className="text-xs flex items-center gap-1">
                   <Bike className="h-3 w-3" /> Modelo da bicicleta
                 </Label>
-                <Input
-                  value={bikeModel}
-                  onChange={(e) => setBikeModel(e.target.value)}
-                  placeholder="WJ Vision Black"
-                  className="mt-1 text-sm"
-                />
+                <Popover open={modelOpen} onOpenChange={setModelOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={modelOpen}
+                      className="mt-1 w-full justify-between text-sm font-normal h-9 px-3"
+                    >
+                      <span className={cn("truncate", !bikeModel && "text-muted-foreground")}>
+                        {bikeModel || "Selecionar modelo…"}
+                      </span>
+                      <ChevronsUpDown className="h-3.5 w-3.5 opacity-50 shrink-0 ml-2" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="p-0 w-[var(--radix-popover-trigger-width)] bg-background/95 backdrop-blur-xl border-border/40"
+                    align="start"
+                  >
+                    <Command shouldFilter={false}>
+                      <CommandInput
+                        placeholder="Procurar modelo…"
+                        value={modelSearch}
+                        onValueChange={setModelSearch}
+                        className="h-9 text-sm"
+                      />
+                      <CommandList className="max-h-56">
+                        {modelsLoading ? (
+                          <div className="py-4 text-center text-xs text-muted-foreground flex items-center justify-center gap-1">
+                            <Loader2 className="h-3 w-3 animate-spin" /> A carregar…
+                          </div>
+                        ) : (
+                          <>
+                            <CommandEmpty>
+                              <div className="py-2 text-xs text-muted-foreground">
+                                Sem modelos. Pode escrever manualmente:
+                                <button
+                                  type="button"
+                                  className="block mt-1 text-wj-green hover:underline"
+                                  onClick={() => {
+                                    setBikeModel(modelSearch.trim());
+                                    setModelOpen(false);
+                                  }}
+                                >
+                                  Usar "{modelSearch}"
+                                </button>
+                              </div>
+                            </CommandEmpty>
+                            <CommandGroup>
+                              {bikeModels
+                                .filter((m) =>
+                                  modelSearch
+                                    ? m.name.toLowerCase().includes(modelSearch.toLowerCase())
+                                    : true,
+                                )
+                                .map((m) => (
+                                  <CommandItem
+                                    key={m.id}
+                                    value={m.name}
+                                    onSelect={() => {
+                                      setBikeModel(m.name);
+                                      setModelOpen(false);
+                                    }}
+                                    className="text-sm"
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-3.5 w-3.5",
+                                        bikeModel === m.name ? "opacity-100" : "opacity-0",
+                                      )}
+                                    />
+                                    {m.color_hex && (
+                                      <span
+                                        className="inline-block w-2 h-2 rounded-full mr-2"
+                                        style={{ backgroundColor: m.color_hex }}
+                                      />
+                                    )}
+                                    <span className="flex-1 truncate">{m.name}</span>
+                                  </CommandItem>
+                                ))}
+                            </CommandGroup>
+                          </>
+                        )}
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               <div>
                 <Label className="text-xs">Nº série / matrícula</Label>
