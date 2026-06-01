@@ -15,6 +15,7 @@ import {
   Plus,
   Upload,
   Zap,
+  MoreVertical,
 } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
@@ -25,6 +26,12 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -297,23 +304,33 @@ export default function AdminInventory() {
                             <Badge className={cn("text-[10px]", s.c)}>{s.l}</Badge>
                           </TableCell>
                           <TableCell className="text-right hidden lg:table-cell">
-                            <div className="inline-flex items-center gap-2">
-                              {can("inventory.receive") && (
-                                <button onClick={() => setReceiveRow(r)} className="text-xs text-wj-green hover:underline inline-flex items-center gap-1">
-                                  <ArrowDownToLine className="h-3 w-3" /> Receive
-                                </button>
-                              )}
-                              {can("inventory.transfer") && (
-                                <button onClick={() => setTransferRow(r)} className="text-xs text-foreground/80 hover:underline inline-flex items-center gap-1">
-                                  <ArrowLeftRight className="h-3 w-3" /> Move
-                                </button>
-                              )}
-                              {can("inventory.adjust") && (
-                                <button onClick={() => setAdjustRow(r)} className="text-xs text-muted-foreground hover:underline inline-flex items-center gap-1">
-                                  <Settings2 className="h-3 w-3" /> Adjust
-                                </button>
-                              )}
-                            </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-40">
+                                {can("inventory.receive") && (
+                                  <DropdownMenuItem onClick={() => setReceiveRow(r)} className="text-xs gap-2">
+                                    <ArrowDownToLine className="h-3.5 w-3.5 text-wj-green" />
+                                    Receive
+                                  </DropdownMenuItem>
+                                )}
+                                {can("inventory.transfer") && (
+                                  <DropdownMenuItem onClick={() => setTransferRow(r)} className="text-xs gap-2">
+                                    <ArrowLeftRight className="h-3.5 w-3.5" />
+                                    Move
+                                  </DropdownMenuItem>
+                                )}
+                                {can("inventory.adjust") && (
+                                  <DropdownMenuItem onClick={() => setAdjustRow(r)} className="text-xs gap-2">
+                                    <Settings2 className="h-3.5 w-3.5" />
+                                    Adjust
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
                       );
