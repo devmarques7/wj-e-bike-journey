@@ -25,6 +25,7 @@ const LABELS: Record<string, string> = {
   products: "Produtos",
   locations: "Localizações",
   categories: "Categorias",
+  history: "Histórico",
   subscriber: "Subscritor",
   service: "Serviço",
   wallet: "Carteira",

@@ -16,6 +16,7 @@ import {
   Upload,
   Zap,
   MoreVertical,
+  History,
 } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
@@ -200,6 +201,11 @@ export default function AdminInventory() {
             <p className="text-sm text-muted-foreground mt-1">Stock levels, movements and replenishment</p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button asChild size="sm" variant="outline">
+              <Link to="/dashboard/admin/inventory/history">
+                <History className="h-4 w-4 mr-1" /> History
+              </Link>
+            </Button>
             {can("inventory.receive") && (
               <Button
                 size="sm"
