@@ -74,7 +74,13 @@ export default function CustomersTable({ rows, loading }: Props) {
         id: "select",
         header: ({ table }) => (
           <Checkbox
-            checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+            checked={
+              table.getIsAllPageRowsSelected()
+                ? true
+                : table.getIsSomePageRowsSelected()
+                  ? "indeterminate"
+                  : false
+            }
             onCheckedChange={(v) => table.toggleAllPageRowsSelected(!!v)}
             aria-label="Select all"
           />
