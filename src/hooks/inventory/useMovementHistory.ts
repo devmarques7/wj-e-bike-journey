@@ -63,7 +63,7 @@ export function useMovementHistory(filters: MovementFilters = {}) {
       .order("created_at", { ascending: false })
       .limit(limit);
 
-    if (movementType && movementType !== "all") q = q.eq("movement_type", movementType);
+    if (movementType && movementType !== "all") q = q.eq("movement_type", movementType as any);
     if (locationId && locationId !== "all") q = q.eq("location_id", locationId);
     if (actorId && actorId !== "all") q = q.eq("created_by", actorId);
     if (from) q = q.gte("created_at", new Date(from).toISOString());
