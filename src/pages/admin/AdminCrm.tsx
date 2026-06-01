@@ -107,22 +107,30 @@ export default function AdminCrm() {
               {/* Radar by plan */}
               <div className="col-span-12 lg:col-span-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-5">
                 <h2 className="text-sm font-medium mb-4">Saúde por Plano</h2>
-                <ResponsiveContainer width="100%" height={260}>
-                  <RadarChart data={[
-                    { dim: "Health", ...Object.fromEntries(planAgg.map((p: any) => [p.plan, p.avgHealth])) },
-                    { dim: "LTV/10", ...Object.fromEntries(planAgg.map((p: any) => [p.plan, Math.min(100, p.avgLtv / 10)])) },
-                    { dim: "Activos", ...Object.fromEntries(planAgg.map((p: any) => [p.plan, (p.active / Math.max(1, p.n)) * 100])) },
-                    { dim: "Fidelidade", ...Object.fromEntries(planAgg.map((p: any) => [p.plan, 100 - (p.churned / Math.max(1, p.n)) * 100])) },
-                    { dim: "Engagement", ...Object.fromEntries(planAgg.map((p: any) => [p.plan, p.avgHealth * 0.8])) },
-                  ]}>
-                    <PolarGrid />
-                    <PolarAngleAxis dataKey="dim" tick={{ fontSize: 10 }} />
-                    {planAgg.map((p: any, i: number) => (
-                      <Radar key={p.plan} name={p.plan} dataKey={p.plan} stroke={[CRM_COLORS.care, CRM_COLORS.performance, CRM_COLORS.prestige][i] ?? CRM_COLORS.accent} fill={[CRM_COLORS.care, CRM_COLORS.performance, CRM_COLORS.prestige][i] ?? CRM_COLORS.accent} fillOpacity={0.25} />
-                    ))}
-                    <Legend wrapperStyle={{ fontSize: 10 }} />
-                  </RadarChart>
-                </ResponsiveContainer>
+                {(() => {
+                  const validPlans = (planAgg || []).filter((p: any) => p && p.plan);
+                  if (validPlans.length === 0) {
+                    return <p className="text-xs text-muted-foreground">Sem dados de planos.</p>;
+                  }
+                  return (
+                    <ResponsiveContainer width="100%" height={260}>
+                      <RadarChart data={[
+                        { dim: "Health", ...Object.fromEntries(validPlans.map((p: any) => [p.plan, p.avgHealth ?? 0])) },
+                        { dim: "LTV/10", ...Object.fromEntries(validPlans.map((p: any) => [p.plan, Math.min(100, (p.avgLtv ?? 0) / 10)])) },
+                        { dim: "Activos", ...Object.fromEntries(validPlans.map((p: any) => [p.plan, ((p.active ?? 0) / Math.max(1, p.n ?? 1)) * 100])) },
+                        { dim: "Fidelidade", ...Object.fromEntries(validPlans.map((p: any) => [p.plan, 100 - ((p.churned ?? 0) / Math.max(1, p.n ?? 1)) * 100])) },
+                        { dim: "Engagement", ...Object.fromEntries(validPlans.map((p: any) => [p.plan, (p.avgHealth ?? 0) * 0.8])) },
+                      ]}>
+                        <PolarGrid />
+                        <PolarAngleAxis dataKey="dim" tick={{ fontSize: 10 }} />
+                        {validPlans.map((p: any, i: number) => (
+                          <Radar key={p.plan} name={p.plan} dataKey={p.plan} stroke={[CRM_COLORS.care, CRM_COLORS.performance, CRM_COLORS.prestige][i] ?? CRM_COLORS.accent} fill={[CRM_COLORS.care, CRM_COLORS.performance, CRM_COLORS.prestige][i] ?? CRM_COLORS.accent} fillOpacity={0.25} />
+                        ))}
+                        <Legend wrapperStyle={{ fontSize: 10 }} />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  );
+                })()}
               </div>
             </div>
 
