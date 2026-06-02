@@ -19,20 +19,26 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ChevronLeft, ChevronRight, MoreHorizontal, ArrowUpDown, Download, Search } from "lucide-react";
 import { downloadCSV } from "@/lib/csv";
-import { type CrmCustomer, type LifecycleStage } from "@/hooks/crm/useCrmData";
+import { type CrmCustomer, type LifecycleStage, deleteCustomerProfile } from "@/hooks/crm/useCrmData";
 import { LIFECYCLE_META, healthColor, initials, relativeTime } from "./colors";
 import { cn } from "@/lib/utils";
+import { usePermissions } from "@/hooks/usePermissions";
+import { toast } from "sonner";
+import CustomerEditDialog from "./CustomerEditDialog";
 
 interface Props {
   rows: CrmCustomer[];
   loading?: boolean;
+  onMutate?: () => void;
 }
 
-export default function CustomersTable({ rows, loading }: Props) {
+export default function CustomersTable({ rows, loading, onMutate }: Props) {
   const navigate = useNavigate();
+  const { can } = usePermissions();
+  const canEdit = can("crm.edit");
   const [sorting, setSorting] = useState<SortingState>([]);
   const [search, setSearch] = useState("");
   const [planFilter, setPlanFilter] = useState("all");
@@ -40,6 +46,18 @@ export default function CustomersTable({ rows, loading }: Props) {
   const [tagFilter, setTagFilter] = useState("all");
   const [healthMin, setHealthMin] = useState(0);
   const [rowSelection, setRowSelection] = useState({});
+  const [editing, setEditing] = useState<CrmCustomer | null>(null);
+
+  const handleDelete = async (c: CrmCustomer) => {
+    if (!confirm(`Eliminar perfil CRM de ${c.full_name}? (Não apaga o utilizador)`)) return;
+    try {
+      await deleteCustomerProfile(c.id);
+      toast.success("Perfil eliminado");
+      onMutate?.();
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
 
   const allTags = useMemo(() => {
     const set = new Set<string>();
@@ -224,7 +242,7 @@ export default function CustomersTable({ rows, loading }: Props) {
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
               <DropdownMenuItem onClick={() => navigate(`/dashboard/admin/crm/${row.original.id}`)}>
                 Ver perfil
               </DropdownMenuItem>
@@ -234,13 +252,27 @@ export default function CustomersTable({ rows, loading }: Props) {
               <DropdownMenuItem onClick={() => navigate(`/dashboard/admin/crm/${row.original.id}?action=note`)}>
                 Adicionar nota
               </DropdownMenuItem>
+              {canEdit && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setEditing(row.original)}>
+                    Editar perfil
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => handleDelete(row.original)}
+                    className="text-red-400 focus:text-red-400"
+                  >
+                    Eliminar
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         ),
         enableSorting: false,
       },
     ],
-    [navigate],
+    [navigate, canEdit],
   );
 
   const table = useReactTable({
@@ -397,6 +429,13 @@ export default function CustomersTable({ rows, loading }: Props) {
           </Button>
         </div>
       </div>
+
+      <CustomerEditDialog
+        open={!!editing}
+        onClose={() => setEditing(null)}
+        customer={editing}
+        onSaved={onMutate}
+      />
     </div>
   );
 }

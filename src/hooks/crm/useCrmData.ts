@@ -88,7 +88,8 @@ export type CrmBike = {
 };
 
 /** Loads all customers with joined profile + plan. */
-export function useCrmCustomers() {
+export function useCrmCustomers(opts?: { onlyActualCustomers?: boolean }) {
+  const onlyActual = opts?.onlyActualCustomers ?? true;
   const [rows, setRows] = useState<CrmCustomer[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -106,16 +107,19 @@ export function useCrmCustomers() {
       return;
     }
 
-    const [{ data: profiles }, { data: subs }] = await Promise.all([
+    const [{ data: profiles }, { data: subs }, { data: roles }] = await Promise.all([
       supabase
         .from("profiles")
-        .select("user_id, full_name, email, phone")
+        .select("user_id, full_name, email, phone, created_at")
         .in("user_id", userIds),
       supabase
         .from("subscriptions")
         .select("user_id, plan_version_id, status")
-        .in("user_id", userIds)
-        .eq("status", "active"),
+        .in("user_id", userIds),
+      supabase
+        .from("user_roles")
+        .select("user_id, role")
+        .in("user_id", userIds),
     ]);
 
     const planVersionIds = (subs ?? []).map((s) => s.plan_version_id).filter(Boolean);
@@ -141,10 +145,15 @@ export function useCrmCustomers() {
     }
 
     const profileMap = new Map((profiles ?? []).map((p: any) => [p.user_id, p]));
-    const subMap = new Map((subs ?? []).map((s: any) => [s.user_id, s]));
+    const activeSubs = (subs ?? []).filter((s: any) => s.status === "active");
+    const subMap = new Map(activeSubs.map((s: any) => [s.user_id, s]));
+    const anySubByUser = new Set((subs ?? []).map((s: any) => s.user_id));
+    const memberUserIds = new Set(
+      (roles ?? []).filter((r: any) => r.role === "member").map((r: any) => r.user_id),
+    );
     const planMap = new Map(plans.map((p) => [p.plan_version_id, p]));
 
-    const merged: CrmCustomer[] = (cps ?? []).map((c: any) => {
+    let merged: CrmCustomer[] = (cps ?? []).map((c: any) => {
       const prof = profileMap.get(c.user_id);
       const sub = subMap.get(c.user_id);
       const plan = sub ? planMap.get(sub.plan_version_id) : null;
@@ -157,6 +166,16 @@ export function useCrmCustomers() {
         plan_tier: plan?.tier_level ?? null,
       };
     });
+
+    if (onlyActual) {
+      // Real customer = has any subscription OR has member role OR lifecycle is post-lead
+      merged = merged.filter(
+        (m) =>
+          anySubByUser.has(m.user_id) ||
+          memberUserIds.has(m.user_id) ||
+          (m.lifecycle_stage !== "lead"),
+      );
+    }
 
     setRows(merged);
     setLoading(false);
@@ -178,6 +197,80 @@ export function useCrmCustomers() {
   }, []);
 
   return { rows, loading, refetch: fetchAll };
+}
+
+/** Monthly new customer registrations (from customer_profiles.created_at). */
+export function useCustomerRegistrationGrowth() {
+  const [data, setData] = useState<{ month: string; count: number; cumulative: number }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const { data: cps } = await supabase
+        .from("customer_profiles")
+        .select("created_at")
+        .order("created_at", { ascending: true });
+
+      const grouped: Record<string, number> = {};
+      // Seed last 12 months so the chart always has bars
+      const now = new Date();
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        grouped[k] = 0;
+      }
+      (cps ?? []).forEach((r: any) => {
+        const k = r.created_at.slice(0, 7);
+        if (k in grouped) grouped[k] = (grouped[k] ?? 0) + 1;
+      });
+
+      let cum = 0;
+      const arr = Object.entries(grouped)
+        .sort(([a], [b]) => (a < b ? -1 : 1))
+        .map(([month, count]) => {
+          cum += count;
+          return { month: month.slice(5) + "/" + month.slice(2, 4), count, cumulative: cum };
+        });
+      setData(arr);
+      setLoading(false);
+    })();
+  }, []);
+
+  return { data, loading };
+}
+
+/** Create / update / delete customer_profiles. */
+export async function createCustomerProfile(args: {
+  user_id: string;
+  lifecycle_stage?: LifecycleStage;
+  tags?: string[];
+}) {
+  const { error } = await supabase.from("customer_profiles").insert({
+    user_id: args.user_id,
+    lifecycle_stage: args.lifecycle_stage ?? "new",
+    tags: args.tags ?? [],
+  } as any);
+  if (error) throw error;
+}
+
+export async function updateCustomerProfile(
+  id: string,
+  patch: Partial<{
+    lifecycle_stage: LifecycleStage;
+    health_score: number;
+    churn_risk_score: number;
+    tags: string[];
+    assigned_to: string | null;
+    ltv_estimated: number;
+  }>,
+) {
+  const { error } = await supabase.from("customer_profiles").update(patch as any).eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteCustomerProfile(id: string) {
+  const { error } = await supabase.from("customer_profiles").delete().eq("id", id);
+  if (error) throw error;
 }
 
 /** Aggregate KPIs for overview tab. */
