@@ -1,35 +1,41 @@
 import { Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Users, Activity, TrendingDown, CreditCard, AlertTriangle, Bell, ArrowRight } from "lucide-react";
+import { Users, Activity, TrendingDown, CreditCard, AlertTriangle, Bell } from "lucide-react";
 import {
-  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid,
   RadarChart, Radar, PolarGrid, PolarAngleAxis, Legend,
-  ComposedChart, Bar, Line, BarChart,
+  ComposedChart, Bar, Line, BarChart, ResponsiveContainer, Tooltip,
 } from "recharts";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
-import AdminKPICard from "@/components/dashboard/AdminKPICard";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import {
-  useCrmCustomers, useCrmKpis, useCrmEvolution, useCrmSegments, useOverdueFollowups,
+  useCrmCustomers, useCrmKpis, useCrmSegments, useOverdueFollowups,
+  useCustomerRegistrationGrowth,
 } from "@/hooks/crm/useCrmData";
 import CustomersTable from "@/components/dashboard/crm/CustomersTable";
 import { CRM_COLORS, LIFECYCLE_META, initials, relativeTime } from "@/components/dashboard/crm/colors";
 import { Link } from "react-router-dom";
 
+const growthConfig: ChartConfig = {
+  count: { label: "Novos clientes", color: "hsl(var(--primary))" },
+  cumulative: { label: "Total acumulado", color: "hsl(var(--muted-foreground))" },
+};
+
 export default function AdminCrm() {
   const { isAuthenticated, isLoading } = useAuth();
   const { can } = usePermissions();
-  const { rows, loading } = useCrmCustomers();
+  const { rows, loading, refetch } = useCrmCustomers({ onlyActualCustomers: true });
   const kpis = useCrmKpis(rows);
-  const { data: evolution } = useCrmEvolution();
+  const { data: growth } = useCustomerRegistrationGrowth();
   const { segments } = useCrmSegments();
-  const { items: followups, refetch: refetchFollow } = useOverdueFollowups();
+  const { items: followups } = useOverdueFollowups();
 
   if (isLoading) return null;
   if (!isAuthenticated) return <Navigate to="/auth" replace />;
@@ -62,13 +68,21 @@ export default function AdminCrm() {
   return (
     <AdminDashboardLayout>
       <div className="p-4 lg:p-6 space-y-6">
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className="text-xl sm:text-2xl font-light text-foreground">CRM & Membership</h1>
-          <p className="text-sm text-muted-foreground mt-1">Análise integrada de clientes e assinaturas</p>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-end justify-between"
+        >
+          <div>
+            <h1 className="text-xl sm:text-2xl font-light text-foreground">CRM</h1>
+            <p className="text-xs text-muted-foreground mt-1">
+              {kpis.total} clientes activos · análise integrada
+            </p>
+          </div>
         </motion.div>
 
         <Tabs defaultValue="overview">
-          <TabsList className="bg-background/60 backdrop-blur-md">
+          <TabsList className="bg-background/60 backdrop-blur-md border border-border/30">
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
             <TabsTrigger value="customers">Clientes</TabsTrigger>
             <TabsTrigger value="segments">Segmentos</TabsTrigger>
@@ -77,43 +91,59 @@ export default function AdminCrm() {
 
           {/* === OVERVIEW === */}
           <TabsContent value="overview" className="space-y-6 mt-6">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-              <AdminKPICard label="Clientes" value={String(kpis.total)} change={`${rows.filter(r => r.lifecycle_stage === "new").length} novos`} trend="up" icon={Users} index={0} />
-              <AdminKPICard label="Health Médio" value={`${kpis.avgHealth}%`} change="—" trend="up" icon={Activity} index={1} />
-              <AdminKPICard label="Churn Rate" value={`${kpis.churnRate}%`} change="—" trend="down" icon={TrendingDown} index={2} />
-              <AdminKPICard label="LTV Médio" value={`€${kpis.avgLtv}`} change="—" trend="up" icon={CreditCard} index={3} />
-              <AdminKPICard label="Alto Risco" value={String(kpis.highRisk)} change="ver lista" trend="down" icon={AlertTriangle} index={4} />
-              <AdminKPICard label="Follow-ups" value={String(followups.length)} change="em atraso" trend="down" icon={Bell} index={5} />
+            {/* KPIs (esquerda) + Crescimento de registos (direita) */}
+            <div className="grid grid-cols-12 gap-4">
+              <div className="col-span-12 lg:col-span-5 grid grid-cols-2 gap-3">
+                <MiniKpi icon={Users} label="Clientes" value={String(kpis.total)} hint={`${rows.filter(r => r.lifecycle_stage === "new").length} novos`} />
+                <MiniKpi icon={Activity} label="Health médio" value={`${kpis.avgHealth}%`} hint="saúde da base" tone={kpis.avgHealth >= 60 ? "good" : "warn"} />
+                <MiniKpi icon={TrendingDown} label="Churn rate" value={`${kpis.churnRate}%`} hint="últimos 30d" tone={kpis.churnRate <= 5 ? "good" : "bad"} />
+                <MiniKpi icon={CreditCard} label="LTV médio" value={`€${kpis.avgLtv}`} hint="por cliente" />
+                <MiniKpi icon={AlertTriangle} label="Alto risco" value={String(kpis.highRisk)} hint="churn ≥ 70" tone="bad" />
+                <MiniKpi icon={Bell} label="Follow-ups" value={String(followups.length)} hint="em atraso" tone={followups.length === 0 ? "good" : "warn"} />
+              </div>
+
+              <div className="col-span-12 lg:col-span-7 bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-5">
+                <div className="flex items-start justify-between mb-1">
+                  <div>
+                    <h2 className="text-sm font-medium">Crescimento de Clientes</h2>
+                    <p className="text-[11px] text-muted-foreground">Novos registos por mês · últimos 12 meses</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-light leading-none">{growth.reduce((s, g) => s + g.count, 0)}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1">no período</p>
+                  </div>
+                </div>
+                <ChartContainer config={growthConfig} className="aspect-auto h-[220px] w-full mt-2">
+                  <AreaChart data={growth} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="growthFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.02} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.15} />
+                    <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fontSize: 10 }} />
+                    <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 10 }} width={28} />
+                    <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
+                    <Area type="monotone" dataKey="count" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#growthFill)" />
+                    <Line type="monotone" dataKey="cumulative" stroke="hsl(var(--muted-foreground))" strokeWidth={1.5} strokeDasharray="4 4" dot={false} />
+                  </AreaChart>
+                </ChartContainer>
+              </div>
             </div>
 
             <div className="grid grid-cols-12 gap-4">
-              {/* Evolution chart */}
-              <div className="col-span-12 lg:col-span-7 bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-5">
-                <h2 className="text-sm font-medium mb-4">Evolução de Clientes</h2>
-                <ResponsiveContainer width="100%" height={260}>
-                  <AreaChart data={evolution}>
-                    <CartesianGrid strokeDasharray="3 3" opacity={0.15} />
-                    <XAxis dataKey="month" tick={{ fontSize: 10 }} />
-                    <YAxis tick={{ fontSize: 10 }} />
-                    <Tooltip contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", fontSize: 12 }} />
-                    <Area type="monotone" dataKey="active_subscriber" stackId="1" stroke={CRM_COLORS.active} fill={CRM_COLORS.active} fillOpacity={0.6} />
-                    <Area type="monotone" dataKey="loyal" stackId="1" stroke={CRM_COLORS.loyal} fill={CRM_COLORS.loyal} fillOpacity={0.6} />
-                    <Area type="monotone" dataKey="at_risk" stackId="1" stroke={CRM_COLORS.atRisk} fill={CRM_COLORS.atRisk} fillOpacity={0.6} />
-                    <Area type="monotone" dataKey="churned" stackId="1" stroke={CRM_COLORS.churned} fill={CRM_COLORS.churned} fillOpacity={0.6} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-
               {/* Radar by plan */}
               <div className="col-span-12 lg:col-span-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-5">
-                <h2 className="text-sm font-medium mb-4">Saúde por Plano</h2>
+                <h2 className="text-sm font-medium mb-1">Saúde por Plano</h2>
+                <p className="text-[11px] text-muted-foreground mb-4">Multi-dimensional por tier</p>
                 {(() => {
                   const validPlans = (planAgg || []).filter((p: any) => p && p.plan);
                   if (validPlans.length === 0) {
                     return <p className="text-xs text-muted-foreground">Sem dados de planos.</p>;
                   }
                   return (
-                    <ResponsiveContainer width="100%" height={260}>
+                    <ResponsiveContainer width="100%" height={240}>
                       <RadarChart data={[
                         { dim: "Health", ...Object.fromEntries(validPlans.map((p: any) => [p.plan, p.avgHealth ?? 0])) },
                         { dim: "LTV/10", ...Object.fromEntries(validPlans.map((p: any) => [p.plan, Math.min(100, (p.avgLtv ?? 0) / 10)])) },
@@ -132,17 +162,14 @@ export default function AdminCrm() {
                   );
                 })()}
               </div>
-            </div>
-
-            <div className="grid grid-cols-12 gap-4">
               {/* Risk list */}
-              <div className="col-span-12 lg:col-span-6 bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-5">
+              <div className="col-span-12 lg:col-span-7 bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-5">
                 <h2 className="text-sm font-medium mb-4">Alto Risco de Churn</h2>
                 <div className="space-y-3">
                   {riskCustomers.length === 0 && <p className="text-xs text-muted-foreground">Sem clientes em risco.</p>}
                   {riskCustomers.map((c) => (
                     <Link key={c.id} to={`/dashboard/admin/crm/${c.id}`} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/30">
-                      <Avatar className="h-9 w-9"><AvatarFallback className="bg-red-500/10 text-red-400 text-[10px]">{initials(c.full_name)}</AvatarFallback></Avatar>
+                      <Avatar className="h-9 w-9"><AvatarFallback className="bg-destructive/10 text-destructive text-[10px]">{initials(c.full_name)}</AvatarFallback></Avatar>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{c.full_name}</p>
                         <p className="text-[11px] text-muted-foreground truncate">{c.email}</p>
@@ -150,21 +177,23 @@ export default function AdminCrm() {
                       {c.plan_name && <Badge variant="outline" className="text-[9px]">{c.plan_name}</Badge>}
                       <div className="flex items-center gap-2 w-24">
                         <Progress value={c.churn_risk_score} className="h-1.5" />
-                        <span className="text-xs font-mono text-red-400 w-6">{c.churn_risk_score}</span>
+                        <span className="text-xs font-mono text-destructive w-6">{c.churn_risk_score}</span>
                       </div>
                     </Link>
                   ))}
                 </div>
               </div>
+            </div>
 
+            <div className="grid grid-cols-12 gap-4">
               {/* Follow-ups */}
-              <div className="col-span-12 lg:col-span-6 bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-5">
+              <div className="col-span-12 bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-5">
                 <h2 className="text-sm font-medium mb-4">Follow-ups em Atraso</h2>
                 <div className="space-y-3">
                   {followups.length === 0 && <p className="text-xs text-muted-foreground">Tudo em dia ✓</p>}
                   {followups.map((n) => (
                     <div key={n.id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/30">
-                      <Bell className="h-4 w-4 text-orange-400 mt-0.5 shrink-0" />
+                      <Bell className="h-4 w-4 text-wj-green mt-0.5 shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
                           <p className="text-sm font-medium truncate">{n.customer_name}</p>
@@ -181,7 +210,7 @@ export default function AdminCrm() {
 
           {/* === CUSTOMERS === */}
           <TabsContent value="customers" className="mt-6">
-            <CustomersTable rows={rows} loading={loading} />
+            <CustomersTable rows={rows} loading={loading} onMutate={refetch} />
           </TabsContent>
 
           {/* === SEGMENTS === */}
@@ -249,5 +278,34 @@ export default function AdminCrm() {
         </Tabs>
       </div>
     </AdminDashboardLayout>
+  );
+}
+
+function MiniKpi({
+  icon: Icon,
+  label,
+  value,
+  hint,
+  tone,
+}: {
+  icon: any;
+  label: string;
+  value: string;
+  hint?: string;
+  tone?: "good" | "warn" | "bad";
+}) {
+  const toneClass =
+    tone === "good" ? "text-wj-green" : tone === "bad" ? "text-destructive" : tone === "warn" ? "text-orange-400" : "text-muted-foreground";
+  return (
+    <div className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4 flex flex-col justify-between min-h-[110px]">
+      <div className="flex items-center justify-between">
+        <Icon className="h-4 w-4 text-muted-foreground" />
+        {hint && <span className={`text-[10px] ${toneClass}`}>{hint}</span>}
+      </div>
+      <div>
+        <p className="text-2xl font-light text-foreground leading-none">{value}</p>
+        <p className="text-[11px] text-muted-foreground mt-1">{label}</p>
+      </div>
+    </div>
   );
 }
