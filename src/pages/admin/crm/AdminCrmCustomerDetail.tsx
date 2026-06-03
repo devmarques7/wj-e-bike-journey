@@ -3,7 +3,7 @@ import { Navigate, useParams, useSearchParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Phone, MessageSquare, Mail, Calendar, StickyNote, ShoppingCart,
-  Wrench, CreditCard, Star, ChevronLeft,
+  Wrench, CreditCard, Star, ChevronLeft, Pencil, LayoutGrid, List,
 } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useCustomerProfile, markFollowupDone } from "@/hooks/crm/useCrmData";
@@ -19,6 +20,7 @@ import { LIFECYCLE_META, healthColor, initials, relativeTime } from "@/component
 import LogContactSheet from "@/components/dashboard/crm/sheets/LogContactSheet";
 import AddNoteSheet from "@/components/dashboard/crm/sheets/AddNoteSheet";
 import SendMessageSheet from "@/components/dashboard/crm/sheets/SendMessageSheet";
+import CustomerEditDialog from "@/components/dashboard/crm/CustomerEditDialog";
 import { toast } from "sonner";
 
 type TimelineItem = {
@@ -34,13 +36,15 @@ export default function AdminCrmCustomerDetail() {
   const { customerId } = useParams<{ customerId: string }>();
   const [params] = useSearchParams();
   const { isAuthenticated, isLoading } = useAuth();
-  const { can } = usePermissions();
+  const { can, isAdmin } = usePermissions();
   const { customer, notes, interactions, bikes, payments, appointments, loading, refetch } =
     useCustomerProfile(customerId);
   const [contactOpen, setContactOpen] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
   const [msgOpen, setMsgOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [timelineFilter, setTimelineFilter] = useState<string>("all");
+  const [timelineGroup, setTimelineGroup] = useState<"none" | "day" | "type">("day");
 
   useEffect(() => {
     const a = params.get("action");
@@ -52,7 +56,7 @@ export default function AdminCrmCustomerDetail() {
   if (!isAuthenticated) return <Navigate to="/auth" replace />;
   if (!can("crm.view")) return <Navigate to="/dashboard" replace />;
 
-  const timeline: TimelineItem[] = [
+  const rawTimeline: TimelineItem[] = [
     ...interactions.map((i) => ({
       id: `i-${i.id}`,
       type: "interaction" as const,
@@ -89,6 +93,25 @@ export default function AdminCrmCustomerDetail() {
     .filter((t) => timelineFilter === "all" || t.type === timelineFilter)
     .sort((a, b) => +new Date(b.date) - +new Date(a.date));
 
+  const TYPE_LABEL: Record<string, string> = {
+    interaction: "Contactos",
+    note: "Notas",
+    appointment: "Agendamentos",
+    payment: "Pagamentos",
+  };
+  const groupedTimeline = (() => {
+    if (timelineGroup === "none") return [{ key: "", items: rawTimeline }];
+    const map = new Map<string, TimelineItem[]>();
+    rawTimeline.forEach((t) => {
+      const key = timelineGroup === "day"
+        ? new Date(t.date).toLocaleDateString()
+        : TYPE_LABEL[t.type] ?? t.type;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(t);
+    });
+    return Array.from(map.entries()).map(([key, items]) => ({ key, items }));
+  })();
+
   const handleMarkFollowup = async (noteId: string) => {
     try {
       await markFollowupDone(noteId);
@@ -101,6 +124,7 @@ export default function AdminCrmCustomerDetail() {
 
   return (
     <AdminDashboardLayout>
+      <TooltipProvider delayDuration={150}>
       <div className="p-4 lg:p-6 space-y-6">
         <Link to="/dashboard/admin/crm" className="inline-flex items-center text-xs text-muted-foreground hover:text-foreground">
           <ChevronLeft className="h-3 w-3 mr-1" /> Voltar ao CRM
@@ -117,7 +141,19 @@ export default function AdminCrmCustomerDetail() {
                 <div className="flex items-start gap-3">
                   <Avatar className="h-14 w-14"><AvatarFallback className="bg-wj-green/10 text-wj-green">{initials(customer.full_name)}</AvatarFallback></Avatar>
                   <div className="flex-1 min-w-0">
-                    <h1 className="text-lg font-medium truncate">{customer.full_name}</h1>
+                    <div className="flex items-start justify-between gap-2">
+                      <h1 className="text-lg font-medium truncate">{customer.full_name}</h1>
+                      {isAdmin && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button size="icon" variant="outline" className="h-7 w-7 shrink-0" onClick={() => setEditOpen(true)}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="left" className="text-xs">Editar cliente</TooltipContent>
+                        </Tooltip>
+                      )}
+                    </div>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {customer.plan_name && <Badge variant="outline" className="text-[10px]">{customer.plan_name}</Badge>}
                       <Badge variant="outline" className="text-[10px]" style={{ borderColor: LIFECYCLE_META[customer.lifecycle_stage].color, color: LIFECYCLE_META[customer.lifecycle_stage].color }}>
@@ -182,41 +218,72 @@ export default function AdminCrmCustomerDetail() {
             {/* Main */}
             <section className="col-span-12 lg:col-span-8">
               <Tabs defaultValue="timeline">
-                <TabsList className="bg-background/60 backdrop-blur-md">
-                  <TabsTrigger value="timeline">Timeline</TabsTrigger>
-                  <TabsTrigger value="bikes">Bikes</TabsTrigger>
-                  <TabsTrigger value="subscription">Assinatura</TabsTrigger>
-                  <TabsTrigger value="financial">Financeiro</TabsTrigger>
-                  <TabsTrigger value="notes">Notas</TabsTrigger>
+                <TabsList className="w-full justify-start gap-1 bg-transparent border-b border-border/30 rounded-none p-0 h-auto">
+                  {[
+                    { v: "timeline", l: "Timeline" },
+                    { v: "bikes", l: "Bikes" },
+                    { v: "subscription", l: "Assinatura" },
+                    { v: "financial", l: "Financeiro" },
+                    { v: "notes", l: "Notas" },
+                  ].map((t) => (
+                    <TabsTrigger
+                      key={t.v}
+                      value={t.v}
+                      className="rounded-none border-b-2 border-transparent bg-transparent px-3 py-2 text-xs text-muted-foreground data-[state=active]:border-wj-green data-[state=active]:text-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                    >
+                      {t.l}
+                    </TabsTrigger>
+                  ))}
                 </TabsList>
 
                 <TabsContent value="timeline" className="mt-4 space-y-4">
-                  <ToggleGroup type="single" value={timelineFilter} onValueChange={(v) => v && setTimelineFilter(v)}>
-                    <ToggleGroupItem value="all" className="text-xs">Todos</ToggleGroupItem>
-                    <ToggleGroupItem value="interaction" className="text-xs">Contactos</ToggleGroupItem>
-                    <ToggleGroupItem value="note" className="text-xs">Notas</ToggleGroupItem>
-                    <ToggleGroupItem value="appointment" className="text-xs">Agendamentos</ToggleGroupItem>
-                    <ToggleGroupItem value="payment" className="text-xs">Pagamentos</ToggleGroupItem>
-                  </ToggleGroup>
-                  {timeline.length === 0 && <p className="text-xs text-muted-foreground p-4">Sem actividade.</p>}
-                  <div className="space-y-2">
-                    {timeline.map((t) => {
-                      const Icon = t.icon;
-                      return (
-                        <div key={t.id} className="flex gap-3 p-3 rounded-xl bg-background/60 backdrop-blur-md border border-border/30">
-                          <div className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center shrink-0">
-                            <Icon className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <ToggleGroup type="single" value={timelineFilter} onValueChange={(v) => v && setTimelineFilter(v)} className="flex-wrap">
+                      <ToggleGroupItem value="all" className="text-xs h-7">Todos</ToggleGroupItem>
+                      <ToggleGroupItem value="interaction" className="text-xs h-7">Contactos</ToggleGroupItem>
+                      <ToggleGroupItem value="note" className="text-xs h-7">Notas</ToggleGroupItem>
+                      <ToggleGroupItem value="appointment" className="text-xs h-7">Agendamentos</ToggleGroupItem>
+                      <ToggleGroupItem value="payment" className="text-xs h-7">Pagamentos</ToggleGroupItem>
+                    </ToggleGroup>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Agrupar</span>
+                      <ToggleGroup type="single" value={timelineGroup} onValueChange={(v) => v && setTimelineGroup(v as any)}>
+                        <Tooltip><TooltipTrigger asChild><ToggleGroupItem value="none" className="text-xs h-7"><List className="h-3.5 w-3.5" /></ToggleGroupItem></TooltipTrigger><TooltipContent className="text-xs">Sem agrupamento</TooltipContent></Tooltip>
+                        <Tooltip><TooltipTrigger asChild><ToggleGroupItem value="day" className="text-xs h-7">Dia</ToggleGroupItem></TooltipTrigger><TooltipContent className="text-xs">Agrupar por dia</TooltipContent></Tooltip>
+                        <Tooltip><TooltipTrigger asChild><ToggleGroupItem value="type" className="text-xs h-7">Tipo</ToggleGroupItem></TooltipTrigger><TooltipContent className="text-xs">Agrupar por tipo</TooltipContent></Tooltip>
+                      </ToggleGroup>
+                    </div>
+                  </div>
+                  {rawTimeline.length === 0 && <p className="text-xs text-muted-foreground p-4">Sem actividade.</p>}
+                  <div className="space-y-4">
+                    {groupedTimeline.map((g) => (
+                      <div key={g.key || "all"} className="space-y-2">
+                        {g.key && (
+                          <div className="flex items-center gap-2 pt-1">
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{g.key}</span>
+                            <span className="text-[10px] text-muted-foreground/60">· {g.items.length}</span>
+                            <div className="flex-1 h-px bg-border/30" />
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-2">
-                              <p className="text-sm font-medium truncate">{t.title}</p>
-                              <span className="text-[10px] text-muted-foreground shrink-0">{relativeTime(t.date)}</span>
+                        )}
+                        {g.items.map((t) => {
+                          const Icon = t.icon;
+                          return (
+                            <div key={t.id} className="flex gap-3 p-3 rounded-xl bg-background/60 backdrop-blur-md border border-border/30">
+                              <div className="w-8 h-8 rounded-lg bg-muted/50 flex items-center justify-center shrink-0">
+                                <Icon className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                  <p className="text-sm font-medium truncate">{t.title}</p>
+                                  <span className="text-[10px] text-muted-foreground shrink-0">{relativeTime(t.date)}</span>
+                                </div>
+                                {t.detail && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{t.detail}</p>}
+                              </div>
                             </div>
-                            {t.detail && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{t.detail}</p>}
-                          </div>
-                        </div>
-                      );
-                    })}
+                          );
+                        })}
+                      </div>
+                    ))}
                   </div>
                 </TabsContent>
 
@@ -293,12 +360,16 @@ export default function AdminCrmCustomerDetail() {
           </motion.div>
         )}
       </div>
+      </TooltipProvider>
 
       {customer && (
         <>
           <LogContactSheet open={contactOpen} onClose={() => setContactOpen(false)} customerId={customer.id} customerName={customer.full_name ?? undefined} onLogged={refetch} />
           <AddNoteSheet open={noteOpen} onClose={() => setNoteOpen(false)} customerId={customer.id} customerName={customer.full_name ?? undefined} onLogged={refetch} />
           <SendMessageSheet open={msgOpen} onClose={() => setMsgOpen(false)} customerName={customer.full_name ?? undefined} customerEmail={customer.email} customerPhone={customer.phone} />
+          {isAdmin && (
+            <CustomerEditDialog open={editOpen} onClose={() => setEditOpen(false)} customer={customer} onSaved={refetch} />
+          )}
         </>
       )}
     </AdminDashboardLayout>
