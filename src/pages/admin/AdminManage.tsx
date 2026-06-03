@@ -454,11 +454,7 @@ export default function AdminManage() {
                   <ChevronRight className="h-3 w-3" />
                 </Button>
               </div>
-              <TeamWeekScheduleDialog
-                embedded
-                mechanics={mechanics}
-                onChanged={refetch}
-              />
+              <TeamWeekWorkloadCompact mechanics={mechanics} />
             </motion.div>
 
             {/* Workload + Team week button */}
