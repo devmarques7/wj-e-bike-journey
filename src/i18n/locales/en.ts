@@ -275,6 +275,11 @@ const en = {
       bulk_saved_off: "{{count}} days marked off",
       bulk_reverted: "Selection reverted",
       bulk_failed: "Bulk save failed",
+      manage_roles: "Manage roles",
+      add_mechanic: "Add mechanic",
+      add_admin: "Add admin",
+      remove_mechanic: "Remove mechanic",
+      remove_admin: "Remove admin",
     },
     team: {
       title: "Mechanics",
