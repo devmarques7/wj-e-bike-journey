@@ -212,9 +212,9 @@ export default function AdminPlans() {
                     yAxisId="right"
                     type="monotone"
                     dataKey="total_subs"
-                    stroke="hsl(var(--foreground))"
+                    stroke="hsl(var(--wj-green))"
                     strokeWidth={2}
-                    dot={{ r: 3 }}
+                    dot={{ r: 3, fill: "hsl(var(--wj-green))" }}
                   />
                 </ComposedChart>
               </ChartContainer>
