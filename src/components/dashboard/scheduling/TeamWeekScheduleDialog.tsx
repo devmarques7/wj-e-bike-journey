@@ -210,7 +210,7 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
             is_working: patch.is_working,
             start_time: patch.is_working ? patch.start_time : null,
             end_time: patch.is_working ? patch.end_time : null,
-            exception_type: patch.is_working ? "custom_hours" : "off",
+            exception_type: patch.is_working ? "reduced_hours" : "day_off",
           })
           .eq("id", existing.id);
         if (error) throw error;
@@ -221,7 +221,7 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
           is_working: patch.is_working,
           start_time: patch.is_working ? patch.start_time : null,
           end_time: patch.is_working ? patch.end_time : null,
-          exception_type: patch.is_working ? "custom_hours" : "off",
+          exception_type: patch.is_working ? "reduced_hours" : "day_off",
           reason: patch.is_working ? "Custom hours" : "Day off",
         });
         if (error) throw error;
