@@ -479,33 +479,6 @@ export default function AdminManage() {
               )}
             </motion.div>
 
-            {/* Row 2 — Team Weekly Schedule (MAIN) */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.12 }}
-              className="col-span-12 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-sm font-medium text-foreground">{t("manage.team_week.title")}</h3>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">{t("manage.team_week.subtitle")}</p>
-                </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-xs text-wj-green hover:text-wj-green/80 gap-1 h-7"
-                  onClick={() => navigate("/dashboard/admin/workshop")}
-                >
-                  {t("manage.week.manage")}
-                  <ChevronRight className="h-3 w-3" />
-                </Button>
-              </div>
-              <div className="flex-1 min-h-0">
-                <TeamWeekWorkloadCompact mechanics={mechanics} />
-              </div>
-            </motion.div>
-
             {/* Row 3 — Heatmap (square) + Upcoming Holidays */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
