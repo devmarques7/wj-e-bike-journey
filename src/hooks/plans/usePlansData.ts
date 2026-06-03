@@ -114,6 +114,7 @@ export async function createPlan(input: {
   description?: string;
   color_hex?: string;
   display_order?: number;
+  is_default?: boolean;
 }) {
   return supabase.from("plans").insert(input).select().single();
 }
