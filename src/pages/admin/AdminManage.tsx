@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 import { useSchedulingData, type BusinessHour } from "@/hooks/scheduling/useSchedulingData";
 import StaffScheduleDialog from "@/components/dashboard/scheduling/StaffScheduleDialog";
 import TeamWeekScheduleDialog from "@/components/dashboard/scheduling/TeamWeekScheduleDialog";
+import TeamWeekWorkloadCompact from "@/components/dashboard/scheduling/TeamWeekWorkloadCompact";
 import { useTranslation } from "react-i18next";
 import { Wrench, CalendarDays, Activity, LayoutGrid } from "lucide-react";
 
@@ -453,11 +454,7 @@ export default function AdminManage() {
                   <ChevronRight className="h-3 w-3" />
                 </Button>
               </div>
-              <TeamWeekScheduleDialog
-                embedded
-                mechanics={mechanics}
-                onChanged={refetch}
-              />
+              <TeamWeekWorkloadCompact mechanics={mechanics} />
             </motion.div>
 
             {/* Workload + Team week button */}
