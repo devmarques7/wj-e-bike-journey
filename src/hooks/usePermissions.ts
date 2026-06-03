@@ -20,7 +20,7 @@ export function usePermissions() {
       role,
       isAdmin: role === "admin",
       isStaff: role === "staff",
-      isMember: role === "member",
+      isMember: role === "customer",
       can: (action: PermissionAction) => canRoleDo(role, action),
       canAny: (actions: PermissionAction[]) => actions.some((a) => canRoleDo(role, a)),
       canAll: (actions: PermissionAction[]) => actions.every((a) => canRoleDo(role, a)),

@@ -47,7 +47,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
-type Role = "admin" | "staff" | "member" | "guest";
+type Role = "admin" | "staff" | "customer" | "guest";
 
 interface MemberRow {
   user_id: string;
@@ -88,7 +88,7 @@ export default function MemberProfileDialog({ member, onClose, onChanged }: Prop
   const isSelf = !!member && currentUser?.id === member.user_id;
   const isActive = member?.is_active !== false;
 
-  const [role, setRole] = useState<Role>(member?.role ?? "member");
+  const [role, setRole] = useState<Role>(member?.role ?? "customer");
   const [saving, setSaving] = useState(false);
   const [statusBusy, setStatusBusy] = useState(false);
   const [confirm, setConfirm] = useState<"deactivate" | "delete" | null>(null);
@@ -205,7 +205,7 @@ export default function MemberProfileDialog({ member, onClose, onChanged }: Prop
                   <SelectContent>
                     <SelectItem value="admin">Admin</SelectItem>
                     <SelectItem value="staff">Staff</SelectItem>
-                    <SelectItem value="member">Member</SelectItem>
+                    <SelectItem value="customer">Member</SelectItem>
                     <SelectItem value="guest">Guest</SelectItem>
                   </SelectContent>
                 </Select>

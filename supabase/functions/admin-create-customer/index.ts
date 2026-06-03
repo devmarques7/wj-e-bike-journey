@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
 
-type Role = "admin" | "staff" | "member" | "guest";
+type Role = "admin" | "staff" | "customer" | "guest";
 
 function genPassword(len = 14): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%";
@@ -57,9 +57,9 @@ Deno.serve(async (req) => {
     const email = String(body.email ?? "").trim().toLowerCase();
     const fullName = String(body.full_name ?? "").trim().slice(0, 120);
     const phone = body.phone ? String(body.phone).trim().slice(0, 32) : null;
-    const role: Role = ["admin", "staff", "member", "guest"].includes(body.role)
+    const role: Role = ["admin", "staff", "customer", "guest"].includes(body.role)
       ? body.role
-      : "member";
+      : "customer";
     const password = body.password
       ? String(body.password).slice(0, 64)
       : genPassword(14);
@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
       .update({ full_name: fullName, phone })
       .eq("user_id", newUserId);
 
-    if (role !== "member") {
+    if (role !== "customer") {
       await admin.from("user_roles").delete().eq("user_id", newUserId);
       await admin.from("user_roles").insert({ user_id: newUserId, role });
     }

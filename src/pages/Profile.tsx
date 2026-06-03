@@ -20,7 +20,7 @@ const profileSchema = z.object({
   email: z.string().trim().email("Invalid email").max(255),
 });
 
-type Role = "admin" | "staff" | "member" | "guest";
+type Role = "admin" | "staff" | "customer" | "guest";
 
 // Notionists-only avatar library (DiceBear), categorized by gender for easy filtering.
 type Gender = "female" | "male" | "neutral";
@@ -221,8 +221,8 @@ export default function Profile() {
     ? "admin"
     : roles.includes("staff")
     ? "staff"
-    : roles.includes("member")
-    ? "member"
+    : roles.includes("customer")
+    ? "customer"
     : "guest";
 
   if (loading) {
