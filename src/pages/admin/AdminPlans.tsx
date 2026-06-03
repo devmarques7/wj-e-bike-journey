@@ -76,6 +76,7 @@ export default function AdminPlans() {
 
       const planSet = new Set<string>();
       const planOrder = new Map<string, number>();
+      const planPrice = new Map<string, number>(); // normalized monthly price
       const rowMap = new Map<string, Record<string, any>>();
       days.forEach((d) => rowMap.set(d.key, { date: d.key }));
 
@@ -83,6 +84,14 @@ export default function AdminPlans() {
       (allPlans ?? []).forEach((p: any) => {
         planSet.add(p.name);
         planOrder.set(p.name, p.display_order ?? 999);
+        const v = Array.isArray(p.plan_versions) ? p.plan_versions[0] : p.plan_versions;
+        const price = Number(v?.price ?? 0);
+        const interval: string = v?.interval ?? "monthly";
+        const monthly =
+          interval === "yearly" ? price / 12 :
+          interval === "quarterly" ? price / 3 :
+          interval === "lifetime" ? 0 : price;
+        planPrice.set(p.name, monthly);
       });
 
       // Member count per plan
@@ -93,6 +102,15 @@ export default function AdminPlans() {
         const order: number = s.plan_version?.plan?.display_order ?? 999;
         planSet.add(planName);
         planOrder.set(planName, order);
+        if (!planPrice.has(planName)) {
+          const price = Number(s.plan_version?.price ?? 0);
+          const interval: string = s.plan_version?.interval ?? "monthly";
+          const monthly =
+            interval === "yearly" ? price / 12 :
+            interval === "quarterly" ? price / 3 :
+            interval === "lifetime" ? 0 : price;
+          planPrice.set(planName, monthly);
+        }
 
         const started = new Date(s.started_at);
         // Monthly subs honor a 1-month minimum — extend canceled_at by 1 month from start.
@@ -105,11 +123,12 @@ export default function AdminPlans() {
           memberCount.set(planName, (memberCount.get(planName) ?? 0) + 1);
         }
 
+        const monthlyPrice = planPrice.get(planName) ?? 0;
         days.forEach((d) => {
           const active = started <= d.date && (!effectiveEnd || effectiveEnd > d.date);
           if (!active) return;
           const row = rowMap.get(d.key)!;
-          row[planName] = (row[planName] ?? 0) + 1;
+          row[planName] = (row[planName] ?? 0) + monthlyPrice;
         });
       });
 
