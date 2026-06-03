@@ -387,6 +387,9 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
           </div>
         )}
 
+        {/* Role assignment layer */}
+        <RoleAssignmentPanel onChanged={onChanged} />
+
         <div className="mt-6 flex items-center justify-between text-[11px] text-muted-foreground">
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">
