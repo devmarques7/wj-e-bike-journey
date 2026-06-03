@@ -2,7 +2,6 @@ import { motion } from "framer-motion";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { 
   ChevronLeft, 
-  Bell, 
   Settings,
   LogOut,
   User,
@@ -25,6 +24,9 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import ThemeToggle from "@/components/ThemeToggle";
+import NotificationsBell from "@/components/dashboard/NotificationsBell";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { LocationTag } from "@/components/ui/location-tag";
 
 const quickNavItems = [
   { icon: LayoutDashboard, label: "Overview", href: "/dashboard/admin" },
@@ -125,19 +127,14 @@ export default function AdminHeader() {
 
         {/* Right: Status + User */}
         <div className="flex items-center gap-4">
-          {/* Live Indicator */}
-          <span className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-wj-green/10 text-wj-green text-xs font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-wj-green animate-pulse" />
-            Live
-          </span>
+          {/* Location + Live time */}
+          <LocationTag />
 
+          <LanguageSwitcher />
           <ThemeToggle />
 
           {/* Notifications */}
-          <button className="relative p-2 rounded-full hover:bg-muted/50 transition-colors">
-            <Bell className="h-5 w-5 text-muted-foreground" />
-            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-wj-green" />
-          </button>
+          <NotificationsBell />
 
           {/* User Menu */}
           <DropdownMenu>
