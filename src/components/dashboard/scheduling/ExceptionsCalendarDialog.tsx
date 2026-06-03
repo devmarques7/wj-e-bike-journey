@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Calendar as CalendarIcon, Check, Loader2, Trash2 } from "lucide-react";
+import { Calendar as CalendarIcon, Check, Loader2, Trash2, Sparkles } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -44,13 +45,25 @@ export default function ExceptionsCalendarDialog({ open, onOpenChange, exception
   }, [exceptions]);
 
   const closedDates = useMemo(
-    () => exceptions.filter((e) => !e.is_open).map((e) => new Date(e.exception_date + "T00:00:00")),
+    () => exceptions.filter((e) => !e.is_open && !e.is_public_holiday).map((e) => new Date(e.exception_date + "T00:00:00")),
     [exceptions],
   );
   const specialDates = useMemo(
     () => exceptions.filter((e) => e.is_open).map((e) => new Date(e.exception_date + "T00:00:00")),
     [exceptions],
   );
+  const holidayDates = useMemo(
+    () => exceptions.filter((e) => e.is_public_holiday).map((e) => new Date(e.exception_date + "T00:00:00")),
+    [exceptions],
+  );
+
+  const upcomingHolidays = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return exceptions
+      .filter((e) => e.is_public_holiday && new Date(e.exception_date + "T00:00:00") >= today)
+      .sort((a, b) => a.exception_date.localeCompare(b.exception_date));
+  }, [exceptions]);
 
   useEffect(() => {
     if (!selected) return;
@@ -118,7 +131,7 @@ export default function ExceptionsCalendarDialog({ open, onOpenChange, exception
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl bg-background/95 backdrop-blur-xl border-border/50">
+      <DialogContent className="max-w-5xl bg-background/95 backdrop-blur-xl border-border/50">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-foreground">
             <CalendarIcon className="h-4 w-4 text-wj-green" />
@@ -127,21 +140,26 @@ export default function ExceptionsCalendarDialog({ open, onOpenChange, exception
           <DialogDescription>{t("manage.exceptions_modal.description")}</DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-2">
           {/* Calendar */}
           <div className="flex flex-col items-center">
             <Calendar
               mode="single"
               selected={selected}
               onSelect={setSelected}
-              modifiers={{ closedEx: closedDates, specialEx: specialDates }}
+              modifiers={{ closedEx: closedDates, specialEx: specialDates, holidayEx: holidayDates }}
               modifiersClassNames={{
                 closedEx: "bg-red-500/20 text-red-400 font-semibold",
                 specialEx: "bg-amber-500/20 text-amber-400 font-semibold",
+                holidayEx: "bg-wj-green/30 text-wj-green font-semibold ring-1 ring-wj-green/50",
               }}
               className={cn("p-3 pointer-events-auto rounded-2xl border border-border/30")}
             />
-            <div className="flex items-center gap-3 mt-3 text-[11px] text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-3 mt-3 text-[11px] text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-wj-green/60" />
+                {t("manage.exceptions_modal.legend_holiday", "Holiday")}
+              </span>
               <span className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-red-500/40" />
                 {t("manage.exceptions_modal.legend_closed")}
@@ -269,6 +287,61 @@ export default function ExceptionsCalendarDialog({ open, onOpenChange, exception
                 </div>
               </>
             )}
+          </div>
+
+          {/* Dutch Holidays list */}
+          <div className="rounded-2xl border border-border/30 bg-muted/20 p-4 flex flex-col">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="h-3.5 w-3.5 text-wj-green" />
+              <h3 className="text-xs font-medium text-foreground uppercase tracking-wider">
+                {t("manage.exceptions_modal.holidays_title", "Dutch Holidays")}
+              </h3>
+            </div>
+            <ScrollArea className="flex-1 max-h-[420px] pr-2">
+              <div className="space-y-1.5">
+                {upcomingHolidays.length === 0 ? (
+                  <p className="text-[11px] text-muted-foreground text-center py-6">
+                    {t("manage.exceptions_modal.no_holidays", "No upcoming holidays")}
+                  </p>
+                ) : (
+                  upcomingHolidays.map((h) => {
+                    const d = new Date(h.exception_date + "T00:00:00");
+                    const isSelected = selected && ymd(selected) === h.exception_date;
+                    return (
+                      <button
+                        key={h.id}
+                        onClick={() => setSelected(d)}
+                        className={cn(
+                          "w-full text-left p-2 rounded-lg border transition-all hover:border-wj-green/40 hover:bg-wj-green/5",
+                          isSelected
+                            ? "border-wj-green/50 bg-wj-green/10"
+                            : "border-border/30 bg-background/40",
+                        )}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[11px] font-medium text-foreground truncate">
+                              {h.reason}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground capitalize">
+                              {d.toLocaleDateString(locale, {
+                                weekday: "short",
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              })}
+                            </p>
+                          </div>
+                          <Badge className="text-[9px] bg-wj-green/20 text-wj-green border-wj-green/30 shrink-0">
+                            {t("manage.exceptions_modal.closed")}
+                          </Badge>
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </ScrollArea>
           </div>
         </div>
       </DialogContent>
