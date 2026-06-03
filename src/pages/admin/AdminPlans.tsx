@@ -123,20 +123,32 @@ export default function AdminPlans() {
           memberCount.set(planName, (memberCount.get(planName) ?? 0) + 1);
         }
 
-        const monthlyPrice = planPrice.get(planName) ?? 0;
+        // Use plan price; fall back to 1 so free/0-price plans still surface
+        // a visible line that represents adoption growth.
+        const rawPrice = planPrice.get(planName) ?? 0;
+        const contribution = rawPrice > 0 ? rawPrice : 1;
         days.forEach((d) => {
           const active = started <= d.date && (!effectiveEnd || effectiveEnd > d.date);
           if (!active) return;
           const row = rowMap.get(d.key)!;
-          row[planName] = (row[planName] ?? 0) + monthlyPrice;
+          row[planName] = (row[planName] ?? 0) + contribution;
         });
       });
 
       const ordered = Array.from(planSet).sort(
         (a, b) => (planOrder.get(a) ?? 999) - (planOrder.get(b) ?? 999),
       );
+      // Ensure every day has a numeric value (0) for every plan so Recharts
+      // renders a continuous area even with sparse data.
+      const filledSeries = days.map((d) => {
+        const row = rowMap.get(d.key)!;
+        ordered.forEach((n) => {
+          if (row[n] === undefined) row[n] = 0;
+        });
+        return row;
+      });
       setPlanNames(ordered);
-      setSeries(days.map((d) => rowMap.get(d.key)!));
+      setSeries(filledSeries);
 
       // Plan rows for the table
       setPlanRows(
