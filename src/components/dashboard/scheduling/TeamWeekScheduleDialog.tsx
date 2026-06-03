@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   ChevronLeft,
   ChevronRight,
@@ -22,6 +23,7 @@ import {
   Shield,
   Wrench,
   Check,
+  Info,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -314,11 +316,16 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
           .eq("id", ex.id);
         if (error) throw error;
       }
-      toast.success(`${rows.length} ${patch.is_working ? "horários aplicados" : "dias marcados como off"}`);
+      toast.success(
+        t(
+          patch.is_working ? "manage.team_week.bulk_saved_hours" : "manage.team_week.bulk_saved_off",
+          { count: rows.length },
+        ),
+      );
       clearSelection();
       await load();
     } catch (e: any) {
-      toast.error(e.message ?? "Falha a guardar em lote");
+      toast.error(e.message ?? t("manage.team_week.bulk_failed"));
     } finally {
       setBulkSaving(false);
     }
@@ -338,11 +345,11 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
         const { error } = await supabase.from("staff_schedule_exceptions").delete().in("id", ids);
         if (error) throw error;
       }
-      toast.success("Selecção revertida");
+      toast.success(t("manage.team_week.bulk_reverted"));
       clearSelection();
       await load();
     } catch (e: any) {
-      toast.error(e.message ?? "Falha");
+      toast.error(e.message ?? t("manage.team_week.bulk_failed"));
     } finally {
       setBulkSaving(false);
     }
@@ -377,6 +384,19 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
             {days[6].toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" })}
           </div>
           <div className="flex items-center gap-2">
+            <TooltipProvider delayDuration={150}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-wj-green/10 border border-wj-green/30 text-[10px] text-wj-green cursor-help">
+                    <Info className="h-3 w-3" />
+                    {t("manage.team_week.multi_hint")}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-[260px] text-xs">
+                  {t("manage.team_week.multi_hint")}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <Button
               variant="ghost"
               size="sm"
@@ -404,7 +424,12 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
           {selected.size > 0 && (
             <div className="flex flex-wrap items-center gap-2 p-3 rounded-2xl bg-wj-green/10 border border-wj-green/30">
               <span className="text-xs font-medium text-foreground">
-                {selected.size} {selected.size === 1 ? "bloco" : "blocos"} selecionado{selected.size === 1 ? "" : "s"}
+                {t(
+                  selected.size === 1
+                    ? "manage.team_week.selected_one"
+                    : "manage.team_week.selected_other",
+                  { count: selected.size },
+                )}
               </span>
               <div className="flex items-center gap-1 ml-2">
                 <Input
@@ -426,7 +451,7 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
                   className="h-7 text-xs bg-wj-green hover:bg-wj-green/90"
                   onClick={() => applyBulk({ is_working: true, start_time: bulkStart, end_time: bulkEnd })}
                 >
-                  Aplicar horário
+                  {t("manage.team_week.bulk_apply_hours")}
                 </Button>
               </div>
               <Button
@@ -436,7 +461,7 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
                 className="h-7 text-xs"
                 onClick={() => applyBulk({ is_working: false, start_time: "09:00", end_time: "18:00" })}
               >
-                <CalendarOff className="h-3 w-3 mr-1" /> Day off
+                <CalendarOff className="h-3 w-3 mr-1" /> {t("manage.team_week.bulk_day_off")}
               </Button>
               <Button
                 size="sm"
@@ -445,7 +470,7 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
                 className="h-7 text-xs"
                 onClick={clearBulkExceptions}
               >
-                Reverter
+                {t("manage.team_week.bulk_revert")}
               </Button>
               <Button
                 size="sm"
@@ -454,7 +479,7 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
                 className="h-7 text-xs ml-auto"
                 onClick={clearSelection}
               >
-                Limpar selecção
+                {t("manage.team_week.bulk_clear")}
               </Button>
               {bulkSaving && <Loader2 className="h-3 w-3 animate-spin text-wj-green" />}
             </div>
