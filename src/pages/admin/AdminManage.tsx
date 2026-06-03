@@ -511,14 +511,123 @@ export default function AdminManage() {
             >
               <div className="flex items-center gap-2 mb-4">
                 <CalendarIcon className="h-4 w-4 text-wj-green" />
-                <h3 className="text-sm font-medium text-foreground">Calendário</h3>
+                <h3 className="text-sm font-medium text-foreground">Mapa de Carga</h3>
               </div>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                className="rounded-lg pointer-events-auto"
-              />
+              <TooltipProvider>
+                {/* Month navigation */}
+                <div className="flex items-center justify-between mb-3">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => {
+                      if (heatMonth === 0) {
+                        setHeatMonth(11);
+                        setHeatYear((y) => y - 1);
+                      } else setHeatMonth((m) => m - 1);
+                    }}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-xs font-medium text-foreground capitalize">
+                    {new Date(heatYear, heatMonth).toLocaleDateString("pt-PT", {
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => {
+                      if (heatMonth === 11) {
+                        setHeatMonth(0);
+                        setHeatYear((y) => y + 1);
+                      } else setHeatMonth((m) => m + 1);
+                    }}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* Weekday headers */}
+                <div className="grid grid-cols-7 gap-1 mb-1">
+                  {WEEKDAYS_HEAT.map((d, i) => (
+                    <div
+                      key={i}
+                      className="text-center text-[9px] text-muted-foreground uppercase"
+                    >
+                      {d}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Heatmap grid */}
+                <div className="grid grid-cols-7 gap-1">
+                  {(() => {
+                    const first = new Date(heatYear, heatMonth, 1);
+                    const last = new Date(heatYear, heatMonth + 1, 0);
+                    const pad = first.getDay();
+                    const cells: JSX.Element[] = [];
+                    for (let i = 0; i < pad; i++) {
+                      cells.push(<div key={`p-${i}`} className="aspect-square" />);
+                    }
+                    for (let day = 1; day <= last.getDate(); day++) {
+                      const date = new Date(heatYear, heatMonth, day);
+                      const key = `${heatYear}-${String(heatMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                      const count = monthCounts[key] ?? 0;
+                      const dow = date.getDay();
+                      const isWeekend = dow === 0 || dow === 6;
+                      const isToday = date.toDateString() === new Date().toDateString();
+                      const isSelected =
+                        selectedDate && date.toDateString() === selectedDate.toDateString();
+                      cells.push(
+                        <Tooltip key={key}>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={() => setSelectedDate(date)}
+                              className={cn(
+                                "aspect-square rounded-md flex items-center justify-center text-[10px] transition-all hover:ring-1 hover:ring-wj-green/50",
+                                isWeekend && !count && "opacity-40",
+                                isToday && "ring-1 ring-wj-green",
+                                isSelected && "ring-2 ring-wj-green",
+                                getHeatColor(count),
+                              )}
+                            >
+                              {day}
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="text-xs">
+                            <p className="font-medium">
+                              {date.toLocaleDateString("pt-PT", {
+                                weekday: "short",
+                                day: "numeric",
+                                month: "short",
+                              })}
+                            </p>
+                            <p className="text-muted-foreground">
+                              {count} agendamento(s) · {getHeatLabel(count)}
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>,
+                      );
+                    }
+                    return cells;
+                  })()}
+                </div>
+
+                {/* Legend */}
+                <div className="mt-3 flex items-center justify-between text-[10px] text-muted-foreground">
+                  <span>Menos</span>
+                  <div className="flex gap-0.5">
+                    {[0, 1, 2, 3, 4, 5].map((l) => (
+                      <div key={l} className={cn("w-3 h-3 rounded-sm", getHeatColor(l))} />
+                    ))}
+                  </div>
+                  <span>Mais</span>
+                </div>
+              </TooltipProvider>
+
               <div className="mt-4 pt-4 border-t border-border/30">
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
                   {selectedDate?.toLocaleDateString("pt-PT", { weekday: "long", day: "numeric", month: "long" })}
