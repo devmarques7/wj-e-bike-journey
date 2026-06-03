@@ -133,12 +133,17 @@ export default function AdminPlans() {
     })();
   }, []);
 
-  // Forecast monthly buckets starting from current month, compounding the
-  // current per-plan MRR baseline by MONTHLY_GROWTH for the chosen horizon.
+  // Forecast cumulative cash accrued per plan over the chosen horizon.
+  // Each month we add (active members for that plan) × (monthly price), with
+  // the member base compounded by MONTHLY_GROWTH to project new registrations.
+  // The series is monotonically increasing — it represents accumulated revenue
+  // in the bank, not the recurring MRR snapshot.
   const filteredSeries = useMemo(() => {
     const months = forecastRange === "3m" ? 3 : forecastRange === "6m" ? 6 : forecastRange === "12m" ? 12 : 24;
-    const baseline = new Map<string, number>();
-    planNames.forEach((n) => baseline.set(n, planRows.find((p) => p.name === n)?.mrr ?? 0));
+    const baselineMrr = new Map<string, number>();
+    planNames.forEach((n) => baselineMrr.set(n, planRows.find((p) => p.name === n)?.mrr ?? 0));
+    const accrued = new Map<string, number>();
+    planNames.forEach((n) => accrued.set(n, 0));
     const today = new Date();
     const start = new Date(today.getFullYear(), today.getMonth(), 1);
     const out: Array<Record<string, any>> = [];
@@ -147,7 +152,13 @@ export default function AdminPlans() {
       const row: Record<string, any> = { date: d.toISOString().slice(0, 10) };
       const factor = Math.pow(1 + MONTHLY_GROWTH, i);
       planNames.forEach((n) => {
-        row[n] = (baseline.get(n) ?? 0) * factor;
+        // Month 0 = starting point (€0 accrued). From month 1 onward we add the
+        // projected monthly cash-in for that plan to the running total.
+        if (i > 0) {
+          const monthly = (baselineMrr.get(n) ?? 0) * factor;
+          accrued.set(n, (accrued.get(n) ?? 0) + monthly);
+        }
+        row[n] = accrued.get(n) ?? 0;
       });
       out.push(row);
     }
