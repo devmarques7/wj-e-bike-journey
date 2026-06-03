@@ -78,6 +78,7 @@ export default function AdminManage() {
   const [monthCounts, setMonthCounts] = useState<Record<string, number>>({});
   const [dayModalDow, setDayModalDow] = useState<number | null>(null);
   const [teamWeekOpen, setTeamWeekOpen] = useState(false);
+  const [exceptionsCalOpen, setExceptionsCalOpen] = useState(false);
 
   const dateStr = (selectedDate ?? new Date()).toISOString().slice(0, 10);
   const {
