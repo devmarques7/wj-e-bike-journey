@@ -43,6 +43,64 @@ export default function AdminPlans() {
   const { kpis, loading } = usePlansKPIs();
   const { rows: subs } = useSubscriptions();
 
+  const [monthly, setMonthly] = useState<Array<Record<string, any>>>([]);
+  const [planNames, setPlanNames] = useState<string[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const since = new Date();
+      since.setMonth(since.getMonth() - 5);
+      since.setDate(1);
+      const { data } = await supabase
+        .from("payments")
+        .select("amount, paid_at, status, subscription:subscriptions!inner(plan_version:plan_versions!inner(plan:plans!inner(name)))")
+        .gte("paid_at", since.toISOString())
+        .eq("status", "succeeded");
+
+      const months: string[] = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(1);
+        d.setMonth(d.getMonth() - i);
+        months.push(d.toLocaleString("en", { month: "short", year: "2-digit" }));
+      }
+
+      const planSet = new Set<string>();
+      const map = new Map<string, Record<string, any>>();
+      months.forEach((m) => map.set(m, { month: m, total_subs: 0 }));
+
+      (data ?? []).forEach((p: any) => {
+        const d = new Date(p.paid_at);
+        const key = d.toLocaleString("en", { month: "short", year: "2-digit" });
+        const planName = p.subscription?.plan_version?.plan?.name ?? "Other";
+        planSet.add(planName);
+        const row = map.get(key);
+        if (!row) return;
+        row[planName] = (row[planName] ?? 0) + Number(p.amount ?? 0);
+        row.total_subs = (row.total_subs ?? 0) + 1;
+      });
+
+      setPlanNames(Array.from(planSet));
+      setMonthly(months.map((m) => map.get(m)!));
+    })();
+  }, []);
+
+  const planColors: Record<string, string> = {
+    Black: "hsl(0 0% 20%)",
+    Plus: "hsl(var(--wj-green))",
+    Light: "hsl(var(--muted-foreground))",
+  };
+  const fallbackColors = ["hsl(var(--wj-green))", "hsl(var(--primary))", "hsl(var(--accent))", "hsl(var(--muted-foreground))"];
+  const chartConfig = useMemo<ChartConfig>(() => {
+    const cfg: ChartConfig = {
+      total_subs: { label: "Subscribers", color: "hsl(var(--foreground))" },
+    };
+    planNames.forEach((name, i) => {
+      cfg[name] = { label: name, color: planColors[name] ?? fallbackColors[i % fallbackColors.length] };
+    });
+    return cfg;
+  }, [planNames]);
+
   if (authLoading) return null;
   if (!isAuthenticated) return <Navigate to="/auth" replace />;
   if (user?.role !== "admin") return <Navigate to="/dashboard" replace />;
@@ -81,17 +139,51 @@ export default function AdminPlans() {
         <div className="grid grid-cols-12 gap-4 lg:gap-6">
           <div className="col-span-12 lg:col-span-8">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4 h-[300px]">
-              <h3 className="text-sm font-medium text-foreground mb-4">Revenue Over Time</h3>
-              <ResponsiveContainer width="100%" height="85%">
-                <BarChart data={kpis.timeseries}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
-                  <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                  <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }} />
-                  <Bar dataKey="revenue" fill="hsl(var(--wj-green))" name="Revenue (€)" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4 h-[340px]">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <h3 className="text-sm font-medium text-foreground">Monthly Revenue per Plan</h3>
+                  <p className="text-[11px] text-muted-foreground">Stacked revenue (€) + total active subscribers</p>
+                </div>
+              </div>
+              <ChartContainer config={chartConfig} className="h-[270px] w-full aspect-auto">
+                <ComposedChart data={monthly} margin={{ left: 4, right: 4, top: 8, bottom: 0 }}>
+                  <defs>
+                    {planNames.map((name) => (
+                      <linearGradient key={name} id={`fill-${name}`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={chartConfig[name]?.color as string} stopOpacity={0.75} />
+                        <stop offset="100%" stopColor={chartConfig[name]?.color as string} stopOpacity={0.05} />
+                      </linearGradient>
+                    ))}
+                  </defs>
+                  <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+                  <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={10} />
+                  <YAxis yAxisId="left" tickLine={false} axisLine={false} fontSize={10} tickFormatter={(v) => `€${v}`} />
+                  <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} fontSize={10} />
+                  <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+                  <ChartLegend content={<ChartLegendContent />} />
+                  {planNames.map((name) => (
+                    <Area
+                      key={name}
+                      yAxisId="left"
+                      type="monotone"
+                      dataKey={name}
+                      stackId="rev"
+                      stroke={chartConfig[name]?.color as string}
+                      fill={`url(#fill-${name})`}
+                      strokeWidth={2}
+                    />
+                  ))}
+                  <Line
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey="total_subs"
+                    stroke="hsl(var(--foreground))"
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                  />
+                </ComposedChart>
+              </ChartContainer>
             </motion.div>
           </div>
 
