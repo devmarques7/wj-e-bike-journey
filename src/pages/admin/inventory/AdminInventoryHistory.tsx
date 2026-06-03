@@ -17,6 +17,7 @@ import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePermissions } from "@/hooks/usePermissions";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -319,22 +320,22 @@ export default function AdminInventoryHistory() {
               </SelectContent>
             </Select>
             <div className="flex gap-2 sm:col-span-2 lg:col-span-2">
-              <Input
-                type="date"
+              <DatePicker
                 value={from}
-                onChange={(e) => {
-                  setFrom(e.target.value);
+                onChange={(v) => {
+                  setFrom(v);
                   setQuickRange("custom");
                 }}
+                placeholder="De"
                 className="bg-background/60 min-w-0 flex-1"
               />
-              <Input
-                type="date"
+              <DatePicker
                 value={to}
-                onChange={(e) => {
-                  setTo(e.target.value);
+                onChange={(v) => {
+                  setTo(v);
                   setQuickRange("custom");
                 }}
+                placeholder="Até"
                 className="bg-background/60 min-w-0 flex-1"
               />
             </div>
