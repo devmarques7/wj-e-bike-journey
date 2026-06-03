@@ -234,7 +234,7 @@ export default function AdminManage() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 }}
-              className="col-span-12 p-4 lg:p-5 flex flex-col bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
+              className="col-span-12 lg:col-span-8 p-4 lg:p-5 flex flex-col bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
