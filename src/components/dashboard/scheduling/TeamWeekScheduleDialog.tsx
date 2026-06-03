@@ -447,6 +447,8 @@ function DayCell({
 
   const off = !eff.is_working;
   const isCustom = eff.source === "exception";
+  const dow = date.getDay(); // 0 = Sun, 6 = Sat
+  const isWeekend = dow === 0 || dow === 6;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -454,9 +456,15 @@ function DayCell({
         <button
           className={cn(
             "relative h-[110px] rounded-xl p-2 text-left transition-all border overflow-hidden",
-            off
-              ? "bg-background/80 border-border/20 hover:bg-background/60"
-              : "bg-muted/30 border-border/40 hover:bg-muted/50",
+            isWeekend
+              ? "bg-white text-neutral-900 border-neutral-200 hover:bg-neutral-50"
+              : off
+                ? "bg-background/80 border-border/20 hover:bg-background/60"
+                : load.pct >= 70
+                  ? "bg-muted/60 border-border/50 hover:bg-muted/70"
+                  : load.pct > 0
+                    ? "bg-muted/45 border-border/40 hover:bg-muted/55"
+                    : "bg-muted/25 border-border/30 hover:bg-muted/40",
             isToday && "ring-2 ring-wj-green/70",
             isCustom && "border-wj-green/50",
           )}
@@ -475,18 +483,20 @@ function DayCell({
               style={{ height: `${Math.max(4, load.pct)}%` }}
             />
           )}
-          {off && (
+          {off && !isWeekend && (
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-foreground/10 pointer-events-none" />
           )}
 
           <div className="relative flex items-start justify-between">
             <span className={cn(
               "text-[10px] font-medium",
-              off ? "text-muted-foreground/60" : "text-foreground/80",
+              isWeekend
+                ? off ? "text-neutral-400" : "text-neutral-700"
+                : off ? "text-muted-foreground/60" : "text-foreground/80",
             )}>
               {off ? t("manage.team_week.off") : `${eff.start_time}-${eff.end_time}`}
             </span>
-            {off && <CalendarOff className="h-3 w-3 text-muted-foreground/60" />}
+            {off && <CalendarOff className={cn("h-3 w-3", isWeekend ? "text-neutral-400" : "text-muted-foreground/60")} />}
             {isCustom && !off && <Clock className="h-3 w-3 text-wj-green" />}
           </div>
 
@@ -499,7 +509,7 @@ function DayCell({
                 )}>
                   {load.pct}%
                 </span>
-                <span className="text-[9px] text-muted-foreground mt-0.5">
+                <span className={cn("text-[9px] mt-0.5", isWeekend ? "text-neutral-500" : "text-muted-foreground")}>
                   {load.busyMin}/{load.totalMin}m
                 </span>
               </div>
