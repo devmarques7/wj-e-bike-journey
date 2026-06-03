@@ -323,6 +323,9 @@ const en = {
       deleted: "Override removed",
       legend_closed: "Closed",
       legend_special: "Special hours",
+      sync_nl: "Sync Dutch holidays",
+      sync_nl_done: "{{n}} Dutch holidays added as closed days",
+      sync_nl_none: "All Dutch holidays are already in the calendar",
     },
     heatmap: {
       title: "Load Heatmap",
