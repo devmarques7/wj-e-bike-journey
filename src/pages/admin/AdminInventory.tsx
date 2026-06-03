@@ -263,6 +263,8 @@ export default function AdminInventory() {
                       <TableHead className="text-muted-foreground text-xs text-right">Avail.</TableHead>
                       <TableHead className="text-muted-foreground text-xs text-right hidden sm:table-cell">Res.</TableHead>
                       <TableHead className="text-muted-foreground text-xs text-right hidden md:table-cell">In</TableHead>
+                      <TableHead className="text-muted-foreground text-xs text-right hidden md:table-cell">Unit €</TableHead>
+                      <TableHead className="text-muted-foreground text-xs text-right hidden md:table-cell">Value</TableHead>
                       <TableHead className="text-muted-foreground text-xs">Status</TableHead>
                       <TableHead className="text-muted-foreground text-xs text-right hidden lg:table-cell">Actions</TableHead>
                     </TableRow>
@@ -270,14 +272,14 @@ export default function AdminInventory() {
                   <TableBody>
                     {loading && (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center text-xs text-muted-foreground py-8">
+                        <TableCell colSpan={10} className="text-center text-xs text-muted-foreground py-8">
                           Loading...
                         </TableCell>
                       </TableRow>
                     )}
                     {!loading && filtered.length === 0 && (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center text-xs text-muted-foreground py-8">
+                        <TableCell colSpan={10} className="text-center text-xs text-muted-foreground py-8">
                           No inventory yet. Add products and variants to get started.
                         </TableCell>
                       </TableRow>
@@ -285,6 +287,12 @@ export default function AdminInventory() {
                     {filtered.map((r) => {
                       const s = statusOf(r);
                       const real = r.qty_available - r.qty_reserved;
+                      const unit =
+                        r.variant.price_override ??
+                        r.variant.product.sale_price ??
+                        r.variant.product.base_price ??
+                        0;
+                      const lineValue = unit * r.qty_available;
                       return (
                         <TableRow key={r.id} className="border-border/30 hover:bg-muted/30">
                           <TableCell className="text-xs">
@@ -298,6 +306,12 @@ export default function AdminInventory() {
                           </TableCell>
                           <TableCell className="text-xs text-right text-muted-foreground hidden sm:table-cell">{r.qty_reserved}</TableCell>
                           <TableCell className="text-xs text-right text-muted-foreground hidden md:table-cell">{r.qty_incoming}</TableCell>
+                          <TableCell className="text-xs text-right text-muted-foreground hidden md:table-cell font-mono">
+                            {fmtEur(unit)}
+                          </TableCell>
+                          <TableCell className="text-xs text-right text-foreground hidden md:table-cell font-mono">
+                            {fmtEur(lineValue)}
+                          </TableCell>
                           <TableCell>
                             <Badge className={cn("text-[10px]", s.c)}>{s.l}</Badge>
                           </TableCell>
