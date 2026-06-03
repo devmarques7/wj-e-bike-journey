@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
-import { CreditCard, TrendingUp, Users, Euro, CheckCircle2, XCircle, Clock, Award, Settings2 } from "lucide-react";
+import { CreditCard, TrendingUp, Users, Euro, CheckCircle2, XCircle, Clock, Award, Settings2, Layers } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,8 +8,9 @@ import { Navigate, useNavigate, Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Area, ComposedChart, CartesianGrid, Line, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent, type ChartConfig } from "@/components/ui/chart";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePlansKPIs, useSubscriptions } from "@/hooks/plans/usePlansData";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -43,65 +44,72 @@ export default function AdminPlans() {
   const { kpis, loading } = usePlansKPIs();
   const { rows: subs } = useSubscriptions();
 
-  const [monthly, setMonthly] = useState<Array<Record<string, any>>>([]);
+  const [series, setSeries] = useState<Array<Record<string, any>>>([]);
   const [planNames, setPlanNames] = useState<string[]>([]);
+  const [planRows, setPlanRows] = useState<Array<{ name: string; price: number; interval: string; members: number; mrr: number }>>([]);
+  const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d">("90d");
 
   useEffect(() => {
     (async () => {
-      const since = new Date();
-      since.setMonth(since.getMonth() - 5);
-      since.setDate(1);
-
-      // Build last 6 months window
-      const monthsMeta: { key: string; start: Date; end: Date }[] = [];
-      for (let i = 5; i >= 0; i--) {
-        const s = new Date();
-        s.setDate(1); s.setHours(0, 0, 0, 0);
-        s.setMonth(s.getMonth() - i);
-        const e = new Date(s);
-        e.setMonth(e.getMonth() + 1);
-        monthsMeta.push({
-          key: s.toLocaleString("en", { month: "short", year: "2-digit" }),
-          start: s,
-          end: e,
-        });
-      }
-
-      // Pull every subscription (active or canceled) with plan + price.
-      // Monthly subscriptions enforce a 1-month minimum, so each sub
-      // contributes price × months it was active in the window.
+      // Pull subscriptions + plan info; we compute the daily active member
+      // count per plan from started_at/canceled_at over the last 90 days.
       const { data: subRows } = await supabase
         .from("subscriptions")
         .select("started_at, canceled_at, status, plan_version:plan_versions!inner(price, interval, plan:plans!inner(name, display_order))");
 
+      // Also fetch full plan catalog so plans with zero members still appear in the table.
+      const { data: allPlans } = await supabase
+        .from("plans")
+        .select("name, display_order, is_active, plan_versions!inner(price, interval, status)")
+        .eq("plan_versions.status", "active")
+        .eq("is_active", true)
+        .order("display_order");
+
+      // Build last 90 days timeline (daily buckets)
+      const days: { key: string; date: Date }[] = [];
+      for (let i = 89; i >= 0; i--) {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        d.setDate(d.getDate() - i);
+        days.push({ key: d.toISOString().slice(0, 10), date: d });
+      }
+
       const planSet = new Set<string>();
       const planOrder = new Map<string, number>();
-      const map = new Map<string, Record<string, any>>();
-      monthsMeta.forEach((m) => map.set(m.key, { month: m.key, total_subs: 0 }));
+      const rowMap = new Map<string, Record<string, any>>();
+      days.forEach((d) => rowMap.set(d.key, { date: d.key }));
+
+      // Seed plan order from catalog so series order is stable.
+      (allPlans ?? []).forEach((p: any) => {
+        planSet.add(p.name);
+        planOrder.set(p.name, p.display_order ?? 999);
+      });
+
+      // Member count per plan
+      const memberCount = new Map<string, number>();
 
       (subRows ?? []).forEach((s: any) => {
         const planName: string = s.plan_version?.plan?.name ?? "Other";
         const order: number = s.plan_version?.plan?.display_order ?? 999;
-        const price = Number(s.plan_version?.price ?? 0);
-        const interval: string = s.plan_version?.interval ?? "monthly";
-        const monthlyPrice =
-          interval === "yearly" ? price / 12 :
-          interval === "quarterly" ? price / 3 :
-          interval === "lifetime" ? 0 : price;
-
-        const started = new Date(s.started_at);
-        const ended = s.canceled_at ? new Date(s.canceled_at) : null;
-
         planSet.add(planName);
         planOrder.set(planName, order);
 
-        monthsMeta.forEach((m) => {
-          // Active during this month? (started before month end AND not canceled before month start)
-          const activeThisMonth = started < m.end && (!ended || ended >= m.start);
-          if (!activeThisMonth) return;
-          const row = map.get(m.key)!;
-          row[planName] = (row[planName] ?? 0) + monthlyPrice;
-          row.total_subs = (row.total_subs ?? 0) + 1;
+        const started = new Date(s.started_at);
+        // Monthly subs honor a 1-month minimum — extend canceled_at by 1 month from start.
+        const rawEnd = s.canceled_at ? new Date(s.canceled_at) : null;
+        const minEnd = new Date(started);
+        minEnd.setMonth(minEnd.getMonth() + 1);
+        const effectiveEnd = rawEnd ? (rawEnd < minEnd ? minEnd : rawEnd) : null;
+
+        if (s.status === "active" || s.status === "trialing" || s.status === "past_due") {
+          memberCount.set(planName, (memberCount.get(planName) ?? 0) + 1);
+        }
+
+        days.forEach((d) => {
+          const active = started <= d.date && (!effectiveEnd || effectiveEnd > d.date);
+          if (!active) return;
+          const row = rowMap.get(d.key)!;
+          row[planName] = (row[planName] ?? 0) + 1;
         });
       });
 
@@ -109,9 +117,29 @@ export default function AdminPlans() {
         (a, b) => (planOrder.get(a) ?? 999) - (planOrder.get(b) ?? 999),
       );
       setPlanNames(ordered);
-      setMonthly(monthsMeta.map((m) => map.get(m.key)!));
+      setSeries(days.map((d) => rowMap.get(d.key)!));
+
+      // Plan rows for the table
+      setPlanRows(
+        (allPlans ?? []).map((p: any) => {
+          const v = Array.isArray(p.plan_versions) ? p.plan_versions[0] : p.plan_versions;
+          const price = Number(v?.price ?? 0);
+          const interval: string = v?.interval ?? "monthly";
+          const monthly =
+            interval === "yearly" ? price / 12 :
+            interval === "quarterly" ? price / 3 :
+            interval === "lifetime" ? 0 : price;
+          const members = memberCount.get(p.name) ?? 0;
+          return { name: p.name, price, interval, members, mrr: monthly * members };
+        }),
+      );
     })();
   }, []);
+
+  const filteredSeries = useMemo(() => {
+    const days = timeRange === "7d" ? 7 : timeRange === "30d" ? 30 : 90;
+    return series.slice(-days);
+  }, [series, timeRange]);
 
   // System token palette only — wj-green primary accent + neutral foreground tones
   const planColors: Record<string, string> = {
@@ -127,7 +155,7 @@ export default function AdminPlans() {
   ];
   const chartConfig = useMemo<ChartConfig>(() => {
     const cfg: ChartConfig = {
-      total_subs: { label: "Active Subscribers", color: "hsl(var(--wj-green))" },
+      members: { label: "Members" },
     };
     planNames.forEach((name, i) => {
       cfg[name] = { label: name, color: planColors[name] ?? fallbackColors[i % fallbackColors.length] };
@@ -173,50 +201,70 @@ export default function AdminPlans() {
         <div className="grid grid-cols-12 gap-4 lg:gap-6">
           <div className="col-span-12 lg:col-span-8">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4 h-[340px]">
-              <div className="flex items-center justify-between mb-2">
+              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4 h-[380px] flex flex-col">
+              <div className="flex items-center justify-between gap-3 mb-2">
                 <div>
-                  <h3 className="text-sm font-medium text-foreground">Monthly Revenue per Plan</h3>
-                  <p className="text-[11px] text-muted-foreground">Stacked revenue (€) + total active subscribers</p>
+                  <h3 className="text-sm font-medium text-foreground">Active Members per Plan</h3>
+                  <p className="text-[11px] text-muted-foreground">
+                    Daily active subscribers — {timeRange === "7d" ? "last 7 days" : timeRange === "30d" ? "last 30 days" : "last 3 months"}
+                  </p>
                 </div>
+                <Select value={timeRange} onValueChange={(v) => setTimeRange(v as any)}>
+                  <SelectTrigger className="w-[150px] h-8 rounded-lg text-xs" aria-label="Select time range">
+                    <SelectValue placeholder="Last 3 months" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    <SelectItem value="90d" className="rounded-lg text-xs">Last 3 months</SelectItem>
+                    <SelectItem value="30d" className="rounded-lg text-xs">Last 30 days</SelectItem>
+                    <SelectItem value="7d" className="rounded-lg text-xs">Last 7 days</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <ChartContainer config={chartConfig} className="h-[270px] w-full aspect-auto">
-                <ComposedChart data={monthly} margin={{ left: 4, right: 4, top: 8, bottom: 0 }}>
+              <ChartContainer config={chartConfig} className="flex-1 w-full aspect-auto">
+                <AreaChart data={filteredSeries} margin={{ left: 4, right: 4, top: 8, bottom: 0 }}>
                   <defs>
                     {planNames.map((name) => (
                       <linearGradient key={name} id={`fill-${name}`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={chartConfig[name]?.color as string} stopOpacity={0.75} />
-                        <stop offset="100%" stopColor={chartConfig[name]?.color as string} stopOpacity={0.05} />
+                        <stop offset="5%" stopColor={chartConfig[name]?.color as string} stopOpacity={0.8} />
+                        <stop offset="95%" stopColor={chartConfig[name]?.color as string} stopOpacity={0.1} />
                       </linearGradient>
                     ))}
                   </defs>
                   <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
-                  <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={10} />
-                  <YAxis yAxisId="left" tickLine={false} axisLine={false} fontSize={10} tickFormatter={(v) => `€${v}`} />
-                  <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} fontSize={10} />
-                  <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+                  <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    fontSize={10}
+                    minTickGap={32}
+                    tickFormatter={(v) =>
+                      new Date(v).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                    }
+                  />
+                  <YAxis tickLine={false} axisLine={false} fontSize={10} allowDecimals={false} />
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        indicator="dot"
+                        labelFormatter={(value) =>
+                          new Date(value as string).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                        }
+                      />
+                    }
+                  />
                   <ChartLegend content={<ChartLegendContent />} />
                   {planNames.map((name) => (
                     <Area
                       key={name}
-                      yAxisId="left"
                       type="monotone"
                       dataKey={name}
-                      stackId="rev"
+                      stackId="members"
                       stroke={chartConfig[name]?.color as string}
                       fill={`url(#fill-${name})`}
                       strokeWidth={2}
                     />
                   ))}
-                  <Line
-                    yAxisId="right"
-                    type="monotone"
-                    dataKey="total_subs"
-                    stroke="hsl(var(--wj-green))"
-                    strokeWidth={2}
-                    dot={{ r: 3, fill: "hsl(var(--wj-green))" }}
-                  />
-                </ComposedChart>
+                </AreaChart>
               </ChartContainer>
             </motion.div>
           </div>
@@ -252,6 +300,46 @@ export default function AdminPlans() {
             </motion.div>
           </div>
         </div>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
+          className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl overflow-hidden">
+          <div className="p-4 border-b border-border/30 flex items-center gap-2">
+            <Layers className="h-4 w-4 text-wj-green" />
+            <h3 className="text-sm font-medium text-foreground">Available Plans</h3>
+            <span className="text-[11px] text-muted-foreground ml-1">Member count per subscription tier</span>
+          </div>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border/30 hover:bg-transparent">
+                  <TableHead className="text-muted-foreground text-xs">Plan</TableHead>
+                  <TableHead className="text-muted-foreground text-xs">Price</TableHead>
+                  <TableHead className="text-muted-foreground text-xs">Interval</TableHead>
+                  <TableHead className="text-muted-foreground text-xs">Members</TableHead>
+                  <TableHead className="text-muted-foreground text-xs">Est. MRR</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {planRows.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-8">
+                      No active plans configured.
+                    </TableCell>
+                  </TableRow>
+                )}
+                {planRows.map((p) => (
+                  <TableRow key={p.name} className="border-border/30 hover:bg-muted/30">
+                    <TableCell>{getPlanBadge(p.name)}</TableCell>
+                    <TableCell className="text-xs">€{p.price.toFixed(2)}</TableCell>
+                    <TableCell className="text-xs capitalize text-muted-foreground">{p.interval}</TableCell>
+                    <TableCell className="text-xs font-medium">{p.members}</TableCell>
+                    <TableCell className="text-xs text-wj-green">€{p.mrr.toFixed(2)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
           className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl overflow-hidden">
