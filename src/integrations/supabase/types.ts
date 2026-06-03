@@ -1143,6 +1143,7 @@ export type Database = {
           icon: string | null
           id: string
           is_active: boolean
+          is_default: boolean
           name: string
           slug: string
           stripe_product_id: string | null
@@ -1157,6 +1158,7 @@ export type Database = {
           icon?: string | null
           id?: string
           is_active?: boolean
+          is_default?: boolean
           name: string
           slug: string
           stripe_product_id?: string | null
@@ -1171,6 +1173,7 @@ export type Database = {
           icon?: string | null
           id?: string
           is_active?: boolean
+          is_default?: boolean
           name?: string
           slug?: string
           stripe_product_id?: string | null
