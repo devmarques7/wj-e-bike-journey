@@ -30,8 +30,9 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useSchedulingData, type BusinessHour } from "@/hooks/scheduling/useSchedulingData";
 import StaffScheduleDialog from "@/components/dashboard/scheduling/StaffScheduleDialog";
+import TeamWeekScheduleDialog from "@/components/dashboard/scheduling/TeamWeekScheduleDialog";
 import { useTranslation } from "react-i18next";
-import { Wrench, CalendarDays, Activity } from "lucide-react";
+import { Wrench, CalendarDays, Activity, LayoutGrid } from "lucide-react";
 
 const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 const trimHm = (t: string | null) => (t ? t.slice(0, 5) : "");
@@ -74,6 +75,7 @@ export default function AdminManage() {
   const [heatYear, setHeatYear] = useState(new Date().getFullYear());
   const [monthCounts, setMonthCounts] = useState<Record<string, number>>({});
   const [dayModalDow, setDayModalDow] = useState<number | null>(null);
+  const [teamWeekOpen, setTeamWeekOpen] = useState(false);
 
   const dateStr = (selectedDate ?? new Date()).toISOString().slice(0, 10);
   const {
