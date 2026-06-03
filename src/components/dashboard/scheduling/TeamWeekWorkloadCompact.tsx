@@ -134,7 +134,7 @@ export default function TeamWeekWorkloadCompact({ mechanics }: Props) {
   const todayISO = ymd(new Date());
 
   return (
-    <div className="w-full">
+    <div className="w-full h-full flex flex-col">
       {/* Week nav */}
       <div className="flex items-center justify-between gap-2 mb-3">
         <Button
@@ -174,15 +174,15 @@ export default function TeamWeekWorkloadCompact({ mechanics }: Props) {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-8 text-muted-foreground gap-2">
+        <div className="flex-1 flex items-center justify-center py-8 text-muted-foreground gap-2">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
         </div>
       ) : mechanics.length === 0 ? (
-        <div className="text-center py-8 text-xs text-muted-foreground">
+        <div className="flex-1 flex items-center justify-center text-center py-8 text-xs text-muted-foreground">
           {t("manage.team.empty")}
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="flex-1 flex flex-col gap-2 min-h-0">
           {/* Day header */}
           <div className="grid grid-cols-[minmax(70px,1fr)_repeat(7,minmax(0,1fr))] gap-1 items-end">
             <div />
@@ -212,6 +212,7 @@ export default function TeamWeekWorkloadCompact({ mechanics }: Props) {
           </div>
 
           {/* Mechanic rows */}
+          <div className="flex-1 flex flex-col gap-2 min-h-0">
           {mechanics.map((m) => {
             const initials = (m.full_name ?? m.email ?? "??")
               .split(" ")
@@ -222,9 +223,9 @@ export default function TeamWeekWorkloadCompact({ mechanics }: Props) {
             return (
               <div
                 key={m.user_id}
-                className="grid grid-cols-[minmax(70px,1fr)_repeat(7,minmax(0,1fr))] gap-1 items-center"
+                className="grid grid-cols-[minmax(70px,1fr)_repeat(7,minmax(0,1fr))] gap-1 items-stretch flex-1 min-h-[44px]"
               >
-                <div className="flex items-center gap-1.5 min-w-0 pr-1">
+                <div className="flex items-center gap-1.5 min-w-0 pr-1 h-full">
                   <div className="w-6 h-6 rounded-full bg-wj-green/20 text-wj-green text-[9px] font-bold flex items-center justify-center shrink-0">
                     {initials}
                   </div>
@@ -241,7 +242,7 @@ export default function TeamWeekWorkloadCompact({ mechanics }: Props) {
                     <div
                       key={d.toISOString()}
                       className={cn(
-                        "relative h-9 rounded-md border flex items-center justify-center overflow-hidden",
+                        "relative h-full min-h-[36px] rounded-md border flex items-center justify-center overflow-hidden",
                         off
                           ? "bg-muted/20 border-border/20"
                           : "bg-muted/30 border-border/30",
@@ -279,11 +280,12 @@ export default function TeamWeekWorkloadCompact({ mechanics }: Props) {
               </div>
             );
           })}
+          </div>
         </div>
       )}
 
       {/* Legend */}
-      <div className="mt-3 pt-3 border-t border-border/30 flex items-center justify-between text-[10px] text-muted-foreground">
+      <div className="mt-3 pt-3 border-t border-border/30 flex items-center justify-between text-[10px] text-muted-foreground shrink-0">
         <span className="flex items-center gap-1">
           <span className="w-2.5 h-1 rounded-full bg-wj-green/60" />
           {t("manage.team_week.legend_load")}
