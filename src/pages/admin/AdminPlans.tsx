@@ -8,7 +8,7 @@ import { Navigate, useNavigate, Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis, Pie, PieChart, LabelList } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent, type ChartConfig } from "@/components/ui/chart";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePlansKPIs, useSubscriptions } from "@/hooks/plans/usePlansData";
@@ -271,32 +271,72 @@ export default function AdminPlans() {
 
           <div className="col-span-12 lg:col-span-4">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4 h-[300px] overflow-y-auto">
-              <div className="flex items-center gap-2 mb-4">
-                <Award className="h-4 w-4 text-wj-green" />
-                <h3 className="text-sm font-medium text-foreground">Plan Adoption</h3>
+              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4 h-[380px] flex flex-col">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2">
+                  <Award className="h-4 w-4 text-wj-green" />
+                  <h3 className="text-sm font-medium text-foreground">Plan Adoption</h3>
+                </div>
+                <span className="text-[11px] text-muted-foreground">{kpis.activeSubs} active</span>
               </div>
-              <div className="space-y-4">
-                {kpis.perPlan.map((p, index) => {
-                  const pct = totalSubs > 0 ? (p.active_subs / totalSubs) * 100 : 0;
-                  return (
-                    <Link to={`/dashboard/admin/plans/${p.plan_id}`} key={p.plan_id} className="block space-y-1.5 hover:opacity-80">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-foreground">{p.name}</span>
-                        <span className="text-xs text-muted-foreground">{p.active_subs} ({pct.toFixed(0)}%)</span>
-                      </div>
-                      <div className="h-2 bg-muted rounded-full overflow-hidden">
-                        <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }}
-                          transition={{ delay: 0.4 + index * 0.1, duration: 0.5 }}
-                          className="h-full bg-gradient-to-r from-wj-green to-wj-green/60 rounded-full" />
-                      </div>
-                    </Link>
-                  );
-                })}
-                {kpis.perPlan.length === 0 && (
+              {kpis.perPlan.length === 0 ? (
+                <div className="flex-1 flex items-center justify-center">
                   <p className="text-xs text-muted-foreground">No plans yet.</p>
-                )}
-              </div>
+                </div>
+              ) : (
+                <>
+                  <ChartContainer
+                    config={chartConfig}
+                    className="[&_.recharts-text]:fill-background mx-auto aspect-square max-h-[200px] w-full"
+                  >
+                    <PieChart>
+                      <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
+                      <Pie
+                        data={kpis.perPlan.map((p) => ({
+                          name: p.name,
+                          value: p.active_subs,
+                          fill: (chartConfig[p.name]?.color as string) ?? "hsl(var(--muted-foreground))",
+                        }))}
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={30}
+                        cornerRadius={8}
+                        paddingAngle={4}
+                      >
+                        <LabelList
+                          dataKey="value"
+                          stroke="none"
+                          fontSize={11}
+                          fontWeight={600}
+                          fill="currentColor"
+                          formatter={(value: number) => (value > 0 ? value.toString() : "")}
+                        />
+                      </Pie>
+                    </PieChart>
+                  </ChartContainer>
+                  <div className="mt-3 space-y-1.5 overflow-y-auto">
+                    {kpis.perPlan.map((p) => {
+                      const pct = totalSubs > 0 ? (p.active_subs / totalSubs) * 100 : 0;
+                      const color = (chartConfig[p.name]?.color as string) ?? "hsl(var(--muted-foreground))";
+                      return (
+                        <Link
+                          to={`/dashboard/admin/plans/${p.plan_id}`}
+                          key={p.plan_id}
+                          className="flex items-center justify-between gap-2 px-2 py-1 rounded-lg hover:bg-muted/30 transition-colors"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="h-2 w-2 rounded-full shrink-0" style={{ background: color }} />
+                            <span className="text-xs text-foreground truncate">{p.name}</span>
+                          </div>
+                          <span className="text-[11px] text-muted-foreground shrink-0">
+                            {p.active_subs} ({pct.toFixed(0)}%)
+                          </span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </motion.div>
           </div>
         </div>
