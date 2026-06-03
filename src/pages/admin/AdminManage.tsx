@@ -8,13 +8,16 @@ import {
   Loader2,
   CalendarOff,
   ChevronRight,
+  ChevronLeft,
+  AlertTriangle,
 } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
-import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +33,23 @@ import StaffScheduleDialog from "@/components/dashboard/scheduling/StaffSchedule
 const DAY_LABELS_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const DAY_LABELS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 const trimHm = (t: string | null) => (t ? t.slice(0, 5) : "");
+const WEEKDAYS_HEAT = ["D", "S", "T", "Q", "Q", "S", "S"];
+
+const getHeatColor = (v: number) => {
+  if (v === 0) return "bg-muted/30";
+  if (v === 1) return "bg-wj-green/20";
+  if (v === 2) return "bg-wj-green/40";
+  if (v === 3) return "bg-wj-green/60";
+  if (v === 4) return "bg-wj-green/80";
+  return "bg-wj-green";
+};
+const getHeatLabel = (v: number) => {
+  if (v === 0) return "Sem agendamentos";
+  if (v === 1) return "Leve";
+  if (v <= 2) return "Moderado";
+  if (v <= 4) return "Ocupado";
+  return "Muito ocupado";
+};
 
 export default function AdminManage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -44,6 +64,9 @@ export default function AdminManage() {
     weekly: number;
     capacity: number;
   } | null>(null);
+  const [heatMonth, setHeatMonth] = useState(new Date().getMonth());
+  const [heatYear, setHeatYear] = useState(new Date().getFullYear());
+  const [monthCounts, setMonthCounts] = useState<Record<string, number>>({});
 
   const dateStr = (selectedDate ?? new Date()).toISOString().slice(0, 10);
   const {
@@ -54,6 +77,27 @@ export default function AdminManage() {
     appointments,
     saveAllBusinessHours,
   } = useSchedulingData({ date: dateStr });
+
+  // Monthly appointment counts for heatmap
+  useEffect(() => {
+    const from = `${heatYear}-${String(heatMonth + 1).padStart(2, "0")}-01`;
+    const lastDay = new Date(heatYear, heatMonth + 1, 0).getDate();
+    const to = `${heatYear}-${String(heatMonth + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+    (async () => {
+      const { data, error } = await supabase
+        .from("appointments")
+        .select("scheduled_date")
+        .gte("scheduled_date", from)
+        .lte("scheduled_date", to)
+        .in("status", ["pending", "confirmed", "in_progress", "completed"]);
+      if (error) return;
+      const map: Record<string, number> = {};
+      (data ?? []).forEach((a: any) => {
+        map[a.scheduled_date] = (map[a.scheduled_date] ?? 0) + 1;
+      });
+      setMonthCounts(map);
+    })();
+  }, [heatMonth, heatYear, appointments.length]);
 
   useEffect(() => {
     if (!businessHours.length) return;
@@ -97,6 +141,15 @@ export default function AdminManage() {
   const totalAppointments = mechanics.reduce((a, m) => a + m.weekly_appointments, 0);
   const workloadPercentage = Math.min(100, Math.round((totalAppointments / totalCapacity) * 100));
 
+  // Overloaded staff (>= 75% capacity)
+  const overloadedStaff = mechanics
+    .map((m) => ({
+      ...m,
+      load: Math.min(100, Math.round((m.weekly_appointments / Math.max(1, m.weekly_capacity)) * 100)),
+    }))
+    .filter((m) => m.load >= 75)
+    .sort((a, b) => b.load - a.load);
+
   // weekly appointment counts per day-of-week for week-overview
   const weeklyByDow = appointments.reduce<Record<number, number>>((acc, a) => {
     const d = new Date(a.scheduled_date).getDay();
@@ -135,6 +188,86 @@ export default function AdminManage() {
         <div className="grid grid-cols-12 gap-4 lg:gap-6">
           {/* Workload Overview - 8 columns */}
           <div className="col-span-12 lg:col-span-8 space-y-4">
+            {/* Overloaded Staff Alert */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={cn(
+                "rounded-2xl p-4 border backdrop-blur-md",
+                overloadedStaff.length > 0
+                  ? "bg-amber-500/5 border-amber-500/30"
+                  : "bg-background/60 border-border/30",
+              )}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <AlertTriangle
+                  className={cn(
+                    "h-4 w-4",
+                    overloadedStaff.length > 0 ? "text-amber-400" : "text-wj-green",
+                  )}
+                />
+                <h3 className="text-sm font-medium text-foreground">
+                  Equipa sobrecarregada
+                </h3>
+                <Badge
+                  variant="outline"
+                  className="ml-auto text-[10px] border-border/40"
+                >
+                  {overloadedStaff.length} / {mechanics.length}
+                </Badge>
+              </div>
+              {overloadedStaff.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  Nenhum mecânico sobrecarregado esta semana. ✨
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {overloadedStaff.map((m) => {
+                    const initials = (m.full_name ?? m.email ?? "??")
+                      .split(" ")
+                      .map((s) => s[0])
+                      .join("")
+                      .slice(0, 2)
+                      .toUpperCase();
+                    return (
+                      <div
+                        key={m.user_id}
+                        className="flex items-center gap-3 p-2 rounded-lg bg-background/60"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold flex items-center justify-center">
+                          {initials}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-foreground truncate">
+                            {m.full_name ?? m.email}
+                          </p>
+                          <div className="h-1 mt-1 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className={cn(
+                                "h-full",
+                                m.load >= 90 ? "bg-red-500" : "bg-amber-500",
+                              )}
+                              style={{ width: `${m.load}%` }}
+                            />
+                          </div>
+                        </div>
+                        <Badge
+                          className={cn(
+                            "text-[10px]",
+                            m.load >= 90
+                              ? "bg-red-500/20 text-red-400 border-red-500/30"
+                              : "bg-amber-500/20 text-amber-400 border-amber-500/30",
+                          )}
+                        >
+                          {m.load}%
+                        </Badge>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </motion.div>
+
             {/* Workload Bar */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -378,14 +511,123 @@ export default function AdminManage() {
             >
               <div className="flex items-center gap-2 mb-4">
                 <CalendarIcon className="h-4 w-4 text-wj-green" />
-                <h3 className="text-sm font-medium text-foreground">Calendário</h3>
+                <h3 className="text-sm font-medium text-foreground">Mapa de Carga</h3>
               </div>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                className="rounded-lg pointer-events-auto"
-              />
+              <TooltipProvider>
+                {/* Month navigation */}
+                <div className="flex items-center justify-between mb-3">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => {
+                      if (heatMonth === 0) {
+                        setHeatMonth(11);
+                        setHeatYear((y) => y - 1);
+                      } else setHeatMonth((m) => m - 1);
+                    }}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-xs font-medium text-foreground capitalize">
+                    {new Date(heatYear, heatMonth).toLocaleDateString("pt-PT", {
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => {
+                      if (heatMonth === 11) {
+                        setHeatMonth(0);
+                        setHeatYear((y) => y + 1);
+                      } else setHeatMonth((m) => m + 1);
+                    }}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* Weekday headers */}
+                <div className="grid grid-cols-7 gap-1 mb-1">
+                  {WEEKDAYS_HEAT.map((d, i) => (
+                    <div
+                      key={i}
+                      className="text-center text-[9px] text-muted-foreground uppercase"
+                    >
+                      {d}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Heatmap grid */}
+                <div className="grid grid-cols-7 gap-1">
+                  {(() => {
+                    const first = new Date(heatYear, heatMonth, 1);
+                    const last = new Date(heatYear, heatMonth + 1, 0);
+                    const pad = first.getDay();
+                    const cells: JSX.Element[] = [];
+                    for (let i = 0; i < pad; i++) {
+                      cells.push(<div key={`p-${i}`} className="aspect-square" />);
+                    }
+                    for (let day = 1; day <= last.getDate(); day++) {
+                      const date = new Date(heatYear, heatMonth, day);
+                      const key = `${heatYear}-${String(heatMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                      const count = monthCounts[key] ?? 0;
+                      const dow = date.getDay();
+                      const isWeekend = dow === 0 || dow === 6;
+                      const isToday = date.toDateString() === new Date().toDateString();
+                      const isSelected =
+                        selectedDate && date.toDateString() === selectedDate.toDateString();
+                      cells.push(
+                        <Tooltip key={key}>
+                          <TooltipTrigger asChild>
+                            <button
+                              onClick={() => setSelectedDate(date)}
+                              className={cn(
+                                "aspect-square rounded-md flex items-center justify-center text-[10px] transition-all hover:ring-1 hover:ring-wj-green/50",
+                                isWeekend && !count && "opacity-40",
+                                isToday && "ring-1 ring-wj-green",
+                                isSelected && "ring-2 ring-wj-green",
+                                getHeatColor(count),
+                              )}
+                            >
+                              {day}
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="text-xs">
+                            <p className="font-medium">
+                              {date.toLocaleDateString("pt-PT", {
+                                weekday: "short",
+                                day: "numeric",
+                                month: "short",
+                              })}
+                            </p>
+                            <p className="text-muted-foreground">
+                              {count} agendamento(s) · {getHeatLabel(count)}
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>,
+                      );
+                    }
+                    return cells;
+                  })()}
+                </div>
+
+                {/* Legend */}
+                <div className="mt-3 flex items-center justify-between text-[10px] text-muted-foreground">
+                  <span>Menos</span>
+                  <div className="flex gap-0.5">
+                    {[0, 1, 2, 3, 4, 5].map((l) => (
+                      <div key={l} className={cn("w-3 h-3 rounded-sm", getHeatColor(l))} />
+                    ))}
+                  </div>
+                  <span>Mais</span>
+                </div>
+              </TooltipProvider>
+
               <div className="mt-4 pt-4 border-t border-border/30">
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
                   {selectedDate?.toLocaleDateString("pt-PT", { weekday: "long", day: "numeric", month: "long" })}
