@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { 
   Calendar as CalendarIcon, 
   Settings, 
@@ -31,7 +31,7 @@ import { cn } from "@/lib/utils";
 import { useSchedulingData, type BusinessHour } from "@/hooks/scheduling/useSchedulingData";
 import StaffScheduleDialog from "@/components/dashboard/scheduling/StaffScheduleDialog";
 import { useTranslation } from "react-i18next";
-import { Wrench, CalendarDays, Activity, Sparkles } from "lucide-react";
+import { Wrench, CalendarDays, Activity } from "lucide-react";
 
 const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 const trimHm = (t: string | null) => (t ? t.slice(0, 5) : "");
