@@ -357,7 +357,7 @@ export default function AdminManage() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.12 }}
-              className="col-span-12 lg:col-span-8 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
+              className="col-span-12 lg:col-span-8 lg:min-h-[560px] p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
             >
               <div className="flex items-center justify-between mb-4">
                 <div>
@@ -384,7 +384,7 @@ export default function AdminManage() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="col-span-12 lg:col-span-4 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
+              className="col-span-12 lg:col-span-4 lg:min-h-[560px] p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
             >
               <div className="flex items-center gap-2 mb-3">
                 <Users className="h-4 w-4 text-wj-green" />
@@ -484,7 +484,7 @@ export default function AdminManage() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.18 }}
-              className="col-span-12 lg:col-span-5 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
+              className="col-span-12 lg:col-span-4 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
             >
               <div className="flex items-center gap-2 mb-4">
                 <CalendarIcon className="h-4 w-4 text-wj-green" />
@@ -613,7 +613,7 @@ export default function AdminManage() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="col-span-12 lg:col-span-7 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
+              className="col-span-12 lg:col-span-8 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
             >
               <div className="flex items-center gap-2 mb-4">
                 <CalendarOff className="h-4 w-4 text-wj-green" />
