@@ -276,7 +276,7 @@ export default function AdminPlans() {
 
           <div className="col-span-12 lg:col-span-4">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4 h-[380px] flex flex-col">
+              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4 h-[460px] flex flex-col">
               <div className="flex items-center justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2">
                   <Award className="h-4 w-4 text-wj-green" />
@@ -284,7 +284,7 @@ export default function AdminPlans() {
                 </div>
                 <span className="text-[11px] text-muted-foreground">{kpis.activeSubs} active</span>
               </div>
-              {kpis.perPlan.length === 0 ? (
+              {kpis.perPlan.length === 0 && !hasOtherPlans ? (
                 <div className="flex-1 flex items-center justify-center">
                   <p className="text-xs text-muted-foreground">No plans yet.</p>
                 </div>
@@ -292,20 +292,23 @@ export default function AdminPlans() {
                 <>
                   <ChartContainer
                     config={chartConfig}
-                    className="[&_.recharts-text]:fill-background mx-auto aspect-square max-h-[200px] w-full"
+                    className="[&_.recharts-text]:fill-background mx-auto aspect-square max-h-[300px] w-full"
                   >
                     <PieChart>
                       <ChartTooltip content={<ChartTooltipContent nameKey="name" hideLabel />} />
                       <Pie
-                        data={kpis.perPlan.map((p) => ({
-                          name: p.name,
-                          value: p.active_subs,
-                          fill: (chartConfig[p.name]?.color as string) ?? "hsl(var(--muted-foreground))",
-                        }))}
+                        data={[
+                          ...kpis.perPlan.map((p) => ({
+                            name: p.name,
+                            value: p.active_subs,
+                            fill: (chartConfig[p.name]?.color as string) ?? "hsl(var(--muted-foreground))",
+                          })),
+                          ...(hasOtherPlans ? [{ name: "Other", value: 0.5, fill: "hsl(var(--border))" }] : []),
+                        ]}
                         dataKey="value"
                         nameKey="name"
                         innerRadius={55}
-                        strokeWidth={2}
+                        strokeWidth={5}
                         cornerRadius={8}
                         paddingAngle={4}
                       >
