@@ -262,7 +262,7 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl bg-background/95 backdrop-blur-xl border-border/50 max-h-[92vh] overflow-y-auto">
+      <DialogContent className="max-w-7xl bg-background/95 backdrop-blur-xl border-border/50 max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-foreground">{t("manage.team_week.title")}</DialogTitle>
           <DialogDescription>{t("manage.team_week.subtitle")}</DialogDescription>
