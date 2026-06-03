@@ -478,7 +478,7 @@ export default function AdminPlans() {
                   <TableRow key={p.name} className="border-border/30 hover:bg-muted/30">
                     <TableCell>{getPlanBadge(p.name)}</TableCell>
                     <TableCell className="text-xs">€{p.price.toFixed(2)}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{t(`plans.intervals.${p.interval}`, p.interval)}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{String(t(`plans.intervals.${p.interval}`, { defaultValue: p.interval }))}</TableCell>
                     <TableCell className="text-xs font-medium">{p.members}</TableCell>
                     <TableCell className="text-xs text-wj-green">€{p.mrr.toFixed(2)}</TableCell>
                   </TableRow>
