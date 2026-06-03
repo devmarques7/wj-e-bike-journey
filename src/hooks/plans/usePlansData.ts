@@ -167,10 +167,20 @@ export function usePlanDetail(planId: string | undefined) {
     if (versionIds.length) {
       const { data: subs } = await supabase
         .from("subscriptions")
-        .select("*, profile:profiles!inner(full_name, email)")
+        .select("*")
         .in("plan_version_id", versionIds)
         .order("started_at", { ascending: false });
-      setSubscribers((subs ?? []) as any[]);
+      let mergedSubs = (subs ?? []) as any[];
+      const uids = Array.from(new Set(mergedSubs.map((r) => r.user_id).filter(Boolean)));
+      if (uids.length) {
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("user_id, full_name, email")
+          .in("user_id", uids);
+        const byId = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
+        mergedSubs = mergedSubs.map((r) => ({ ...r, profile: byId.get(r.user_id) ?? null }));
+      }
+      setSubscribers(mergedSubs);
     } else {
       setSubscribers([]);
     }
@@ -195,10 +205,24 @@ export function useSubscriptions() {
     const { data } = await supabase
       .from("subscriptions")
       .select(`*,
-        plan_version:plan_versions!inner(*, plan:plans!inner(name, slug, color_hex)),
-        profile:profiles(full_name, email)`)
+        plan_version:plan_versions!inner(*, plan:plans!inner(name, slug, color_hex))`)
       .order("started_at", { ascending: false });
-    setRows((data ?? []) as any[]);
+    let merged = (data ?? []) as any[];
+    // No FK between subscriptions.user_id and profiles.user_id, so the embed
+    // above may silently return null. Fetch profiles separately and merge.
+    const userIds = Array.from(new Set(merged.map((r) => r.user_id).filter(Boolean)));
+    if (userIds.length) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, email")
+        .in("user_id", userIds);
+      const byId = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
+      merged = merged.map((r) => ({
+        ...r,
+        profile: byId.get(r.user_id) ?? null,
+      }));
+    }
+    setRows(merged);
     setLoading(false);
   }, []);
 
