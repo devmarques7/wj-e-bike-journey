@@ -82,13 +82,15 @@ function startOfWeek(d: Date) {
 }
 
 interface Props {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
+  open?: boolean;
+  onOpenChange?: (v: boolean) => void;
   mechanics: Mechanic[];
   onChanged?: () => void;
+  /** Render inline (no Dialog wrapper). When true, `open` is ignored. */
+  embedded?: boolean;
 }
 
-export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, onChanged }: Props) {
+export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, onChanged, embedded = false }: Props) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language?.startsWith("pt") ? "pt-PT" : "en-GB";
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date()));
@@ -169,8 +171,8 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
   }, [mechanics, fromISO, toISO]);
 
   useEffect(() => {
-    if (open) load();
-  }, [open, load]);
+    if (embedded || open) load();
+  }, [open, embedded, load]);
 
   /* ------------- helpers ------------- */
 
