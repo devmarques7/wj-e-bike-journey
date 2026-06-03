@@ -372,6 +372,14 @@ export default function AdminCrmCustomerDetail() {
           {isAdmin && (
             <CustomerEditDialog open={editOpen} onClose={() => setEditOpen(false)} customer={customer} onSaved={refetch} />
           )}
+          <ScheduleAppointmentDialog
+            open={scheduleOpen}
+            onClose={() => setScheduleOpen(false)}
+            customerUserId={customer.user_id}
+            customerName={customer.full_name}
+            bikes={bikes}
+            onCreated={refetch}
+          />
         </>
       )}
     </AdminDashboardLayout>
