@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Calendar as CalendarIcon, Check, Loader2, Trash2, X, Download } from "lucide-react";
+import { Calendar as CalendarIcon, Check, Loader2, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,6 @@ export default function ExceptionsCalendarDialog({ open, onOpenChange, exception
   const [closeTime, setCloseTime] = useState("18:00");
   const [reason, setReason] = useState("");
   const [saving, setSaving] = useState(false);
-  const [syncing, setSyncing] = useState(false);
 
   const map = useMemo(() => {
     const m = new Map<string, BusinessHourException>();
@@ -71,47 +70,6 @@ export default function ExceptionsCalendarDialog({ open, onOpenChange, exception
   }, [selected, map]);
 
   const existing = selected ? map.get(ymd(selected)) : undefined;
-
-  const handleSyncNL = async () => {
-    setSyncing(true);
-    try {
-      const year = new Date().getFullYear();
-      const years = [year, year + 1];
-      const responses = await Promise.all(
-        years.map((y) =>
-          fetch(`https://date.nager.at/api/v3/PublicHolidays/${y}/NL`).then((r) => {
-            if (!r.ok) throw new Error(`Holiday API ${r.status}`);
-            return r.json() as Promise<Array<{ date: string; localName: string; name: string }>>;
-          }),
-        ),
-      );
-      const holidays = responses.flat();
-      const existingDates = new Set(exceptions.map((e) => e.exception_date));
-      const rows = holidays
-        .filter((h) => !existingDates.has(h.date))
-        .map((h) => ({
-          exception_date: h.date,
-          is_open: false,
-          exception_type: "closed",
-          open_time: null,
-          close_time: null,
-          reason: h.localName ?? h.name,
-          is_public_holiday: true,
-        }));
-      if (rows.length === 0) {
-        toast.info(t("manage.exceptions_modal.sync_nl_none"));
-      } else {
-        const { error } = await supabase.from("business_hour_exceptions").insert(rows);
-        if (error) throw error;
-        toast.success(t("manage.exceptions_modal.sync_nl_done", { n: rows.length }));
-        onChanged();
-      }
-    } catch (e: any) {
-      toast.error(e.message ?? "Sync failed");
-    } finally {
-      setSyncing(false);
-    }
-  };
 
   const handleSave = async () => {
     if (!selected) return;
@@ -168,23 +126,6 @@ export default function ExceptionsCalendarDialog({ open, onOpenChange, exception
           </DialogTitle>
           <DialogDescription>{t("manage.exceptions_modal.description")}</DialogDescription>
         </DialogHeader>
-
-        <div className="flex items-center justify-end -mt-1">
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-1.5 h-8 text-xs"
-            onClick={handleSyncNL}
-            disabled={syncing}
-          >
-            {syncing ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Download className="h-3.5 w-3.5" />
-            )}
-            {t("manage.exceptions_modal.sync_nl")}
-          </Button>
-        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">
           {/* Calendar */}
