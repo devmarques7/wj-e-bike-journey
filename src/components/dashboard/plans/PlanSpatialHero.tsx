@@ -115,7 +115,7 @@ export default function PlanSpatialHero({
                   <span className="absolute inline-flex h-full w-full rounded-full opacity-75 animate-ping" style={{ background: color }} />
                   <span className="relative inline-flex h-1.5 w-1.5 rounded-full" style={{ background: color }} />
                 </span>
-                {plan.is_active ? "Live" : "Archived"}
+                {plan.is_active ? t("plans.hero.live") : t("plans.hero.archived")}
               </div>
             </div>
           </div>
