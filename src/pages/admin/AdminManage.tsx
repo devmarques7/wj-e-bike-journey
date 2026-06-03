@@ -30,8 +30,9 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useSchedulingData, type BusinessHour } from "@/hooks/scheduling/useSchedulingData";
 import StaffScheduleDialog from "@/components/dashboard/scheduling/StaffScheduleDialog";
+import TeamWeekScheduleDialog from "@/components/dashboard/scheduling/TeamWeekScheduleDialog";
 import { useTranslation } from "react-i18next";
-import { Wrench, CalendarDays, Activity } from "lucide-react";
+import { Wrench, CalendarDays, Activity, LayoutGrid } from "lucide-react";
 
 const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 const trimHm = (t: string | null) => (t ? t.slice(0, 5) : "");
@@ -74,6 +75,7 @@ export default function AdminManage() {
   const [heatYear, setHeatYear] = useState(new Date().getFullYear());
   const [monthCounts, setMonthCounts] = useState<Record<string, number>>({});
   const [dayModalDow, setDayModalDow] = useState<number | null>(null);
+  const [teamWeekOpen, setTeamWeekOpen] = useState(false);
 
   const dateStr = (selectedDate ?? new Date()).toISOString().slice(0, 10);
   const {
@@ -298,16 +300,15 @@ export default function AdminManage() {
             </motion.div>
 
         {/* Main Content Grid */}
-        <div className="grid grid-cols-12 gap-4 lg:gap-6">
-          {/* Left column - 7 */}
-          <div className="col-span-12 lg:col-span-7 space-y-4">
-            {/* Heatmap Calendar */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4"
-            >
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl overflow-hidden"
+        >
+          <div className="grid grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-border/30">
+            {/* Heatmap — compact, no longer the highlight */}
+            <div className="col-span-12 lg:col-span-4 p-4">
               <div className="flex items-center gap-2 mb-4">
                 <CalendarIcon className="h-4 w-4 text-wj-green" />
                 <h3 className="text-sm font-medium text-foreground">{t("manage.heatmap.title")}</h3>
@@ -420,48 +421,31 @@ export default function AdminManage() {
                 </div>
               </TooltipProvider>
 
-              <div className="mt-4 pt-4 border-t border-border/30 flex items-end justify-between gap-4">
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
-                    {selectedDate?.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" })}
-                  </p>
-                  <p className="text-sm text-foreground">
-                    <span className="text-2xl font-light">{appointments.length}</span>{" "}
-                    <span className="text-xs text-muted-foreground">{t("manage.heatmap.appointments", { n: appointments.length })}</span>
-                  </p>
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="gap-2"
-                  onClick={() => navigate("/dashboard/admin/workshop")}
-                >
-                  <Wrench className="h-3.5 w-3.5" />
-                  {t("manage.week.manage")}
-                </Button>
+              <div className="mt-3 pt-3 border-t border-border/30 flex items-center justify-between text-[11px]">
+                <span className="text-muted-foreground truncate">
+                  {selectedDate?.toLocaleDateString(locale, { day: "numeric", month: "short" })}
+                </span>
+                <span className="text-foreground font-medium">
+                  {appointments.length} {t("manage.heatmap.appointments", { n: appointments.length })}
+                </span>
               </div>
-            </motion.div>
+            </div>
 
-            {/* Weekly Schedule Grid — aligned with business hours, today highlighted, badge dot */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4"
-            >
+            {/* Week Overview — middle column */}
+            <div className="col-span-12 lg:col-span-5 p-4">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-medium text-foreground">{t("manage.week.title")}</h3>
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="text-xs text-wj-green hover:text-wj-green/80 gap-1"
+                  className="text-xs text-wj-green hover:text-wj-green/80 gap-1 h-7"
                   onClick={() => navigate("/dashboard/admin/workshop")}
                 >
                   {t("manage.week.manage")}
                   <ChevronRight className="h-3 w-3" />
                 </Button>
               </div>
-              <div className="grid grid-cols-7 gap-2">
+              <div className="grid grid-cols-7 gap-1.5">
                 {[1, 2, 3, 4, 5, 6, 0].map((dow) => {
                   const dh = draft[dow];
                   const apptCount = weeklyByDow[dow] ?? 0;
@@ -471,7 +455,7 @@ export default function AdminManage() {
                       key={dow}
                       onClick={() => setDayModalDow(dow)}
                       className={cn(
-                        "relative p-3 rounded-xl text-center transition-all group",
+                        "relative p-2 rounded-lg text-center transition-all group",
                         dh?.is_open
                           ? "bg-muted/50 hover:bg-muted/70"
                           : "bg-muted/20 opacity-50 hover:opacity-80",
@@ -479,103 +463,35 @@ export default function AdminManage() {
                       )}
                     >
                       {apptCount > 0 && (
-                        <span className="absolute top-1.5 right-1.5 min-w-[16px] h-[16px] px-1 rounded-full bg-wj-green text-[9px] font-bold text-background flex items-center justify-center">
+                        <span className="absolute top-1 right-1 min-w-[14px] h-[14px] px-1 rounded-full bg-wj-green text-[8px] font-bold text-background flex items-center justify-center">
                           {apptCount}
                         </span>
                       )}
-                      <p className={cn("text-xs font-medium", isToday ? "text-wj-green" : "text-foreground")}>
+                      <p className={cn("text-[11px] font-medium", isToday ? "text-wj-green" : "text-foreground")}>
                         {t(`manage.days_short.${DAY_KEYS[dow]}`)}
                       </p>
                       {dh?.is_open ? (
-                        <p className="text-[10px] text-muted-foreground mt-1">
+                        <p className="text-[9px] text-muted-foreground mt-0.5">
                           {trimHm(dh.open_time).replace(":00", "")}-{trimHm(dh.close_time).replace(":00", "")}
                         </p>
                       ) : (
-                        <p className="text-[10px] text-muted-foreground mt-1">{t("manage.week.closed")}</p>
-                      )}
-                      {isToday && (
-                        <span className="block mt-1 text-[8px] uppercase tracking-wider text-wj-green font-semibold">
-                          {t("manage.week.today_chip")}
-                        </span>
+                        <p className="text-[9px] text-muted-foreground mt-0.5">{t("manage.week.closed")}</p>
                       )}
                     </button>
                   );
                 })}
               </div>
-            </motion.div>
+            </div>
 
-            {/* Upcoming exceptions / holidays */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4"
-            >
-              <div className="flex items-center gap-2 mb-4">
-                <CalendarOff className="h-4 w-4 text-wj-green" />
-                <h3 className="text-sm font-medium text-foreground">{t("manage.exceptions.title")}</h3>
-              </div>
-              {exceptions.length === 0 ? (
-                <p className="text-xs text-muted-foreground">{t("manage.exceptions.empty")}</p>
-              ) : (
-                <div className="space-y-2">
-                  {exceptions.slice(0, 6).map((ex) => (
-                    <div
-                      key={ex.id}
-                      className="flex items-center justify-between p-2.5 rounded-lg bg-muted/30"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-wj-green/10 flex items-center justify-center">
-                          <span className="text-xs font-bold text-wj-green">
-                            {new Date(ex.exception_date).getDate()}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-foreground">{ex.reason}</p>
-                          <p className="text-[10px] text-muted-foreground">
-                            {new Date(ex.exception_date).toLocaleDateString(locale, {
-                              weekday: "long",
-                              day: "numeric",
-                              month: "long",
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                      <Badge
-                        className={cn(
-                          "text-[10px]",
-                          ex.exception_type === "closed"
-                            ? "bg-red-500/20 text-red-400 border-red-500/30"
-                            : "bg-amber-500/20 text-amber-400 border-amber-500/30",
-                        )}
-                      >
-                        {ex.exception_type === "closed"
-                          ? t("manage.exceptions.closed")
-                          : t("manage.exceptions.special")}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </motion.div>
-          </div>
-
-          {/* Right column - 5 */}
-          <div className="col-span-12 lg:col-span-5 space-y-4">
-            {/* Workload Bar */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4"
-            >
+            {/* Workload + Team week button */}
+            <div className="col-span-12 lg:col-span-3 p-4 flex flex-col">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-wj-green" />
                   <h3 className="text-sm font-medium text-foreground">{t("manage.workload.title")}</h3>
                 </div>
                 <Badge className={cn(
-                  "text-xs",
+                  "text-[10px]",
                   workloadPercentage > 80 
                     ? "bg-red-500/20 text-red-400 border-red-500/30"
                     : workloadPercentage > 60
@@ -586,7 +502,7 @@ export default function AdminManage() {
                 </Badge>
               </div>
               
-              <div className="h-3 bg-muted rounded-full overflow-hidden">
+              <div className="h-2.5 bg-muted rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${workloadPercentage}%` }}
@@ -602,19 +518,24 @@ export default function AdminManage() {
                 />
               </div>
               
-              <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+              <div className="flex justify-between mt-2 text-[11px] text-muted-foreground">
                 <span>{t("manage.workload.appointments", { n: totalAppointments })}</span>
                 <span>{t("manage.workload.capacity", { n: totalCapacity })}</span>
               </div>
-            </motion.div>
 
-            {/* Team Members Workload */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
-              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4"
-            >
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-auto gap-2 w-full text-xs h-8"
+                onClick={() => setTeamWeekOpen(true)}
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+                {t("manage.team_week.open_button")}
+              </Button>
+            </div>
+
+            {/* Team Members Workload — bottom row left */}
+            <div className="col-span-12 lg:col-span-7 p-4">
               <div className="flex items-center gap-2 mb-4">
                 <Users className="h-4 w-4 text-wj-green" />
                 <h3 className="text-sm font-medium text-foreground">{t("manage.team.title")}</h3>
@@ -629,7 +550,7 @@ export default function AdminManage() {
                   {t("manage.team.empty")}
                 </div>
               ) : (
-              <div className="grid grid-cols-1 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {mechanics.map((member, index) => {
                   const memberLoad = Math.min(100, Math.round((member.weekly_appointments / member.weekly_capacity) * 100));
                   const initials = (member.full_name ?? member.email ?? "??")
@@ -643,8 +564,8 @@ export default function AdminManage() {
                       key={member.user_id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.3 + index * 0.1 }}
-                      className="bg-muted/30 rounded-xl p-3 hover:bg-muted/50 transition-colors"
+                      transition={{ delay: 0.2 + index * 0.05 }}
+                      className="bg-muted/30 rounded-xl p-2.5 hover:bg-muted/50 transition-colors"
                     >
                       <div className="flex items-center gap-3 mb-2">
                         <div className="w-8 h-8 rounded-full bg-wj-green/20 text-wj-green text-xs font-bold flex items-center justify-center">
@@ -683,7 +604,7 @@ export default function AdminManage() {
                             capacity: member.weekly_capacity,
                           })
                         }
-                        className="mt-2 w-full flex items-center justify-between text-[11px] text-wj-green hover:text-wj-green/80 transition-colors"
+                        className="mt-2 w-full flex items-center justify-between text-[10px] text-wj-green hover:text-wj-green/80 transition-colors"
                       >
                         <span>{t("manage.team.view_details")}</span>
                         <ChevronRight className="h-3 w-3" />
@@ -693,9 +614,59 @@ export default function AdminManage() {
                 })}
               </div>
               )}
-            </motion.div>
+            </div>
+
+            {/* Exceptions — bottom row right */}
+            <div className="col-span-12 lg:col-span-5 p-4">
+              <div className="flex items-center gap-2 mb-4">
+                <CalendarOff className="h-4 w-4 text-wj-green" />
+                <h3 className="text-sm font-medium text-foreground">{t("manage.exceptions.title")}</h3>
+              </div>
+              {exceptions.length === 0 ? (
+                <p className="text-xs text-muted-foreground">{t("manage.exceptions.empty")}</p>
+              ) : (
+                <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+                  {exceptions.slice(0, 6).map((ex) => (
+                    <div
+                      key={ex.id}
+                      className="flex items-center justify-between p-2 rounded-lg bg-muted/30"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 rounded-lg bg-wj-green/10 flex items-center justify-center shrink-0">
+                          <span className="text-xs font-bold text-wj-green">
+                            {new Date(ex.exception_date).getDate()}
+                          </span>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-foreground truncate">{ex.reason}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">
+                            {new Date(ex.exception_date).toLocaleDateString(locale, {
+                              weekday: "short",
+                              day: "numeric",
+                              month: "short",
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge
+                        className={cn(
+                          "text-[10px] shrink-0",
+                          ex.exception_type === "closed"
+                            ? "bg-red-500/20 text-red-400 border-red-500/30"
+                            : "bg-amber-500/20 text-amber-400 border-amber-500/30",
+                        )}
+                      >
+                        {ex.exception_type === "closed"
+                          ? t("manage.exceptions.closed")
+                          : t("manage.exceptions.special")}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Opening Hours Modal */}
@@ -830,6 +801,12 @@ export default function AdminManage() {
           weeklyCapacity={staffDetail.capacity}
         />
       )}
+
+      <TeamWeekScheduleDialog
+        open={teamWeekOpen}
+        onOpenChange={setTeamWeekOpen}
+        mechanics={mechanics}
+      />
     </AdminDashboardLayout>
   );
 }
