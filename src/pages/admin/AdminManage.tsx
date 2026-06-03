@@ -825,6 +825,7 @@ export default function AdminManage() {
         open={teamWeekOpen}
         onOpenChange={setTeamWeekOpen}
         mechanics={mechanics}
+        onChanged={refetch}
       />
     </AdminDashboardLayout>
   );
