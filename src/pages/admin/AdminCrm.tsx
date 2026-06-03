@@ -9,7 +9,7 @@ import {
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   RadarChart, Radar, PolarGrid, PolarAngleAxis,
-  BarChart, Bar, Line, ResponsiveContainer,
+  BarChart, Bar, Line, ResponsiveContainer, Tooltip as RTooltip,
   PieChart, Pie, Cell, RadialBarChart, RadialBar,
 } from "recharts";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
@@ -344,7 +344,6 @@ export default function AdminCrm() {
                           <Cell key={i} fill={[CRM_COLORS.care, CRM_COLORS.performance, CRM_COLORS.prestige, CRM_COLORS.accent][i % 4]} />
                         ))}
                       </Pie>
-                      <ChartTooltip content={<ChartTooltipContent />} />
                     </PieChart>
                   </ResponsiveContainer>
                 )}
