@@ -112,7 +112,9 @@ export default function AdminPlans() {
           planPrice.set(planName, monthly);
         }
 
-        const started = new Date(s.started_at);
+        // Truncate started_at to midnight so today's signups still count today.
+        const startedRaw = new Date(s.started_at);
+        const started = new Date(startedRaw.getFullYear(), startedRaw.getMonth(), startedRaw.getDate());
         // Monthly subs honor a 1-month minimum — extend canceled_at by 1 month from start.
         const rawEnd = s.canceled_at ? new Date(s.canceled_at) : null;
         const minEnd = new Date(started);
@@ -123,21 +125,21 @@ export default function AdminPlans() {
           memberCount.set(planName, (memberCount.get(planName) ?? 0) + 1);
         }
 
-        // Use plan price; fall back to 1 so free/0-price plans still surface
-        // a visible line that represents adoption growth.
-        const rawPrice = planPrice.get(planName) ?? 0;
-        const contribution = rawPrice > 0 ? rawPrice : 1;
+        // Revenue contribution per active day = monthly plan price.
+        const contribution = planPrice.get(planName) ?? 0;
         days.forEach((d) => {
-          const active = started <= d.date && (!effectiveEnd || effectiveEnd > d.date);
+          const active = started <= d.date && (!effectiveEnd || effectiveEnd >= d.date);
           if (!active) return;
           const row = rowMap.get(d.key)!;
           row[planName] = (row[planName] ?? 0) + contribution;
         });
       });
 
-      const ordered = Array.from(planSet).sort(
-        (a, b) => (planOrder.get(a) ?? 999) - (planOrder.get(b) ?? 999),
-      );
+      // Order plans; exclude zero-price plans (e.g. Free) from the revenue chart
+      // since they contribute €0 and would just sit on the axis.
+      const ordered = Array.from(planSet)
+        .filter((n) => (planPrice.get(n) ?? 0) > 0)
+        .sort((a, b) => (planOrder.get(a) ?? 999) - (planOrder.get(b) ?? 999));
       // Ensure every day has a numeric value (0) for every plan so Recharts
       // renders a continuous area even with sparse data.
       const filledSeries = days.map((d) => {
@@ -302,7 +304,6 @@ export default function AdminPlans() {
                       />
                     }
                   />
-                  <ChartLegend content={<ChartLegendContent />} />
                   {planNames.map((name) => (
                     <Area
                       key={name}
@@ -315,6 +316,30 @@ export default function AdminPlans() {
                   ))}
                 </AreaChart>
               </ChartContainer>
+              <div className="mt-2 flex items-center justify-center flex-wrap gap-1.5">
+                {planNames.map((name) => {
+                  const color = (chartConfig[name]?.color as string) ?? "hsl(var(--muted-foreground))";
+                  const row = planRows.find((p) => p.name === name);
+                  const members = row?.members ?? 0;
+                  const mrr = row?.mrr ?? 0;
+                  return (
+                    <div
+                      key={name}
+                      className="group flex items-center gap-1.5 px-2 py-1 rounded-full border border-border/40 bg-background/40 hover:bg-muted/40 hover:border-border transition-all duration-300 overflow-hidden cursor-default"
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: color }} />
+                      <span className="text-[10px] uppercase tracking-wider text-foreground/80">{name}</span>
+                      <span className="grid grid-cols-[0fr] group-hover:grid-cols-[1fr] transition-[grid-template-columns] duration-300 ease-out">
+                        <span className="overflow-hidden whitespace-nowrap">
+                          <span className="pl-1.5 text-[10px] text-muted-foreground">
+                            {members} · €{mrr.toFixed(2)}
+                          </span>
+                        </span>
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </motion.div>
           </div>
 
