@@ -4,6 +4,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar, Clock, Bike } from "lucide-react";
@@ -143,13 +144,12 @@ const BookTestRide = () => {
                   <Calendar className="h-4 w-4" />
                   Preferred Date
                 </Label>
-                <Input
+                <DatePicker
                   id="date"
-                  type="date"
                   value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  onChange={(v) => setFormData({ ...formData, date: v })}
                   className="bg-muted/20 border-border/30 focus:border-wj-green/50"
-                  required
+                  placeholder="Select a date"
                 />
               </div>
               <div className="space-y-2">
