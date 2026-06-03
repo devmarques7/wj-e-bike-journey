@@ -384,19 +384,6 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
             {days[6].toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" })}
           </div>
           <div className="flex items-center gap-2">
-            <TooltipProvider delayDuration={150}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-wj-green/10 border border-wj-green/30 text-[10px] text-wj-green cursor-help">
-                    <Info className="h-3 w-3" />
-                    {t("manage.team_week.multi_hint")}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-[260px] text-xs">
-                  {t("manage.team_week.multi_hint")}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
             <Button
               variant="ghost"
               size="sm"
