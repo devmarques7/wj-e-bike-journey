@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -591,12 +592,12 @@ export default function BookAppointmentDialog({
             <div className="flex items-end gap-3">
               <div className="flex-1">
                 <Label className="text-xs">Data</Label>
-                <Input
-                  type="date"
-                  min={todayISO()}
+                <DatePicker
                   value={date}
-                  onChange={(e) => setDate(e.target.value)}
+                  onChange={setDate}
+                  min={todayISO()}
                   className="mt-1 text-sm"
+                  placeholder="Selecionar data"
                 />
               </div>
               <div className="text-xs text-muted-foreground pb-2">
