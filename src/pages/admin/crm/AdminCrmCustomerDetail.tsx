@@ -376,6 +376,7 @@ export default function AdminCrmCustomerDetail() {
             open={scheduleOpen}
             onClose={() => setScheduleOpen(false)}
             customerUserId={customer.user_id}
+            customerId={customer.id}
             customerName={customer.full_name}
             bikes={bikes}
             onCreated={refetch}
