@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +28,7 @@ export default function PlanFormModal({
   plan?: PlanWithActiveVersion | null;
   onSaved: () => void;
 }) {
+  const { t } = useTranslation();
   const isEdit = Boolean(plan);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -119,13 +121,13 @@ export default function PlanFormModal({
   };
 
   const runImport = async () => {
-    if (!bulkText.trim()) { toast.error("Paste plans first"); return; }
+    if (!bulkText.trim()) { toast.error(t("plans.form.bulk.paste_first")); return; }
     let rows: any[] = [];
     try {
       rows = bulkFormat === "json" ? JSON.parse(bulkText) : parseCsv(bulkText);
       if (!Array.isArray(rows)) throw new Error("Expected an array");
     } catch (e: any) {
-      toast.error(`Parse error: ${e.message}`);
+      toast.error(t("plans.form.bulk.parse_error", { message: e.message }));
       return;
     }
     setImporting(true);
@@ -158,7 +160,10 @@ export default function PlanFormModal({
       }
     }
     setImporting(false);
-    toast.success(`Imported ${ok} plan${ok === 1 ? "" : "s"}${fail ? ` — ${fail} failed` : ""}`);
+    toast.success(
+      (ok === 1 ? t("plans.form.bulk.imported_one", { n: ok }) : t("plans.form.bulk.imported_other", { n: ok })) +
+      (fail ? String(t("plans.form.bulk.with_failures", { n: fail })) : "")
+    );
     if (ok > 0) { onSaved(); onOpenChange(false); setBulkText(""); }
   };
 
@@ -185,7 +190,7 @@ export default function PlanFormModal({
 
   const save = async () => {
     if (!name || !slug) {
-      toast.error("Name and slug are required");
+      toast.error(t("plans.form.name_slug_required"));
       return;
     }
     setSaving(true);
@@ -216,11 +221,11 @@ export default function PlanFormModal({
         });
         if (error) throw error;
       }
-      toast.success(isEdit ? "Plan updated — new version created" : "Plan created");
+      toast.success(isEdit ? t("plans.form.updated") : t("plans.form.created"));
       onSaved();
       onOpenChange(false);
     } catch (e: any) {
-      toast.error(e.message ?? "Failed to save plan");
+      toast.error(e.message ?? t("plans.form.failed"));
     } finally {
       setSaving(false);
     }
@@ -230,17 +235,17 @@ export default function PlanFormModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="font-light text-xl">{isEdit ? `Edit ${plan?.name}` : "New Plan"}</DialogTitle>
+          <DialogTitle className="font-light text-xl">{isEdit ? t("plans.form.edit_plan", { name: plan?.name }) : t("plans.form.new_plan")}</DialogTitle>
           <DialogDescription>
-            {isEdit ? "Saving creates a new version. Existing subscribers keep the old price (grandfathering)." : "Define the plan and its initial active version."}
+            {isEdit ? t("plans.form.edit_desc") : t("plans.form.new_desc")}
           </DialogDescription>
         </DialogHeader>
 
         {!isEdit && (
           <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="mb-2">
             <TabsList className="bg-transparent border-b border-border/30 rounded-none p-0 h-auto w-full justify-start gap-1">
-              <TabsTrigger value="single" className="rounded-none border-b-2 border-transparent bg-transparent px-3 py-2 text-xs data-[state=active]:border-wj-green data-[state=active]:bg-transparent data-[state=active]:shadow-none">Single plan</TabsTrigger>
-              <TabsTrigger value="bulk" className="rounded-none border-b-2 border-transparent bg-transparent px-3 py-2 text-xs data-[state=active]:border-wj-green data-[state=active]:bg-transparent data-[state=active]:shadow-none">Bulk import</TabsTrigger>
+              <TabsTrigger value="single" className="rounded-none border-b-2 border-transparent bg-transparent px-3 py-2 text-xs data-[state=active]:border-wj-green data-[state=active]:bg-transparent data-[state=active]:shadow-none">{t("plans.form.tabs.single")}</TabsTrigger>
+              <TabsTrigger value="bulk" className="rounded-none border-b-2 border-transparent bg-transparent px-3 py-2 text-xs data-[state=active]:border-wj-green data-[state=active]:bg-transparent data-[state=active]:shadow-none">{t("plans.form.tabs.bulk")}</TabsTrigger>
             </TabsList>
           </Tabs>
         )}
@@ -249,19 +254,19 @@ export default function PlanFormModal({
         <>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label>Name</Label>
+            <Label>{t("plans.form.name")}</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Plus" />
           </div>
           <div>
-            <Label>Slug</Label>
+            <Label>{t("plans.form.slug")}</Label>
             <Input value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))} placeholder="plus" disabled={isEdit} />
           </div>
           <div>
-            <Label>Tier Level</Label>
+            <Label>{t("plans.form.tier_level")}</Label>
             <Input type="number" value={tier} onChange={(e) => setTier(Number(e.target.value))} />
           </div>
           <div>
-            <Label>Color</Label>
+            <Label>{t("plans.form.color")}</Label>
             <div className="flex gap-1.5 mt-2 items-center flex-wrap">
               {PRESET_COLORS.map((c) => (
                 <button
@@ -286,39 +291,37 @@ export default function PlanFormModal({
             </div>
           </div>
           <div className="col-span-2">
-            <Label>Description</Label>
+            <Label>{t("plans.form.description")}</Label>
             <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
           </div>
 
           <div className="col-span-2 flex items-center justify-between rounded-lg border border-border/40 bg-muted/20 px-3 py-2.5">
             <div className="pr-4">
-              <Label className="text-xs">Default plan for new users</Label>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
-                When enabled, every new customer is automatically subscribed to this plan's active version at signup. Only one plan can be the default.
-              </p>
+              <Label className="text-xs">{t("plans.form.default_label")}</Label>
+              <p className="text-[11px] text-muted-foreground mt-0.5">{t("plans.form.default_hint")}</p>
             </div>
             <Switch checked={isDefault} onCheckedChange={setIsDefault} />
           </div>
 
           <div>
-            <Label>Price (€)</Label>
+            <Label>{t("plans.form.price")}</Label>
             <Input type="number" step="0.01" value={price} onChange={(e) => setPrice(Number(e.target.value))} />
           </div>
           <div>
-            <Label>Interval</Label>
+            <Label>{t("plans.form.interval")}</Label>
             <Select value={interval} onValueChange={(v) => setInterval(v as any)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="monthly">Monthly</SelectItem>
-                <SelectItem value="quarterly">Quarterly</SelectItem>
-                <SelectItem value="yearly">Yearly</SelectItem>
-                <SelectItem value="lifetime">Lifetime</SelectItem>
+                <SelectItem value="monthly">{t("plans.intervals.monthly")}</SelectItem>
+                <SelectItem value="quarterly">{t("plans.intervals.quarterly")}</SelectItem>
+                <SelectItem value="yearly">{t("plans.intervals.yearly")}</SelectItem>
+                <SelectItem value="lifetime">{t("plans.intervals.lifetime")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
             <div className="flex items-center justify-between">
-              <Label>Trial Days</Label>
+              <Label>{t("plans.form.trial")}</Label>
               <label className="flex items-center gap-1.5 cursor-pointer">
                 <input
                   type="checkbox"
@@ -326,7 +329,7 @@ export default function PlanFormModal({
                   onChange={(e) => setUnlimitedTrial(e.target.checked)}
                   className="h-3.5 w-3.5 rounded border-border/50 accent-wj-green"
                 />
-                <span className="text-[11px] text-muted-foreground">Unlimited</span>
+                <span className="text-[11px] text-muted-foreground">{t("plans.form.unlimited")}</span>
               </label>
             </div>
             <Input
@@ -334,17 +337,17 @@ export default function PlanFormModal({
               value={unlimitedTrial ? "" : trial}
               disabled={unlimitedTrial}
               onChange={(e) => setTrial(Number(e.target.value))}
-              placeholder={unlimitedTrial ? "Unlimited" : "0"}
+              placeholder={unlimitedTrial ? String(t("plans.form.unlimited")) : "0"}
             />
           </div>
 
           <div className="col-span-2">
-            <Label>Features</Label>
+            <Label>{t("plans.form.features")}</Label>
             <div className="flex gap-2">
               <Input
                 value={newFeature}
                 onChange={(e) => setNewFeature(e.target.value)}
-                placeholder="Add a feature..."
+                placeholder={String(t("plans.form.add_feature"))}
                 onKeyDown={(e) => { if (e.key === "Enter" && newFeature.trim()) { setFeatures([...features, newFeature.trim()]); setNewFeature(""); } }}
               />
               <Button type="button" size="icon" variant="outline" onClick={() => { if (newFeature.trim()) { setFeatures([...features, newFeature.trim()]); setNewFeature(""); } }}>
@@ -365,9 +368,9 @@ export default function PlanFormModal({
         </div>
 
         <div className="flex justify-end gap-2 mt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t("plans.form.cancel")}</Button>
           <Button onClick={save} disabled={saving} className="bg-wj-green hover:bg-wj-green/90">
-            {saving ? "Saving..." : isEdit ? "Save new version" : "Create plan"}
+            {saving ? t("plans.form.saving") : isEdit ? t("plans.form.save_version") : t("plans.form.create")}
           </Button>
         </div>
         </>
@@ -378,28 +381,28 @@ export default function PlanFormModal({
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="inline-flex rounded-md border border-border/40 overflow-hidden">
                 <button type="button" onClick={() => setBulkFormat("json")} className={`px-3 py-1.5 text-xs flex items-center gap-1.5 ${bulkFormat === "json" ? "bg-wj-green/10 text-wj-green" : "text-muted-foreground hover:text-foreground"}`}>
-                  <FileJson className="h-3.5 w-3.5" /> JSON
+                  <FileJson className="h-3.5 w-3.5" /> {t("plans.form.bulk.json")}
                 </button>
                 <button type="button" onClick={() => setBulkFormat("csv")} className={`px-3 py-1.5 text-xs flex items-center gap-1.5 border-l border-border/40 ${bulkFormat === "csv" ? "bg-wj-green/10 text-wj-green" : "text-muted-foreground hover:text-foreground"}`}>
-                  <FileSpreadsheet className="h-3.5 w-3.5" /> CSV
+                  <FileSpreadsheet className="h-3.5 w-3.5" /> {t("plans.form.bulk.csv")}
                 </button>
               </div>
               <div className="flex items-center gap-2">
                 <Button type="button" size="sm" variant="outline" className="h-8 text-xs" onClick={() => setBulkText(bulkFormat === "json" ? JSON_TEMPLATE : CSV_TEMPLATE)}>
-                  View template
+                  {t("plans.form.bulk.view_template")}
                 </Button>
                 <Button type="button" size="sm" variant="outline" className="h-8 text-xs" onClick={() => downloadFile(
                   bulkFormat === "json" ? JSON_TEMPLATE : CSV_TEMPLATE,
                   bulkFormat === "json" ? "plans-template.json" : "plans-template.csv",
                   bulkFormat === "json" ? "application/json" : "text/csv",
                 )}>
-                  <Download className="h-3.5 w-3.5 mr-1" /> Download
+                  <Download className="h-3.5 w-3.5 mr-1" /> {t("plans.form.bulk.download")}
                 </Button>
               </div>
             </div>
 
             <div className="rounded-md border border-border/30 bg-muted/20 p-3">
-              <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">Expected fields</p>
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">{t("plans.form.bulk.expected_fields")}</p>
               <p className="text-xs text-muted-foreground">
                 <code className="text-foreground">name</code>, <code className="text-foreground">slug</code>, <code className="text-foreground">tier_level</code>, <code className="text-foreground">description</code>, <code className="text-foreground">color_hex</code>, <code className="text-foreground">price</code>, <code className="text-foreground">interval</code> (monthly/quarterly/yearly/lifetime), <code className="text-foreground">trial_days</code>, <code className="text-foreground">features</code>{" "}
                 {bulkFormat === "csv" ? <>(pipe-separated <code className="text-foreground">|</code>)</> : <>(array)</>}.
@@ -407,7 +410,7 @@ export default function PlanFormModal({
             </div>
 
             <div>
-              <Label className="text-xs">Paste {bulkFormat.toUpperCase()}</Label>
+              <Label className="text-xs">{t("plans.form.bulk.paste", { format: bulkFormat.toUpperCase() })}</Label>
               <Textarea
                 value={bulkText}
                 onChange={(e) => setBulkText(e.target.value)}
@@ -418,9 +421,9 @@ export default function PlanFormModal({
             </div>
 
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+              <Button variant="outline" onClick={() => onOpenChange(false)}>{t("plans.form.cancel")}</Button>
               <Button onClick={runImport} disabled={importing} className="bg-wj-green hover:bg-wj-green/90">
-                {importing ? <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> Importing…</> : "Import plans"}
+                {importing ? <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> {t("plans.form.bulk.importing")}</> : t("plans.form.bulk.import_btn")}
               </Button>
             </div>
           </div>

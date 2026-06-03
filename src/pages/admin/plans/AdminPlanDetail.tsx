@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate, useParams, Link } from "react-router-dom";
 import { ArrowLeft, Edit3, CheckCircle2, Users, Euro, History, Sparkles, TrendingUp, Layers } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
@@ -13,6 +14,8 @@ import PlanFormModal from "@/components/dashboard/plans/PlanFormModal";
 import PlanSpatialHero from "@/components/dashboard/plans/PlanSpatialHero";
 
 export default function AdminPlanDetail() {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage === "pt" ? "pt-PT" : "en-US";
   const { user, isAuthenticated, isLoading } = useAuth();
   const { planId } = useParams();
   const navigate = useNavigate();
@@ -38,11 +41,11 @@ export default function AdminPlanDetail() {
     <AdminDashboardLayout>
       <div className="p-4 lg:p-6 space-y-6">
         <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-3.5 w-3.5" /> Back
+          <ArrowLeft className="h-3.5 w-3.5" /> {t("plans.detail.back")}
         </button>
 
         {loading || !plan ? (
-          <div className="text-sm text-muted-foreground">Loading…</div>
+          <div className="text-sm text-muted-foreground">{t("plans.detail.loading")}</div>
         ) : (
           <>
             <PlanSpatialHero
@@ -56,18 +59,18 @@ export default function AdminPlanDetail() {
 
             <Tabs defaultValue="subscribers">
               <TabsList>
-                <TabsTrigger value="subscribers"><Users className="h-3.5 w-3.5 mr-1" /> Subscribers</TabsTrigger>
-                <TabsTrigger value="versions"><History className="h-3.5 w-3.5 mr-1" /> Versions</TabsTrigger>
-                <TabsTrigger value="features"><Euro className="h-3.5 w-3.5 mr-1" /> Features</TabsTrigger>
+                <TabsTrigger value="subscribers"><Users className="h-3.5 w-3.5 mr-1" /> {t("plans.detail.tabs.subscribers")}</TabsTrigger>
+                <TabsTrigger value="versions"><History className="h-3.5 w-3.5 mr-1" /> {t("plans.detail.tabs.versions")}</TabsTrigger>
+                <TabsTrigger value="features"><Euro className="h-3.5 w-3.5 mr-1" /> {t("plans.detail.tabs.features")}</TabsTrigger>
               </TabsList>
               <TabsContent value="subscribers">
                 <div className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl overflow-hidden">
                   <Table>
                     <TableHeader>
-                      <TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Version</TableHead><TableHead>Status</TableHead><TableHead>Started</TableHead></TableRow>
+                      <TableRow><TableHead>{t("plans.detail.subscribers.name")}</TableHead><TableHead>{t("plans.detail.subscribers.email")}</TableHead><TableHead>{t("plans.detail.subscribers.version")}</TableHead><TableHead>{t("plans.detail.subscribers.status")}</TableHead><TableHead>{t("plans.detail.subscribers.started")}</TableHead></TableRow>
                     </TableHeader>
                     <TableBody>
-                      {subscribers.length === 0 && <TableRow><TableCell colSpan={5} className="text-center py-6 text-xs text-muted-foreground">No subscribers yet.</TableCell></TableRow>}
+                      {subscribers.length === 0 && <TableRow><TableCell colSpan={5} className="text-center py-6 text-xs text-muted-foreground">{t("plans.detail.subscribers.empty")}</TableCell></TableRow>}
                       {subscribers.map((s: any) => {
                         const v = versions.find((x) => x.id === s.plan_version_id);
                         return (
@@ -75,8 +78,8 @@ export default function AdminPlanDetail() {
                             <TableCell className="text-xs font-medium">{s.profile?.full_name ?? "—"}</TableCell>
                             <TableCell className="text-xs text-muted-foreground">{s.profile?.email ?? "—"}</TableCell>
                             <TableCell className="text-xs">v{v?.version_number ?? "?"}</TableCell>
-                            <TableCell><Badge variant="outline" className="text-xs">{s.status}</Badge></TableCell>
-                            <TableCell className="text-xs text-muted-foreground">{new Date(s.started_at).toLocaleDateString()}</TableCell>
+                            <TableCell><Badge variant="outline" className="text-xs">{String(t(`plans.status.${s.status}`, { defaultValue: s.status }))}</Badge></TableCell>
+                            <TableCell className="text-xs text-muted-foreground">{new Date(s.started_at).toLocaleDateString(locale)}</TableCell>
                           </TableRow>
                         );
                       })}
@@ -88,7 +91,7 @@ export default function AdminPlanDetail() {
                 <div className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl overflow-hidden">
                   <Table>
                     <TableHeader>
-                      <TableRow><TableHead>Version</TableHead><TableHead>Price</TableHead><TableHead>Interval</TableHead><TableHead>Status</TableHead><TableHead>Subscribers</TableHead><TableHead>Effective From</TableHead></TableRow>
+                      <TableRow><TableHead>{t("plans.detail.versions.version")}</TableHead><TableHead>{t("plans.detail.versions.price")}</TableHead><TableHead>{t("plans.detail.versions.interval")}</TableHead><TableHead>{t("plans.detail.versions.status")}</TableHead><TableHead>{t("plans.detail.versions.subscribers")}</TableHead><TableHead>{t("plans.detail.versions.effective_from")}</TableHead></TableRow>
                     </TableHeader>
                     <TableBody>
                       {versions.map((v) => {
@@ -97,12 +100,12 @@ export default function AdminPlanDetail() {
                           <TableRow key={v.id}>
                             <TableCell className="font-medium">v{v.version_number}</TableCell>
                             <TableCell>€{Number(v.price).toFixed(2)}</TableCell>
-                            <TableCell className="text-xs">{v.interval}</TableCell>
+                            <TableCell className="text-xs">{String(t(`plans.intervals.${v.interval}`, { defaultValue: v.interval }))}</TableCell>
                             <TableCell>
-                              {v.status === "active" ? <Badge className="bg-wj-green/20 text-wj-green">Active</Badge> : <Badge variant="outline">{v.status}</Badge>}
+                              {v.status === "active" ? <Badge className="bg-wj-green/20 text-wj-green">{t("plans.detail.versions.active")}</Badge> : <Badge variant="outline">{v.status}</Badge>}
                             </TableCell>
                             <TableCell className="text-xs">{count}</TableCell>
-                            <TableCell className="text-xs text-muted-foreground">{new Date(v.effective_from).toLocaleDateString()}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground">{new Date(v.effective_from).toLocaleDateString(locale)}</TableCell>
                           </TableRow>
                         );
                       })}
@@ -121,7 +124,7 @@ export default function AdminPlanDetail() {
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-sm text-muted-foreground">No features defined.</p>
+                    <p className="text-sm text-muted-foreground">{t("plans.detail.features.empty")}</p>
                   )}
                 </div>
               </TabsContent>

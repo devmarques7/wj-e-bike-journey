@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { CreditCard, TrendingUp, Users, Euro, CheckCircle2, XCircle, Clock, Award, Settings2, Layers } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
@@ -14,18 +15,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { usePlansKPIs, useSubscriptions } from "@/hooks/plans/usePlansData";
 import { supabase } from "@/integrations/supabase/client";
 
-const getStatusBadge = (status: string) => {
+const getStatusBadge = (status: string, t: (k: string) => string) => {
   switch (status) {
     case "active":
-      return <Badge className="bg-wj-green/20 text-wj-green border-wj-green/30 gap-1"><CheckCircle2 className="h-3 w-3" />Active</Badge>;
+      return <Badge className="bg-wj-green/20 text-wj-green border-wj-green/30 gap-1"><CheckCircle2 className="h-3 w-3" />{t("plans.status.active")}</Badge>;
     case "trialing":
-      return <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 gap-1"><Clock className="h-3 w-3" />Pending</Badge>;
+      return <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30 gap-1"><Clock className="h-3 w-3" />{t("plans.status.trialing")}</Badge>;
     case "past_due":
-      return <Badge className="bg-red-500/20 text-red-400 border-red-500/30 gap-1"><XCircle className="h-3 w-3" />Overdue</Badge>;
+      return <Badge className="bg-red-500/20 text-red-400 border-red-500/30 gap-1"><XCircle className="h-3 w-3" />{t("plans.status.past_due")}</Badge>;
     case "canceled":
-      return <Badge className="bg-zinc-700 text-zinc-300">Canceled</Badge>;
+      return <Badge className="bg-zinc-700 text-zinc-300">{t("plans.status.canceled")}</Badge>;
     case "paused":
-      return <Badge className="bg-zinc-700 text-zinc-300">Paused</Badge>;
+      return <Badge className="bg-zinc-700 text-zinc-300">{t("plans.status.paused")}</Badge>;
     default:
       return <Badge variant="outline">{status}</Badge>;
   }
@@ -39,6 +40,8 @@ const getPlanBadge = (name: string) => {
 };
 
 export default function AdminPlans() {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage === "pt" ? "pt-PT" : "en-US";
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { kpis, loading } = usePlansKPIs();
@@ -199,10 +202,10 @@ export default function AdminPlans() {
   const totalSubs = kpis.perPlan.reduce((s, p) => s + p.active_subs, 0) || 1;
 
   const kpiCards = [
-    { label: "Monthly Revenue", value: `€${kpis.mrr.toFixed(2)}`, change: loading ? "..." : "live", trend: "up" as const, icon: Euro },
-    { label: "Active Subscribers", value: String(kpis.activeSubs), change: loading ? "..." : "live", trend: "up" as const, icon: Users },
-    { label: "Churn Rate (30d)", value: `${kpis.churnRate.toFixed(1)}%`, change: loading ? "..." : "live", trend: kpis.churnRate > 5 ? "down" as const : "up" as const, icon: TrendingUp },
-    { label: "Avg. Revenue/User", value: `€${kpis.arpu.toFixed(2)}`, change: loading ? "..." : "live", trend: "up" as const, icon: CreditCard },
+    { label: t("plans.kpi.monthly_revenue"), value: `€${kpis.mrr.toFixed(2)}`, change: loading ? t("plans.kpi.loading") : t("plans.kpi.live"), trend: "up" as const, icon: Euro },
+    { label: t("plans.kpi.active_subscribers"), value: String(kpis.activeSubs), change: loading ? t("plans.kpi.loading") : t("plans.kpi.live"), trend: "up" as const, icon: Users },
+    { label: t("plans.kpi.churn_rate"), value: `${kpis.churnRate.toFixed(1)}%`, change: loading ? t("plans.kpi.loading") : t("plans.kpi.live"), trend: kpis.churnRate > 5 ? "down" as const : "up" as const, icon: TrendingUp },
+    { label: t("plans.kpi.arpu"), value: `€${kpis.arpu.toFixed(2)}`, change: loading ? t("plans.kpi.loading") : t("plans.kpi.live"), trend: "up" as const, icon: CreditCard },
   ];
 
   return (
@@ -211,11 +214,11 @@ export default function AdminPlans() {
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
           className="flex items-center justify-between flex-wrap gap-3">
           <div>
-            <h1 className="text-xl sm:text-2xl font-light text-foreground">Subscription Plans</h1>
-            <p className="text-sm text-muted-foreground mt-1">Revenue analytics and subscriber management</p>
+            <h1 className="text-xl sm:text-2xl font-light text-foreground">{t("plans.title")}</h1>
+            <p className="text-sm text-muted-foreground mt-1">{t("plans.subtitle")}</p>
           </div>
           <Button onClick={() => navigate("/dashboard/admin/plans/manage")} className="bg-wj-green hover:bg-wj-green/90 gap-2">
-            <Settings2 className="h-4 w-4" /> Manage Plans
+            <Settings2 className="h-4 w-4" /> {t("plans.manage_btn")}
           </Button>
         </motion.div>
 
@@ -233,20 +236,20 @@ export default function AdminPlans() {
               className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4 h-[460px] w-full flex flex-col">
               <div className="flex items-center justify-between gap-3 mb-2">
                 <div>
-                  <h3 className="text-sm font-medium text-foreground">Cumulative Revenue per Plan</h3>
+                  <h3 className="text-sm font-medium text-foreground">{t("plans.forecast.title")}</h3>
                   <p className="text-[11px] text-muted-foreground">
-                    Accrued cash by plan — next {forecastRange === "3m" ? "3 months" : forecastRange === "6m" ? "6 months" : forecastRange === "12m" ? "12 months" : "24 months"} at +3%/mo member growth
+                    {t("plans.forecast.subtitle", { horizon: t(`plans.forecast.horizon.${forecastRange}`) })}
                   </p>
                 </div>
                 <Select value={forecastRange} onValueChange={(v) => setForecastRange(v as any)}>
-                  <SelectTrigger className="w-[170px] h-8 rounded-lg text-xs" aria-label="Select forecast horizon">
-                    <SelectValue placeholder="Next 12 months" />
+                  <SelectTrigger className="w-[170px] h-8 rounded-lg text-xs" aria-label={t("plans.forecast.aria")}>
+                    <SelectValue placeholder={t("plans.forecast.placeholder")} />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
-                    <SelectItem value="3m" className="rounded-lg text-xs">Next 3 months</SelectItem>
-                    <SelectItem value="6m" className="rounded-lg text-xs">Next 6 months</SelectItem>
-                    <SelectItem value="12m" className="rounded-lg text-xs">Next 12 months</SelectItem>
-                    <SelectItem value="24m" className="rounded-lg text-xs">Next 24 months</SelectItem>
+                    <SelectItem value="3m" className="rounded-lg text-xs">{t("plans.forecast.select.3m")}</SelectItem>
+                    <SelectItem value="6m" className="rounded-lg text-xs">{t("plans.forecast.select.6m")}</SelectItem>
+                    <SelectItem value="12m" className="rounded-lg text-xs">{t("plans.forecast.select.12m")}</SelectItem>
+                    <SelectItem value="24m" className="rounded-lg text-xs">{t("plans.forecast.select.24m")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -268,7 +271,7 @@ export default function AdminPlans() {
                     fontSize={10}
                     minTickGap={32}
                     tickFormatter={(v) =>
-                      new Date(v).toLocaleDateString("en-US", { month: "short", year: "2-digit" })
+                      new Date(v).toLocaleDateString(locale, { month: "short", year: "2-digit" })
                     }
                   />
                   <YAxis
@@ -291,7 +294,7 @@ export default function AdminPlans() {
                           </div>
                         )}
                         labelFormatter={(value) =>
-                          new Date(value as string).toLocaleDateString("en-US", { month: "long", year: "numeric" })
+                          new Date(value as string).toLocaleDateString(locale, { month: "long", year: "numeric" })
                         }
                       />
                     }
@@ -341,13 +344,13 @@ export default function AdminPlans() {
               <div className="flex items-center justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2">
                   <Award className="h-4 w-4 text-wj-green" />
-                  <h3 className="text-sm font-medium text-foreground">Plan Adoption</h3>
+                  <h3 className="text-sm font-medium text-foreground">{t("plans.adoption.title")}</h3>
                 </div>
-                <span className="text-[11px] text-muted-foreground">{kpis.activeSubs} active</span>
+                <span className="text-[11px] text-muted-foreground">{t("plans.adoption.active", { n: kpis.activeSubs })}</span>
               </div>
               {kpis.perPlan.length === 0 && !hasOtherPlans ? (
                 <div className="flex-1 flex items-center justify-center">
-                  <p className="text-xs text-muted-foreground">No plans yet.</p>
+                  <p className="text-xs text-muted-foreground">{t("plans.adoption.no_plans")}</p>
                 </div>
               ) : (
                 <>
@@ -392,7 +395,7 @@ export default function AdminPlans() {
                                     {kpis.activeSubs.toLocaleString()}
                                   </tspan>
                                   <tspan x={cx} y={cy + 14} className="fill-muted-foreground text-[10px]">
-                                    Subscribers
+                                    {t("plans.adoption.subscribers")}
                                   </tspan>
                                 </text>
                               );
@@ -428,7 +431,7 @@ export default function AdminPlans() {
                     {hasOtherPlans && (
                       <div className="group flex items-center gap-1.5 px-2 py-1 rounded-full border border-border/40 bg-background/40 hover:bg-muted/40 hover:border-border transition-all duration-300 overflow-hidden cursor-default">
                         <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: "hsl(var(--border))" }} />
-                        <span className="text-[10px] uppercase tracking-wider text-foreground/80">Other</span>
+                        <span className="text-[10px] uppercase tracking-wider text-foreground/80">{t("plans.adoption.other")}</span>
                         <span className="grid grid-cols-[0fr] group-hover:grid-cols-[1fr] transition-[grid-template-columns] duration-300 ease-out">
                           <span className="overflow-hidden whitespace-nowrap">
                             <span className="pl-1.5 text-[10px] text-muted-foreground">
@@ -449,25 +452,25 @@ export default function AdminPlans() {
           className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl overflow-hidden">
           <div className="p-4 border-b border-border/30 flex items-center gap-2">
             <Layers className="h-4 w-4 text-wj-green" />
-            <h3 className="text-sm font-medium text-foreground">Available Plans</h3>
-            <span className="text-[11px] text-muted-foreground ml-1">Member count per subscription tier</span>
+            <h3 className="text-sm font-medium text-foreground">{t("plans.available.title")}</h3>
+            <span className="text-[11px] text-muted-foreground ml-1">{t("plans.available.subtitle")}</span>
           </div>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="border-border/30 hover:bg-transparent">
-                  <TableHead className="text-muted-foreground text-xs">Plan</TableHead>
-                  <TableHead className="text-muted-foreground text-xs">Price</TableHead>
-                  <TableHead className="text-muted-foreground text-xs">Interval</TableHead>
-                  <TableHead className="text-muted-foreground text-xs">Members</TableHead>
-                  <TableHead className="text-muted-foreground text-xs">Est. MRR</TableHead>
+                  <TableHead className="text-muted-foreground text-xs">{t("plans.available.col.plan")}</TableHead>
+                  <TableHead className="text-muted-foreground text-xs">{t("plans.available.col.price")}</TableHead>
+                  <TableHead className="text-muted-foreground text-xs">{t("plans.available.col.interval")}</TableHead>
+                  <TableHead className="text-muted-foreground text-xs">{t("plans.available.col.members")}</TableHead>
+                  <TableHead className="text-muted-foreground text-xs">{t("plans.available.col.mrr")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {planRows.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-8">
-                      No active plans configured.
+                      {t("plans.available.empty")}
                     </TableCell>
                   </TableRow>
                 )}
@@ -475,7 +478,7 @@ export default function AdminPlans() {
                   <TableRow key={p.name} className="border-border/30 hover:bg-muted/30">
                     <TableCell>{getPlanBadge(p.name)}</TableCell>
                     <TableCell className="text-xs">€{p.price.toFixed(2)}</TableCell>
-                    <TableCell className="text-xs capitalize text-muted-foreground">{p.interval}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{String(t(`plans.intervals.${p.interval}`, { defaultValue: p.interval }))}</TableCell>
                     <TableCell className="text-xs font-medium">{p.members}</TableCell>
                     <TableCell className="text-xs text-wj-green">€{p.mrr.toFixed(2)}</TableCell>
                   </TableRow>
@@ -488,25 +491,25 @@ export default function AdminPlans() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
           className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl overflow-hidden">
           <div className="p-4 border-b border-border/30">
-            <h3 className="text-sm font-medium text-foreground">All Subscribers</h3>
+            <h3 className="text-sm font-medium text-foreground">{t("plans.subscribers_table.title")}</h3>
           </div>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow className="border-border/30 hover:bg-transparent">
-                  <TableHead className="text-muted-foreground text-xs">Name</TableHead>
-                  <TableHead className="text-muted-foreground text-xs">Email</TableHead>
-                  <TableHead className="text-muted-foreground text-xs">Plan</TableHead>
-                  <TableHead className="text-muted-foreground text-xs">Payment</TableHead>
-                  <TableHead className="text-muted-foreground text-xs">Period End</TableHead>
-                  <TableHead className="text-muted-foreground text-xs">Status</TableHead>
+                  <TableHead className="text-muted-foreground text-xs">{t("plans.subscribers_table.col.name")}</TableHead>
+                  <TableHead className="text-muted-foreground text-xs">{t("plans.subscribers_table.col.email")}</TableHead>
+                  <TableHead className="text-muted-foreground text-xs">{t("plans.subscribers_table.col.plan")}</TableHead>
+                  <TableHead className="text-muted-foreground text-xs">{t("plans.subscribers_table.col.payment")}</TableHead>
+                  <TableHead className="text-muted-foreground text-xs">{t("plans.subscribers_table.col.period_end")}</TableHead>
+                  <TableHead className="text-muted-foreground text-xs">{t("plans.subscribers_table.col.status")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {subs.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center text-xs text-muted-foreground py-8">
-                      No subscribers yet. Create subscriptions to see them here.
+                      {t("plans.subscribers_table.empty")}
                     </TableCell>
                   </TableRow>
                 )}
@@ -518,9 +521,9 @@ export default function AdminPlans() {
                     <TableCell>{getPlanBadge(sub.plan_version?.plan?.name ?? "—")}</TableCell>
                     <TableCell className="text-xs">{sub.payment_method ?? "—"}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">
-                      {sub.current_period_end ? new Date(sub.current_period_end).toLocaleDateString() : "—"}
+                      {sub.current_period_end ? new Date(sub.current_period_end).toLocaleDateString(locale) : "—"}
                     </TableCell>
-                    <TableCell>{getStatusBadge(sub.status)}</TableCell>
+                    <TableCell>{getStatusBadge(sub.status, t)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

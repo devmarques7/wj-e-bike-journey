@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -22,6 +23,7 @@ export default function RegisterManualPaymentModal({
   defaultAmount?: number;
   onSaved: () => void;
 }) {
+  const { t } = useTranslation();
   const [amount, setAmount] = useState(defaultAmount);
   const [method, setMethod] = useState<"cash" | "bank_transfer" | "pos_card" | "other">("cash");
   const [periodStart, setPeriodStart] = useState("");
@@ -31,7 +33,7 @@ export default function RegisterManualPaymentModal({
 
   const submit = async () => {
     if (!amount || amount <= 0) {
-      toast.error("Amount must be greater than 0");
+      toast.error(t("plans.payment_modal.amount_required"));
       return;
     }
     setSaving(true);
@@ -45,7 +47,7 @@ export default function RegisterManualPaymentModal({
     });
     setSaving(false);
     if (error) return toast.error(error.message);
-    toast.success("Payment registered");
+    toast.success(t("plans.payment_modal.registered"));
     onSaved();
     onOpenChange(false);
   };
@@ -54,45 +56,45 @@ export default function RegisterManualPaymentModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="font-light text-xl">Register Manual Payment</DialogTitle>
-          <DialogDescription>Record an offline payment (cash, transfer, POS).</DialogDescription>
+          <DialogTitle className="font-light text-xl">{t("plans.payment_modal.title")}</DialogTitle>
+          <DialogDescription>{t("plans.payment_modal.desc")}</DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Amount (€)</Label>
+              <Label>{t("plans.payment_modal.amount")}</Label>
               <Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(Number(e.target.value))} />
             </div>
             <div>
-              <Label>Method</Label>
+              <Label>{t("plans.payment_modal.method")}</Label>
               <Select value={method} onValueChange={(v) => setMethod(v as any)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                  <SelectItem value="pos_card">POS Card</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="cash">{t("plans.payment_modal.methods.cash")}</SelectItem>
+                  <SelectItem value="bank_transfer">{t("plans.payment_modal.methods.bank_transfer")}</SelectItem>
+                  <SelectItem value="pos_card">{t("plans.payment_modal.methods.pos_card")}</SelectItem>
+                  <SelectItem value="other">{t("plans.payment_modal.methods.other")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Period Start (optional)</Label>
-              <DatePicker value={periodStart} onChange={setPeriodStart} placeholder="Período inicial" />
+              <Label>{t("plans.payment_modal.period_start")}</Label>
+              <DatePicker value={periodStart} onChange={setPeriodStart} placeholder={String(t("plans.payment_modal.period_start_ph"))} />
             </div>
             <div>
-              <Label>Period End (optional)</Label>
-              <DatePicker value={periodEnd} onChange={setPeriodEnd} placeholder="Período final" />
+              <Label>{t("plans.payment_modal.period_end")}</Label>
+              <DatePicker value={periodEnd} onChange={setPeriodEnd} placeholder={String(t("plans.payment_modal.period_end_ph"))} />
             </div>
           </div>
           <div>
-            <Label>Notes</Label>
+            <Label>{t("plans.payment_modal.notes")}</Label>
             <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
           </div>
         </div>
         <div className="flex justify-end gap-2 mt-3">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t("plans.payment_modal.cancel")}</Button>
           <Button onClick={submit} disabled={saving} className="bg-wj-green hover:bg-wj-green/90">
-            {saving ? "Saving..." : "Register"}
+            {saving ? t("plans.payment_modal.saving") : t("plans.payment_modal.register")}
           </Button>
         </div>
       </DialogContent>

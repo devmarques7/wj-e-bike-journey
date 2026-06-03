@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { Edit3, Sparkles, TrendingUp, Users, Layers, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,25 +23,26 @@ export default function PlanSpatialHero({
   versionsCount,
   onEdit,
 }: PlanSpatialHeroProps) {
+  const { t } = useTranslation();
   const color = plan.color_hex || "#058c42";
   const price = Number(activeVersion?.price ?? 0);
-  const interval = activeVersion?.interval ?? "—";
+  const interval = activeVersion?.interval ? String(t(`plans.intervals.${activeVersion.interval}`, { defaultValue: activeVersion.interval })) : "—";
 
   const metrics = [
     {
-      label: "MRR",
+      label: t("plans.hero.mrr"),
       value: `€${mrr.toFixed(2)}`,
       icon: TrendingUp,
       bar: Math.min(100, mrr > 0 ? Math.log10(mrr + 1) * 30 : 4),
     },
     {
-      label: "Subscribers",
+      label: t("plans.hero.subscribers"),
       value: String(activeSubsCount),
       icon: Users,
       bar: Math.min(100, activeSubsCount * 4 + 4),
     },
     {
-      label: "Versions",
+      label: t("plans.hero.versions"),
       value: String(versionsCount),
       icon: Layers,
       bar: Math.min(100, versionsCount * 14 + 6),
@@ -113,7 +115,7 @@ export default function PlanSpatialHero({
                   <span className="absolute inline-flex h-full w-full rounded-full opacity-75 animate-ping" style={{ background: color }} />
                   <span className="relative inline-flex h-1.5 w-1.5 rounded-full" style={{ background: color }} />
                 </span>
-                {plan.is_active ? "Live" : "Archived"}
+                {plan.is_active ? t("plans.hero.live") : t("plans.hero.archived")}
               </div>
             </div>
           </div>
@@ -125,14 +127,14 @@ export default function PlanSpatialHero({
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
                 <span className="h-px w-6 bg-border" />
-                Subscription Plan
+                {t("plans.hero.subscription_plan")}
               </div>
               <div className="flex items-center gap-3 flex-wrap">
                 <h1 className="text-3xl lg:text-4xl font-light tracking-tight">{plan.name}</h1>
                 {plan.is_active ? (
-                  <Badge className="bg-wj-green/20 text-wj-green border-0">Active</Badge>
+                  <Badge className="bg-wj-green/20 text-wj-green border-0">{t("plans.status.active")}</Badge>
                 ) : (
-                  <Badge variant="outline">Archived</Badge>
+                  <Badge variant="outline">{t("plans.hero.archived")}</Badge>
                 )}
               </div>
               {plan.description && (
@@ -140,14 +142,14 @@ export default function PlanSpatialHero({
               )}
             </div>
             <Button onClick={onEdit} className="gap-2 bg-wj-green hover:bg-wj-green/90 rounded-full">
-              <Edit3 className="h-4 w-4" /> New Version
+              <Edit3 className="h-4 w-4" /> {t("plans.hero.new_version")}
             </Button>
           </div>
 
           {/* Price strip */}
           <div className="flex items-end gap-6 flex-wrap pt-2">
             <div>
-              <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">Current Price</div>
+              <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">{t("plans.hero.current_price")}</div>
               <div className="flex items-baseline gap-1">
                 <span className="text-4xl font-light" style={{ color }}>€{price.toFixed(2)}</span>
                 <span className="text-sm text-muted-foreground">/ {interval}</span>
@@ -160,7 +162,7 @@ export default function PlanSpatialHero({
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Zap className="h-3.5 w-3.5" />
-                  {activeVersion.trial_days === -1 ? "Trial Unlimited" : `Trial ${activeVersion.trial_days}d`}
+                  {activeVersion.trial_days === -1 ? t("plans.hero.trial_unlimited") : t("plans.hero.trial_d", { n: activeVersion.trial_days })}
                 </span>
               </div>
             )}
