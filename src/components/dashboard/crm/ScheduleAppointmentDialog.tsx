@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { format } from "date-fns";
 import { Loader2, CalendarDays, Bike as BikeIcon, AlertTriangle } from "lucide-react";
 import {
   Dialog,
@@ -341,8 +340,9 @@ export default function ScheduleAppointmentDialog({
             <div>
               <Label className="text-xs">{t("crm.schedule_modal.date")}</Label>
               <DatePicker
-                date={new Date(date + "T00:00:00")}
-                onDateChange={(d) => d && setDate(format(d, "yyyy-MM-dd"))}
+                value={date}
+                onChange={(v) => v && setDate(v)}
+                min={todayISO()}
                 className="mt-1 w-full"
               />
             </div>
