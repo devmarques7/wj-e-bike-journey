@@ -583,3 +583,273 @@ function DayCell({
     </Popover>
   );
 }
+
+/* ============================================================ */
+/* Role assignment panel                                        */
+/* ============================================================ */
+
+type Candidate = {
+  user_id: string;
+  full_name: string | null;
+  email: string | null;
+  roles: string[];
+};
+
+function RoleAssignmentPanel({ onChanged }: { onChanged?: () => void }) {
+  const { t } = useTranslation();
+  const [users, setUsers] = useState<Candidate[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [selectedUser, setSelectedUser] = useState<string>("");
+  const [selectedRole, setSelectedRole] = useState<"staff" | "admin">("staff");
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [{ data: profs, error: pErr }, { data: roles, error: rErr }] = await Promise.all([
+        supabase.from("profiles").select("user_id, full_name, email").eq("is_active", true).limit(500),
+        supabase.from("user_roles").select("user_id, role"),
+      ]);
+      if (pErr) throw pErr;
+      if (rErr) throw rErr;
+      const roleMap = new Map<string, string[]>();
+      (roles ?? []).forEach((r: any) => {
+        const arr = roleMap.get(r.user_id) ?? [];
+        arr.push(r.role);
+        roleMap.set(r.user_id, arr);
+      });
+      const list: Candidate[] = (profs ?? []).map((p: any) => ({
+        user_id: p.user_id,
+        full_name: p.full_name,
+        email: p.email,
+        roles: roleMap.get(p.user_id) ?? [],
+      }));
+      // Exclude users who are *only* customers (or guests) — show staff/admin/no-role users.
+      const filtered = list.filter(
+        (u) => !(u.roles.length === 1 && u.roles[0] === "customer") && u.roles[0] !== "guest",
+      );
+      // Sort: staff/admin first, then unassigned
+      filtered.sort((a, b) => {
+        const aHas = a.roles.includes("admin") || a.roles.includes("staff") ? 0 : 1;
+        const bHas = b.roles.includes("admin") || b.roles.includes("staff") ? 0 : 1;
+        if (aHas !== bHas) return aHas - bHas;
+        return (a.full_name ?? a.email ?? "").localeCompare(b.full_name ?? b.email ?? "");
+      });
+      setUsers(filtered);
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e.message ?? "Falha a carregar utilizadores");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const assignRole = async (userId: string, role: "staff" | "admin") => {
+    setBusyId(userId + role);
+    try {
+      const { error } = await supabase
+        .from("user_roles")
+        .insert({ user_id: userId, role: role as any });
+      if (error && !String(error.message).toLowerCase().includes("duplicate")) throw error;
+      toast.success(t("manage.team_week.role_assigned", { defaultValue: "Role assigned" }));
+      await load();
+      onChanged?.();
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const removeRole = async (userId: string, role: string) => {
+    setBusyId(userId + role + "rm");
+    try {
+      const { error } = await supabase
+        .from("user_roles")
+        .delete()
+        .eq("user_id", userId)
+        .eq("role", role as any);
+      if (error) throw error;
+      toast.success(t("manage.team_week.role_removed", { defaultValue: "Role removed" }));
+      await load();
+      onChanged?.();
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const candidatesForSelect = users.filter(
+    (u) => !u.roles.includes("admin") && !u.roles.includes("staff"),
+  );
+
+  return (
+    <div className="mt-6 rounded-xl border border-border/40 bg-muted/20 p-4">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <UserPlus className="h-4 w-4 text-wj-green" />
+          <h4 className="text-sm font-semibold text-foreground">
+            {t("manage.team_week.roles_title", { defaultValue: "Team roles" })}
+          </h4>
+        </div>
+        <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
+          {t("manage.team_week.roles_hint", {
+            defaultValue: "Promote a user to mechanic (staff) or admin",
+          })}
+        </span>
+      </div>
+
+      {/* Quick assign */}
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <Select value={selectedUser} onValueChange={setSelectedUser}>
+          <SelectTrigger className="w-[260px] h-9 text-xs">
+            <SelectValue
+              placeholder={t("manage.team_week.pick_user", {
+                defaultValue: "Select a user…",
+              })}
+            />
+          </SelectTrigger>
+          <SelectContent className="max-h-72">
+            {candidatesForSelect.length === 0 ? (
+              <div className="text-xs text-muted-foreground px-3 py-2">
+                {t("manage.team_week.no_candidates", { defaultValue: "No available users" })}
+              </div>
+            ) : (
+              candidatesForSelect.map((u) => (
+                <SelectItem key={u.user_id} value={u.user_id} className="text-xs">
+                  {(u.full_name ?? u.email) || u.user_id.slice(0, 8)}
+                </SelectItem>
+              ))
+            )}
+          </SelectContent>
+        </Select>
+
+        <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as any)}>
+          <SelectTrigger className="w-[140px] h-9 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="staff" className="text-xs">
+              <span className="flex items-center gap-1.5"><Wrench className="h-3 w-3" /> Mechanic</span>
+            </SelectItem>
+            <SelectItem value="admin" className="text-xs">
+              <span className="flex items-center gap-1.5"><Shield className="h-3 w-3" /> Admin</span>
+            </SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Button
+          size="sm"
+          className="h-9 text-xs bg-wj-green hover:bg-wj-green/90"
+          disabled={!selectedUser || !!busyId}
+          onClick={() => {
+            if (selectedUser) {
+              assignRole(selectedUser, selectedRole);
+              setSelectedUser("");
+            }
+          }}
+        >
+          {busyId ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3 mr-1" />}
+          {t("manage.team_week.assign", { defaultValue: "Assign" })}
+        </Button>
+      </div>
+
+      {/* Current staff/admin list */}
+      <div className="rounded-lg border border-border/30 overflow-hidden">
+        <div className="grid grid-cols-[1fr_auto_auto] gap-2 px-3 py-2 bg-muted/40 text-[10px] uppercase tracking-wider text-muted-foreground">
+          <span>{t("manage.team_week.user", { defaultValue: "User" })}</span>
+          <span>{t("manage.team_week.roles", { defaultValue: "Roles" })}</span>
+          <span className="text-right">{t("manage.team_week.actions", { defaultValue: "Actions" })}</span>
+        </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-6 text-xs text-muted-foreground gap-2">
+            <Loader2 className="h-3 w-3 animate-spin" /> Loading…
+          </div>
+        ) : users.filter((u) => u.roles.includes("staff") || u.roles.includes("admin")).length === 0 ? (
+          <div className="text-center py-6 text-xs text-muted-foreground">
+            {t("manage.team_week.no_staff", { defaultValue: "No staff or admins yet" })}
+          </div>
+        ) : (
+          users
+            .filter((u) => u.roles.includes("staff") || u.roles.includes("admin"))
+            .map((u) => (
+              <div
+                key={u.user_id}
+                className="grid grid-cols-[1fr_auto_auto] gap-2 items-center px-3 py-2 border-t border-border/20 text-xs"
+              >
+                <div className="min-w-0">
+                  <p className="text-foreground truncate">{u.full_name ?? u.email}</p>
+                  {u.full_name && u.email && (
+                    <p className="text-[10px] text-muted-foreground truncate">{u.email}</p>
+                  )}
+                </div>
+                <div className="flex gap-1">
+                  {u.roles.includes("admin") && (
+                    <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/30 text-[9px] gap-1">
+                      <Shield className="h-2.5 w-2.5" /> admin
+                    </Badge>
+                  )}
+                  {u.roles.includes("staff") && (
+                    <Badge className="bg-wj-green/15 text-wj-green border-wj-green/30 text-[9px] gap-1">
+                      <Wrench className="h-2.5 w-2.5" /> staff
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex gap-1 justify-end">
+                  {!u.roles.includes("staff") && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 text-[10px] px-2"
+                      disabled={!!busyId}
+                      onClick={() => assignRole(u.user_id, "staff")}
+                    >
+                      + Mechanic
+                    </Button>
+                  )}
+                  {!u.roles.includes("admin") && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 text-[10px] px-2"
+                      disabled={!!busyId}
+                      onClick={() => assignRole(u.user_id, "admin")}
+                    >
+                      + Admin
+                    </Button>
+                  )}
+                  {u.roles.includes("staff") && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 text-[10px] px-2 text-red-400 hover:text-red-300"
+                      disabled={!!busyId}
+                      onClick={() => removeRole(u.user_id, "staff")}
+                    >
+                      − Mechanic
+                    </Button>
+                  )}
+                  {u.roles.includes("admin") && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 text-[10px] px-2 text-red-400 hover:text-red-300"
+                      disabled={!!busyId}
+                      onClick={() => removeRole(u.user_id, "admin")}
+                    >
+                      − Admin
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))
+        )}
+      </div>
+    </div>
+  );
+}
