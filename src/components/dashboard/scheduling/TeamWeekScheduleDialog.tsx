@@ -532,6 +532,7 @@ function DayCell({
             <div className="relative mt-auto flex items-end justify-between h-full pt-4">
               <div className="flex flex-col">
                 <span className={cn(
+                  "mb-1",
                   "text-lg font-bold leading-none",
                   load.pct >= 90 ? "text-red-500" : load.pct >= 70 ? "text-amber-500" : "text-wj-green",
                 )}>
