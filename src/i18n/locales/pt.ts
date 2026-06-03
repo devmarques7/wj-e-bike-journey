@@ -267,6 +267,11 @@ const pt = {
       bulk_saved_off: "{{count}} dias marcados como folga",
       bulk_reverted: "Selecção revertida",
       bulk_failed: "Falha a guardar em lote",
+      manage_roles: "Gerir funções",
+      add_mechanic: "Adicionar mecânico",
+      add_admin: "Adicionar admin",
+      remove_mechanic: "Remover mecânico",
+      remove_admin: "Remover admin",
     },
     team: {
       title: "Mecânicos",

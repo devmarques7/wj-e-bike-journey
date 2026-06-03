@@ -14,6 +14,14 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   ChevronLeft,
   ChevronRight,
   Loader2,
@@ -24,6 +32,9 @@ import {
   Wrench,
   Check,
   Info,
+  MoreHorizontal,
+  Trash2,
+  Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -1048,50 +1059,73 @@ function RoleAssignmentPanel({ onChanged, inset = false }: { onChanged?: () => v
                   )}
                 </div>
                 <div className="flex gap-1 justify-end">
-                  {!u.roles.includes("staff") && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-6 text-[10px] px-2"
-                      disabled={!!busyId}
-                      onClick={() => assignRole(u.user_id, "staff")}
-                    >
-                      + Mechanic
-                    </Button>
-                  )}
-                  {!u.roles.includes("admin") && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-6 text-[10px] px-2"
-                      disabled={!!busyId}
-                      onClick={() => assignRole(u.user_id, "admin")}
-                    >
-                      + Admin
-                    </Button>
-                  )}
-                  {u.roles.includes("staff") && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-6 text-[10px] px-2 text-red-400 hover:text-red-300"
-                      disabled={!!busyId}
-                      onClick={() => removeRole(u.user_id, "staff")}
-                    >
-                      − Mechanic
-                    </Button>
-                  )}
-                  {u.roles.includes("admin") && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-6 text-[10px] px-2 text-red-400 hover:text-red-300"
-                      disabled={!!busyId}
-                      onClick={() => removeRole(u.user_id, "admin")}
-                    >
-                      − Admin
-                    </Button>
-                  )}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7"
+                        disabled={!!busyId}
+                        aria-label={t("manage.team_week.actions", { defaultValue: "Actions" })}
+                      >
+                        {busyId?.startsWith(u.user_id) ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <MoreHorizontal className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-52">
+                      <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        {t("manage.team_week.manage_roles", { defaultValue: "Manage roles" })}
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {!u.roles.includes("staff") && (
+                        <DropdownMenuItem
+                          className="text-xs gap-2"
+                          onClick={() => assignRole(u.user_id, "staff")}
+                        >
+                          <Plus className="h-3.5 w-3.5 text-wj-green" />
+                          <Wrench className="h-3.5 w-3.5" />
+                          <span>{t("manage.team_week.add_mechanic", { defaultValue: "Add mechanic" })}</span>
+                        </DropdownMenuItem>
+                      )}
+                      {!u.roles.includes("admin") && (
+                        <DropdownMenuItem
+                          className="text-xs gap-2"
+                          onClick={() => assignRole(u.user_id, "admin")}
+                        >
+                          <Plus className="h-3.5 w-3.5 text-wj-green" />
+                          <Shield className="h-3.5 w-3.5" />
+                          <span>{t("manage.team_week.add_admin", { defaultValue: "Add admin" })}</span>
+                        </DropdownMenuItem>
+                      )}
+                      {(u.roles.includes("staff") || u.roles.includes("admin")) &&
+                        (!u.roles.includes("staff") || !u.roles.includes("admin")) && (
+                          <DropdownMenuSeparator />
+                        )}
+                      {u.roles.includes("staff") && (
+                        <DropdownMenuItem
+                          className="text-xs gap-2 text-red-400 focus:text-red-300"
+                          onClick={() => removeRole(u.user_id, "staff")}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          <Wrench className="h-3.5 w-3.5" />
+                          <span>{t("manage.team_week.remove_mechanic", { defaultValue: "Remove mechanic" })}</span>
+                        </DropdownMenuItem>
+                      )}
+                      {u.roles.includes("admin") && (
+                        <DropdownMenuItem
+                          className="text-xs gap-2 text-red-400 focus:text-red-300"
+                          onClick={() => removeRole(u.user_id, "admin")}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          <Shield className="h-3.5 w-3.5" />
+                          <span>{t("manage.team_week.remove_admin", { defaultValue: "Remove admin" })}</span>
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             ))
