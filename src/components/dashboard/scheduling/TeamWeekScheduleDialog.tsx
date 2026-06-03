@@ -499,9 +499,6 @@ function DayCell({
               style={{ height: `${Math.max(4, load.pct)}%` }}
             />
           )}
-          {off && !isWeekend && (
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-foreground/10 pointer-events-none" />
-          )}
 
           <div className="relative flex items-start justify-between">
             <span className={cn(
