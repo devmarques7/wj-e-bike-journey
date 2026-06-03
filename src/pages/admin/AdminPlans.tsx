@@ -123,20 +123,32 @@ export default function AdminPlans() {
           memberCount.set(planName, (memberCount.get(planName) ?? 0) + 1);
         }
 
-        const monthlyPrice = planPrice.get(planName) ?? 0;
+        // Use plan price; fall back to 1 so free/0-price plans still surface
+        // a visible line that represents adoption growth.
+        const rawPrice = planPrice.get(planName) ?? 0;
+        const contribution = rawPrice > 0 ? rawPrice : 1;
         days.forEach((d) => {
           const active = started <= d.date && (!effectiveEnd || effectiveEnd > d.date);
           if (!active) return;
           const row = rowMap.get(d.key)!;
-          row[planName] = (row[planName] ?? 0) + monthlyPrice;
+          row[planName] = (row[planName] ?? 0) + contribution;
         });
       });
 
       const ordered = Array.from(planSet).sort(
         (a, b) => (planOrder.get(a) ?? 999) - (planOrder.get(b) ?? 999),
       );
+      // Ensure every day has a numeric value (0) for every plan so Recharts
+      // renders a continuous area even with sparse data.
+      const filledSeries = days.map((d) => {
+        const row = rowMap.get(d.key)!;
+        ordered.forEach((n) => {
+          if (row[n] === undefined) row[n] = 0;
+        });
+        return row;
+      });
       setPlanNames(ordered);
-      setSeries(days.map((d) => rowMap.get(d.key)!));
+      setSeries(filledSeries);
 
       // Plan rows for the table
       setPlanRows(
@@ -222,10 +234,10 @@ export default function AdminPlans() {
           ))}
         </div>
 
-        <div className="grid grid-cols-12 gap-4 lg:gap-6">
-          <div className="col-span-12 lg:col-span-8">
+        <div className="grid grid-cols-12 gap-4 lg:gap-6 items-stretch">
+          <div className="col-span-12 lg:col-span-8 flex">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4 h-[380px] flex flex-col">
+              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4 h-[460px] w-full flex flex-col">
               <div className="flex items-center justify-between gap-3 mb-2">
                 <div>
                   <h3 className="text-sm font-medium text-foreground">Revenue Potential per Plan</h3>
@@ -306,9 +318,9 @@ export default function AdminPlans() {
             </motion.div>
           </div>
 
-          <div className="col-span-12 lg:col-span-4">
+          <div className="col-span-12 lg:col-span-4 flex">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4 h-[460px] flex flex-col">
+              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4 h-[460px] w-full flex flex-col">
               <div className="flex items-center justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2">
                   <Award className="h-4 w-4 text-wj-green" />
