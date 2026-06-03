@@ -503,9 +503,7 @@ function DayCell({
           <div className="relative flex items-start justify-between">
             <span className={cn(
               "text-[10px] font-medium",
-              isWeekend
-                ? off ? "text-neutral-400" : "text-neutral-700"
-                : off ? "text-muted-foreground/60" : "text-foreground/80",
+              off ? "text-neutral-500" : "text-foreground/80",
             )}>
               {off ? t("manage.team_week.off") : `${eff.start_time}-${eff.end_time}`}
             </span>
