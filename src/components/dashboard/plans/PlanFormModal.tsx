@@ -317,8 +317,25 @@ export default function PlanFormModal({
             </Select>
           </div>
           <div>
-            <Label>Trial Days</Label>
-            <Input type="number" value={trial} onChange={(e) => setTrial(Number(e.target.value))} />
+            <div className="flex items-center justify-between">
+              <Label>Trial Days</Label>
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={unlimitedTrial}
+                  onChange={(e) => setUnlimitedTrial(e.target.checked)}
+                  className="h-3.5 w-3.5 rounded border-border/50 accent-wj-green"
+                />
+                <span className="text-[11px] text-muted-foreground">Unlimited</span>
+              </label>
+            </div>
+            <Input
+              type="number"
+              value={unlimitedTrial ? "" : trial}
+              disabled={unlimitedTrial}
+              onChange={(e) => setTrial(Number(e.target.value))}
+              placeholder={unlimitedTrial ? "Unlimited" : "0"}
+            />
           </div>
 
           <div className="col-span-2">
