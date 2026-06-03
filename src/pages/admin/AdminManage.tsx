@@ -32,8 +32,9 @@ import { useSchedulingData, type BusinessHour } from "@/hooks/scheduling/useSche
 import StaffScheduleDialog from "@/components/dashboard/scheduling/StaffScheduleDialog";
 import TeamWeekScheduleDialog from "@/components/dashboard/scheduling/TeamWeekScheduleDialog";
 import TeamWeekWorkloadCompact from "@/components/dashboard/scheduling/TeamWeekWorkloadCompact";
+import ExceptionsCalendarDialog from "@/components/dashboard/scheduling/ExceptionsCalendarDialog";
 import { useTranslation } from "react-i18next";
-import { Wrench, CalendarDays, Activity, LayoutGrid } from "lucide-react";
+import { Wrench, CalendarDays, Activity, LayoutGrid, Star } from "lucide-react";
 
 const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 const trimHm = (t: string | null) => (t ? t.slice(0, 5) : "");
