@@ -24,7 +24,7 @@ export default function CreateCustomerDialog({ open, onClose, onCreated }: Props
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"member" | "staff" | "admin" | "guest">("member");
+  const [role, setRole] = useState<"customer" | "staff" | "admin" | "guest">("customer");
   const [stage, setStage] = useState<LifecycleStage>("new");
   const [planVersionId, setPlanVersionId] = useState<string>("none");
   const [tags, setTags] = useState("");
@@ -60,7 +60,7 @@ export default function CreateCustomerDialog({ open, onClose, onCreated }: Props
   useEffect(() => {
     if (!open) {
       setFullName(""); setEmail(""); setPhone(""); setPassword("");
-      setRole("member"); setStage("new"); setPlanVersionId("none"); setTags("");
+      setRole("customer"); setStage("new"); setPlanVersionId("none"); setTags("");
       setCredentials(null);
     }
   }, [open]);
@@ -147,7 +147,7 @@ export default function CreateCustomerDialog({ open, onClose, onCreated }: Props
                 <Select value={role} onValueChange={(v) => setRole(v as any)}>
                   <SelectTrigger className="h-9 mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="member">{t("crm.roles.member")}</SelectItem>
+                    <SelectItem value="customer">{t("crm.roles.customer")}</SelectItem>
                     <SelectItem value="staff">{t("crm.roles.staff")}</SelectItem>
                     <SelectItem value="admin">{t("crm.roles.admin")}</SelectItem>
                     <SelectItem value="guest">{t("crm.roles.guest")}</SelectItem>

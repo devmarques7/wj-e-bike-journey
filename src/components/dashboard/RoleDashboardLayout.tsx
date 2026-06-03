@@ -10,7 +10,7 @@ import DashboardLayout from "./DashboardLayout";
  */
 export default function RoleDashboardLayout({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const role = user?.role ?? "member";
+  const role = user?.role ?? "customer";
 
   if (role === "admin") return <AdminDashboardLayout>{children}</AdminDashboardLayout>;
   if (role === "staff") return <StaffDashboardLayout>{children}</StaffDashboardLayout>;

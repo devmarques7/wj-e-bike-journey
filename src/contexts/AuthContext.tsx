@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
 
 export type MemberTier = "light" | "plus" | "black";
-export type UserRole = "guest" | "member" | "admin" | "staff";
+export type UserRole = "guest" | "customer" | "admin" | "staff";
 
 export interface User {
   id: string;
@@ -95,7 +95,7 @@ const mockUsers: Record<string, User> = {
     id: "member-light-001",
     name: "Emma van der Berg",
     email: "light@wjvision.com",
-    role: "member",
+    role: "customer",
     tier: "light",
     bikeId: "V8-2024-NL-00421",
     bikeName: "WJ V8 Urban",
@@ -108,7 +108,7 @@ const mockUsers: Record<string, User> = {
     id: "member-plus-001",
     name: "Lucas de Vries",
     email: "plus@wjvision.com",
-    role: "member",
+    role: "customer",
     tier: "plus",
     bikeId: "V8-2024-NL-00892",
     bikeName: "WJ V8 Sport",
@@ -121,7 +121,7 @@ const mockUsers: Record<string, User> = {
     id: "member-black-001",
     name: "Sophie Jansen",
     email: "black@wjvision.com",
-    role: "member",
+    role: "customer",
     tier: "black",
     bikeId: "V8-2024-NL-00156",
     bikeName: "WJ V8 Prestige",
@@ -169,9 +169,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ? "admin"
         : roleNames.includes("staff")
         ? "staff"
-        : roleNames.includes("member")
-        ? "member"
-        : "member";
+        : roleNames.includes("customer")
+        ? "customer"
+        : "customer";
 
       const next: User = {
         id: authUser.id,
@@ -280,7 +280,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       next = mockUsers["admin@wjvision.com"];
     } else if (role === "staff") {
       next = mockUsers["staff@wjvision.com"];
-    } else if (role === "member" && tier) {
+    } else if (role === "customer" && tier) {
       next = mockUsers[`${tier}@wjvision.com`];
     }
     if (next) next = { ...next, isDemo: true };

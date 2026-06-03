@@ -149,7 +149,7 @@ export function useCrmCustomers(opts?: { onlyActualCustomers?: boolean }) {
     const subMap = new Map(activeSubs.map((s: any) => [s.user_id, s]));
     const anySubByUser = new Set((subs ?? []).map((s: any) => s.user_id));
     const memberUserIds = new Set(
-      (roles ?? []).filter((r: any) => r.role === "member").map((r: any) => r.user_id),
+      (roles ?? []).filter((r: any) => r.role === "customer").map((r: any) => r.user_id),
     );
     const planMap = new Map(plans.map((p) => [p.plan_version_id, p]));
 
@@ -279,7 +279,7 @@ export async function adminCreateCustomer(input: {
   full_name: string;
   phone?: string | null;
   password?: string;
-  role?: "member" | "staff" | "admin" | "guest";
+  role?: "customer" | "staff" | "admin" | "guest";
   lifecycle_stage?: LifecycleStage;
   plan_version_id?: string | null;
   tags?: string[];

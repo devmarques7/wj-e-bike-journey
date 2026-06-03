@@ -154,7 +154,7 @@ const Auth = () => {
       setMockUser("staff");
       navigate("/dashboard/staff");
     } else {
-      setMockUser("member", type);
+      setMockUser("customer", type);
       navigate("/dashboard");
     }
     

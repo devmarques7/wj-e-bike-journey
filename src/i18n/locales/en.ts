@@ -169,7 +169,7 @@ const en = {
       churned: "Churned",
     },
     roles: {
-      member: "Member",
+      customer: "Customer",
       staff: "Staff",
       admin: "Admin",
       guest: "Guest",

@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
 
 type Action = "set_active" | "delete";
-type Role = "admin" | "staff" | "member" | "guest";
+type Role = "admin" | "staff" | "customer" | "guest";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
 
     if (action === "update_role") {
       const role = String(body.role ?? "") as Role;
-      if (!["admin", "staff", "member", "guest"].includes(role)) {
+      if (!["admin", "staff", "customer", "guest"].includes(role)) {
         return json({ error: "Invalid role" }, 400);
       }
       await admin.from("user_roles").delete().eq("user_id", userId);

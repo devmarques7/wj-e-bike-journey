@@ -74,7 +74,7 @@ import MemberProfileDialog from "@/components/dashboard/MemberProfileDialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 
-type Role = "admin" | "staff" | "member" | "guest";
+type Role = "admin" | "staff" | "customer" | "guest";
 
 interface MemberRow {
   user_id: string;
@@ -142,7 +142,7 @@ export default function AdminMembers() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ email: "", full_name: "", role: "member" as Role });
+  const [form, setForm] = useState({ email: "", full_name: "", role: "customer" as Role });
   const [createdCreds, setCreatedCreds] = useState<{
     email: string;
     password: string;
@@ -152,7 +152,7 @@ export default function AdminMembers() {
   const [viewMember, setViewMember] = useState<MemberRow | null>(null);
   const [tab, setTab] = useState<"members" | "invites">("members");
   const [editInvite, setEditInvite] = useState<InviteRow | null>(null);
-  const [editRole, setEditRole] = useState<Role>("member");
+  const [editRole, setEditRole] = useState<Role>("customer");
   const [savingEdit, setSavingEdit] = useState(false);
   const [revokeInvite, setRevokeInvite] = useState<InviteRow | null>(null);
   const [revoking, setRevoking] = useState(false);
@@ -185,14 +185,14 @@ export default function AdminMembers() {
         .in("user_id", ids);
       (roles ?? []).forEach((r: any) => {
         const prev = rolesById.get(r.user_id);
-        const rank = (x: Role) => (x === "admin" ? 3 : x === "staff" ? 2 : x === "member" ? 1 : 0);
+        const rank = (x: Role) => (x === "admin" ? 3 : x === "staff" ? 2 : x === "customer" ? 1 : 0);
         if (!prev || rank(r.role) > rank(prev)) rolesById.set(r.user_id, r.role);
       });
     }
     setMembers(
       (profiles ?? []).map((p: any) => ({
         ...p,
-        role: rolesById.get(p.user_id) ?? "member",
+        role: rolesById.get(p.user_id) ?? "customer",
       })),
     );
 
@@ -246,7 +246,7 @@ export default function AdminMembers() {
       password: (data as any).temp_password,
       setup_link: (data as any).setup_link ?? null,
     });
-    setForm({ email: "", full_name: "", role: "member" });
+    setForm({ email: "", full_name: "", role: "customer" });
     await loadMembers();
     setCreating(false);
   };
@@ -281,7 +281,7 @@ export default function AdminMembers() {
     if (!error && editInvite.user_id && editInvite.status === "pending") {
       // Sync user_roles for the invited user
       await supabase.from("user_roles").delete().eq("user_id", editInvite.user_id);
-      if (editRole !== "member") {
+      if (editRole !== "customer") {
         await supabase.from("user_roles").insert({ user_id: editInvite.user_id, role: editRole });
       }
     }
@@ -946,7 +946,7 @@ export default function AdminMembers() {
                 <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v as Role })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="member">Member</SelectItem>
+                    <SelectItem value="customer">Customer</SelectItem>
                     <SelectItem value="staff">Staff</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>
@@ -994,7 +994,7 @@ export default function AdminMembers() {
                 <Select value={editRole} onValueChange={(v) => setEditRole(v as Role)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="member">Member</SelectItem>
+                    <SelectItem value="customer">Customer</SelectItem>
                     <SelectItem value="staff">Staff</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>
