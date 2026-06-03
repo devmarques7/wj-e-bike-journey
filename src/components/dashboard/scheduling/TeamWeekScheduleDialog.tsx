@@ -307,17 +307,19 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
           </div>
         </div>
 
-        {loading ? (
-          <div className="flex items-center justify-center py-12 text-muted-foreground gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" /> {t("manage.team_week.loading")}
-          </div>
-        ) : mechanics.length === 0 ? (
-          <div className="text-center py-12 text-sm text-muted-foreground">
-            {t("manage.team.empty")}
-          </div>
-        ) : (
-          <div className="mt-4 rounded-2xl border border-border/40 bg-muted/10 p-3 sm:p-4 overflow-x-auto">
-            <div className="min-w-[920px]">
+        <main className="mt-4 rounded-3xl border border-border/40 bg-muted/10 p-3 sm:p-5 space-y-5">
+          {/* Schedule grid */}
+          {loading ? (
+            <div className="flex items-center justify-center py-12 text-muted-foreground gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" /> {t("manage.team_week.loading")}
+            </div>
+          ) : mechanics.length === 0 ? (
+            <div className="text-center py-12 text-sm text-muted-foreground">
+              {t("manage.team.empty")}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <div className="min-w-[920px]">
               {/* Header row */}
               <div className="grid grid-cols-[200px_repeat(7,minmax(110px,1fr))] gap-2 mb-2">
                 <div className="text-[10px] uppercase tracking-wider text-muted-foreground px-2 self-end pb-1">
@@ -393,12 +395,16 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
                   </div>
                 ))}
               </div>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Role assignment layer */}
-        <RoleAssignmentPanel onChanged={onChanged} />
+          {/* Divider */}
+          <div className="h-px bg-border/40" />
+
+          {/* Role assignment layer (inset inside main) */}
+          <RoleAssignmentPanel onChanged={onChanged} inset />
+        </main>
 
         <div className="mt-6 flex items-center justify-between text-[11px] text-muted-foreground">
           <div className="flex items-center gap-3">
@@ -615,7 +621,7 @@ type Candidate = {
   roles: string[];
 };
 
-function RoleAssignmentPanel({ onChanged }: { onChanged?: () => void }) {
+function RoleAssignmentPanel({ onChanged, inset = false }: { onChanged?: () => void; inset?: boolean }) {
   const { t } = useTranslation();
   const [users, setUsers] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(false);
@@ -709,7 +715,9 @@ function RoleAssignmentPanel({ onChanged }: { onChanged?: () => void }) {
   );
 
   return (
-    <div className="mt-6 rounded-xl border border-border/40 bg-muted/20 p-4">
+    <div className={cn(
+      inset ? "" : "mt-6 rounded-xl border border-border/40 bg-muted/20 p-4",
+    )}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <UserPlus className="h-4 w-4 text-wj-green" />
