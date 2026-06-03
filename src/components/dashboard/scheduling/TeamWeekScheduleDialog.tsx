@@ -479,6 +479,7 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
               </Button>
               {bulkSaving && <Loader2 className="h-3 w-3 animate-spin text-wj-green" />}
             </div>
+          </>
           )}
 
           {/* Schedule grid */}
