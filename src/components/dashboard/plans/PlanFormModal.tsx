@@ -39,6 +39,7 @@ export default function PlanFormModal({
   const [features, setFeatures] = useState<string[]>([]);
   const [newFeature, setNewFeature] = useState("");
   const [isDefault, setIsDefault] = useState(false);
+  const [unlimitedTrial, setUnlimitedTrial] = useState(false);
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState<"single" | "bulk">("single");
   const [bulkText, setBulkText] = useState("");
