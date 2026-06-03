@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -76,11 +77,11 @@ export default function RegisterManualPaymentModal({
             </div>
             <div>
               <Label>Period Start (optional)</Label>
-              <Input type="date" value={periodStart} onChange={(e) => setPeriodStart(e.target.value)} />
+              <DatePicker value={periodStart} onChange={setPeriodStart} placeholder="Período inicial" />
             </div>
             <div>
               <Label>Period End (optional)</Label>
-              <Input type="date" value={periodEnd} onChange={(e) => setPeriodEnd(e.target.value)} />
+              <DatePicker value={periodEnd} onChange={setPeriodEnd} placeholder="Período final" />
             </div>
           </div>
           <div>

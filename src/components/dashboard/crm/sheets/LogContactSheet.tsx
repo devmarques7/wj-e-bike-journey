@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -117,7 +118,7 @@ export default function LogContactSheet({ open, onClose, customerId, customerNam
           </div>
           <div>
             <Label className="text-xs">Follow-up em (opcional)</Label>
-            <Input type="date" value={followup} onChange={(e) => setFollowup(e.target.value)} className="mt-2" />
+            <DatePicker value={followup} onChange={setFollowup} className="mt-2" placeholder="Selecionar data" />
           </div>
           <div className="flex gap-2 pt-4">
             <Button variant="outline" className="flex-1" onClick={onClose} disabled={saving}>Cancelar</Button>
