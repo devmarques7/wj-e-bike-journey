@@ -153,6 +153,8 @@ export default function AdminPlans() {
     "hsl(var(--foreground))",
     "hsl(var(--primary))",
   ];
+  const hasOtherPlans = planRows.some((p) => p.members === 0);
+
   const chartConfig = useMemo<ChartConfig>(() => {
     const cfg: ChartConfig = {
       members: { label: "Members" },
@@ -160,8 +162,11 @@ export default function AdminPlans() {
     planNames.forEach((name, i) => {
       cfg[name] = { label: name, color: planColors[name] ?? fallbackColors[i % fallbackColors.length] };
     });
+    if (hasOtherPlans) {
+      cfg["Other"] = { label: "Other", color: "hsl(var(--border))" };
+    }
     return cfg;
-  }, [planNames]);
+  }, [planNames, hasOtherPlans]);
 
   if (authLoading) return null;
   if (!isAuthenticated) return <Navigate to="/auth" replace />;
