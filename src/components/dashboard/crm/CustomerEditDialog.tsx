@@ -286,6 +286,19 @@ export default function CustomerEditDialog({ open, onClose, customer, onSaved }:
                   </div>
                 </div>
 
+                <div>
+                  <FieldLabel
+                    label="Next monthly payment date"
+                    hint="Date of the next subscription charge / cash collection. Updates current_period_end. Renewals follow this anchor day."
+                  />
+                  <Input
+                    type="date"
+                    value={billingDate}
+                    onChange={(e) => setBillingDate(e.target.value)}
+                    className="h-9 mt-1"
+                  />
+                </div>
+
                 {bankRequiresMethod && (
                   <div className={`flex items-center gap-2 text-xs rounded-lg p-2 border ${
                     hasPaymentMethod
