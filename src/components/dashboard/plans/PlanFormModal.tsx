@@ -258,11 +258,42 @@ export default function PlanFormModal({
           </div>
           <div>
             <Label>Color</Label>
-            <Input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="h-10 p-1" />
+            <div className="flex gap-1.5 mt-2 items-center flex-wrap">
+              {PRESET_COLORS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setColor(c)}
+                  aria-label={`Select color ${c}`}
+                  className={`h-6 w-6 rounded-full border-2 transition ${color === c ? "border-foreground scale-110" : "border-transparent"}`}
+                  style={{ background: c }}
+                />
+              ))}
+              <label className="relative h-6 w-6 rounded-full border border-dashed border-border/60 grid place-items-center cursor-pointer overflow-hidden" title="Custom color">
+                <span className="text-[10px] text-muted-foreground">+</span>
+                <input
+                  type="color"
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="absolute inset-0 opacity-0 cursor-pointer"
+                />
+              </label>
+              <span className="ml-1 text-[10px] text-muted-foreground font-mono">{color}</span>
+            </div>
           </div>
           <div className="col-span-2">
             <Label>Description</Label>
             <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
+          </div>
+
+          <div className="col-span-2 flex items-center justify-between rounded-lg border border-border/40 bg-muted/20 px-3 py-2.5">
+            <div className="pr-4">
+              <Label className="text-xs">Default plan for new users</Label>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                When enabled, every new customer is automatically subscribed to this plan's active version at signup. Only one plan can be the default.
+              </p>
+            </div>
+            <Switch checked={isDefault} onCheckedChange={setIsDefault} />
           </div>
 
           <div>
