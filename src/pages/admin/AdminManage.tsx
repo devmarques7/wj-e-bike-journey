@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { 
   Calendar as CalendarIcon, 
   Settings, 
@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -22,6 +22,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -29,11 +30,12 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useSchedulingData, type BusinessHour } from "@/hooks/scheduling/useSchedulingData";
 import StaffScheduleDialog from "@/components/dashboard/scheduling/StaffScheduleDialog";
+import { useTranslation } from "react-i18next";
+import { Wrench, CalendarDays, Activity } from "lucide-react";
 
-const DAY_LABELS_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-const DAY_LABELS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 const trimHm = (t: string | null) => (t ? t.slice(0, 5) : "");
-const WEEKDAYS_HEAT = ["D", "S", "T", "Q", "Q", "S", "S"];
+const WEEKDAYS_HEAT_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 
 const getHeatColor = (v: number) => {
   if (v === 0) return "bg-muted/30";
@@ -43,15 +45,19 @@ const getHeatColor = (v: number) => {
   if (v === 4) return "bg-wj-green/80";
   return "bg-wj-green";
 };
-const getHeatLabel = (v: number) => {
-  if (v === 0) return "Sem agendamentos";
-  if (v === 1) return "Leve";
-  if (v <= 2) return "Moderado";
-  if (v <= 4) return "Ocupado";
-  return "Muito ocupado";
-};
 
 export default function AdminManage() {
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const locale = i18n.language?.startsWith("pt") ? "pt-PT" : "en-GB";
+  const getHeatLabel = (v: number) => {
+    if (v === 0) return t("manage.heatmap.labels.none");
+    if (v === 1) return t("manage.heatmap.labels.light");
+    if (v <= 2) return t("manage.heatmap.labels.moderate");
+    if (v <= 4) return t("manage.heatmap.labels.busy");
+    return t("manage.heatmap.labels.very_busy");
+  };
+
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [showSettings, setShowSettings] = useState(false);
@@ -67,6 +73,7 @@ export default function AdminManage() {
   const [heatMonth, setHeatMonth] = useState(new Date().getMonth());
   const [heatYear, setHeatYear] = useState(new Date().getFullYear());
   const [monthCounts, setMonthCounts] = useState<Record<string, number>>({});
+  const [dayModalDow, setDayModalDow] = useState<number | null>(null);
 
   const dateStr = (selectedDate ?? new Date()).toISOString().slice(0, 10);
   const {
@@ -157,6 +164,11 @@ export default function AdminManage() {
     return acc;
   }, {});
 
+  const todayDow = new Date().getDay();
+  const dayApptList = dayModalDow == null
+    ? []
+    : appointments.filter((a) => new Date(a.scheduled_date).getDay() === dayModalDow);
+
   return (
     <AdminDashboardLayout>
       <div className="p-4 lg:p-6 space-y-6">
@@ -168,10 +180,8 @@ export default function AdminManage() {
           className="flex items-center justify-between"
         >
           <div>
-            <h1 className="text-xl sm:text-2xl font-light text-foreground">Gestão de Horários</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Carga da equipa, horário de funcionamento e feriados
-            </p>
+            <h1 className="text-xl sm:text-2xl font-light text-foreground">{t("manage.title")}</h1>
+            <p className="text-sm text-muted-foreground mt-1">{t("manage.subtitle")}</p>
           </div>
           <Button 
             variant="outline" 
@@ -180,16 +190,39 @@ export default function AdminManage() {
             className="gap-2"
           >
             <Settings className="h-4 w-4" />
-            <span className="hidden sm:inline">Horário de Funcionamento</span>
+            <span className="hidden sm:inline">{t("manage.business_hours_btn")}</span>
           </Button>
         </motion.div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-12 gap-4 lg:gap-6">
-          {/* Workload Overview - 8 columns */}
-          <div className="col-span-12 lg:col-span-8 space-y-4">
-            {/* Overloaded Staff Alert */}
+        {/* KPI Row */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+          {[
+            { icon: Users, label: t("manage.kpi.mechanics"), hint: t("manage.kpi.mechanics_hint"), value: String(mechanics.length), accent: "text-wj-green" },
+            { icon: AlertTriangle, label: t("manage.kpi.overloaded"), hint: t("manage.kpi.overloaded_hint"), value: String(overloadedStaff.length), accent: overloadedStaff.length ? "text-amber-400" : "text-muted-foreground" },
+            { icon: CalendarDays, label: t("manage.kpi.appointments"), hint: t("manage.kpi.appointments_hint"), value: String(totalAppointments), accent: "text-wj-green" },
+            { icon: Activity, label: t("manage.kpi.capacity"), hint: t("manage.kpi.capacity_hint"), value: `${workloadPercentage}%`, accent: workloadPercentage > 80 ? "text-red-400" : workloadPercentage > 60 ? "text-amber-400" : "text-wj-green" },
+          ].map((k, i) => (
             <motion.div
+              key={k.label}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4"
+            >
+              <div className="flex items-center justify-between">
+                <div className="w-9 h-9 rounded-xl bg-muted/40 flex items-center justify-center">
+                  <k.icon className={cn("h-4 w-4", k.accent)} />
+                </div>
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{k.hint}</span>
+              </div>
+              <p className={cn("text-2xl font-light mt-3", k.accent)}>{k.value}</p>
+              <p className="text-xs text-muted-foreground">{k.label}</p>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Overloaded Staff Alert — above calendar, full width */}
+        <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className={cn(
@@ -206,9 +239,7 @@ export default function AdminManage() {
                     overloadedStaff.length > 0 ? "text-amber-400" : "text-wj-green",
                   )}
                 />
-                <h3 className="text-sm font-medium text-foreground">
-                  Equipa sobrecarregada
-                </h3>
+                <h3 className="text-sm font-medium text-foreground">{t("manage.overload.title")}</h3>
                 <Badge
                   variant="outline"
                   className="ml-auto text-[10px] border-border/40"
@@ -217,11 +248,9 @@ export default function AdminManage() {
                 </Badge>
               </div>
               {overloadedStaff.length === 0 ? (
-                <p className="text-xs text-muted-foreground">
-                  Nenhum mecânico sobrecarregado esta semana. ✨
-                </p>
+                <p className="text-xs text-muted-foreground">{t("manage.overload.empty")}</p>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   {overloadedStaff.map((m) => {
                     const initials = (m.full_name ?? m.email ?? "??")
                       .split(" ")
@@ -268,253 +297,22 @@ export default function AdminManage() {
               )}
             </motion.div>
 
-            {/* Workload Bar */}
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-12 gap-4 lg:gap-6">
+          {/* Left column - 7 */}
+          <div className="col-span-12 lg:col-span-7 space-y-4">
+            {/* Heatmap Calendar */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
               className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4"
             >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-wj-green" />
-                  <h3 className="text-sm font-medium text-foreground">Carga Semanal</h3>
-                </div>
-                <Badge className={cn(
-                  "text-xs",
-                  workloadPercentage > 80 
-                    ? "bg-red-500/20 text-red-400 border-red-500/30"
-                    : workloadPercentage > 60
-                    ? "bg-amber-500/20 text-amber-400 border-amber-500/30"
-                    : "bg-wj-green/20 text-wj-green border-wj-green/30"
-                )}>
-                  {workloadPercentage}% da capacidade
-                </Badge>
-              </div>
-              
-              <div className="h-3 bg-muted rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${workloadPercentage}%` }}
-                  transition={{ delay: 0.3, duration: 0.8 }}
-                  className={cn(
-                    "h-full rounded-full",
-                    workloadPercentage > 80 
-                      ? "bg-gradient-to-r from-red-500 to-red-400"
-                      : workloadPercentage > 60
-                      ? "bg-gradient-to-r from-amber-500 to-amber-400"
-                      : "bg-gradient-to-r from-wj-green to-wj-green/60"
-                  )}
-                />
-              </div>
-              
-              <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-                <span>{totalAppointments} agendamentos</span>
-                <span>{totalCapacity} capacidade</span>
-              </div>
-            </motion.div>
-
-            {/* Team Members Workload */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4"
-            >
-              <div className="flex items-center gap-2 mb-4">
-                <Users className="h-4 w-4 text-wj-green" />
-                <h3 className="text-sm font-medium text-foreground">Mecânicos</h3>
-              </div>
-
-              {loading ? (
-                <div className="flex items-center justify-center py-8 text-muted-foreground text-sm gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" /> A carregar…
-                </div>
-              ) : mechanics.length === 0 ? (
-                <div className="text-center py-8 text-sm text-muted-foreground">
-                  Sem mecânicos registados. Crie utilizadores com a função "staff".
-                </div>
-              ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {mechanics.map((member, index) => {
-                  const memberLoad = Math.min(100, Math.round((member.weekly_appointments / member.weekly_capacity) * 100));
-                  const initials = (member.full_name ?? member.email ?? "??")
-                    .split(" ")
-                    .map((s) => s[0])
-                    .join("")
-                    .slice(0, 2)
-                    .toUpperCase();
-                  return (
-                    <motion.div
-                      key={member.user_id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.3 + index * 0.1 }}
-                      className="bg-muted/30 rounded-xl p-3 hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="w-8 h-8 rounded-full bg-wj-green/20 text-wj-green text-xs font-bold flex items-center justify-center">
-                          {initials}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
-                            {member.full_name ?? member.email}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground">Mecânico</p>
-                        </div>
-                        <Badge variant="outline" className="text-[10px]">
-                          {member.weekly_appointments}/{member.weekly_capacity}
-                        </Badge>
-                      </div>
-                      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                        <div 
-                          className={cn(
-                            "h-full rounded-full transition-all",
-                            memberLoad > 80 
-                              ? "bg-red-500"
-                              : memberLoad > 60
-                              ? "bg-amber-500"
-                              : "bg-wj-green"
-                          )}
-                          style={{ width: `${memberLoad}%` }}
-                        />
-                      </div>
-                      <button
-                        onClick={() =>
-                          setStaffDetail({
-                            id: member.user_id,
-                            name: member.full_name ?? member.email ?? "Mecânico",
-                            email: member.email,
-                            weekly: member.weekly_appointments,
-                            capacity: member.weekly_capacity,
-                          })
-                        }
-                        className="mt-2 w-full flex items-center justify-between text-[11px] text-wj-green hover:text-wj-green/80 transition-colors"
-                      >
-                        <span>Ver detalhes & horário</span>
-                        <ChevronRight className="h-3 w-3" />
-                      </button>
-                    </motion.div>
-                  );
-                })}
-              </div>
-              )}
-            </motion.div>
-
-            {/* Weekly Schedule Grid */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4"
-            >
-              <h3 className="text-sm font-medium text-foreground mb-4">Visão da Semana</h3>
-              <div className="grid grid-cols-7 gap-2">
-                {[1, 2, 3, 4, 5, 6, 0].map((dow) => {
-                  const dh = draft[dow];
-                  const apptCount = weeklyByDow[dow] ?? 0;
-                  return (
-                    <div 
-                      key={dow}
-                      className={cn(
-                        "p-3 rounded-xl text-center transition-all",
-                        dh?.is_open
-                          ? "bg-muted/50 hover:bg-muted/70" 
-                          : "bg-muted/20 opacity-50"
-                      )}
-                    >
-                      <p className="text-xs font-medium text-foreground">{DAY_LABELS_SHORT[dow]}</p>
-                      {dh?.is_open ? (
-                        <>
-                          <p className="text-[10px] text-muted-foreground mt-1">
-                            {trimHm(dh.open_time).replace(":00", "")}-{trimHm(dh.close_time).replace(":00", "")}
-                          </p>
-                          <div className="mt-2 flex flex-col items-center gap-1">
-                            {[...Array(Math.min(apptCount, 4))].map((_, i) => (
-                              <div key={i} className="w-2 h-2 rounded-full bg-wj-green" />
-                            ))}
-                            {apptCount > 4 && (
-                              <span className="text-[8px] text-muted-foreground">+{apptCount - 4}</span>
-                            )}
-                          </div>
-                        </>
-                      ) : (
-                        <p className="text-[10px] text-muted-foreground mt-1">Fechado</p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </motion.div>
-
-            {/* Upcoming exceptions / holidays */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4"
-            >
-              <div className="flex items-center gap-2 mb-4">
-                <CalendarOff className="h-4 w-4 text-wj-green" />
-                <h3 className="text-sm font-medium text-foreground">Próximos Feriados & Exceções</h3>
-              </div>
-              {exceptions.length === 0 ? (
-                <p className="text-xs text-muted-foreground">Sem exceções marcadas.</p>
-              ) : (
-                <div className="space-y-2">
-                  {exceptions.slice(0, 6).map((ex) => (
-                    <div
-                      key={ex.id}
-                      className="flex items-center justify-between p-2.5 rounded-lg bg-muted/30"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-wj-green/10 flex items-center justify-center">
-                          <span className="text-xs font-bold text-wj-green">
-                            {new Date(ex.exception_date).getDate()}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-foreground">{ex.reason}</p>
-                          <p className="text-[10px] text-muted-foreground">
-                            {new Date(ex.exception_date).toLocaleDateString("pt-PT", {
-                              weekday: "long",
-                              day: "numeric",
-                              month: "long",
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                      <Badge
-                        className={cn(
-                          "text-[10px]",
-                          ex.exception_type === "closed"
-                            ? "bg-red-500/20 text-red-400 border-red-500/30"
-                            : "bg-amber-500/20 text-amber-400 border-amber-500/30",
-                        )}
-                      >
-                        {ex.exception_type === "closed" ? "Fechado" : "Especial"}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </motion.div>
-          </div>
-
-          {/* Calendar - 4 columns */}
-          <div className="col-span-12 lg:col-span-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4"
-            >
               <div className="flex items-center gap-2 mb-4">
                 <CalendarIcon className="h-4 w-4 text-wj-green" />
-                <h3 className="text-sm font-medium text-foreground">Mapa de Carga</h3>
+                <h3 className="text-sm font-medium text-foreground">{t("manage.heatmap.title")}</h3>
               </div>
               <TooltipProvider>
-                {/* Month navigation */}
                 <div className="flex items-center justify-between mb-3">
                   <Button
                     variant="ghost"
@@ -530,7 +328,7 @@ export default function AdminManage() {
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                   <span className="text-xs font-medium text-foreground capitalize">
-                    {new Date(heatYear, heatMonth).toLocaleDateString("pt-PT", {
+                    {new Date(heatYear, heatMonth).toLocaleDateString(locale, {
                       month: "long",
                       year: "numeric",
                     })}
@@ -550,19 +348,14 @@ export default function AdminManage() {
                   </Button>
                 </div>
 
-                {/* Weekday headers */}
                 <div className="grid grid-cols-7 gap-1 mb-1">
-                  {WEEKDAYS_HEAT.map((d, i) => (
-                    <div
-                      key={i}
-                      className="text-center text-[9px] text-muted-foreground uppercase"
-                    >
-                      {d}
+                  {WEEKDAYS_HEAT_KEYS.map((k, i) => (
+                    <div key={i} className="text-center text-[9px] text-muted-foreground uppercase">
+                      {t(`manage.days_short.${k}`).charAt(0)}
                     </div>
                   ))}
                 </div>
 
-                {/* Heatmap grid */}
                 <div className="grid grid-cols-7 gap-1">
                   {(() => {
                     const first = new Date(heatYear, heatMonth, 1);
@@ -599,14 +392,14 @@ export default function AdminManage() {
                           </TooltipTrigger>
                           <TooltipContent side="top" className="text-xs">
                             <p className="font-medium">
-                              {date.toLocaleDateString("pt-PT", {
+                              {date.toLocaleDateString(locale, {
                                 weekday: "short",
                                 day: "numeric",
                                 month: "short",
                               })}
                             </p>
                             <p className="text-muted-foreground">
-                              {count} agendamento(s) · {getHeatLabel(count)}
+                              {t("manage.heatmap.appointments", { n: count })} · {getHeatLabel(count)}
                             </p>
                           </TooltipContent>
                         </Tooltip>,
@@ -616,27 +409,290 @@ export default function AdminManage() {
                   })()}
                 </div>
 
-                {/* Legend */}
                 <div className="mt-3 flex items-center justify-between text-[10px] text-muted-foreground">
-                  <span>Menos</span>
+                  <span>{t("manage.heatmap.less")}</span>
                   <div className="flex gap-0.5">
                     {[0, 1, 2, 3, 4, 5].map((l) => (
                       <div key={l} className={cn("w-3 h-3 rounded-sm", getHeatColor(l))} />
                     ))}
                   </div>
-                  <span>Mais</span>
+                  <span>{t("manage.heatmap.more")}</span>
                 </div>
               </TooltipProvider>
 
-              <div className="mt-4 pt-4 border-t border-border/30">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
-                  {selectedDate?.toLocaleDateString("pt-PT", { weekday: "long", day: "numeric", month: "long" })}
-                </p>
-                <p className="text-sm text-foreground">
-                  <span className="text-2xl font-light">{appointments.length}</span>{" "}
-                  <span className="text-xs text-muted-foreground">agendamento(s)</span>
-                </p>
+              <div className="mt-4 pt-4 border-t border-border/30 flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
+                    {selectedDate?.toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" })}
+                  </p>
+                  <p className="text-sm text-foreground">
+                    <span className="text-2xl font-light">{appointments.length}</span>{" "}
+                    <span className="text-xs text-muted-foreground">{t("manage.heatmap.appointments", { n: appointments.length })}</span>
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() => navigate("/dashboard/admin/workshop")}
+                >
+                  <Wrench className="h-3.5 w-3.5" />
+                  {t("manage.week.manage")}
+                </Button>
               </div>
+            </motion.div>
+
+            {/* Weekly Schedule Grid — aligned with business hours, today highlighted, badge dot */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium text-foreground">{t("manage.week.title")}</h3>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-xs text-wj-green hover:text-wj-green/80 gap-1"
+                  onClick={() => navigate("/dashboard/admin/workshop")}
+                >
+                  {t("manage.week.manage")}
+                  <ChevronRight className="h-3 w-3" />
+                </Button>
+              </div>
+              <div className="grid grid-cols-7 gap-2">
+                {[1, 2, 3, 4, 5, 6, 0].map((dow) => {
+                  const dh = draft[dow];
+                  const apptCount = weeklyByDow[dow] ?? 0;
+                  const isToday = dow === todayDow;
+                  return (
+                    <button
+                      key={dow}
+                      onClick={() => setDayModalDow(dow)}
+                      className={cn(
+                        "relative p-3 rounded-xl text-center transition-all group",
+                        dh?.is_open
+                          ? "bg-muted/50 hover:bg-muted/70"
+                          : "bg-muted/20 opacity-50 hover:opacity-80",
+                        isToday && "ring-2 ring-wj-green bg-wj-green/10 hover:bg-wj-green/15 opacity-100",
+                      )}
+                    >
+                      {apptCount > 0 && (
+                        <span className="absolute top-1.5 right-1.5 min-w-[16px] h-[16px] px-1 rounded-full bg-wj-green text-[9px] font-bold text-background flex items-center justify-center">
+                          {apptCount}
+                        </span>
+                      )}
+                      <p className={cn("text-xs font-medium", isToday ? "text-wj-green" : "text-foreground")}>
+                        {t(`manage.days_short.${DAY_KEYS[dow]}`)}
+                      </p>
+                      {dh?.is_open ? (
+                        <p className="text-[10px] text-muted-foreground mt-1">
+                          {trimHm(dh.open_time).replace(":00", "")}-{trimHm(dh.close_time).replace(":00", "")}
+                        </p>
+                      ) : (
+                        <p className="text-[10px] text-muted-foreground mt-1">{t("manage.week.closed")}</p>
+                      )}
+                      {isToday && (
+                        <span className="block mt-1 text-[8px] uppercase tracking-wider text-wj-green font-semibold">
+                          {t("manage.week.today_chip")}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+
+            {/* Upcoming exceptions / holidays */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4"
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <CalendarOff className="h-4 w-4 text-wj-green" />
+                <h3 className="text-sm font-medium text-foreground">{t("manage.exceptions.title")}</h3>
+              </div>
+              {exceptions.length === 0 ? (
+                <p className="text-xs text-muted-foreground">{t("manage.exceptions.empty")}</p>
+              ) : (
+                <div className="space-y-2">
+                  {exceptions.slice(0, 6).map((ex) => (
+                    <div
+                      key={ex.id}
+                      className="flex items-center justify-between p-2.5 rounded-lg bg-muted/30"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-wj-green/10 flex items-center justify-center">
+                          <span className="text-xs font-bold text-wj-green">
+                            {new Date(ex.exception_date).getDate()}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-foreground">{ex.reason}</p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {new Date(ex.exception_date).toLocaleDateString(locale, {
+                              weekday: "long",
+                              day: "numeric",
+                              month: "long",
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge
+                        className={cn(
+                          "text-[10px]",
+                          ex.exception_type === "closed"
+                            ? "bg-red-500/20 text-red-400 border-red-500/30"
+                            : "bg-amber-500/20 text-amber-400 border-amber-500/30",
+                        )}
+                      >
+                        {ex.exception_type === "closed"
+                          ? t("manage.exceptions.closed")
+                          : t("manage.exceptions.special")}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          </div>
+
+          {/* Right column - 5 */}
+          <div className="col-span-12 lg:col-span-5 space-y-4">
+            {/* Workload Bar */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-wj-green" />
+                  <h3 className="text-sm font-medium text-foreground">{t("manage.workload.title")}</h3>
+                </div>
+                <Badge className={cn(
+                  "text-xs",
+                  workloadPercentage > 80 
+                    ? "bg-red-500/20 text-red-400 border-red-500/30"
+                    : workloadPercentage > 60
+                    ? "bg-amber-500/20 text-amber-400 border-amber-500/30"
+                    : "bg-wj-green/20 text-wj-green border-wj-green/30"
+                )}>
+                  {t("manage.workload.of_capacity", { n: workloadPercentage })}
+                </Badge>
+              </div>
+              
+              <div className="h-3 bg-muted rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${workloadPercentage}%` }}
+                  transition={{ delay: 0.3, duration: 0.8 }}
+                  className={cn(
+                    "h-full rounded-full",
+                    workloadPercentage > 80 
+                      ? "bg-gradient-to-r from-red-500 to-red-400"
+                      : workloadPercentage > 60
+                      ? "bg-gradient-to-r from-amber-500 to-amber-400"
+                      : "bg-gradient-to-r from-wj-green to-wj-green/60"
+                  )}
+                />
+              </div>
+              
+              <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+                <span>{t("manage.workload.appointments", { n: totalAppointments })}</span>
+                <span>{t("manage.workload.capacity", { n: totalCapacity })}</span>
+              </div>
+            </motion.div>
+
+            {/* Team Members Workload */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4"
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <Users className="h-4 w-4 text-wj-green" />
+                <h3 className="text-sm font-medium text-foreground">{t("manage.team.title")}</h3>
+              </div>
+
+              {loading ? (
+                <div className="flex items-center justify-center py-8 text-muted-foreground text-sm gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" /> {t("manage.team.loading")}
+                </div>
+              ) : mechanics.length === 0 ? (
+                <div className="text-center py-8 text-sm text-muted-foreground">
+                  {t("manage.team.empty")}
+                </div>
+              ) : (
+              <div className="grid grid-cols-1 gap-3">
+                {mechanics.map((member, index) => {
+                  const memberLoad = Math.min(100, Math.round((member.weekly_appointments / member.weekly_capacity) * 100));
+                  const initials = (member.full_name ?? member.email ?? "??")
+                    .split(" ")
+                    .map((s) => s[0])
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase();
+                  return (
+                    <motion.div
+                      key={member.user_id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 + index * 0.1 }}
+                      className="bg-muted/30 rounded-xl p-3 hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-8 h-8 rounded-full bg-wj-green/20 text-wj-green text-xs font-bold flex items-center justify-center">
+                          {initials}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {member.full_name ?? member.email}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground">{t("manage.team.role")}</p>
+                        </div>
+                        <Badge variant="outline" className="text-[10px]">
+                          {member.weekly_appointments}/{member.weekly_capacity}
+                        </Badge>
+                      </div>
+                      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div 
+                          className={cn(
+                            "h-full rounded-full transition-all",
+                            memberLoad > 80 
+                              ? "bg-red-500"
+                              : memberLoad > 60
+                              ? "bg-amber-500"
+                              : "bg-wj-green"
+                          )}
+                          style={{ width: `${memberLoad}%` }}
+                        />
+                      </div>
+                      <button
+                        onClick={() =>
+                          setStaffDetail({
+                            id: member.user_id,
+                            name: member.full_name ?? member.email ?? "Mecânico",
+                            email: member.email,
+                            weekly: member.weekly_appointments,
+                            capacity: member.weekly_capacity,
+                          })
+                        }
+                        className="mt-2 w-full flex items-center justify-between text-[11px] text-wj-green hover:text-wj-green/80 transition-colors"
+                      >
+                        <span>{t("manage.team.view_details")}</span>
+                        <ChevronRight className="h-3 w-3" />
+                      </button>
+                    </motion.div>
+                  );
+                })}
+              </div>
+              )}
             </motion.div>
           </div>
         </div>
@@ -646,10 +702,8 @@ export default function AdminManage() {
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
         <DialogContent className="max-w-md bg-background/95 backdrop-blur-xl border-border/50">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Horário de Funcionamento</DialogTitle>
-            <DialogDescription>
-              Configure o horário da oficina. Cada alteração cria uma nova versão a partir de hoje.
-            </DialogDescription>
+            <DialogTitle className="text-foreground">{t("manage.settings_modal.title")}</DialogTitle>
+            <DialogDescription>{t("manage.settings_modal.description")}</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3 mt-4">
@@ -665,7 +719,9 @@ export default function AdminManage() {
                   )}
                 >
                   <Switch checked={config.is_open} onCheckedChange={() => toggleDay(dow)} />
-                  <span className="w-24 text-sm font-medium text-foreground">{DAY_LABELS[dow]}</span>
+                  <span className="w-24 text-sm font-medium text-foreground">
+                    {t(`manage.days_long.${DAY_KEYS[dow]}`)}
+                  </span>
                   {config.is_open ? (
                     <div className="flex items-center gap-2 flex-1">
                       <input
@@ -674,7 +730,7 @@ export default function AdminManage() {
                         onChange={(e) => updateTime(dow, "open_time", e.target.value)}
                         className="bg-muted px-2 py-1 rounded text-xs text-foreground"
                       />
-                      <span className="text-muted-foreground text-xs">até</span>
+                      <span className="text-muted-foreground text-xs">{t("manage.settings_modal.until")}</span>
                       <input
                         type="time"
                         value={trimHm(config.close_time) || "18:00"}
@@ -683,7 +739,7 @@ export default function AdminManage() {
                       />
                     </div>
                   ) : (
-                    <span className="text-sm text-muted-foreground">Fechado</span>
+                    <span className="text-sm text-muted-foreground">{t("manage.settings_modal.closed")}</span>
                   )}
                 </div>
               );
@@ -692,7 +748,7 @@ export default function AdminManage() {
 
           <div className="flex justify-end gap-2 mt-4">
             <Button variant="outline" size="sm" onClick={() => setShowSettings(false)} disabled={saving}>
-              Cancelar
+              {t("manage.settings_modal.cancel")}
             </Button>
             <Button
               size="sm"
@@ -700,9 +756,66 @@ export default function AdminManage() {
               onClick={handleSaveHours}
               disabled={saving}
             >
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar Alterações"}
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : t("manage.settings_modal.save")}
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Day appointments modal */}
+      <Dialog open={dayModalDow !== null} onOpenChange={(v) => !v && setDayModalDow(null)}>
+        <DialogContent className="max-w-md bg-background/95 backdrop-blur-xl border-border/50">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">
+              {t("manage.day_modal.title")} ·{" "}
+              {dayModalDow != null && t(`manage.days_long.${DAY_KEYS[dayModalDow]}`)}
+            </DialogTitle>
+            <DialogDescription>
+              {t("manage.heatmap.appointments", { n: dayApptList.length })}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 mt-3 max-h-[50vh] overflow-y-auto">
+            {dayApptList.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-6">
+                {t("manage.day_modal.empty")}
+              </p>
+            ) : (
+              dayApptList.map((a) => (
+                <div
+                  key={a.id}
+                  className="flex items-center justify-between p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
+                >
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-foreground truncate">
+                      {a.customer_name ?? a.customer_email ?? "—"}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground truncate">
+                      {a.service_name ?? "—"} · {a.mechanic_name ?? "—"}
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="text-[10px]">
+                    {trimHm(a.scheduled_start_time)}
+                  </Badge>
+                </div>
+              ))
+            )}
+          </div>
+          <DialogFooter className="mt-4 gap-2">
+            <Button variant="outline" size="sm" onClick={() => setDayModalDow(null)}>
+              {t("manage.day_modal.close")}
+            </Button>
+            <Button
+              size="sm"
+              className="bg-wj-green hover:bg-wj-green/90 gap-2"
+              onClick={() => {
+                setDayModalDow(null);
+                navigate("/dashboard/admin/workshop");
+              }}
+            >
+              <Wrench className="h-3.5 w-3.5" />
+              {t("manage.day_modal.go_workshop")}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
