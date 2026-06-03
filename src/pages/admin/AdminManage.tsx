@@ -227,82 +227,6 @@ export default function AdminManage() {
           ))}
         </div>
 
-        {/* Overloaded Staff Alert — above calendar, full width */}
-        <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={cn(
-                "rounded-2xl p-4 border backdrop-blur-md",
-                overloadedStaff.length > 0
-                  ? "bg-amber-500/5 border-amber-500/30"
-                  : "bg-background/60 border-border/30",
-              )}
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <AlertTriangle
-                  className={cn(
-                    "h-4 w-4",
-                    overloadedStaff.length > 0 ? "text-amber-400" : "text-wj-green",
-                  )}
-                />
-                <h3 className="text-sm font-medium text-foreground">{t("manage.overload.title")}</h3>
-                <Badge
-                  variant="outline"
-                  className="ml-auto text-[10px] border-border/40"
-                >
-                  {overloadedStaff.length} / {mechanics.length}
-                </Badge>
-              </div>
-              {overloadedStaff.length === 0 ? (
-                <p className="text-xs text-muted-foreground">{t("manage.overload.empty")}</p>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                  {overloadedStaff.map((m) => {
-                    const initials = (m.full_name ?? m.email ?? "??")
-                      .split(" ")
-                      .map((s) => s[0])
-                      .join("")
-                      .slice(0, 2)
-                      .toUpperCase();
-                    return (
-                      <div
-                        key={m.user_id}
-                        className="flex items-center gap-3 p-2 rounded-lg bg-background/60"
-                      >
-                        <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold flex items-center justify-center">
-                          {initials}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-foreground truncate">
-                            {m.full_name ?? m.email}
-                          </p>
-                          <div className="h-1 mt-1 bg-muted rounded-full overflow-hidden">
-                            <div
-                              className={cn(
-                                "h-full",
-                                m.load >= 90 ? "bg-red-500" : "bg-amber-500",
-                              )}
-                              style={{ width: `${m.load}%` }}
-                            />
-                          </div>
-                        </div>
-                        <Badge
-                          className={cn(
-                            "text-[10px]",
-                            m.load >= 90
-                              ? "bg-red-500/20 text-red-400 border-red-500/30"
-                              : "bg-amber-500/20 text-amber-400 border-amber-500/30",
-                          )}
-                        >
-                          {m.load}%
-                        </Badge>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </motion.div>
-
         {/* Main Content Grid — independent glass blocks */}
         <div className="grid grid-cols-12 gap-4 lg:gap-5">
             {/* Row 1 — Workload (full width slim bar) */}
@@ -310,7 +234,7 @@ export default function AdminManage() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 }}
-              className="col-span-12 p-4 lg:p-5 flex flex-col bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
+              className="col-span-12 lg:col-span-8 p-4 lg:p-5 flex flex-col bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
@@ -350,6 +274,85 @@ export default function AdminManage() {
                 <span>{t("manage.workload.capacity", { n: totalCapacity })}</span>
               </div>
 
+            </motion.div>
+
+            {/* Overloaded Staff Alert — col 2, row 1 */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.08 }}
+              className={cn(
+                "col-span-12 lg:col-span-4 p-4 lg:p-5 rounded-3xl border backdrop-blur-md flex flex-col",
+                overloadedStaff.length > 0
+                  ? "bg-amber-500/5 border-amber-500/30"
+                  : "bg-background/60 border-border/30",
+              )}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <AlertTriangle
+                  className={cn(
+                    "h-4 w-4",
+                    overloadedStaff.length > 0 ? "text-amber-400" : "text-wj-green",
+                  )}
+                />
+                <h3 className="text-sm font-medium text-foreground">{t("manage.overload.title")}</h3>
+                <Badge
+                  variant="outline"
+                  className="ml-auto text-[10px] border-border/40"
+                >
+                  {overloadedStaff.length} / {mechanics.length}
+                </Badge>
+              </div>
+              <div className="flex-1 min-h-0">
+                {overloadedStaff.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">{t("manage.overload.empty")}</p>
+                ) : (
+                  <div className="flex flex-col gap-2 overflow-y-auto max-h-[200px] pr-1">
+                    {overloadedStaff.map((m) => {
+                      const initials = (m.full_name ?? m.email ?? "??")
+                        .split(" ")
+                        .map((s) => s[0])
+                        .join("")
+                        .slice(0, 2)
+                        .toUpperCase();
+                      return (
+                        <div
+                          key={m.user_id}
+                          className="flex items-center gap-3 p-2 rounded-lg bg-background/60"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold flex items-center justify-center">
+                            {initials}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-foreground truncate">
+                              {m.full_name ?? m.email}
+                            </p>
+                            <div className="h-1 mt-1 bg-muted rounded-full overflow-hidden">
+                              <div
+                                className={cn(
+                                  "h-full",
+                                  m.load >= 90 ? "bg-red-500" : "bg-amber-500",
+                                )}
+                                style={{ width: `${m.load}%` }}
+                              />
+                            </div>
+                          </div>
+                          <Badge
+                            className={cn(
+                              "text-[10px]",
+                              m.load >= 90
+                                ? "bg-red-500/20 text-red-400 border-red-500/30"
+                                : "bg-amber-500/20 text-amber-400 border-amber-500/30",
+                            )}
+                          >
+                            {m.load}%
+                          </Badge>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </motion.div>
 
             {/* Row 2 — Team Weekly Schedule (MAIN) */}
