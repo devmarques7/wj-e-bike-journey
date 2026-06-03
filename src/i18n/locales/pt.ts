@@ -165,7 +165,7 @@ const pt = {
       at_risk: "Em risco",
       churned: "Churn",
     },
-    roles: { member: "Membro", staff: "Staff", admin: "Admin", guest: "Convidado" },
+    roles: { customer: "Cliente", staff: "Staff", admin: "Admin", guest: "Convidado" },
   },
 };
 export default pt;
