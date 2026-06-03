@@ -84,6 +84,21 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
   const [appts, setAppts] = useState<ApptRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkSaving, setBulkSaving] = useState(false);
+  const [bulkStart, setBulkStart] = useState("09:00");
+  const [bulkEnd, setBulkEnd] = useState("18:00");
+
+  const cellKey = (staffId: string, date: Date) => `${staffId}|${ymd(date)}`;
+  const toggleSelect = (staffId: string, date: Date) => {
+    const k = cellKey(staffId, date);
+    setSelected((prev) => {
+      const n = new Set(prev);
+      if (n.has(k)) n.delete(k); else n.add(k);
+      return n;
+    });
+  };
+  const clearSelection = () => setSelected(new Set());
 
   const days = useMemo(() => {
     const arr: Date[] = [];
@@ -256,6 +271,83 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
     }
   };
 
+  /* ------------- bulk mutations ------------- */
+
+  const applyBulk = async (patch: { is_working: boolean; start_time: string; end_time: string }) => {
+    if (!selected.size) return;
+    setBulkSaving(true);
+    try {
+      const rows = Array.from(selected).map((k) => {
+        const [staff_id, iso] = k.split("|");
+        return { staff_id, iso };
+      });
+      const existingByKey = new Map(
+        exceptions.map((e) => [`${e.staff_id}|${e.exception_date}`, e]),
+      );
+      const toUpdate = rows.filter((r) => existingByKey.has(`${r.staff_id}|${r.iso}`));
+      const toInsert = rows.filter((r) => !existingByKey.has(`${r.staff_id}|${r.iso}`));
+
+      if (toInsert.length) {
+        const { error } = await supabase.from("staff_schedule_exceptions").insert(
+          toInsert.map((r) => ({
+            staff_id: r.staff_id,
+            exception_date: r.iso,
+            is_working: patch.is_working,
+            start_time: patch.is_working ? patch.start_time : null,
+            end_time: patch.is_working ? patch.end_time : null,
+            exception_type: patch.is_working ? "reduced_hours" : "day_off",
+            reason: patch.is_working ? "Custom hours" : "Day off",
+          })),
+        );
+        if (error) throw error;
+      }
+      for (const r of toUpdate) {
+        const ex = existingByKey.get(`${r.staff_id}|${r.iso}`)!;
+        const { error } = await supabase
+          .from("staff_schedule_exceptions")
+          .update({
+            is_working: patch.is_working,
+            start_time: patch.is_working ? patch.start_time : null,
+            end_time: patch.is_working ? patch.end_time : null,
+            exception_type: patch.is_working ? "reduced_hours" : "day_off",
+          })
+          .eq("id", ex.id);
+        if (error) throw error;
+      }
+      toast.success(`${rows.length} ${patch.is_working ? "horários aplicados" : "dias marcados como off"}`);
+      clearSelection();
+      await load();
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha a guardar em lote");
+    } finally {
+      setBulkSaving(false);
+    }
+  };
+
+  const clearBulkExceptions = async () => {
+    if (!selected.size) return;
+    setBulkSaving(true);
+    try {
+      const ids = Array.from(selected)
+        .map((k) => {
+          const [staff_id, iso] = k.split("|");
+          return exceptions.find((e) => e.staff_id === staff_id && e.exception_date === iso)?.id;
+        })
+        .filter(Boolean) as string[];
+      if (ids.length) {
+        const { error } = await supabase.from("staff_schedule_exceptions").delete().in("id", ids);
+        if (error) throw error;
+      }
+      toast.success("Selecção revertida");
+      clearSelection();
+      await load();
+    } catch (e: any) {
+      toast.error(e.message ?? "Falha");
+    } finally {
+      setBulkSaving(false);
+    }
+  };
+
   const todayISO = ymd(new Date());
 
   return (
@@ -308,6 +400,66 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
         </div>
 
         <main className="mt-4 rounded-3xl border border-border/40 bg-muted/10 p-3 sm:p-5 space-y-5">
+          {/* Bulk action bar */}
+          {selected.size > 0 && (
+            <div className="flex flex-wrap items-center gap-2 p-3 rounded-2xl bg-wj-green/10 border border-wj-green/30">
+              <span className="text-xs font-medium text-foreground">
+                {selected.size} {selected.size === 1 ? "bloco" : "blocos"} selecionado{selected.size === 1 ? "" : "s"}
+              </span>
+              <div className="flex items-center gap-1 ml-2">
+                <Input
+                  type="time"
+                  value={bulkStart}
+                  onChange={(e) => setBulkStart(e.target.value)}
+                  className="h-7 w-24 text-xs"
+                />
+                <span className="text-xs text-muted-foreground">–</span>
+                <Input
+                  type="time"
+                  value={bulkEnd}
+                  onChange={(e) => setBulkEnd(e.target.value)}
+                  className="h-7 w-24 text-xs"
+                />
+                <Button
+                  size="sm"
+                  disabled={bulkSaving}
+                  className="h-7 text-xs bg-wj-green hover:bg-wj-green/90"
+                  onClick={() => applyBulk({ is_working: true, start_time: bulkStart, end_time: bulkEnd })}
+                >
+                  Aplicar horário
+                </Button>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={bulkSaving}
+                className="h-7 text-xs"
+                onClick={() => applyBulk({ is_working: false, start_time: "09:00", end_time: "18:00" })}
+              >
+                <CalendarOff className="h-3 w-3 mr-1" /> Day off
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={bulkSaving}
+                className="h-7 text-xs"
+                onClick={clearBulkExceptions}
+              >
+                Reverter
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={bulkSaving}
+                className="h-7 text-xs ml-auto"
+                onClick={clearSelection}
+              >
+                Limpar selecção
+              </Button>
+              {bulkSaving && <Loader2 className="h-3 w-3 animate-spin text-wj-green" />}
+            </div>
+          )}
+
           {/* Schedule grid */}
           {loading ? (
             <div className="flex items-center justify-center py-12 text-muted-foreground gap-2">
@@ -388,6 +540,9 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
                         load={computeLoad(m.user_id, d)}
                         saving={saving === `${m.user_id}-${ymd(d)}`}
                         isToday={ymd(d) === todayISO}
+                        selected={selected.has(cellKey(m.user_id, d))}
+                        hasSelection={selected.size > 0}
+                        onToggleSelect={() => toggleSelect(m.user_id, d)}
                         onSave={(patch) => saveCell(m.user_id, d, patch)}
                         onClear={() => clearException(m.user_id, d)}
                       />
@@ -435,6 +590,9 @@ function DayCell({
   load,
   saving,
   isToday,
+  selected,
+  hasSelection,
+  onToggleSelect,
   onSave,
   onClear,
 }: {
@@ -448,6 +606,9 @@ function DayCell({
   load: { pct: number; busyMin: number; totalMin: number };
   saving: boolean;
   isToday: boolean;
+  selected: boolean;
+  hasSelection: boolean;
+  onToggleSelect: () => void;
   onSave: (p: { is_working: boolean; start_time: string; end_time: string }) => void;
   onClear: () => void;
 }) {
@@ -468,10 +629,21 @@ function DayCell({
   const dow = date.getDay(); // 0 = Sun, 6 = Sat
   const isWeekend = dow === 0 || dow === 6;
 
+  const handleClick = (e: React.MouseEvent) => {
+    // Modifier click OR any click while in selection mode toggles selection.
+    if (e.metaKey || e.ctrlKey || e.shiftKey || hasSelection) {
+      e.preventDefault();
+      onToggleSelect();
+    } else {
+      setOpen(true);
+    }
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
+          onClick={handleClick}
           className={cn(
             "relative h-[130px] rounded-xl p-2.5 text-left transition-all border overflow-hidden",
             isWeekend || off
@@ -483,8 +655,14 @@ function DayCell({
                   : "bg-muted/25 border-border/30 hover:bg-muted/40",
             isToday && "ring-2 ring-wj-green/70",
             isCustom && "border-wj-green/50",
+            selected && "ring-2 ring-wj-green ring-offset-2 ring-offset-background",
           )}
         >
+          {selected && (
+            <div className="absolute top-1.5 right-1.5 z-10 h-4 w-4 rounded-full bg-wj-green flex items-center justify-center">
+              <Check className="h-2.5 w-2.5 text-white" />
+            </div>
+          )}
           {/* Bottom-up load fill */}
           {!off && (
             <div
