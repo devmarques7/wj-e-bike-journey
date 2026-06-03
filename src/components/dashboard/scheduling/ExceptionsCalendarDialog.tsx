@@ -153,7 +153,32 @@ export default function ExceptionsCalendarDialog({ open, onOpenChange, exception
                 specialEx: "bg-amber-500/20 text-amber-400 font-semibold",
                 holidayEx: "bg-wj-green/30 text-wj-green font-semibold ring-1 ring-wj-green/50",
               }}
-              className={cn("p-3 pointer-events-auto rounded-2xl border border-border/30")}
+              showOutsideDays
+              className={cn("p-4 pointer-events-auto rounded-2xl border border-border/30 bg-background/40 w-full")}
+              classNames={{
+                months: "flex flex-col space-y-4",
+                month: "space-y-3 w-full",
+                caption: "flex justify-center pt-1 relative items-center",
+                caption_label: "text-sm font-semibold text-foreground",
+                nav: "space-x-1 flex items-center",
+                nav_button:
+                  "h-7 w-7 bg-transparent p-0 rounded-lg border border-border/40 text-muted-foreground hover:text-foreground hover:bg-wj-green/10 hover:border-wj-green/40 transition-colors inline-flex items-center justify-center",
+                nav_button_previous: "absolute left-1",
+                nav_button_next: "absolute right-1",
+                table: "w-full border-collapse",
+                head_row: "flex w-full",
+                head_cell:
+                  "text-muted-foreground/70 rounded-md flex-1 font-medium text-[0.7rem] uppercase tracking-wider h-8 flex items-center justify-center",
+                row: "flex w-full mt-1",
+                cell: "flex-1 h-9 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
+                day: "h-9 w-full p-0 font-normal rounded-lg hover:bg-wj-green/10 hover:text-wj-green transition-colors inline-flex items-center justify-center text-foreground",
+                day_selected:
+                  "bg-wj-green text-white hover:bg-wj-green hover:text-white focus:bg-wj-green focus:text-white",
+                day_today: "ring-1 ring-wj-green/60 text-wj-green font-semibold",
+                day_outside: "text-muted-foreground/40",
+                day_disabled: "text-muted-foreground/30 opacity-50",
+                day_hidden: "invisible",
+              }}
             />
             <div className="flex flex-wrap items-center gap-3 mt-3 text-[11px] text-muted-foreground">
               <span className="flex items-center gap-1.5">
