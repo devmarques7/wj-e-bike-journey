@@ -305,12 +305,12 @@ export default function AdminManage() {
 
         {/* Main Content Grid — independent glass blocks */}
         <div className="grid grid-cols-12 gap-4 lg:gap-5">
-            {/* Heatmap — compact, no longer the highlight */}
+            {/* Heatmap + Exceptions — side by side top row */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.10 }}
-              className="col-span-12 lg:col-span-4 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
+              className="col-span-12 lg:col-span-5 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
             >
               <div className="flex items-center gap-2 mb-4">
                 <CalendarIcon className="h-4 w-4 text-wj-green" />
@@ -434,39 +434,76 @@ export default function AdminManage() {
               </div>
             </motion.div>
 
-            {/* Week Overview — middle column */}
+            {/* Exceptions — side by side with heatmap */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="col-span-12 lg:col-span-5 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
+              className="col-span-12 lg:col-span-7 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
             >
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-sm font-medium text-foreground">{t("manage.team_week.title")}</h3>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">{t("manage.team_week.subtitle")}</p>
-                </div>
+              <div className="flex items-center gap-2 mb-4">
+                <CalendarOff className="h-4 w-4 text-wj-green" />
+                <h3 className="text-sm font-medium text-foreground">{t("manage.exceptions.title")}</h3>
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="text-xs text-wj-green hover:text-wj-green/80 gap-1 h-7"
-                  onClick={() => navigate("/dashboard/admin/workshop")}
+                  className="ml-auto text-xs text-wj-green hover:text-wj-green/80 gap-1 h-7"
+                  onClick={() => setExceptionsCalOpen(true)}
                 >
-                  {t("manage.week.manage")}
-                  <ChevronRight className="h-3 w-3" />
+                  <CalendarIcon className="h-3.5 w-3.5" />
+                  {t("manage.exceptions.open_calendar")}
                 </Button>
               </div>
-              <div className="flex-1 min-h-0">
-                <TeamWeekWorkloadCompact mechanics={mechanics} />
-              </div>
+              {exceptions.length === 0 ? (
+                <p className="text-xs text-muted-foreground">{t("manage.exceptions.empty")}</p>
+              ) : (
+                <div className="space-y-2 flex-1 overflow-y-auto pr-1">
+                  {exceptions.slice(0, 8).map((ex) => (
+                    <div
+                      key={ex.id}
+                      className="flex items-center justify-between p-2 rounded-lg bg-muted/30"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-9 h-9 rounded-lg bg-wj-green/10 flex items-center justify-center shrink-0">
+                          <span className="text-xs font-bold text-wj-green">
+                            {new Date(ex.exception_date).getDate()}
+                          </span>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-foreground truncate">{ex.reason}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">
+                            {new Date(ex.exception_date).toLocaleDateString(locale, {
+                              weekday: "short",
+                              day: "numeric",
+                              month: "short",
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge
+                        className={cn(
+                          "text-[10px] shrink-0",
+                          ex.exception_type === "closed"
+                            ? "bg-red-500/20 text-red-400 border-red-500/30"
+                            : "bg-amber-500/20 text-amber-400 border-amber-500/30",
+                        )}
+                      >
+                        {ex.exception_type === "closed"
+                          ? t("manage.exceptions.closed")
+                          : t("manage.exceptions.special")}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
             </motion.div>
 
-            {/* Team Members Workload — swapped to compact col-3 slot */}
+            {/* Team Members Workload — compact col-4 */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.20 }}
-              className="col-span-12 lg:col-span-3 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
+              className="col-span-12 lg:col-span-4 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
             >
               <div className="flex items-center gap-2 mb-4">
                 <Users className="h-4 w-4 text-wj-green" />
@@ -562,12 +599,39 @@ export default function AdminManage() {
               )}
             </motion.div>
 
-            {/* Weekly Load — swapped to wider col-7 slot */}
+            {/* Week Overview — middle column */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25 }}
-              className="col-span-12 lg:col-span-7 p-4 lg:p-5 flex flex-col bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
+              className="col-span-12 lg:col-span-4 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-sm font-medium text-foreground">{t("manage.team_week.title")}</h3>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{t("manage.team_week.subtitle")}</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-xs text-wj-green hover:text-wj-green/80 gap-1 h-7"
+                  onClick={() => navigate("/dashboard/admin/workshop")}
+                >
+                  {t("manage.week.manage")}
+                  <ChevronRight className="h-3 w-3" />
+                </Button>
+              </div>
+              <div className="flex-1 min-h-0">
+                <TeamWeekWorkloadCompact mechanics={mechanics} />
+              </div>
+            </motion.div>
+
+            {/* Weekly Load */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.30 }}
+              className="col-span-12 lg:col-span-4 p-4 lg:p-5 flex flex-col bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
@@ -616,70 +680,6 @@ export default function AdminManage() {
                 <LayoutGrid className="h-3.5 w-3.5" />
                 {t("manage.team_week.open_button")}
               </Button>
-            </motion.div>
-
-            {/* Exceptions — bottom row right */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.30 }}
-              className="col-span-12 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
-            >
-              <div className="flex items-center gap-2 mb-4">
-                <CalendarOff className="h-4 w-4 text-wj-green" />
-                <h3 className="text-sm font-medium text-foreground">{t("manage.exceptions.title")}</h3>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="ml-auto text-xs text-wj-green hover:text-wj-green/80 gap-1 h-7"
-                  onClick={() => setExceptionsCalOpen(true)}
-                >
-                  <CalendarIcon className="h-3.5 w-3.5" />
-                  {t("manage.exceptions.open_calendar")}
-                </Button>
-              </div>
-              {exceptions.length === 0 ? (
-                <p className="text-xs text-muted-foreground">{t("manage.exceptions.empty")}</p>
-              ) : (
-                <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
-                  {exceptions.slice(0, 6).map((ex) => (
-                    <div
-                      key={ex.id}
-                      className="flex items-center justify-between p-2 rounded-lg bg-muted/30"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-9 h-9 rounded-lg bg-wj-green/10 flex items-center justify-center shrink-0">
-                          <span className="text-xs font-bold text-wj-green">
-                            {new Date(ex.exception_date).getDate()}
-                          </span>
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-xs font-medium text-foreground truncate">{ex.reason}</p>
-                          <p className="text-[10px] text-muted-foreground truncate">
-                            {new Date(ex.exception_date).toLocaleDateString(locale, {
-                              weekday: "short",
-                              day: "numeric",
-                              month: "short",
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                      <Badge
-                        className={cn(
-                          "text-[10px] shrink-0",
-                          ex.exception_type === "closed"
-                            ? "bg-red-500/20 text-red-400 border-red-500/30"
-                            : "bg-amber-500/20 text-amber-400 border-amber-500/30",
-                        )}
-                      >
-                        {ex.exception_type === "closed"
-                          ? t("manage.exceptions.closed")
-                          : t("manage.exceptions.special")}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              )}
             </motion.div>
         </div>
       </div>
