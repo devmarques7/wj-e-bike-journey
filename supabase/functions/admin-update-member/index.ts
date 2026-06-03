@@ -59,6 +59,21 @@ Deno.serve(async (req) => {
       return json({ success: true, deleted: true });
     }
 
+    if (action === "update_credentials") {
+      const email = body.email ? String(body.email).trim() : undefined;
+      const password = body.password ? String(body.password) : undefined;
+      if (!email && !password) return json({ error: "Provide email or password" }, 400);
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "Invalid email" }, 400);
+      if (password && password.length < 8) return json({ error: "Password must be at least 8 characters" }, 400);
+      const attrs: Record<string, unknown> = {};
+      if (email) attrs.email = email;
+      if (password) attrs.password = password;
+      const upd = await admin.auth.admin.updateUserById(userId, attrs as any);
+      if (upd.error) return json({ error: upd.error.message }, 500);
+      if (email) await admin.from("profiles").update({ email }).eq("user_id", userId);
+      return json({ success: true, email_updated: !!email, password_updated: !!password });
+    }
+
     if (action === "update_role") {
       const role = String(body.role ?? "") as Role;
       if (!["admin", "staff", "member", "guest"].includes(role)) {

@@ -9,7 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Info, CheckCircle2, AlertTriangle, CreditCard, Banknote, XCircle, Loader2 } from "lucide-react";
-import { Plus, X, Check } from "lucide-react";
+import { Plus, X, Check, ShieldAlert, Eye, EyeOff, KeyRound } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { usePlans, cancelSubscription, changeSubscriptionPlan } from "@/hooks/plans/usePlansData";
 import { type CrmCustomer, type LifecycleStage, updateCustomerProfile } from "@/hooks/crm/useCrmData";
 import { LIFECYCLE_META } from "./colors";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 interface Props {
@@ -135,6 +136,8 @@ function TagsMultiSelect({ value, onChange }: { value: string[]; onChange: (next
 
 export default function CustomerEditDialog({ open, onClose, customer, onSaved }: Props) {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const { plans } = usePlans();
   const [stage, setStage] = useState<LifecycleStage>("new");
   const [health, setHealth] = useState(50);
@@ -151,6 +154,12 @@ export default function CustomerEditDialog({ open, onClose, customer, onSaved }:
   const [billingDate, setBillingDate] = useState<string>(""); // YYYY-MM-DD — next monthly charge
   const [loadingSub, setLoadingSub] = useState(false);
   const [busy, setBusy] = useState<null | "assign" | "cancel">(null);
+
+  // Sensitive credentials (admin only)
+  const [credEmail, setCredEmail] = useState("");
+  const [credPassword, setCredPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [savingCreds, setSavingCreds] = useState(false);
 
   const loadSub = async (userId: string) => {
     setLoadingSub(true);
@@ -181,8 +190,44 @@ export default function CustomerEditDialog({ open, onClose, customer, onSaved }:
     setRisk(customer.churn_risk_score);
     setLtv(Number(customer.ltv_estimated));
     setTags(customer.tags ?? []);
+    setCredEmail(customer.email ?? "");
+    setCredPassword("");
+    setShowPassword(false);
     if (open) loadSub(customer.user_id);
   }, [customer, open]);
+
+  const saveCredentials = async () => {
+    if (!customer || !isAdmin) return;
+    const payload: Record<string, unknown> = { user_id: customer.user_id, action: "update_credentials" };
+    const emailChanged = credEmail && credEmail.trim() !== (customer.email ?? "").trim();
+    if (emailChanged) payload.email = credEmail.trim();
+    if (credPassword) payload.password = credPassword;
+    if (!emailChanged && !credPassword) {
+      toast.error("Change email or set a new password first");
+      return;
+    }
+    if (credPassword && credPassword.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+    const confirmMsg = credPassword
+      ? "This will overwrite the user's login password. Continue?"
+      : "Update the user's login email?";
+    if (!confirm(confirmMsg)) return;
+    setSavingCreds(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-update-member", { body: payload });
+      if (error) throw error;
+      if ((data as any)?.error) throw new Error((data as any).error);
+      toast.success("Login credentials updated");
+      setCredPassword("");
+      onSaved?.();
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed to update credentials");
+    } finally {
+      setSavingCreds(false);
+    }
+  };
 
   const save = async () => {
     if (!customer) return;
@@ -439,6 +484,63 @@ export default function CustomerEditDialog({ open, onClose, customer, onSaved }:
                   )}
                 </div>
               </div>
+
+              {isAdmin && (
+                <>
+                  <Separator className="my-2" />
+                  <div className="space-y-3 rounded-xl border border-red-500/30 p-3 bg-red-500/5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <ShieldAlert className="h-3.5 w-3.5 text-red-400" />
+                        <h4 className="text-xs uppercase tracking-wider text-red-400">Sensitive · Login credentials</h4>
+                      </div>
+                      <Badge variant="outline" className="text-[10px] border-red-500/40 text-red-400">Admin only</Badge>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      Change the email or password this customer uses to sign in. Changes apply immediately and bypass email verification.
+                    </p>
+                    <div>
+                      <FieldLabel label="Login email" hint="The address the user signs in with. Must be unique across all accounts." />
+                      <Input
+                        type="email"
+                        autoComplete="off"
+                        value={credEmail}
+                        onChange={(e) => setCredEmail(e.target.value)}
+                        className="h-9 mt-1"
+                      />
+                    </div>
+                    <div>
+                      <FieldLabel label="New password" hint="Leave empty to keep current. Minimum 8 characters. User will need this to log in." />
+                      <div className="relative mt-1">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          autoComplete="new-password"
+                          value={credPassword}
+                          onChange={(e) => setCredPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className="h-9 pr-9"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((v) => !v)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          aria-label={showPassword ? "Hide password" : "Show password"}
+                        >
+                          {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                        </button>
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={saveCredentials}
+                      disabled={savingCreds}
+                      className="bg-red-500/90 hover:bg-red-500 text-white"
+                    >
+                      {savingCreds ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : (<><KeyRound className="h-3.5 w-3.5 mr-1.5" /> Update credentials</>)}
+                    </Button>
+                  </div>
+                </>
+              )}
             </div>
           )}
           <DialogFooter>
