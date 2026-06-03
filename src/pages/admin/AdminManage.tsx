@@ -85,6 +85,7 @@ export default function AdminManage() {
     mechanics,
     appointments,
     saveAllBusinessHours,
+    refetch,
   } = useSchedulingData({ date: dateStr });
 
   // Monthly appointment counts for heatmap
