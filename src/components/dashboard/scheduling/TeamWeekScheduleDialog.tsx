@@ -516,7 +516,7 @@ function DayCell({
                   {load.busyMin}/{load.totalMin}m
                 </span>
               )}
-              {off && <CalendarOff className={cn("h-3 w-3", isWeekend ? "text-neutral-400" : "text-muted-foreground/60")} />}
+              {off && <CalendarOff className="h-3 w-3 text-neutral-400" />}
               {isCustom && !off && <Clock className="h-3 w-3 text-wj-green" />}
             </div>
           </div>
