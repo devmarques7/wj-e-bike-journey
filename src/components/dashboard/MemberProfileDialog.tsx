@@ -205,7 +205,7 @@ export default function MemberProfileDialog({ member, onClose, onChanged }: Prop
                   <SelectContent>
                     <SelectItem value="admin">Admin</SelectItem>
                     <SelectItem value="staff">Staff</SelectItem>
-                    <SelectItem value="customer">Member</SelectItem>
+                    <SelectItem value="customer">Customer</SelectItem>
                     <SelectItem value="guest">Guest</SelectItem>
                   </SelectContent>
                 </Select>

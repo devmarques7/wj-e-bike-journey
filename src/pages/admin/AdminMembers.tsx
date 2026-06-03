@@ -946,7 +946,7 @@ export default function AdminMembers() {
                 <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v as Role })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="customer">Member</SelectItem>
+                    <SelectItem value="customer">Customer</SelectItem>
                     <SelectItem value="staff">Staff</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>
@@ -994,7 +994,7 @@ export default function AdminMembers() {
                 <Select value={editRole} onValueChange={(v) => setEditRole(v as Role)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="customer">Member</SelectItem>
+                    <SelectItem value="customer">Customer</SelectItem>
                     <SelectItem value="staff">Staff</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>

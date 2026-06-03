@@ -147,7 +147,7 @@ export default function CreateCustomerDialog({ open, onClose, onCreated }: Props
                 <Select value={role} onValueChange={(v) => setRole(v as any)}>
                   <SelectTrigger className="h-9 mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="customer">{t("crm.roles.member")}</SelectItem>
+                    <SelectItem value="customer">{t("crm.roles.customer")}</SelectItem>
                     <SelectItem value="staff">{t("crm.roles.staff")}</SelectItem>
                     <SelectItem value="admin">{t("crm.roles.admin")}</SelectItem>
                     <SelectItem value="guest">{t("crm.roles.guest")}</SelectItem>
