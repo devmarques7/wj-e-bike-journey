@@ -366,12 +366,12 @@ export default function AdminManage() {
                 </div>
                 <Button
                   size="sm"
-                  variant="ghost"
-                  className="text-xs text-wj-green hover:text-wj-green/80 gap-1 h-7"
-                  onClick={() => navigate("/dashboard/admin/workshop")}
+                  variant="outline"
+                  className="text-xs gap-1.5 h-8 border-wj-green/30 text-wj-green hover:bg-wj-green/10 hover:text-wj-green hover:border-wj-green/50"
+                  onClick={() => setTeamWeekOpen(true)}
                 >
+                  <LayoutGrid className="h-3.5 w-3.5" />
                   {t("manage.week.manage")}
-                  <ChevronRight className="h-3 w-3" />
                 </Button>
               </div>
               <div className="flex-1 min-h-0">
