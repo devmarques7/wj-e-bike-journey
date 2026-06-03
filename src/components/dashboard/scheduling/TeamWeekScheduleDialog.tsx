@@ -621,7 +621,7 @@ type Candidate = {
   roles: string[];
 };
 
-function RoleAssignmentPanel({ onChanged }: { onChanged?: () => void }) {
+function RoleAssignmentPanel({ onChanged, inset = false }: { onChanged?: () => void; inset?: boolean }) {
   const { t } = useTranslation();
   const [users, setUsers] = useState<Candidate[]>([]);
   const [loading, setLoading] = useState(false);
@@ -715,7 +715,9 @@ function RoleAssignmentPanel({ onChanged }: { onChanged?: () => void }) {
   );
 
   return (
-    <div className="mt-6 rounded-xl border border-border/40 bg-muted/20 p-4">
+    <div className={cn(
+      inset ? "" : "mt-6 rounded-xl border border-border/40 bg-muted/20 p-4",
+    )}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <UserPlus className="h-4 w-4 text-wj-green" />
