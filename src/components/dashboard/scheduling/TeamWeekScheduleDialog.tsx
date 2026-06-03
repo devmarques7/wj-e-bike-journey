@@ -604,8 +604,8 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
           </DialogContent>
         </Dialog>
 
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-[11px] text-muted-foreground">
-          <div className="flex items-center gap-3">
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
             <span className="flex items-center gap-1">
               <span className="w-3 h-1.5 rounded-full bg-wj-green" /> {t("manage.team_week.legend_load")}
             </span>
@@ -616,17 +616,19 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
               <Clock className="h-3 w-3" /> {t("manage.team_week.legend_custom")}
             </span>
           </div>
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-neutral-200">
-            <Info className="h-3 w-3 text-neutral-600 shrink-0" />
-            <span className="text-[11px] text-black font-medium">
-              {t("manage.team_week.multi_hint_before")}
-              <strong>{t("manage.team_week.multi_hint_key")}</strong>
-              {t("manage.team_week.multi_hint_after")}
-            </span>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-neutral-200">
+              <Info className="h-3 w-3 text-neutral-600 shrink-0" />
+              <span className="text-[11px] text-black font-medium">
+                {t("manage.team_week.multi_hint_before")}
+                <strong>{t("manage.team_week.multi_hint_key")}</strong>
+                {t("manage.team_week.multi_hint_after")}
+              </span>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => onOpenChange(false)}>
+              {t("manage.day_modal.close")}
+            </Button>
           </div>
-          <Button size="sm" variant="outline" onClick={() => onOpenChange(false)}>
-            {t("manage.day_modal.close")}
-          </Button>
         </div>
       </DialogContent>
     </Dialog>
