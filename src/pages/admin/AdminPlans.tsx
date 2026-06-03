@@ -44,10 +44,13 @@ export default function AdminPlans() {
   const { kpis, loading } = usePlansKPIs();
   const { rows: subs } = useSubscriptions();
 
-  const [series, setSeries] = useState<Array<Record<string, any>>>([]);
   const [planNames, setPlanNames] = useState<string[]>([]);
   const [planRows, setPlanRows] = useState<Array<{ name: string; price: number; interval: string; members: number; mrr: number }>>([]);
-  const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d">("90d");
+  const [forecastRange, setForecastRange] = useState<"3m" | "6m" | "12m" | "24m">("12m");
+  // Assumed compound monthly growth rate applied to the current MRR baseline.
+  // 3%/month is a conservative SaaS-style projection — visible curve without
+  // overpromising. Surfaced in the subtitle so the user knows it's a forecast.
+  const MONTHLY_GROWTH = 0.03;
 
   useEffect(() => {
     (async () => {
@@ -65,20 +68,9 @@ export default function AdminPlans() {
         .eq("is_active", true)
         .order("display_order");
 
-      // Build last 90 days timeline (daily buckets)
-      const days: { key: string; date: Date }[] = [];
-      for (let i = 89; i >= 0; i--) {
-        const d = new Date();
-        d.setHours(0, 0, 0, 0);
-        d.setDate(d.getDate() - i);
-        days.push({ key: d.toISOString().slice(0, 10), date: d });
-      }
-
       const planSet = new Set<string>();
       const planOrder = new Map<string, number>();
       const planPrice = new Map<string, number>(); // normalized monthly price
-      const rowMap = new Map<string, Record<string, any>>();
-      days.forEach((d) => rowMap.set(d.key, { date: d.key }));
 
       // Seed plan order from catalog so series order is stable.
       (allPlans ?? []).forEach((p: any) => {
@@ -112,27 +104,9 @@ export default function AdminPlans() {
           planPrice.set(planName, monthly);
         }
 
-        // Truncate started_at to midnight so today's signups still count today.
-        const startedRaw = new Date(s.started_at);
-        const started = new Date(startedRaw.getFullYear(), startedRaw.getMonth(), startedRaw.getDate());
-        // Monthly subs honor a 1-month minimum — extend canceled_at by 1 month from start.
-        const rawEnd = s.canceled_at ? new Date(s.canceled_at) : null;
-        const minEnd = new Date(started);
-        minEnd.setMonth(minEnd.getMonth() + 1);
-        const effectiveEnd = rawEnd ? (rawEnd < minEnd ? minEnd : rawEnd) : null;
-
         if (s.status === "active" || s.status === "trialing" || s.status === "past_due") {
           memberCount.set(planName, (memberCount.get(planName) ?? 0) + 1);
         }
-
-        // Revenue contribution per active day = monthly plan price.
-        const contribution = planPrice.get(planName) ?? 0;
-        days.forEach((d) => {
-          const active = started <= d.date && (!effectiveEnd || effectiveEnd >= d.date);
-          if (!active) return;
-          const row = rowMap.get(d.key)!;
-          row[planName] = (row[planName] ?? 0) + contribution;
-        });
       });
 
       // Order plans; exclude zero-price plans (e.g. Free) from the revenue chart
@@ -140,17 +114,7 @@ export default function AdminPlans() {
       const ordered = Array.from(planSet)
         .filter((n) => (planPrice.get(n) ?? 0) > 0)
         .sort((a, b) => (planOrder.get(a) ?? 999) - (planOrder.get(b) ?? 999));
-      // Ensure every day has a numeric value (0) for every plan so Recharts
-      // renders a continuous area even with sparse data.
-      const filledSeries = days.map((d) => {
-        const row = rowMap.get(d.key)!;
-        ordered.forEach((n) => {
-          if (row[n] === undefined) row[n] = 0;
-        });
-        return row;
-      });
       setPlanNames(ordered);
-      setSeries(filledSeries);
 
       // Plan rows for the table
       setPlanRows(
@@ -169,10 +133,26 @@ export default function AdminPlans() {
     })();
   }, []);
 
+  // Forecast monthly buckets starting from current month, compounding the
+  // current per-plan MRR baseline by MONTHLY_GROWTH for the chosen horizon.
   const filteredSeries = useMemo(() => {
-    const days = timeRange === "7d" ? 7 : timeRange === "30d" ? 30 : 90;
-    return series.slice(-days);
-  }, [series, timeRange]);
+    const months = forecastRange === "3m" ? 3 : forecastRange === "6m" ? 6 : forecastRange === "12m" ? 12 : 24;
+    const baseline = new Map<string, number>();
+    planNames.forEach((n) => baseline.set(n, planRows.find((p) => p.name === n)?.mrr ?? 0));
+    const today = new Date();
+    const start = new Date(today.getFullYear(), today.getMonth(), 1);
+    const out: Array<Record<string, any>> = [];
+    for (let i = 0; i <= months; i++) {
+      const d = new Date(start.getFullYear(), start.getMonth() + i, 1);
+      const row: Record<string, any> = { date: d.toISOString().slice(0, 10) };
+      const factor = Math.pow(1 + MONTHLY_GROWTH, i);
+      planNames.forEach((n) => {
+        row[n] = (baseline.get(n) ?? 0) * factor;
+      });
+      out.push(row);
+    }
+    return out;
+  }, [planNames, planRows, forecastRange]);
 
   // System token palette only — wj-green primary accent + neutral foreground tones
   const planColors: Record<string, string> = {
