@@ -79,11 +79,11 @@ export default function RegisterManualPaymentModal({
             </div>
             <div>
               <Label>{t("plans.payment_modal.period_start")}</Label>
-              <DatePicker value={periodStart} onChange={setPeriodStart} placeholder={t("plans.payment_modal.period_start_ph")} />
+              <DatePicker value={periodStart} onChange={setPeriodStart} placeholder={String(t("plans.payment_modal.period_start_ph"))} />
             </div>
             <div>
               <Label>{t("plans.payment_modal.period_end")}</Label>
-              <DatePicker value={periodEnd} onChange={setPeriodEnd} placeholder={t("plans.payment_modal.period_end_ph")} />
+              <DatePicker value={periodEnd} onChange={setPeriodEnd} placeholder={String(t("plans.payment_modal.period_end_ph"))} />
             </div>
           </div>
           <div>
