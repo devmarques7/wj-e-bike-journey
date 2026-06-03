@@ -90,6 +90,7 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
   const [bulkSaving, setBulkSaving] = useState(false);
   const [bulkStart, setBulkStart] = useState("09:00");
   const [bulkEnd, setBulkEnd] = useState("18:00");
+  const [assignOpen, setAssignOpen] = useState(false);
 
   const cellKey = (staffId: string, date: Date) => `${staffId}|${ymd(date)}`;
   const toggleSelect = (staffId: string, date: Date) => {
@@ -571,17 +572,34 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
                     ))}
                   </div>
                 ))}
+
+                {/* Add mechanic CTA row */}
+                <button
+                  type="button"
+                  onClick={() => setAssignOpen(true)}
+                  className="w-full mt-1 flex items-center justify-center gap-2 px-3 py-3 rounded-xl border border-dashed border-wj-green/40 bg-wj-green/5 hover:bg-wj-green/10 text-wj-green text-xs font-medium transition-colors"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  {t("manage.team_week.add_mechanic", { defaultValue: "Add mechanic" })}
+                </button>
               </div>
               </div>
             </div>
           )}
-
-          {/* Divider */}
-          <div className="h-px bg-border/40" />
-
-          {/* Role assignment layer (inset inside main) */}
-          <RoleAssignmentPanel onChanged={onChanged} inset />
         </main>
+
+        {/* Role assignment modal */}
+        <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
+          <DialogContent className="max-w-2xl bg-background/95 backdrop-blur-xl border-border/50 max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{t("manage.team_week.roles_title", { defaultValue: "Team roles" })}</DialogTitle>
+              <DialogDescription>
+                {t("manage.team_week.roles_hint", { defaultValue: "Promote a user to mechanic (staff) or admin" })}
+              </DialogDescription>
+            </DialogHeader>
+            <RoleAssignmentPanel onChanged={onChanged} inset />
+          </DialogContent>
+        </Dialog>
 
         <div className="mt-6 flex items-center justify-between text-[11px] text-muted-foreground">
           <div className="flex items-center gap-3">
