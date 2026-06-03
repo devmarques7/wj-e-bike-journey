@@ -82,13 +82,15 @@ function startOfWeek(d: Date) {
 }
 
 interface Props {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
+  open?: boolean;
+  onOpenChange?: (v: boolean) => void;
   mechanics: Mechanic[];
   onChanged?: () => void;
+  /** Render inline (no Dialog wrapper). When true, `open` is ignored. */
+  embedded?: boolean;
 }
 
-export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, onChanged }: Props) {
+export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, onChanged, embedded = false }: Props) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language?.startsWith("pt") ? "pt-PT" : "en-GB";
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date()));
@@ -169,8 +171,8 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
   }, [mechanics, fromISO, toISO]);
 
   useEffect(() => {
-    if (open) load();
-  }, [open, load]);
+    if (embedded || open) load();
+  }, [open, embedded, load]);
 
   /* ------------- helpers ------------- */
 
@@ -369,14 +371,8 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
 
   const todayISO = ymd(new Date());
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[98vw] max-w-[1600px] bg-background/95 backdrop-blur-xl border-border/50 max-h-[94vh] overflow-y-auto p-4 sm:p-6">
-        <DialogHeader>
-          <DialogTitle className="text-foreground">{t("manage.team_week.title")}</DialogTitle>
-          <DialogDescription>{t("manage.team_week.subtitle")}</DialogDescription>
-        </DialogHeader>
-
+  const body = (
+    <>
         {/* Week nav */}
         <div className="flex flex-wrap items-center justify-between gap-2 mt-4">
           <Button
@@ -625,11 +621,28 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
                 {t("manage.team_week.multi_hint_after")}
               </span>
             </div>
-            <Button size="sm" variant="outline" onClick={() => onOpenChange(false)}>
-              {t("manage.day_modal.close")}
-            </Button>
+            {!embedded && (
+              <Button size="sm" variant="outline" onClick={() => onOpenChange?.(false)}>
+                {t("manage.day_modal.close")}
+              </Button>
+            )}
           </div>
         </div>
+    </>
+  );
+
+  if (embedded) {
+    return <div className="w-full">{body}</div>;
+  }
+
+  return (
+    <Dialog open={!!open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-[98vw] max-w-[1600px] bg-background/95 backdrop-blur-xl border-border/50 max-h-[94vh] overflow-y-auto p-4 sm:p-6">
+        <DialogHeader>
+          <DialogTitle className="text-foreground">{t("manage.team_week.title")}</DialogTitle>
+          <DialogDescription>{t("manage.team_week.subtitle")}</DialogDescription>
+        </DialogHeader>
+        {body}
       </DialogContent>
     </Dialog>
   );

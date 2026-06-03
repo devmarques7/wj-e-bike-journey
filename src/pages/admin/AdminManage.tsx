@@ -439,7 +439,10 @@ export default function AdminManage() {
               className="col-span-12 lg:col-span-5 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-medium text-foreground">{t("manage.week.title")}</h3>
+                <div>
+                  <h3 className="text-sm font-medium text-foreground">{t("manage.team_week.title")}</h3>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{t("manage.team_week.subtitle")}</p>
+                </div>
                 <Button
                   size="sm"
                   variant="ghost"
@@ -450,42 +453,11 @@ export default function AdminManage() {
                   <ChevronRight className="h-3 w-3" />
                 </Button>
               </div>
-              <div className="grid grid-cols-7 gap-1.5">
-                {[1, 2, 3, 4, 5, 6, 0].map((dow) => {
-                  const dh = draft[dow];
-                  const apptCount = weeklyByDow[dow] ?? 0;
-                  const isToday = dow === todayDow;
-                  return (
-                    <button
-                      key={dow}
-                      onClick={() => setDayModalDow(dow)}
-                      className={cn(
-                        "relative p-2 rounded-lg text-center transition-all group",
-                        dh?.is_open
-                          ? "bg-muted/50 hover:bg-muted/70"
-                          : "bg-muted/20 opacity-50 hover:opacity-80",
-                        isToday && "ring-2 ring-wj-green bg-wj-green/10 hover:bg-wj-green/15 opacity-100",
-                      )}
-                    >
-                      {apptCount > 0 && (
-                        <span className="absolute top-1 right-1 min-w-[14px] h-[14px] px-1 rounded-full bg-wj-green text-[8px] font-bold text-background flex items-center justify-center">
-                          {apptCount}
-                        </span>
-                      )}
-                      <p className={cn("text-[11px] font-medium", isToday ? "text-wj-green" : "text-foreground")}>
-                        {t(`manage.days_short.${DAY_KEYS[dow]}`)}
-                      </p>
-                      {dh?.is_open ? (
-                        <p className="text-[9px] text-muted-foreground mt-0.5">
-                          {trimHm(dh.open_time).replace(":00", "")}-{trimHm(dh.close_time).replace(":00", "")}
-                        </p>
-                      ) : (
-                        <p className="text-[9px] text-muted-foreground mt-0.5">{t("manage.week.closed")}</p>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+              <TeamWeekScheduleDialog
+                embedded
+                mechanics={mechanics}
+                onChanged={refetch}
+              />
             </motion.div>
 
             {/* Workload + Team week button */}
