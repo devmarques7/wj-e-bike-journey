@@ -209,7 +209,7 @@ export function useSubscriptions() {
       const byId = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
       merged = merged.map((r) => ({
         ...r,
-        profile: r.profile ?? byId.get(r.user_id) ?? null,
+        profile: byId.get(r.user_id) ?? null,
       }));
     }
     setRows(merged);
