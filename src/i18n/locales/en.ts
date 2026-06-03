@@ -261,6 +261,7 @@ const en = {
       legend_load: "Load",
       legend_off: "Off day",
       legend_custom: "Custom hours",
+      legend_default: "Default",
       multi_hint: "Tip: hold ⌘/Ctrl or Shift and click to select multiple days",
       multi_hint_before: "Tip: hold ",
       multi_hint_key: "⌘/Ctrl",
