@@ -305,12 +305,12 @@ export default function AdminManage() {
 
         {/* Main Content Grid — independent glass blocks */}
         <div className="grid grid-cols-12 gap-4 lg:gap-5">
-            {/* Row 1 — Workload (slim bar) + Mechanics list */}
+            {/* Row 1 — Workload (full width slim bar) */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 }}
-              className="col-span-12 lg:col-span-8 p-4 lg:p-5 flex flex-col bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
+              className="col-span-12 p-4 lg:p-5 flex flex-col bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
@@ -350,22 +350,40 @@ export default function AdminManage() {
                 <span>{t("manage.workload.capacity", { n: totalCapacity })}</span>
               </div>
 
-              <Button
-                size="sm"
-                variant="outline"
-                className="mt-3 gap-2 w-full text-xs h-8"
-                onClick={() => setTeamWeekOpen(true)}
-              >
-                <LayoutGrid className="h-3.5 w-3.5" />
-                {t("manage.team_week.open_button")}
-              </Button>
             </motion.div>
 
-            {/* Mechanics list — col-4 */}
+            {/* Row 2 — Team Weekly Schedule (MAIN) */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.08 }}
+              transition={{ delay: 0.12 }}
+              className="col-span-12 lg:col-span-8 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-sm font-medium text-foreground">{t("manage.team_week.title")}</h3>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{t("manage.team_week.subtitle")}</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-xs text-wj-green hover:text-wj-green/80 gap-1 h-7"
+                  onClick={() => navigate("/dashboard/admin/workshop")}
+                >
+                  {t("manage.week.manage")}
+                  <ChevronRight className="h-3 w-3" />
+                </Button>
+              </div>
+              <div className="flex-1 min-h-0">
+                <TeamWeekWorkloadCompact mechanics={mechanics} />
+              </div>
+            </motion.div>
+
+            {/* Mechanics list — col-4 next to team weekly */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
               className="col-span-12 lg:col-span-4 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
             >
               <div className="flex items-center gap-2 mb-3">
@@ -382,7 +400,7 @@ export default function AdminManage() {
                   {t("manage.team.empty")}
                 </div>
               ) : (
-                <div className="flex-1 flex flex-col gap-2 min-h-0 overflow-y-auto pr-1 max-h-[180px]">
+                <div className="flex-1 flex flex-col gap-2 min-h-0 overflow-y-auto pr-1">
                   {mechanics.map((member, index) => {
                     const memberLoad = Math.min(
                       100,
