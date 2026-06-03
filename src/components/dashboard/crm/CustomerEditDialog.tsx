@@ -8,7 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Info, CheckCircle2, AlertTriangle, CreditCard, Banknote, XCircle, Loader2 } from "lucide-react";
+import { Info, CheckCircle2, AlertTriangle, CreditCard, Banknote, XCircle, Loader2, Calendar as CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlans, cancelSubscription, changeSubscriptionPlan } from "@/hooks/plans/usePlansData";
 import { type CrmCustomer, type LifecycleStage, updateCustomerProfile } from "@/hooks/crm/useCrmData";
@@ -291,12 +295,30 @@ export default function CustomerEditDialog({ open, onClose, customer, onSaved }:
                     label="Next monthly payment date"
                     hint="Date of the next subscription charge / cash collection. Updates current_period_end. Renewals follow this anchor day."
                   />
-                  <Input
-                    type="date"
-                    value={billingDate}
-                    onChange={(e) => setBillingDate(e.target.value)}
-                    className="h-9 mt-1"
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        data-empty={!billingDate}
+                        className={cn(
+                          "h-9 mt-1 w-full justify-start text-left font-normal",
+                          "data-[empty=true]:text-muted-foreground",
+                        )}
+                      >
+                        <CalendarIcon className="h-3.5 w-3.5 mr-2" />
+                        {billingDate ? format(new Date(billingDate), "PPP") : <span>Pick a date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={billingDate ? new Date(billingDate) : undefined}
+                        onSelect={(d) => setBillingDate(d ? format(d, "yyyy-MM-dd") : "")}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 {bankRequiresMethod && (
