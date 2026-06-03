@@ -78,7 +78,7 @@ export default function AdminPlanDetail() {
                             <TableCell className="text-xs font-medium">{s.profile?.full_name ?? "—"}</TableCell>
                             <TableCell className="text-xs text-muted-foreground">{s.profile?.email ?? "—"}</TableCell>
                             <TableCell className="text-xs">v{v?.version_number ?? "?"}</TableCell>
-                            <TableCell><Badge variant="outline" className="text-xs">{t(`plans.status.${s.status}`, s.status)}</Badge></TableCell>
+                            <TableCell><Badge variant="outline" className="text-xs">{String(t(`plans.status.${s.status}`, { defaultValue: s.status }))}</Badge></TableCell>
                             <TableCell className="text-xs text-muted-foreground">{new Date(s.started_at).toLocaleDateString(locale)}</TableCell>
                           </TableRow>
                         );
@@ -100,7 +100,7 @@ export default function AdminPlanDetail() {
                           <TableRow key={v.id}>
                             <TableCell className="font-medium">v{v.version_number}</TableCell>
                             <TableCell>€{Number(v.price).toFixed(2)}</TableCell>
-                            <TableCell className="text-xs">{t(`plans.intervals.${v.interval}`, v.interval)}</TableCell>
+                            <TableCell className="text-xs">{String(t(`plans.intervals.${v.interval}`, { defaultValue: v.interval }))}</TableCell>
                             <TableCell>
                               {v.status === "active" ? <Badge className="bg-wj-green/20 text-wj-green">{t("plans.detail.versions.active")}</Badge> : <Badge variant="outline">{v.status}</Badge>}
                             </TableCell>
