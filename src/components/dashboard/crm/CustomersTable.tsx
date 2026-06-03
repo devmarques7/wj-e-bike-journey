@@ -21,7 +21,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ChevronLeft, ChevronRight, MoreHorizontal, ArrowUpDown, Download, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, MoreHorizontal, ArrowUpDown, Download, Search, Info } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { downloadCSV } from "@/lib/csv";
 import { type CrmCustomer, type LifecycleStage, deleteCustomerProfile } from "@/hooks/crm/useCrmData";
 import { LIFECYCLE_META, healthColor, initials, relativeTime } from "./colors";
@@ -49,6 +50,30 @@ export default function CustomersTable({ rows, loading, onMutate }: Props) {
   const [healthMin, setHealthMin] = useState(0);
   const [rowSelection, setRowSelection] = useState({});
   const [editing, setEditing] = useState<CrmCustomer | null>(null);
+
+  const HeaderHint = ({ label, hintKey, sortable, column }: { label: string; hintKey: string; sortable?: boolean; column?: any }) => (
+    <div className="flex items-center gap-1">
+      {sortable ? (
+        <button className="flex items-center gap-1" onClick={() => column?.toggleSorting()}>
+          {label} <ArrowUpDown className="h-3 w-3" />
+        </button>
+      ) : (
+        <span>{label}</span>
+      )}
+      <TooltipProvider delayDuration={150}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button type="button" className="text-muted-foreground/60 hover:text-foreground transition-colors" onClick={(e) => e.stopPropagation()}>
+              <Info className="h-3 w-3" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-[220px] text-[11px] leading-snug">
+            {t(`crm.table.column_hints.${hintKey}`)}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </div>
+  );
 
   const handleDelete = async (c: CrmCustomer) => {
     if (!confirm(t("crm.table.confirm_delete", { name: c.full_name }))) return;
@@ -118,9 +143,7 @@ export default function CustomersTable({ rows, loading, onMutate }: Props) {
       {
         accessorKey: "full_name",
         header: ({ column }) => (
-          <button className="flex items-center gap-1" onClick={() => column.toggleSorting()}>
-            {t("crm.table.columns.customer")} <ArrowUpDown className="h-3 w-3" />
-          </button>
+          <HeaderHint label={t("crm.table.columns.customer")} hintKey="customer" sortable column={column} />
         ),
         cell: ({ row }) => (
           <div className="flex items-center gap-3 min-w-[200px]">
@@ -138,7 +161,7 @@ export default function CustomersTable({ rows, loading, onMutate }: Props) {
       },
       {
         accessorKey: "plan_name",
-        header: t("crm.table.columns.plan"),
+        header: () => <HeaderHint label={t("crm.table.columns.plan")} hintKey="plan" />,
         cell: ({ row }) =>
           row.original.plan_name ? (
             <Badge variant="outline" className="text-[10px]">{row.original.plan_name}</Badge>
@@ -148,7 +171,7 @@ export default function CustomersTable({ rows, loading, onMutate }: Props) {
       },
       {
         accessorKey: "lifecycle_stage",
-        header: t("crm.table.columns.stage"),
+        header: () => <HeaderHint label={t("crm.table.columns.stage")} hintKey="stage" />,
         cell: ({ row }) => {
           const meta = LIFECYCLE_META[row.original.lifecycle_stage];
           return (
@@ -165,9 +188,7 @@ export default function CustomersTable({ rows, loading, onMutate }: Props) {
       {
         accessorKey: "health_score",
         header: ({ column }) => (
-          <button className="flex items-center gap-1" onClick={() => column.toggleSorting()}>
-            {t("crm.table.columns.health")} <ArrowUpDown className="h-3 w-3" />
-          </button>
+          <HeaderHint label={t("crm.table.columns.health")} hintKey="health" sortable column={column} />
         ),
         cell: ({ row }) => (
           <div className="flex items-center gap-2 min-w-[90px]">
@@ -185,9 +206,7 @@ export default function CustomersTable({ rows, loading, onMutate }: Props) {
       {
         accessorKey: "churn_risk_score",
         header: ({ column }) => (
-          <button className="flex items-center gap-1" onClick={() => column.toggleSorting()}>
-            {t("crm.table.columns.risk")} <ArrowUpDown className="h-3 w-3" />
-          </button>
+          <HeaderHint label={t("crm.table.columns.risk")} hintKey="risk" sortable column={column} />
         ),
         cell: ({ row }) => {
           const v = row.original.churn_risk_score;
@@ -205,20 +224,18 @@ export default function CustomersTable({ rows, loading, onMutate }: Props) {
       {
         accessorKey: "ltv_estimated",
         header: ({ column }) => (
-          <button className="flex items-center gap-1" onClick={() => column.toggleSorting()}>
-            {t("crm.table.columns.ltv")} <ArrowUpDown className="h-3 w-3" />
-          </button>
+          <HeaderHint label={t("crm.table.columns.ltv")} hintKey="ltv" sortable column={column} />
         ),
         cell: ({ row }) => <span className="font-mono text-xs">€{Number(row.original.ltv_estimated).toFixed(0)}</span>,
       },
       {
         accessorKey: "last_contact_at",
-        header: t("crm.table.columns.last_contact"),
+        header: () => <HeaderHint label={t("crm.table.columns.last_contact")} hintKey="last_contact" />,
         cell: ({ row }) => <span className="text-xs text-muted-foreground">{relativeTime(row.original.last_contact_at)}</span>,
       },
       {
         accessorKey: "tags",
-        header: t("crm.table.columns.tags"),
+        header: () => <HeaderHint label={t("crm.table.columns.tags")} hintKey="tags" />,
         cell: ({ row }) => {
           const tags = row.original.tags ?? [];
           const visible = tags.slice(0, 3);
