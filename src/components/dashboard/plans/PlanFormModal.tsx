@@ -171,13 +171,15 @@ export default function PlanFormModal({
       setColor(plan.color_hex ?? "#058c42");
       setPrice(Number(plan.activeVersion?.price ?? 0));
       setInterval((plan.activeVersion?.interval ?? "monthly") as any);
-      setTrial(plan.activeVersion?.trial_days ?? 0);
+      const td = plan.activeVersion?.trial_days ?? 0;
+      setUnlimitedTrial(td === -1);
+      setTrial(td === -1 ? 0 : td);
       setFeatures(plan.activeVersion?.features ?? []);
       setIsDefault(Boolean((plan as any).is_default));
     } else {
       setName(""); setSlug(""); setTier(1); setDescription(""); setColor("#058c42");
       setPrice(0); setInterval("monthly"); setTrial(0); setFeatures([]);
-      setIsDefault(false);
+      setIsDefault(false); setUnlimitedTrial(false);
     }
   }, [plan, open]);
 
