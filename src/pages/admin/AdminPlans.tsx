@@ -334,7 +334,7 @@ export default function AdminPlans() {
                       </Pie>
                     </PieChart>
                   </ChartContainer>
-                  <div className="mt-3 space-y-1.5 overflow-y-auto">
+                  <div className="mt-3 flex items-center justify-center flex-wrap gap-1.5">
                     {kpis.perPlan.map((p) => {
                       const pct = totalSubs > 0 ? (p.active_subs / totalSubs) * 100 : 0;
                       const color = (chartConfig[p.name]?.color as string) ?? "hsl(var(--muted-foreground))";
@@ -342,14 +342,16 @@ export default function AdminPlans() {
                         <Link
                           to={`/dashboard/admin/plans/${p.plan_id}`}
                           key={p.plan_id}
-                          className="flex items-center justify-between gap-2 px-2 py-1 rounded-lg hover:bg-muted/30 transition-colors"
+                          className="group flex items-center gap-1.5 px-2 py-1 rounded-full border border-border/40 bg-background/40 hover:bg-muted/40 hover:border-border transition-all duration-300 overflow-hidden"
                         >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="h-2 w-2 rounded-full shrink-0" style={{ background: color }} />
-                            <span className="text-xs text-foreground truncate">{p.name}</span>
-                          </div>
-                          <span className="text-[11px] text-muted-foreground shrink-0">
-                            {p.active_subs} ({pct.toFixed(0)}%)
+                          <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: color }} />
+                          <span className="text-[10px] uppercase tracking-wider text-foreground/80">{p.name}</span>
+                          <span className="grid grid-cols-[0fr] group-hover:grid-cols-[1fr] transition-[grid-template-columns] duration-300 ease-out">
+                            <span className="overflow-hidden whitespace-nowrap">
+                              <span className="pl-1.5 text-[10px] text-muted-foreground">
+                                {p.active_subs} · {pct.toFixed(0)}%
+                              </span>
+                            </span>
                           </span>
                         </Link>
                       );
