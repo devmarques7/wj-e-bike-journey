@@ -60,18 +60,16 @@ export default function CustomersTable({ rows, loading, onMutate }: Props) {
       ) : (
         <span>{label}</span>
       )}
-      <TooltipProvider delayDuration={150}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button type="button" className="text-muted-foreground/60 hover:text-foreground transition-colors" onClick={(e) => e.stopPropagation()}>
-              <Info className="h-3 w-3" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="top" className="max-w-[220px] text-[11px] leading-snug">
-            {t(`crm.table.column_hints.${hintKey}`)}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button type="button" className="text-muted-foreground/60 hover:text-foreground transition-colors" onClick={(e) => e.stopPropagation()}>
+            <Info className="h-3 w-3" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top" align="center" sideOffset={8} className="max-w-[220px] text-[11px] leading-snug">
+          {t(`crm.table.column_hints.${hintKey}`)}
+        </TooltipContent>
+      </Tooltip>
     </div>
   );
 
@@ -325,6 +323,7 @@ export default function CustomersTable({ rows, loading, onMutate }: Props) {
   };
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="space-y-3">
       {/* Filters */}
       <div className="flex flex-wrap gap-2 items-center">
@@ -456,5 +455,6 @@ export default function CustomersTable({ rows, loading, onMutate }: Props) {
         onSaved={onMutate}
       />
     </div>
+    </TooltipProvider>
   );
 }
