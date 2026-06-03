@@ -1,3 +1,0 @@
-# Note: ensure the function below is registered in supabase/config.toml under [functions]
-# [functions.admin-create-customer]
-# verify_jwt = true
