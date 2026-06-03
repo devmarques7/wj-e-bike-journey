@@ -9,7 +9,7 @@ import {
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   RadarChart, Radar, PolarGrid, PolarAngleAxis,
-  BarChart, Bar, Line, ResponsiveContainer,
+  BarChart, Bar, Line, ResponsiveContainer, Tooltip as RTooltip,
   PieChart, Pie, Cell, RadialBarChart, RadialBar,
 } from "recharts";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
@@ -344,7 +344,7 @@ export default function AdminCrm() {
                           <Cell key={i} fill={[CRM_COLORS.care, CRM_COLORS.performance, CRM_COLORS.prestige, CRM_COLORS.accent][i % 4]} />
                         ))}
                       </Pie>
-                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <RTooltip cursor={{ fill: "hsl(var(--muted) / 0.2)" }} contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
                     </PieChart>
                   </ResponsiveContainer>
                 )}
@@ -372,7 +372,7 @@ export default function AdminCrm() {
                           <Cell key={i} fill={entry.color} />
                         ))}
                       </RadialBar>
-                      <ChartTooltip content={<ChartTooltipContent nameKey="label" />} />
+                      <RTooltip contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
                     </RadialBarChart>
                   </ResponsiveContainer>
                 )}
@@ -429,7 +429,7 @@ export default function AdminCrm() {
                       <CartesianGrid horizontal={false} strokeDasharray="3 3" opacity={0.15} />
                       <XAxis type="number" tickLine={false} axisLine={false} tick={{ fontSize: 10 }} />
                       <YAxis type="category" dataKey="plan" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} width={80} />
-                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <RTooltip cursor={{ fill: "hsl(var(--muted) / 0.2)" }} contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
                       <Bar dataKey="avgLtv" fill={CRM_COLORS.accent} radius={[0, 8, 8, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
