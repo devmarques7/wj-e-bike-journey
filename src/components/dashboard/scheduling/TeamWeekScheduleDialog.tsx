@@ -384,19 +384,6 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
             {days[6].toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" })}
           </div>
           <div className="flex items-center gap-2">
-            <TooltipProvider delayDuration={150}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-wj-green/10 border border-wj-green/30 text-[10px] text-wj-green cursor-help">
-                    <Info className="h-3 w-3" />
-                    {t("manage.team_week.multi_hint")}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-[260px] text-xs">
-                  {t("manage.team_week.multi_hint")}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
             <Button
               variant="ghost"
               size="sm"
@@ -422,7 +409,16 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
         <main className="mt-4 rounded-3xl border border-border/40 bg-muted/10 p-3 sm:p-5 space-y-5">
           {/* Bulk action bar */}
           {selected.size > 0 && (
-            <div className="flex flex-wrap items-center gap-2 p-3 rounded-2xl bg-wj-green/10 border border-wj-green/30">
+            <>
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-neutral-200 w-fit">
+                <Info className="h-3 w-3 text-neutral-600 shrink-0" />
+                <span className="text-[11px] text-black font-medium">
+                  {t("manage.team_week.multi_hint_before")}
+                  <strong>{t("manage.team_week.multi_hint_key")}</strong>
+                  {t("manage.team_week.multi_hint_after")}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 p-3 rounded-2xl bg-wj-green/10 border border-wj-green/30">
               <span className="text-xs font-medium text-foreground">
                 {t(
                   selected.size === 1
@@ -483,6 +479,7 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
               </Button>
               {bulkSaving && <Loader2 className="h-3 w-3 animate-spin text-wj-green" />}
             </div>
+          </>
           )}
 
           {/* Schedule grid */}
