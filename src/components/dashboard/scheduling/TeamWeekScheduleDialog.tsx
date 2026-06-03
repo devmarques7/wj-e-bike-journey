@@ -260,14 +260,14 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-7xl bg-background/95 backdrop-blur-xl border-border/50 max-h-[92vh] overflow-y-auto">
+      <DialogContent className="w-[98vw] max-w-[1600px] bg-background/95 backdrop-blur-xl border-border/50 max-h-[94vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="text-foreground">{t("manage.team_week.title")}</DialogTitle>
           <DialogDescription>{t("manage.team_week.subtitle")}</DialogDescription>
         </DialogHeader>
 
         {/* Week nav */}
-        <div className="flex items-center justify-between mt-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 mt-4">
           <Button
             variant="ghost"
             size="sm"
@@ -280,7 +280,7 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
           >
             <ChevronLeft className="h-4 w-4" /> {t("manage.team_week.prev")}
           </Button>
-          <div className="text-sm font-medium text-foreground capitalize">
+          <div className="text-xs sm:text-sm font-medium text-foreground capitalize order-last w-full text-center sm:order-none sm:w-auto">
             {days[0].toLocaleDateString(locale, { day: "numeric", month: "short" })} –{" "}
             {days[6].toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" })}
           </div>
@@ -316,25 +316,34 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
             {t("manage.team.empty")}
           </div>
         ) : (
-          <div className="mt-4 overflow-x-auto">
-            <div className="min-w-[800px]">
+          <div className="mt-4 rounded-2xl border border-border/40 bg-muted/10 p-3 sm:p-4 overflow-x-auto">
+            <div className="min-w-[920px]">
               {/* Header row */}
-              <div className="grid grid-cols-[180px_repeat(7,minmax(0,1fr))] gap-1 mb-1">
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground px-2">
+              <div className="grid grid-cols-[200px_repeat(7,minmax(110px,1fr))] gap-2 mb-2">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground px-2 self-end pb-1">
                   {t("manage.team_week.mechanic")}
                 </div>
                 {days.map((d) => {
                   const isToday = ymd(d) === todayISO;
+                  const dw = d.getDay();
+                  const wknd = dw === 0 || dw === 6;
                   return (
                     <div
                       key={d.toISOString()}
                       className={cn(
-                        "text-center text-[10px] uppercase tracking-wider py-1 rounded-md",
-                        isToday ? "bg-wj-green/15 text-wj-green font-bold" : "text-muted-foreground",
+                        "text-center text-[10px] uppercase tracking-wider py-1.5 rounded-md",
+                        isToday
+                          ? "bg-wj-green/15 text-wj-green font-bold"
+                          : wknd
+                            ? "bg-white/90 text-neutral-700"
+                            : "text-muted-foreground",
                       )}
                     >
                       <div>{d.toLocaleDateString(locale, { weekday: "short" })}</div>
-                      <div className="text-foreground text-sm font-medium mt-0.5">
+                      <div className={cn(
+                        "text-sm font-medium mt-0.5",
+                        wknd && !isToday ? "text-neutral-900" : "text-foreground",
+                      )}>
                         {d.getDate()}
                       </div>
                     </div>
@@ -343,15 +352,15 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
               </div>
 
               {/* Mechanic rows */}
-              <div className="space-y-1">
+              <div className="space-y-2">
                 {mechanics.map((m) => (
                   <div
                     key={m.user_id}
-                    className="grid grid-cols-[180px_repeat(7,minmax(0,1fr))] gap-1 items-stretch"
+                    className="grid grid-cols-[200px_repeat(7,minmax(110px,1fr))] gap-2 items-stretch"
                   >
                     {/* Mechanic identity */}
-                    <div className="flex items-center gap-2 px-2 py-2 rounded-lg bg-muted/30">
-                      <div className="w-7 h-7 rounded-full bg-wj-green/20 text-wj-green text-[10px] font-bold flex items-center justify-center shrink-0">
+                    <div className="flex items-center gap-2 px-3 py-3 rounded-xl bg-muted/40 border border-border/30">
+                      <div className="w-9 h-9 rounded-full bg-wj-green/20 text-wj-green text-xs font-bold flex items-center justify-center shrink-0">
                         {(m.full_name ?? m.email ?? "??")
                           .split(" ")
                           .map((s) => s[0])
@@ -360,9 +369,12 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
                           .toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-medium text-foreground truncate">
+                        <p className="text-sm font-medium text-foreground truncate">
                           {m.full_name ?? m.email}
                         </p>
+                        {m.full_name && m.email && (
+                          <p className="text-[10px] text-muted-foreground truncate">{m.email}</p>
+                        )}
                       </div>
                     </div>
 
