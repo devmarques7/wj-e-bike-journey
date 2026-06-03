@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Calendar as CalendarIcon, Check, Loader2, Trash2, Sparkles } from "lucide-react";
+import { Calendar as CalendarIcon, Check, Loader2, Trash2, ArrowUpRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
@@ -317,7 +317,7 @@ export default function ExceptionsCalendarDialog({ open, onOpenChange, exception
           {/* Dutch Holidays list */}
           <div className="rounded-2xl border border-border/30 bg-muted/20 p-4 flex flex-col">
             <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="h-3.5 w-3.5 text-wj-green" />
+              <ArrowUpRight className="h-3.5 w-3.5 text-wj-green" />
               <h3 className="text-xs font-medium text-foreground uppercase tracking-wider">
                 {t("manage.exceptions_modal.holidays_title", "Dutch Holidays")}
               </h3>
