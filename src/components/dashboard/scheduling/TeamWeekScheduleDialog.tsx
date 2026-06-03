@@ -467,7 +467,7 @@ function DayCell({
       <PopoverTrigger asChild>
         <button
           className={cn(
-            "relative h-[110px] rounded-xl p-2 text-left transition-all border overflow-hidden",
+            "relative h-[130px] rounded-xl p-2.5 text-left transition-all border overflow-hidden",
             isWeekend
               ? "bg-white text-neutral-900 border-neutral-200 hover:bg-neutral-50"
               : off
