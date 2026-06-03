@@ -8,7 +8,7 @@ import { Navigate, useNavigate, Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis, Pie, PieChart, LabelList } from "recharts";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis, Pie, PieChart, LabelList, Label } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent, type ChartConfig } from "@/components/ui/chart";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePlansKPIs, useSubscriptions } from "@/hooks/plans/usePlansData";
@@ -299,7 +299,8 @@ export default function AdminPlans() {
                         }))}
                         dataKey="value"
                         nameKey="name"
-                        innerRadius={30}
+                        innerRadius={55}
+                        strokeWidth={2}
                         cornerRadius={8}
                         paddingAngle={4}
                       >
@@ -310,6 +311,25 @@ export default function AdminPlans() {
                           fontWeight={600}
                           fill="currentColor"
                           formatter={(value: number) => (value > 0 ? value.toString() : "")}
+                        />
+                        <Label
+                          content={({ viewBox }) => {
+                            if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                              const cx = viewBox.cx as number;
+                              const cy = viewBox.cy as number;
+                              return (
+                                <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle">
+                                  <tspan x={cx} y={cy - 6} className="fill-foreground text-2xl font-semibold">
+                                    {kpis.activeSubs.toLocaleString()}
+                                  </tspan>
+                                  <tspan x={cx} y={cy + 14} className="fill-muted-foreground text-[10px]">
+                                    Subscribers
+                                  </tspan>
+                                </text>
+                              );
+                            }
+                            return null;
+                          }}
                         />
                       </Pie>
                     </PieChart>
