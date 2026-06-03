@@ -452,41 +452,61 @@ function DayCell({
       <PopoverTrigger asChild>
         <button
           className={cn(
-            "relative h-[58px] rounded-lg p-1.5 text-left transition-all border",
+            "relative h-[110px] rounded-xl p-2 text-left transition-all border overflow-hidden",
             off
-              ? "bg-muted/20 border-border/30 hover:bg-muted/30"
-              : "bg-muted/40 border-border/30 hover:bg-muted/60",
-            isToday && "ring-1 ring-wj-green",
-            isCustom && "border-wj-green/40",
+              ? "bg-background/80 border-border/20 hover:bg-background/60"
+              : "bg-muted/30 border-border/40 hover:bg-muted/50",
+            isToday && "ring-2 ring-wj-green/70",
+            isCustom && "border-wj-green/50",
           )}
         >
-          <div className="flex items-center justify-between">
-            <span className="text-[9px] text-muted-foreground">
+          {/* Bottom-up load fill */}
+          {!off && (
+            <div
+              className={cn(
+                "absolute left-0 right-0 bottom-0 transition-all duration-500 pointer-events-none",
+                load.pct >= 90
+                  ? "bg-red-500/30"
+                  : load.pct >= 70
+                    ? "bg-amber-500/30"
+                    : "bg-wj-green/25",
+              )}
+              style={{ height: `${Math.max(4, load.pct)}%` }}
+            />
+          )}
+          {off && (
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-foreground/10 pointer-events-none" />
+          )}
+
+          <div className="relative flex items-start justify-between">
+            <span className={cn(
+              "text-[10px] font-medium",
+              off ? "text-muted-foreground/60" : "text-foreground/80",
+            )}>
               {off ? t("manage.team_week.off") : `${eff.start_time}-${eff.end_time}`}
             </span>
-            {off && <CalendarOff className="h-3 w-3 text-muted-foreground" />}
+            {off && <CalendarOff className="h-3 w-3 text-muted-foreground/60" />}
             {isCustom && !off && <Clock className="h-3 w-3 text-wj-green" />}
           </div>
+
           {!off && (
-            <div className="mt-2">
-              <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                <div
-                  className={cn(
-                    "h-full transition-all",
-                    load.pct >= 90
-                      ? "bg-red-500"
-                      : load.pct >= 70
-                        ? "bg-amber-500"
-                        : "bg-wj-green",
-                  )}
-                  style={{ width: `${load.pct}%` }}
-                />
+            <div className="relative mt-auto flex items-end justify-between h-full pt-4">
+              <div className="flex flex-col">
+                <span className={cn(
+                  "text-lg font-bold leading-none",
+                  load.pct >= 90 ? "text-red-500" : load.pct >= 70 ? "text-amber-500" : "text-wj-green",
+                )}>
+                  {load.pct}%
+                </span>
+                <span className="text-[9px] text-muted-foreground mt-0.5">
+                  {load.busyMin}/{load.totalMin}m
+                </span>
               </div>
-              <p className="text-[9px] text-muted-foreground mt-1">{load.pct}%</p>
             </div>
           )}
+
           {saving && (
-            <div className="absolute inset-0 flex items-center justify-center bg-background/60 rounded-lg">
+            <div className="absolute inset-0 flex items-center justify-center bg-background/70 rounded-xl">
               <Loader2 className="h-3 w-3 animate-spin text-wj-green" />
             </div>
           )}
