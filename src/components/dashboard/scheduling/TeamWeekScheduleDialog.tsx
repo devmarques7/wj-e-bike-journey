@@ -61,11 +61,9 @@ const trim = (t: string | null | undefined) => (t ? t.slice(0, 5) : "");
 const ymd = (d: Date) => d.toISOString().slice(0, 10);
 
 function startOfWeek(d: Date) {
-  // Monday-start week
+  // Sunday-start week (Sun = first, Sat = last)
   const date = new Date(d);
-  const day = date.getDay();
-  const diff = (day === 0 ? -6 : 1 - day);
-  date.setDate(date.getDate() + diff);
+  date.setDate(date.getDate() - date.getDay());
   date.setHours(0, 0, 0, 0);
   return date;
 }
