@@ -8,7 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Plus, X, Download, FileJson, FileSpreadsheet, Loader2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { createPlan, createPlanVersion, updatePlan, type PlanWithActiveVersion } from "@/hooks/plans/usePlansData";
+
+const PRESET_COLORS = [
+  "#058c42", "#e8593c", "#60a5fa", "#a78bfa",
+  "#f59e0b", "#34d399", "#f87171", "#94a3b8",
+];
 
 export default function PlanFormModal({
   open,
@@ -32,6 +38,7 @@ export default function PlanFormModal({
   const [trial, setTrial] = useState(0);
   const [features, setFeatures] = useState<string[]>([]);
   const [newFeature, setNewFeature] = useState("");
+  const [isDefault, setIsDefault] = useState(false);
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState<"single" | "bulk">("single");
   const [bulkText, setBulkText] = useState("");
@@ -165,9 +172,11 @@ export default function PlanFormModal({
       setInterval((plan.activeVersion?.interval ?? "monthly") as any);
       setTrial(plan.activeVersion?.trial_days ?? 0);
       setFeatures(plan.activeVersion?.features ?? []);
+      setIsDefault(Boolean((plan as any).is_default));
     } else {
       setName(""); setSlug(""); setTier(1); setDescription(""); setColor("#058c42");
       setPrice(0); setInterval("monthly"); setTrial(0); setFeatures([]);
+      setIsDefault(false);
     }
   }, [plan, open]);
 
@@ -180,9 +189,9 @@ export default function PlanFormModal({
     try {
       let planId = plan?.id;
       if (isEdit && planId) {
-        await updatePlan(planId, { name, slug, tier_level: tier, description, color_hex: color });
+        await updatePlan(planId, { name, slug, tier_level: tier, description, color_hex: color, is_default: isDefault } as any);
       } else {
-        const { data, error } = await createPlan({ name, slug, tier_level: tier, description, color_hex: color, display_order: tier });
+        const { data, error } = await createPlan({ name, slug, tier_level: tier, description, color_hex: color, display_order: tier, is_default: isDefault });
         if (error) throw error;
         planId = data!.id;
       }
