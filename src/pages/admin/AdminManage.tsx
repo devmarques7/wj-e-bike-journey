@@ -32,8 +32,9 @@ import { useSchedulingData, type BusinessHour } from "@/hooks/scheduling/useSche
 import StaffScheduleDialog from "@/components/dashboard/scheduling/StaffScheduleDialog";
 import TeamWeekScheduleDialog from "@/components/dashboard/scheduling/TeamWeekScheduleDialog";
 import TeamWeekWorkloadCompact from "@/components/dashboard/scheduling/TeamWeekWorkloadCompact";
+import ExceptionsCalendarDialog from "@/components/dashboard/scheduling/ExceptionsCalendarDialog";
 import { useTranslation } from "react-i18next";
-import { Wrench, CalendarDays, Activity, LayoutGrid } from "lucide-react";
+import { Wrench, CalendarDays, Activity, LayoutGrid, Star } from "lucide-react";
 
 const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 const trimHm = (t: string | null) => (t ? t.slice(0, 5) : "");
@@ -77,6 +78,7 @@ export default function AdminManage() {
   const [monthCounts, setMonthCounts] = useState<Record<string, number>>({});
   const [dayModalDow, setDayModalDow] = useState<number | null>(null);
   const [teamWeekOpen, setTeamWeekOpen] = useState(false);
+  const [exceptionsCalOpen, setExceptionsCalOpen] = useState(false);
 
   const dateStr = (selectedDate ?? new Date()).toISOString().slice(0, 10);
   const {
@@ -459,12 +461,113 @@ export default function AdminManage() {
               </div>
             </motion.div>
 
-            {/* Workload + Team week button */}
+            {/* Team Members Workload — swapped to compact col-3 slot */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.20 }}
-              className="col-span-12 lg:col-span-3 p-4 lg:p-5 flex flex-col bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
+              className="col-span-12 lg:col-span-3 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <Users className="h-4 w-4 text-wj-green" />
+                <h3 className="text-sm font-medium text-foreground">{t("manage.team.title")}</h3>
+              </div>
+
+              {loading ? (
+                <div className="flex-1 flex items-center justify-center py-8 text-muted-foreground text-sm gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" /> {t("manage.team.loading")}
+                </div>
+              ) : mechanics.length === 0 ? (
+                <div className="flex-1 text-center py-8 text-sm text-muted-foreground">
+                  {t("manage.team.empty")}
+                </div>
+              ) : (
+              <div className="flex-1 flex flex-col gap-2.5 min-h-0 overflow-y-auto pr-1">
+                {mechanics.map((member, index) => {
+                  const memberLoad = Math.min(
+                    100,
+                    Math.round((member.weekly_appointments / member.weekly_capacity) * 100),
+                  );
+                  // Derived performance rating (3.0 – 5.0) until a real rating source exists
+                  const rating = Math.max(3, Math.min(5, 3 + (memberLoad / 100) * 2));
+                  const initials = (member.full_name ?? member.email ?? "??")
+                    .split(" ")
+                    .map((s) => s[0])
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase();
+                  return (
+                    <motion.button
+                      key={member.user_id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.2 + index * 0.05 }}
+                      onClick={() =>
+                        setStaffDetail({
+                          id: member.user_id,
+                          name: member.full_name ?? member.email ?? "Mecânico",
+                          email: member.email,
+                          weekly: member.weekly_appointments,
+                          capacity: member.weekly_capacity,
+                        })
+                      }
+                      className="text-left bg-muted/30 rounded-xl p-2.5 hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-wj-green/20 text-wj-green text-xs font-bold flex items-center justify-center shrink-0">
+                          {initials}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-foreground truncate">
+                            {member.full_name ?? member.email}
+                          </p>
+                          <div className="flex items-center gap-1 mt-0.5">
+                            {[0, 1, 2, 3, 4].map((i) => (
+                              <Star
+                                key={i}
+                                className={cn(
+                                  "h-2.5 w-2.5",
+                                  i < Math.round(rating)
+                                    ? "fill-amber-400 text-amber-400"
+                                    : "text-muted-foreground/40",
+                                )}
+                              />
+                            ))}
+                            <span className="text-[10px] text-muted-foreground ml-1">
+                              {rating.toFixed(1)}
+                            </span>
+                          </div>
+                        </div>
+                        <Badge variant="outline" className="text-[10px] shrink-0">
+                          {member.weekly_appointments}/{member.weekly_capacity}
+                        </Badge>
+                      </div>
+                      <div className="h-1 mt-2 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-all",
+                            memberLoad > 80
+                              ? "bg-red-500"
+                              : memberLoad > 60
+                                ? "bg-amber-500"
+                                : "bg-wj-green",
+                          )}
+                          style={{ width: `${memberLoad}%` }}
+                        />
+                      </div>
+                    </motion.button>
+                  );
+                })}
+              </div>
+              )}
+            </motion.div>
+
+            {/* Weekly Load — swapped to wider col-7 slot */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="col-span-12 lg:col-span-7 p-4 lg:p-5 flex flex-col bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
@@ -515,103 +618,25 @@ export default function AdminManage() {
               </Button>
             </motion.div>
 
-            {/* Team Members Workload — bottom row left */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
-              className="col-span-12 lg:col-span-7 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
-            >
-              <div className="flex items-center gap-2 mb-4">
-                <Users className="h-4 w-4 text-wj-green" />
-                <h3 className="text-sm font-medium text-foreground">{t("manage.team.title")}</h3>
-              </div>
-
-              {loading ? (
-                <div className="flex items-center justify-center py-8 text-muted-foreground text-sm gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" /> {t("manage.team.loading")}
-                </div>
-              ) : mechanics.length === 0 ? (
-                <div className="text-center py-8 text-sm text-muted-foreground">
-                  {t("manage.team.empty")}
-                </div>
-              ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {mechanics.map((member, index) => {
-                  const memberLoad = Math.min(100, Math.round((member.weekly_appointments / member.weekly_capacity) * 100));
-                  const initials = (member.full_name ?? member.email ?? "??")
-                    .split(" ")
-                    .map((s) => s[0])
-                    .join("")
-                    .slice(0, 2)
-                    .toUpperCase();
-                  return (
-                    <motion.div
-                      key={member.user_id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.2 + index * 0.05 }}
-                      className="bg-muted/30 rounded-xl p-2.5 hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="w-8 h-8 rounded-full bg-wj-green/20 text-wj-green text-xs font-bold flex items-center justify-center">
-                          {initials}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
-                            {member.full_name ?? member.email}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground">{t("manage.team.role")}</p>
-                        </div>
-                        <Badge variant="outline" className="text-[10px]">
-                          {member.weekly_appointments}/{member.weekly_capacity}
-                        </Badge>
-                      </div>
-                      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                        <div 
-                          className={cn(
-                            "h-full rounded-full transition-all",
-                            memberLoad > 80 
-                              ? "bg-red-500"
-                              : memberLoad > 60
-                              ? "bg-amber-500"
-                              : "bg-wj-green"
-                          )}
-                          style={{ width: `${memberLoad}%` }}
-                        />
-                      </div>
-                      <button
-                        onClick={() =>
-                          setStaffDetail({
-                            id: member.user_id,
-                            name: member.full_name ?? member.email ?? "Mecânico",
-                            email: member.email,
-                            weekly: member.weekly_appointments,
-                            capacity: member.weekly_capacity,
-                          })
-                        }
-                        className="mt-2 w-full flex items-center justify-between text-[10px] text-wj-green hover:text-wj-green/80 transition-colors"
-                      >
-                        <span>{t("manage.team.view_details")}</span>
-                        <ChevronRight className="h-3 w-3" />
-                      </button>
-                    </motion.div>
-                  );
-                })}
-              </div>
-              )}
-            </motion.div>
-
             {/* Exceptions — bottom row right */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.30 }}
-              className="col-span-12 lg:col-span-5 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
+              className="col-span-12 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
             >
               <div className="flex items-center gap-2 mb-4">
                 <CalendarOff className="h-4 w-4 text-wj-green" />
                 <h3 className="text-sm font-medium text-foreground">{t("manage.exceptions.title")}</h3>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="ml-auto text-xs text-wj-green hover:text-wj-green/80 gap-1 h-7"
+                  onClick={() => setExceptionsCalOpen(true)}
+                >
+                  <CalendarIcon className="h-3.5 w-3.5" />
+                  {t("manage.exceptions.open_calendar")}
+                </Button>
               </div>
               {exceptions.length === 0 ? (
                 <p className="text-xs text-muted-foreground">{t("manage.exceptions.empty")}</p>
@@ -796,6 +821,13 @@ export default function AdminManage() {
         open={teamWeekOpen}
         onOpenChange={setTeamWeekOpen}
         mechanics={mechanics}
+        onChanged={refetch}
+      />
+
+      <ExceptionsCalendarDialog
+        open={exceptionsCalOpen}
+        onOpenChange={setExceptionsCalOpen}
+        exceptions={exceptions}
         onChanged={refetch}
       />
     </AdminDashboardLayout>
