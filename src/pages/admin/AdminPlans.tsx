@@ -233,9 +233,9 @@ export default function AdminPlans() {
               className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4 h-[460px] w-full flex flex-col">
               <div className="flex items-center justify-between gap-3 mb-2">
                 <div>
-                  <h3 className="text-sm font-medium text-foreground">Revenue Potential per Plan</h3>
+                  <h3 className="text-sm font-medium text-foreground">Cumulative Revenue per Plan</h3>
                   <p className="text-[11px] text-muted-foreground">
-                    Projected MRR by plan — next {forecastRange === "3m" ? "3 months" : forecastRange === "6m" ? "6 months" : forecastRange === "12m" ? "12 months" : "24 months"} at +3%/mo growth
+                    Accrued cash by plan — next {forecastRange === "3m" ? "3 months" : forecastRange === "6m" ? "6 months" : forecastRange === "12m" ? "12 months" : "24 months"} at +3%/mo member growth
                   </p>
                 </div>
                 <Select value={forecastRange} onValueChange={(v) => setForecastRange(v as any)}>
