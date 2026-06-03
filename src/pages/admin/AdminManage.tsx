@@ -823,6 +823,13 @@ export default function AdminManage() {
         mechanics={mechanics}
         onChanged={refetch}
       />
+
+      <ExceptionsCalendarDialog
+        open={exceptionsCalOpen}
+        onOpenChange={setExceptionsCalOpen}
+        exceptions={exceptions}
+        onChanged={refetch}
+      />
     </AdminDashboardLayout>
   );
 }
