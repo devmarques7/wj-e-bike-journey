@@ -474,15 +474,13 @@ function DayCell({
         <button
           className={cn(
             "relative h-[130px] rounded-xl p-2.5 text-left transition-all border overflow-hidden",
-            isWeekend
+            isWeekend || off
               ? "bg-white text-neutral-900 border-neutral-200 hover:bg-neutral-50"
-              : off
-                ? "bg-background/80 border-border/20 hover:bg-background/60"
-                : load.pct >= 70
-                  ? "bg-muted/60 border-border/50 hover:bg-muted/70"
-                  : load.pct > 0
-                    ? "bg-muted/45 border-border/40 hover:bg-muted/55"
-                    : "bg-muted/25 border-border/30 hover:bg-muted/40",
+              : load.pct >= 70
+                ? "bg-muted/60 border-border/50 hover:bg-muted/70"
+                : load.pct > 0
+                  ? "bg-muted/45 border-border/40 hover:bg-muted/55"
+                  : "bg-muted/25 border-border/30 hover:bg-muted/40",
             isToday && "ring-2 ring-wj-green/70",
             isCustom && "border-wj-green/50",
           )}
