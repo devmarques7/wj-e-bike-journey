@@ -364,6 +364,19 @@ export default function AdminPlans() {
                         </Link>
                       );
                     })}
+                    {hasOtherPlans && (
+                      <div className="group flex items-center gap-1.5 px-2 py-1 rounded-full border border-border/40 bg-background/40 hover:bg-muted/40 hover:border-border transition-all duration-300 overflow-hidden cursor-default">
+                        <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: "hsl(var(--border))" }} />
+                        <span className="text-[10px] uppercase tracking-wider text-foreground/80">Other</span>
+                        <span className="grid grid-cols-[0fr] group-hover:grid-cols-[1fr] transition-[grid-template-columns] duration-300 ease-out">
+                          <span className="overflow-hidden whitespace-nowrap">
+                            <span className="pl-1.5 text-[10px] text-muted-foreground">
+                              0 · 0%
+                            </span>
+                          </span>
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </>
               )}
