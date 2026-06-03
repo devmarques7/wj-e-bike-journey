@@ -198,18 +198,19 @@ export default function PlanFormModal({
         if (error) throw error;
         planId = data!.id;
       }
+      const effectiveTrial = unlimitedTrial ? -1 : trial;
       const priceChanged =
         !plan?.activeVersion ||
         Number(plan.activeVersion.price) !== Number(price) ||
         plan.activeVersion.interval !== interval ||
-        plan.activeVersion.trial_days !== trial ||
+        plan.activeVersion.trial_days !== effectiveTrial ||
         JSON.stringify(plan.activeVersion.features) !== JSON.stringify(features);
       if (priceChanged && planId) {
         const { error } = await createPlanVersion({
           p_plan_id: planId,
           p_price: price,
           p_interval: interval,
-          p_trial_days: trial,
+          p_trial_days: effectiveTrial,
           p_features: features,
           p_activate: true,
         });
