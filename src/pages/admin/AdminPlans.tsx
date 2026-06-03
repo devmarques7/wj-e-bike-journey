@@ -234,10 +234,10 @@ export default function AdminPlans() {
           ))}
         </div>
 
-        <div className="grid grid-cols-12 gap-4 lg:gap-6">
-          <div className="col-span-12 lg:col-span-8">
+        <div className="grid grid-cols-12 gap-4 lg:gap-6 items-stretch">
+          <div className="col-span-12 lg:col-span-8 flex">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4 h-[380px] flex flex-col">
+              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4 h-[460px] w-full flex flex-col">
               <div className="flex items-center justify-between gap-3 mb-2">
                 <div>
                   <h3 className="text-sm font-medium text-foreground">Revenue Potential per Plan</h3>
@@ -318,9 +318,9 @@ export default function AdminPlans() {
             </motion.div>
           </div>
 
-          <div className="col-span-12 lg:col-span-4">
+          <div className="col-span-12 lg:col-span-4 flex">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4 h-[460px] flex flex-col">
+              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4 h-[460px] w-full flex flex-col">
               <div className="flex items-center justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2">
                   <Award className="h-4 w-4 text-wj-green" />
