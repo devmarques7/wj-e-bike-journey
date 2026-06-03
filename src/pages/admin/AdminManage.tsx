@@ -623,8 +623,8 @@ export default function AdminManage() {
                 <h3 className="text-sm font-medium text-foreground">{t("manage.exceptions.title")}</h3>
                 <Button
                   size="sm"
-                  variant="ghost"
-                  className="ml-auto text-xs text-wj-green hover:text-wj-green/80 gap-1 h-7"
+                  variant="outline"
+                  className="ml-auto h-8 gap-1.5 text-xs border-wj-green/30 text-wj-green hover:bg-wj-green/10 hover:text-wj-green hover:border-wj-green/50"
                   onClick={() => setExceptionsCalOpen(true)}
                 >
                   <CalendarIcon className="h-3.5 w-3.5" />
