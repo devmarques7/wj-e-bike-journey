@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Users, Activity, TrendingDown, CreditCard, AlertTriangle, Bell,
