@@ -51,49 +51,83 @@ export default function AdminPlans() {
       const since = new Date();
       since.setMonth(since.getMonth() - 5);
       since.setDate(1);
-      const { data } = await supabase
-        .from("payments")
-        .select("amount, paid_at, status, subscription:subscriptions!inner(plan_version:plan_versions!inner(plan:plans!inner(name)))")
-        .gte("paid_at", since.toISOString())
-        .eq("status", "succeeded");
 
-      const months: string[] = [];
+      // Build last 6 months window
+      const monthsMeta: { key: string; start: Date; end: Date }[] = [];
       for (let i = 5; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(1);
-        d.setMonth(d.getMonth() - i);
-        months.push(d.toLocaleString("en", { month: "short", year: "2-digit" }));
+        const s = new Date();
+        s.setDate(1); s.setHours(0, 0, 0, 0);
+        s.setMonth(s.getMonth() - i);
+        const e = new Date(s);
+        e.setMonth(e.getMonth() + 1);
+        monthsMeta.push({
+          key: s.toLocaleString("en", { month: "short", year: "2-digit" }),
+          start: s,
+          end: e,
+        });
       }
 
-      const planSet = new Set<string>();
-      const map = new Map<string, Record<string, any>>();
-      months.forEach((m) => map.set(m, { month: m, total_subs: 0 }));
+      // Pull every subscription (active or canceled) with plan + price.
+      // Monthly subscriptions enforce a 1-month minimum, so each sub
+      // contributes price × months it was active in the window.
+      const { data: subRows } = await supabase
+        .from("subscriptions")
+        .select("started_at, canceled_at, status, plan_version:plan_versions!inner(price, interval, plan:plans!inner(name, display_order))");
 
-      (data ?? []).forEach((p: any) => {
-        const d = new Date(p.paid_at);
-        const key = d.toLocaleString("en", { month: "short", year: "2-digit" });
-        const planName = p.subscription?.plan_version?.plan?.name ?? "Other";
+      const planSet = new Set<string>();
+      const planOrder = new Map<string, number>();
+      const map = new Map<string, Record<string, any>>();
+      monthsMeta.forEach((m) => map.set(m.key, { month: m.key, total_subs: 0 }));
+
+      (subRows ?? []).forEach((s: any) => {
+        const planName: string = s.plan_version?.plan?.name ?? "Other";
+        const order: number = s.plan_version?.plan?.display_order ?? 999;
+        const price = Number(s.plan_version?.price ?? 0);
+        const interval: string = s.plan_version?.interval ?? "monthly";
+        const monthlyPrice =
+          interval === "yearly" ? price / 12 :
+          interval === "quarterly" ? price / 3 :
+          interval === "lifetime" ? 0 : price;
+
+        const started = new Date(s.started_at);
+        const ended = s.canceled_at ? new Date(s.canceled_at) : null;
+
         planSet.add(planName);
-        const row = map.get(key);
-        if (!row) return;
-        row[planName] = (row[planName] ?? 0) + Number(p.amount ?? 0);
-        row.total_subs = (row.total_subs ?? 0) + 1;
+        planOrder.set(planName, order);
+
+        monthsMeta.forEach((m) => {
+          // Active during this month? (started before month end AND not canceled before month start)
+          const activeThisMonth = started < m.end && (!ended || ended >= m.start);
+          if (!activeThisMonth) return;
+          const row = map.get(m.key)!;
+          row[planName] = (row[planName] ?? 0) + monthlyPrice;
+          row.total_subs = (row.total_subs ?? 0) + 1;
+        });
       });
 
-      setPlanNames(Array.from(planSet));
-      setMonthly(months.map((m) => map.get(m)!));
+      const ordered = Array.from(planSet).sort(
+        (a, b) => (planOrder.get(a) ?? 999) - (planOrder.get(b) ?? 999),
+      );
+      setPlanNames(ordered);
+      setMonthly(monthsMeta.map((m) => map.get(m.key)!));
     })();
   }, []);
 
+  // System token palette only — wj-green primary accent + neutral foreground tones
   const planColors: Record<string, string> = {
-    Black: "hsl(0 0% 20%)",
-    Plus: "hsl(var(--wj-green))",
     Light: "hsl(var(--muted-foreground))",
+    Plus: "hsl(var(--wj-green))",
+    Black: "hsl(var(--foreground))",
   };
-  const fallbackColors = ["hsl(var(--wj-green))", "hsl(var(--primary))", "hsl(var(--accent))", "hsl(var(--muted-foreground))"];
+  const fallbackColors = [
+    "hsl(var(--wj-green))",
+    "hsl(var(--muted-foreground))",
+    "hsl(var(--foreground))",
+    "hsl(var(--primary))",
+  ];
   const chartConfig = useMemo<ChartConfig>(() => {
     const cfg: ChartConfig = {
-      total_subs: { label: "Subscribers", color: "hsl(var(--foreground))" },
+      total_subs: { label: "Active Subscribers", color: "hsl(var(--wj-green))" },
     };
     planNames.forEach((name, i) => {
       cfg[name] = { label: name, color: planColors[name] ?? fallbackColors[i % fallbackColors.length] };
