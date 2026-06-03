@@ -5,8 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Download, FileJson, FileSpreadsheet, Loader2 } from "lucide-react";
 import { createPlan, createPlanVersion, updatePlan, type PlanWithActiveVersion } from "@/hooks/plans/usePlansData";
 
 export default function PlanFormModal({
@@ -32,6 +33,126 @@ export default function PlanFormModal({
   const [features, setFeatures] = useState<string[]>([]);
   const [newFeature, setNewFeature] = useState("");
   const [saving, setSaving] = useState(false);
+  const [tab, setTab] = useState<"single" | "bulk">("single");
+  const [bulkText, setBulkText] = useState("");
+  const [bulkFormat, setBulkFormat] = useState<"json" | "csv">("json");
+  const [importing, setImporting] = useState(false);
+
+  const JSON_TEMPLATE = JSON.stringify(
+    [
+      {
+        name: "Free",
+        slug: "free",
+        tier_level: 0,
+        description: "View-only access.",
+        color_hex: "#6b7280",
+        price: 0,
+        interval: "monthly",
+        trial_days: 0,
+        features: ["View dashboard", "View bike details"],
+      },
+      {
+        name: "Plus",
+        slug: "plus",
+        tier_level: 2,
+        description: "Includes priority service.",
+        color_hex: "#058c42",
+        price: 19.9,
+        interval: "monthly",
+        trial_days: 7,
+        features: ["All Light features", "Priority booking"],
+      },
+    ],
+    null,
+    2
+  );
+
+  const CSV_TEMPLATE =
+    "name,slug,tier_level,description,color_hex,price,interval,trial_days,features\n" +
+    'Free,free,0,View-only access.,#6b7280,0,monthly,0,"View dashboard|View bike details"\n' +
+    'Plus,plus,2,Includes priority service.,#058c42,19.90,monthly,7,"All Light features|Priority booking"\n';
+
+  const downloadFile = (content: string, filename: string, mime: string) => {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const parseCsv = (text: string): any[] => {
+    const lines = text.trim().split(/\r?\n/);
+    if (lines.length < 2) return [];
+    const split = (l: string) => {
+      const out: string[] = [];
+      let cur = "", q = false;
+      for (let i = 0; i < l.length; i++) {
+        const c = l[i];
+        if (c === '"') { q = !q; continue; }
+        if (c === "," && !q) { out.push(cur); cur = ""; continue; }
+        cur += c;
+      }
+      out.push(cur);
+      return out.map((s) => s.trim());
+    };
+    const headers = split(lines[0]);
+    return lines.slice(1).filter(Boolean).map((l) => {
+      const cells = split(l);
+      const o: any = {};
+      headers.forEach((h, i) => (o[h] = cells[i]));
+      o.tier_level = Number(o.tier_level ?? 0);
+      o.price = Number(o.price ?? 0);
+      o.trial_days = Number(o.trial_days ?? 0);
+      o.features = (o.features ?? "").split("|").map((s: string) => s.trim()).filter(Boolean);
+      return o;
+    });
+  };
+
+  const runImport = async () => {
+    if (!bulkText.trim()) { toast.error("Paste plans first"); return; }
+    let rows: any[] = [];
+    try {
+      rows = bulkFormat === "json" ? JSON.parse(bulkText) : parseCsv(bulkText);
+      if (!Array.isArray(rows)) throw new Error("Expected an array");
+    } catch (e: any) {
+      toast.error(`Parse error: ${e.message}`);
+      return;
+    }
+    setImporting(true);
+    let ok = 0, fail = 0;
+    for (const r of rows) {
+      try {
+        if (!r.name || !r.slug) throw new Error("name and slug required");
+        const { data, error } = await createPlan({
+          name: r.name,
+          slug: String(r.slug).toLowerCase(),
+          tier_level: Number(r.tier_level ?? 0),
+          description: r.description ?? "",
+          color_hex: r.color_hex ?? "#058c42",
+          display_order: Number(r.tier_level ?? 0),
+        });
+        if (error) throw error;
+        const { error: e2 } = await createPlanVersion({
+          p_plan_id: data!.id,
+          p_price: Number(r.price ?? 0),
+          p_interval: (r.interval ?? "monthly") as any,
+          p_trial_days: Number(r.trial_days ?? 0),
+          p_features: Array.isArray(r.features) ? r.features : [],
+          p_activate: true,
+        });
+        if (e2) throw e2;
+        ok++;
+      } catch (e: any) {
+        fail++;
+        console.error("Import row failed:", r, e.message);
+      }
+    }
+    setImporting(false);
+    toast.success(`Imported ${ok} plan${ok === 1 ? "" : "s"}${fail ? ` — ${fail} failed` : ""}`);
+    if (ok > 0) { onSaved(); onOpenChange(false); setBulkText(""); }
+  };
 
   useEffect(() => {
     if (plan) {
@@ -102,6 +223,17 @@ export default function PlanFormModal({
           </DialogDescription>
         </DialogHeader>
 
+        {!isEdit && (
+          <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="mb-2">
+            <TabsList className="bg-transparent border-b border-border/30 rounded-none p-0 h-auto w-full justify-start gap-1">
+              <TabsTrigger value="single" className="rounded-none border-b-2 border-transparent bg-transparent px-3 py-2 text-xs data-[state=active]:border-wj-green data-[state=active]:bg-transparent data-[state=active]:shadow-none">Single plan</TabsTrigger>
+              <TabsTrigger value="bulk" className="rounded-none border-b-2 border-transparent bg-transparent px-3 py-2 text-xs data-[state=active]:border-wj-green data-[state=active]:bg-transparent data-[state=active]:shadow-none">Bulk import</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        )}
+
+        {(isEdit || tab === "single") && (
+        <>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label>Name</Label>
@@ -177,6 +309,61 @@ export default function PlanFormModal({
             {saving ? "Saving..." : isEdit ? "Save new version" : "Create plan"}
           </Button>
         </div>
+        </>
+        )}
+
+        {!isEdit && tab === "bulk" && (
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="inline-flex rounded-md border border-border/40 overflow-hidden">
+                <button type="button" onClick={() => setBulkFormat("json")} className={`px-3 py-1.5 text-xs flex items-center gap-1.5 ${bulkFormat === "json" ? "bg-wj-green/10 text-wj-green" : "text-muted-foreground hover:text-foreground"}`}>
+                  <FileJson className="h-3.5 w-3.5" /> JSON
+                </button>
+                <button type="button" onClick={() => setBulkFormat("csv")} className={`px-3 py-1.5 text-xs flex items-center gap-1.5 border-l border-border/40 ${bulkFormat === "csv" ? "bg-wj-green/10 text-wj-green" : "text-muted-foreground hover:text-foreground"}`}>
+                  <FileSpreadsheet className="h-3.5 w-3.5" /> CSV
+                </button>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button type="button" size="sm" variant="outline" className="h-8 text-xs" onClick={() => setBulkText(bulkFormat === "json" ? JSON_TEMPLATE : CSV_TEMPLATE)}>
+                  View template
+                </Button>
+                <Button type="button" size="sm" variant="outline" className="h-8 text-xs" onClick={() => downloadFile(
+                  bulkFormat === "json" ? JSON_TEMPLATE : CSV_TEMPLATE,
+                  bulkFormat === "json" ? "plans-template.json" : "plans-template.csv",
+                  bulkFormat === "json" ? "application/json" : "text/csv",
+                )}>
+                  <Download className="h-3.5 w-3.5 mr-1" /> Download
+                </Button>
+              </div>
+            </div>
+
+            <div className="rounded-md border border-border/30 bg-muted/20 p-3">
+              <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">Expected fields</p>
+              <p className="text-xs text-muted-foreground">
+                <code className="text-foreground">name</code>, <code className="text-foreground">slug</code>, <code className="text-foreground">tier_level</code>, <code className="text-foreground">description</code>, <code className="text-foreground">color_hex</code>, <code className="text-foreground">price</code>, <code className="text-foreground">interval</code> (monthly/quarterly/yearly/lifetime), <code className="text-foreground">trial_days</code>, <code className="text-foreground">features</code>{" "}
+                {bulkFormat === "csv" ? <>(pipe-separated <code className="text-foreground">|</code>)</> : <>(array)</>}.
+              </p>
+            </div>
+
+            <div>
+              <Label className="text-xs">Paste {bulkFormat.toUpperCase()}</Label>
+              <Textarea
+                value={bulkText}
+                onChange={(e) => setBulkText(e.target.value)}
+                placeholder={bulkFormat === "json" ? "[ { …plan… }, … ]" : "name,slug,tier_level,…"}
+                rows={12}
+                className="font-mono text-xs mt-1"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+              <Button onClick={runImport} disabled={importing} className="bg-wj-green hover:bg-wj-green/90">
+                {importing ? <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> Importing…</> : "Import plans"}
+              </Button>
+            </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
