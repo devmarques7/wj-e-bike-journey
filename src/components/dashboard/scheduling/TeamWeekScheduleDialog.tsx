@@ -514,8 +514,18 @@ function DayCell({
             )}>
               {off ? t("manage.team_week.off") : `${eff.start_time}-${eff.end_time}`}
             </span>
-            {off && <CalendarOff className={cn("h-3 w-3", isWeekend ? "text-neutral-400" : "text-muted-foreground/60")} />}
-            {isCustom && !off && <Clock className="h-3 w-3 text-wj-green" />}
+            <div className="flex items-center gap-1.5">
+              {!off && (
+                <span className={cn(
+                  "text-[9px] tabular-nums leading-none",
+                  isWeekend ? "text-neutral-500" : "text-muted-foreground",
+                )}>
+                  {load.busyMin}/{load.totalMin}m
+                </span>
+              )}
+              {off && <CalendarOff className={cn("h-3 w-3", isWeekend ? "text-neutral-400" : "text-muted-foreground/60")} />}
+              {isCustom && !off && <Clock className="h-3 w-3 text-wj-green" />}
+            </div>
           </div>
 
           {!off && (
@@ -526,9 +536,6 @@ function DayCell({
                   load.pct >= 90 ? "text-red-500" : load.pct >= 70 ? "text-amber-500" : "text-wj-green",
                 )}>
                   {load.pct}%
-                </span>
-                <span className={cn("text-[9px] mt-0.5", isWeekend ? "text-neutral-500" : "text-muted-foreground")}>
-                  {load.busyMin}/{load.totalMin}m
                 </span>
               </div>
             </div>
