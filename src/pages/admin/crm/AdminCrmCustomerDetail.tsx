@@ -21,6 +21,7 @@ import LogContactSheet from "@/components/dashboard/crm/sheets/LogContactSheet";
 import AddNoteSheet from "@/components/dashboard/crm/sheets/AddNoteSheet";
 import SendMessageSheet from "@/components/dashboard/crm/sheets/SendMessageSheet";
 import CustomerEditDialog from "@/components/dashboard/crm/CustomerEditDialog";
+import ScheduleAppointmentDialog from "@/components/dashboard/crm/ScheduleAppointmentDialog";
 import { toast } from "sonner";
 
 type TimelineItem = {
@@ -43,6 +44,7 @@ export default function AdminCrmCustomerDetail() {
   const [noteOpen, setNoteOpen] = useState(false);
   const [msgOpen, setMsgOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
   const [timelineFilter, setTimelineFilter] = useState<string>("all");
   const [timelineGroup, setTimelineGroup] = useState<"none" | "day" | "type">("day");
 
@@ -174,8 +176,8 @@ export default function AdminCrmCustomerDetail() {
                   <Button size="sm" variant="outline" onClick={() => setMsgOpen(true)}>
                     <Mail className="h-3.5 w-3.5 mr-1.5" /> Email
                   </Button>
-                  <Button size="sm" variant="outline" asChild>
-                    <Link to="/dashboard/admin/workshop"><Calendar className="h-3.5 w-3.5 mr-1.5" /> Agendar</Link>
+                  <Button size="sm" variant="outline" onClick={() => setScheduleOpen(true)}>
+                    <Calendar className="h-3.5 w-3.5 mr-1.5" /> Agendar
                   </Button>
                 </div>
               </div>
