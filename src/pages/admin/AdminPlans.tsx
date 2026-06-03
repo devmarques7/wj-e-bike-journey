@@ -201,50 +201,70 @@ export default function AdminPlans() {
         <div className="grid grid-cols-12 gap-4 lg:gap-6">
           <div className="col-span-12 lg:col-span-8">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4 h-[340px]">
-              <div className="flex items-center justify-between mb-2">
+              className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4 h-[380px] flex flex-col">
+              <div className="flex items-center justify-between gap-3 mb-2">
                 <div>
-                  <h3 className="text-sm font-medium text-foreground">Monthly Revenue per Plan</h3>
-                  <p className="text-[11px] text-muted-foreground">Stacked revenue (€) + total active subscribers</p>
+                  <h3 className="text-sm font-medium text-foreground">Active Members per Plan</h3>
+                  <p className="text-[11px] text-muted-foreground">
+                    Daily active subscribers — {timeRange === "7d" ? "last 7 days" : timeRange === "30d" ? "last 30 days" : "last 3 months"}
+                  </p>
                 </div>
+                <Select value={timeRange} onValueChange={(v) => setTimeRange(v as any)}>
+                  <SelectTrigger className="w-[150px] h-8 rounded-lg text-xs" aria-label="Select time range">
+                    <SelectValue placeholder="Last 3 months" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    <SelectItem value="90d" className="rounded-lg text-xs">Last 3 months</SelectItem>
+                    <SelectItem value="30d" className="rounded-lg text-xs">Last 30 days</SelectItem>
+                    <SelectItem value="7d" className="rounded-lg text-xs">Last 7 days</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <ChartContainer config={chartConfig} className="h-[270px] w-full aspect-auto">
-                <ComposedChart data={monthly} margin={{ left: 4, right: 4, top: 8, bottom: 0 }}>
+              <ChartContainer config={chartConfig} className="flex-1 w-full aspect-auto">
+                <AreaChart data={filteredSeries} margin={{ left: 4, right: 4, top: 8, bottom: 0 }}>
                   <defs>
                     {planNames.map((name) => (
                       <linearGradient key={name} id={`fill-${name}`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={chartConfig[name]?.color as string} stopOpacity={0.75} />
-                        <stop offset="100%" stopColor={chartConfig[name]?.color as string} stopOpacity={0.05} />
+                        <stop offset="5%" stopColor={chartConfig[name]?.color as string} stopOpacity={0.8} />
+                        <stop offset="95%" stopColor={chartConfig[name]?.color as string} stopOpacity={0.1} />
                       </linearGradient>
                     ))}
                   </defs>
                   <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
-                  <XAxis dataKey="month" tickLine={false} axisLine={false} fontSize={10} />
-                  <YAxis yAxisId="left" tickLine={false} axisLine={false} fontSize={10} tickFormatter={(v) => `€${v}`} />
-                  <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} fontSize={10} />
-                  <ChartTooltip content={<ChartTooltipContent indicator="dot" />} />
+                  <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    fontSize={10}
+                    minTickGap={32}
+                    tickFormatter={(v) =>
+                      new Date(v).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                    }
+                  />
+                  <YAxis tickLine={false} axisLine={false} fontSize={10} allowDecimals={false} />
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        indicator="dot"
+                        labelFormatter={(value) =>
+                          new Date(value as string).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                        }
+                      />
+                    }
+                  />
                   <ChartLegend content={<ChartLegendContent />} />
                   {planNames.map((name) => (
                     <Area
                       key={name}
-                      yAxisId="left"
                       type="monotone"
                       dataKey={name}
-                      stackId="rev"
+                      stackId="members"
                       stroke={chartConfig[name]?.color as string}
                       fill={`url(#fill-${name})`}
                       strokeWidth={2}
                     />
                   ))}
-                  <Line
-                    yAxisId="right"
-                    type="monotone"
-                    dataKey="total_subs"
-                    stroke="hsl(var(--wj-green))"
-                    strokeWidth={2}
-                    dot={{ r: 3, fill: "hsl(var(--wj-green))" }}
-                  />
-                </ComposedChart>
+                </AreaChart>
               </ChartContainer>
             </motion.div>
           </div>
@@ -280,6 +300,46 @@ export default function AdminPlans() {
             </motion.div>
           </div>
         </div>
+
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
+          className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl overflow-hidden">
+          <div className="p-4 border-b border-border/30 flex items-center gap-2">
+            <Layers className="h-4 w-4 text-wj-green" />
+            <h3 className="text-sm font-medium text-foreground">Available Plans</h3>
+            <span className="text-[11px] text-muted-foreground ml-1">Member count per subscription tier</span>
+          </div>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border/30 hover:bg-transparent">
+                  <TableHead className="text-muted-foreground text-xs">Plan</TableHead>
+                  <TableHead className="text-muted-foreground text-xs">Price</TableHead>
+                  <TableHead className="text-muted-foreground text-xs">Interval</TableHead>
+                  <TableHead className="text-muted-foreground text-xs">Members</TableHead>
+                  <TableHead className="text-muted-foreground text-xs">Est. MRR</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {planRows.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-xs text-muted-foreground py-8">
+                      No active plans configured.
+                    </TableCell>
+                  </TableRow>
+                )}
+                {planRows.map((p) => (
+                  <TableRow key={p.name} className="border-border/30 hover:bg-muted/30">
+                    <TableCell>{getPlanBadge(p.name)}</TableCell>
+                    <TableCell className="text-xs">€{p.price.toFixed(2)}</TableCell>
+                    <TableCell className="text-xs capitalize text-muted-foreground">{p.interval}</TableCell>
+                    <TableCell className="text-xs font-medium">{p.members}</TableCell>
+                    <TableCell className="text-xs text-wj-green">€{p.mrr.toFixed(2)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
           className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl overflow-hidden">
