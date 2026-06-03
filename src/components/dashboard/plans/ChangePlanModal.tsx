@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -17,6 +18,7 @@ export default function ChangePlanModal({
   currentVersionId: string;
   onSaved: () => void;
 }) {
+  const { t } = useTranslation();
   const { plans } = usePlans();
   const [selected, setSelected] = useState<string>(currentVersionId);
   const [saving, setSaving] = useState(false);
@@ -25,14 +27,14 @@ export default function ChangePlanModal({
 
   const submit = async () => {
     if (!selected || selected === currentVersionId) {
-      toast.error("Pick a different plan");
+      toast.error(t("plans.change_modal.pick_diff"));
       return;
     }
     setSaving(true);
     const { error } = await changeSubscriptionPlan(subscriptionId, selected);
     setSaving(false);
     if (error) return toast.error(error.message);
-    toast.success("Plan changed");
+    toast.success(t("plans.change_modal.changed"));
     onSaved();
     onOpenChange(false);
   };
@@ -41,7 +43,7 @@ export default function ChangePlanModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="font-light text-xl">Change Plan</DialogTitle>
+          <DialogTitle className="font-light text-xl">{t("plans.change_modal.title")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-2">
           {plans.map((p) => (
@@ -56,10 +58,10 @@ export default function ChangePlanModal({
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="font-medium">{p.name}</div>
-                    <div className="text-xs text-muted-foreground">€{Number(p.activeVersion.price).toFixed(2)} / {p.activeVersion.interval}</div>
+                    <div className="text-xs text-muted-foreground">€{Number(p.activeVersion.price).toFixed(2)} / {String(t(`plans.intervals.${p.activeVersion.interval}`, { defaultValue: p.activeVersion.interval }))}</div>
                   </div>
                   {p.activeVersion.id === currentVersionId && (
-                    <span className="text-xs text-muted-foreground">Current</span>
+                    <span className="text-xs text-muted-foreground">{t("plans.change_modal.current")}</span>
                   )}
                 </div>
               </button>
@@ -67,9 +69,9 @@ export default function ChangePlanModal({
           ))}
         </div>
         <div className="flex justify-end gap-2 mt-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t("plans.change_modal.cancel")}</Button>
           <Button onClick={submit} disabled={saving} className="bg-wj-green hover:bg-wj-green/90">
-            {saving ? "Saving..." : "Confirm"}
+            {saving ? t("plans.change_modal.saving") : t("plans.change_modal.confirm")}
           </Button>
         </div>
       </DialogContent>
