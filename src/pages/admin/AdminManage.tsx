@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 import { useSchedulingData, type BusinessHour } from "@/hooks/scheduling/useSchedulingData";
 import StaffScheduleDialog from "@/components/dashboard/scheduling/StaffScheduleDialog";
 import TeamWeekScheduleDialog from "@/components/dashboard/scheduling/TeamWeekScheduleDialog";
+import TeamWeekWorkloadCompact from "@/components/dashboard/scheduling/TeamWeekWorkloadCompact";
 import { useTranslation } from "react-i18next";
 import { Wrench, CalendarDays, Activity, LayoutGrid } from "lucide-react";
 
