@@ -257,7 +257,7 @@ export default function AdminPlans() {
                     fontSize={10}
                     minTickGap={32}
                     tickFormatter={(v) =>
-                      new Date(v).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                      new Date(v).toLocaleDateString("en-US", { month: "short", year: "2-digit" })
                     }
                   />
                   <YAxis
@@ -280,7 +280,7 @@ export default function AdminPlans() {
                           </div>
                         )}
                         labelFormatter={(value) =>
-                          new Date(value as string).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                          new Date(value as string).toLocaleDateString("en-US", { month: "long", year: "numeric" })
                         }
                       />
                     }
