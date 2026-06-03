@@ -305,11 +305,194 @@ export default function AdminManage() {
 
         {/* Main Content Grid — independent glass blocks */}
         <div className="grid grid-cols-12 gap-4 lg:gap-5">
-            {/* Heatmap + Exceptions — side by side top row */}
+            {/* Row 1 — Workload (slim bar) + Mechanics list */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.10 }}
+              transition={{ delay: 0.05 }}
+              className="col-span-12 lg:col-span-8 p-4 lg:p-5 flex flex-col bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-wj-green" />
+                  <h3 className="text-sm font-medium text-foreground">{t("manage.workload.title")}</h3>
+                </div>
+                <Badge className={cn(
+                  "text-[10px]",
+                  workloadPercentage > 80
+                    ? "bg-red-500/20 text-red-400 border-red-500/30"
+                    : workloadPercentage > 60
+                    ? "bg-amber-500/20 text-amber-400 border-amber-500/30"
+                    : "bg-wj-green/20 text-wj-green border-wj-green/30"
+                )}>
+                  {t("manage.workload.of_capacity", { n: workloadPercentage })}
+                </Badge>
+              </div>
+
+              <div className="h-2.5 bg-muted rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${workloadPercentage}%` }}
+                  transition={{ delay: 0.3, duration: 0.8 }}
+                  className={cn(
+                    "h-full rounded-full",
+                    workloadPercentage > 80
+                      ? "bg-gradient-to-r from-red-500 to-red-400"
+                      : workloadPercentage > 60
+                      ? "bg-gradient-to-r from-amber-500 to-amber-400"
+                      : "bg-gradient-to-r from-wj-green to-wj-green/60"
+                  )}
+                />
+              </div>
+
+              <div className="flex justify-between mt-2 text-[11px] text-muted-foreground">
+                <span>{t("manage.workload.appointments", { n: totalAppointments })}</span>
+                <span>{t("manage.workload.capacity", { n: totalCapacity })}</span>
+              </div>
+
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-3 gap-2 w-full text-xs h-8"
+                onClick={() => setTeamWeekOpen(true)}
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+                {t("manage.team_week.open_button")}
+              </Button>
+            </motion.div>
+
+            {/* Mechanics list — col-4 */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.08 }}
+              className="col-span-12 lg:col-span-4 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <Users className="h-4 w-4 text-wj-green" />
+                <h3 className="text-sm font-medium text-foreground">{t("manage.team.title")}</h3>
+              </div>
+
+              {loading ? (
+                <div className="flex-1 flex items-center justify-center py-4 text-muted-foreground text-sm gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" /> {t("manage.team.loading")}
+                </div>
+              ) : mechanics.length === 0 ? (
+                <div className="flex-1 text-center py-4 text-sm text-muted-foreground">
+                  {t("manage.team.empty")}
+                </div>
+              ) : (
+                <div className="flex-1 flex flex-col gap-2 min-h-0 overflow-y-auto pr-1 max-h-[180px]">
+                  {mechanics.map((member, index) => {
+                    const memberLoad = Math.min(
+                      100,
+                      Math.round((member.weekly_appointments / member.weekly_capacity) * 100),
+                    );
+                    const rating = Math.max(3, Math.min(5, 3 + (memberLoad / 100) * 2));
+                    const initials = (member.full_name ?? member.email ?? "??")
+                      .split(" ")
+                      .map((s) => s[0])
+                      .join("")
+                      .slice(0, 2)
+                      .toUpperCase();
+                    return (
+                      <motion.button
+                        key={member.user_id}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.1 + index * 0.04 }}
+                        onClick={() =>
+                          setStaffDetail({
+                            id: member.user_id,
+                            name: member.full_name ?? member.email ?? "Mecânico",
+                            email: member.email,
+                            weekly: member.weekly_appointments,
+                            capacity: member.weekly_capacity,
+                          })
+                        }
+                        className="text-left bg-muted/30 rounded-xl p-2 hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-full bg-wj-green/20 text-wj-green text-[10px] font-bold flex items-center justify-center shrink-0">
+                            {initials}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-foreground truncate">
+                              {member.full_name ?? member.email}
+                            </p>
+                            <div className="flex items-center gap-0.5 mt-0.5">
+                              {[0, 1, 2, 3, 4].map((i) => (
+                                <Star
+                                  key={i}
+                                  className={cn(
+                                    "h-2.5 w-2.5",
+                                    i < Math.round(rating)
+                                      ? "fill-amber-400 text-amber-400"
+                                      : "text-muted-foreground/40",
+                                  )}
+                                />
+                              ))}
+                              <span className="text-[10px] text-muted-foreground ml-1">
+                                {rating.toFixed(1)}
+                              </span>
+                            </div>
+                          </div>
+                          <Badge variant="outline" className="text-[10px] shrink-0">
+                            {member.weekly_appointments}/{member.weekly_capacity}
+                          </Badge>
+                        </div>
+                        <div className="h-1 mt-1.5 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className={cn(
+                              "h-full rounded-full transition-all",
+                              memberLoad > 80
+                                ? "bg-red-500"
+                                : memberLoad > 60
+                                  ? "bg-amber-500"
+                                  : "bg-wj-green",
+                            )}
+                            style={{ width: `${memberLoad}%` }}
+                          />
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              )}
+            </motion.div>
+
+            {/* Row 2 — Team Weekly Schedule (MAIN) */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.12 }}
+              className="col-span-12 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-sm font-medium text-foreground">{t("manage.team_week.title")}</h3>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{t("manage.team_week.subtitle")}</p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-xs text-wj-green hover:text-wj-green/80 gap-1 h-7"
+                  onClick={() => navigate("/dashboard/admin/workshop")}
+                >
+                  {t("manage.week.manage")}
+                  <ChevronRight className="h-3 w-3" />
+                </Button>
+              </div>
+              <div className="flex-1 min-h-0">
+                <TeamWeekWorkloadCompact mechanics={mechanics} />
+              </div>
+            </motion.div>
+
+            {/* Row 3 — Heatmap (square) + Upcoming Holidays */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.18 }}
               className="col-span-12 lg:col-span-5 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
             >
               <div className="flex items-center gap-2 mb-4">
@@ -498,189 +681,6 @@ export default function AdminManage() {
               )}
             </motion.div>
 
-            {/* Team Members Workload — compact col-4 */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.20 }}
-              className="col-span-12 lg:col-span-4 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
-            >
-              <div className="flex items-center gap-2 mb-4">
-                <Users className="h-4 w-4 text-wj-green" />
-                <h3 className="text-sm font-medium text-foreground">{t("manage.team.title")}</h3>
-              </div>
-
-              {loading ? (
-                <div className="flex-1 flex items-center justify-center py-8 text-muted-foreground text-sm gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" /> {t("manage.team.loading")}
-                </div>
-              ) : mechanics.length === 0 ? (
-                <div className="flex-1 text-center py-8 text-sm text-muted-foreground">
-                  {t("manage.team.empty")}
-                </div>
-              ) : (
-              <div className="flex-1 flex flex-col gap-2.5 min-h-0 overflow-y-auto pr-1">
-                {mechanics.map((member, index) => {
-                  const memberLoad = Math.min(
-                    100,
-                    Math.round((member.weekly_appointments / member.weekly_capacity) * 100),
-                  );
-                  // Derived performance rating (3.0 – 5.0) until a real rating source exists
-                  const rating = Math.max(3, Math.min(5, 3 + (memberLoad / 100) * 2));
-                  const initials = (member.full_name ?? member.email ?? "??")
-                    .split(" ")
-                    .map((s) => s[0])
-                    .join("")
-                    .slice(0, 2)
-                    .toUpperCase();
-                  return (
-                    <motion.button
-                      key={member.user_id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.2 + index * 0.05 }}
-                      onClick={() =>
-                        setStaffDetail({
-                          id: member.user_id,
-                          name: member.full_name ?? member.email ?? "Mecânico",
-                          email: member.email,
-                          weekly: member.weekly_appointments,
-                          capacity: member.weekly_capacity,
-                        })
-                      }
-                      className="text-left bg-muted/30 rounded-xl p-2.5 hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full bg-wj-green/20 text-wj-green text-xs font-bold flex items-center justify-center shrink-0">
-                          {initials}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-foreground truncate">
-                            {member.full_name ?? member.email}
-                          </p>
-                          <div className="flex items-center gap-1 mt-0.5">
-                            {[0, 1, 2, 3, 4].map((i) => (
-                              <Star
-                                key={i}
-                                className={cn(
-                                  "h-2.5 w-2.5",
-                                  i < Math.round(rating)
-                                    ? "fill-amber-400 text-amber-400"
-                                    : "text-muted-foreground/40",
-                                )}
-                              />
-                            ))}
-                            <span className="text-[10px] text-muted-foreground ml-1">
-                              {rating.toFixed(1)}
-                            </span>
-                          </div>
-                        </div>
-                        <Badge variant="outline" className="text-[10px] shrink-0">
-                          {member.weekly_appointments}/{member.weekly_capacity}
-                        </Badge>
-                      </div>
-                      <div className="h-1 mt-2 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className={cn(
-                            "h-full rounded-full transition-all",
-                            memberLoad > 80
-                              ? "bg-red-500"
-                              : memberLoad > 60
-                                ? "bg-amber-500"
-                                : "bg-wj-green",
-                          )}
-                          style={{ width: `${memberLoad}%` }}
-                        />
-                      </div>
-                    </motion.button>
-                  );
-                })}
-              </div>
-              )}
-            </motion.div>
-
-            {/* Week Overview — middle column */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
-              className="col-span-12 lg:col-span-4 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-sm font-medium text-foreground">{t("manage.team_week.title")}</h3>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">{t("manage.team_week.subtitle")}</p>
-                </div>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-xs text-wj-green hover:text-wj-green/80 gap-1 h-7"
-                  onClick={() => navigate("/dashboard/admin/workshop")}
-                >
-                  {t("manage.week.manage")}
-                  <ChevronRight className="h-3 w-3" />
-                </Button>
-              </div>
-              <div className="flex-1 min-h-0">
-                <TeamWeekWorkloadCompact mechanics={mechanics} />
-              </div>
-            </motion.div>
-
-            {/* Weekly Load */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.30 }}
-              className="col-span-12 lg:col-span-4 p-4 lg:p-5 flex flex-col bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-wj-green" />
-                  <h3 className="text-sm font-medium text-foreground">{t("manage.workload.title")}</h3>
-                </div>
-                <Badge className={cn(
-                  "text-[10px]",
-                  workloadPercentage > 80 
-                    ? "bg-red-500/20 text-red-400 border-red-500/30"
-                    : workloadPercentage > 60
-                    ? "bg-amber-500/20 text-amber-400 border-amber-500/30"
-                    : "bg-wj-green/20 text-wj-green border-wj-green/30"
-                )}>
-                  {t("manage.workload.of_capacity", { n: workloadPercentage })}
-                </Badge>
-              </div>
-              
-              <div className="h-2.5 bg-muted rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${workloadPercentage}%` }}
-                  transition={{ delay: 0.3, duration: 0.8 }}
-                  className={cn(
-                    "h-full rounded-full",
-                    workloadPercentage > 80 
-                      ? "bg-gradient-to-r from-red-500 to-red-400"
-                      : workloadPercentage > 60
-                      ? "bg-gradient-to-r from-amber-500 to-amber-400"
-                      : "bg-gradient-to-r from-wj-green to-wj-green/60"
-                  )}
-                />
-              </div>
-              
-              <div className="flex justify-between mt-2 text-[11px] text-muted-foreground">
-                <span>{t("manage.workload.appointments", { n: totalAppointments })}</span>
-                <span>{t("manage.workload.capacity", { n: totalCapacity })}</span>
-              </div>
-
-              <Button
-                size="sm"
-                variant="outline"
-                className="mt-auto gap-2 w-full text-xs h-8"
-                onClick={() => setTeamWeekOpen(true)}
-              >
-                <LayoutGrid className="h-3.5 w-3.5" />
-                {t("manage.team_week.open_button")}
-              </Button>
-            </motion.div>
         </div>
       </div>
 
