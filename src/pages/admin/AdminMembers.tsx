@@ -103,7 +103,7 @@ const getRoleBadge = (role: Role) => {
   const map: Record<Role, string> = {
     admin: "bg-amber-500/20 text-amber-400 border-amber-500/30",
     staff: "bg-blue-500/20 text-blue-400 border-blue-500/30",
-    member: "bg-wj-green/20 text-wj-green border-wj-green/30",
+    customer: "bg-wj-green/20 text-wj-green border-wj-green/30",
     guest: "bg-muted text-muted-foreground border-border/50",
   };
   return <Badge className={cn("text-[10px] capitalize", map[role])}>{role}</Badge>;
