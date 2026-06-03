@@ -258,7 +258,7 @@ export default function AdminPlans() {
                   </SelectContent>
                 </Select>
               </div>
-              <ChartContainer config={chartConfig} className="flex-1 w-full aspect-auto">
+              <ChartContainer config={chartConfig} className="flex-1 min-h-0 w-full aspect-auto">
                 <AreaChart data={filteredSeries} margin={{ left: 4, right: 4, top: 8, bottom: 0 }}>
                   <defs>
                     {planNames.map((name) => (
@@ -316,7 +316,7 @@ export default function AdminPlans() {
                   ))}
                 </AreaChart>
               </ChartContainer>
-              <div className="mt-2 flex items-center justify-center flex-wrap gap-1.5">
+              <div className="mt-2 flex shrink-0 items-center justify-center flex-wrap gap-1.5 max-w-full">
                 {planNames.map((name) => {
                   const color = (chartConfig[name]?.color as string) ?? "hsl(var(--muted-foreground))";
                   const row = planRows.find((p) => p.name === name);
@@ -325,10 +325,10 @@ export default function AdminPlans() {
                   return (
                     <div
                       key={name}
-                      className="group flex items-center gap-1.5 px-2 py-1 rounded-full border border-border/40 bg-background/40 hover:bg-muted/40 hover:border-border transition-all duration-300 overflow-hidden cursor-default"
+                      className="group flex items-center gap-1.5 px-2 py-1 rounded-full border border-border/40 bg-background/40 hover:bg-muted/40 hover:border-border transition-all duration-300 overflow-hidden cursor-default min-w-0"
                     >
                       <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: color }} />
-                      <span className="text-[10px] uppercase tracking-wider text-foreground/80">{name}</span>
+                      <span className="text-[10px] uppercase tracking-wider text-foreground/80 truncate">{name}</span>
                       <span className="grid grid-cols-[0fr] group-hover:grid-cols-[1fr] transition-[grid-template-columns] duration-300 ease-out">
                         <span className="overflow-hidden whitespace-nowrap">
                           <span className="pl-1.5 text-[10px] text-muted-foreground">
