@@ -18,12 +18,17 @@ import {
   Loader2,
   CalendarOff,
   Clock,
+  UserPlus,
+  Shield,
+  Wrench,
+  Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import type { Mechanic } from "@/hooks/scheduling/useSchedulingData";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type ScheduleRow = {
   staff_id: string;
@@ -69,9 +74,10 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   mechanics: Mechanic[];
+  onChanged?: () => void;
 }
 
-export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics }: Props) {
+export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, onChanged }: Props) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language?.startsWith("pt") ? "pt-PT" : "en-GB";
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date()));
