@@ -196,9 +196,24 @@ export function useSubscriptions() {
       .from("subscriptions")
       .select(`*,
         plan_version:plan_versions!inner(*, plan:plans!inner(name, slug, color_hex)),
-        profile:profiles(full_name, email)`)
+        profile:profiles!subscriptions_user_id_fkey(full_name, email)`)
       .order("started_at", { ascending: false });
-    setRows((data ?? []) as any[]);
+    let merged = (data ?? []) as any[];
+    // No FK between subscriptions.user_id and profiles.user_id, so the embed
+    // above may silently return null. Fetch profiles separately and merge.
+    const userIds = Array.from(new Set(merged.map((r) => r.user_id).filter(Boolean)));
+    if (userIds.length) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, email")
+        .in("user_id", userIds);
+      const byId = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
+      merged = merged.map((r) => ({
+        ...r,
+        profile: r.profile ?? byId.get(r.user_id) ?? null,
+      }));
+    }
+    setRows(merged);
     setLoading(false);
   }, []);
 
