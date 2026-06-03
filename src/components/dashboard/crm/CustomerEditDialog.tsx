@@ -9,6 +9,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Info, CheckCircle2, AlertTriangle, CreditCard, Banknote, XCircle, Loader2 } from "lucide-react";
+import { Plus, X, Check } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { DatePicker } from "@/components/ui/date-picker";
 import { supabase } from "@/integrations/supabase/client";
 import { usePlans, cancelSubscription, changeSubscriptionPlan } from "@/hooks/plans/usePlansData";
@@ -47,6 +50,89 @@ function FieldLabel({ label, hint }: { label: string; hint: string }) {
   );
 }
 
+function TagsMultiSelect({ value, onChange }: { value: string[]; onChange: (next: string[]) => void }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!open) return;
+    (async () => {
+      const { data } = await supabase.from("customer_profiles").select("tags").limit(500);
+      const all = new Set<string>();
+      (data ?? []).forEach((r: any) => (r.tags ?? []).forEach((t: string) => t && all.add(t)));
+      setSuggestions(Array.from(all).sort());
+    })();
+  }, [open]);
+
+  const add = (tag: string) => {
+    const v = tag.trim();
+    if (!v) return;
+    if (value.includes(v)) return;
+    onChange([...value, v]);
+    setQuery("");
+  };
+  const remove = (tag: string) => onChange(value.filter((t) => t !== tag));
+
+  const available = suggestions.filter((s) => !value.includes(s));
+  const q = query.trim();
+  const showCreate = q.length > 0 && !suggestions.some((s) => s.toLowerCase() === q.toLowerCase()) && !value.some((s) => s.toLowerCase() === q.toLowerCase());
+
+  return (
+    <div className="mt-1 flex flex-wrap items-center gap-1.5 rounded-md border border-input bg-background p-1.5 min-h-9">
+      {value.map((t) => (
+        <Badge key={t} variant="secondary" className="text-[10px] gap-1 pl-2 pr-1 py-0.5">
+          {t}
+          <button type="button" onClick={() => remove(t)} className="rounded hover:bg-muted-foreground/20" aria-label={`Remove ${t}`}>
+            <X className="h-3 w-3" />
+          </button>
+        </Badge>
+      ))}
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button type="button" size="sm" variant="ghost" className="h-6 px-2 text-[11px] text-muted-foreground">
+            <Plus className="h-3 w-3 mr-1" /> {value.length ? "Add" : "Add tag"}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="p-0 w-64" align="start">
+          <Command shouldFilter>
+            <CommandInput
+              placeholder="Search or create…"
+              value={query}
+              onValueChange={setQuery}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && showCreate) {
+                  e.preventDefault();
+                  add(q);
+                }
+              }}
+            />
+            <CommandList>
+              <CommandEmpty>{showCreate ? "Press Enter to create" : "No tags"}</CommandEmpty>
+              {available.length > 0 && (
+                <CommandGroup heading="Existing">
+                  {available.map((s) => (
+                    <CommandItem key={s} value={s} onSelect={() => add(s)} className="text-xs">
+                      <Check className="h-3 w-3 mr-2 opacity-0" />{s}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
+              {showCreate && (
+                <CommandGroup heading="Create">
+                  <CommandItem value={`__create__${q}`} onSelect={() => add(q)} className="text-xs">
+                    <Plus className="h-3 w-3 mr-2" /> Create "{q}"
+                  </CommandItem>
+                </CommandGroup>
+              )}
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
+
 export default function CustomerEditDialog({ open, onClose, customer, onSaved }: Props) {
   const { t } = useTranslation();
   const { plans } = usePlans();
@@ -54,7 +140,7 @@ export default function CustomerEditDialog({ open, onClose, customer, onSaved }:
   const [health, setHealth] = useState(50);
   const [risk, setRisk] = useState(0);
   const [ltv, setLtv] = useState(0);
-  const [tags, setTags] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
   const [subId, setSubId] = useState<string | null>(null);
@@ -94,7 +180,7 @@ export default function CustomerEditDialog({ open, onClose, customer, onSaved }:
     setHealth(customer.health_score);
     setRisk(customer.churn_risk_score);
     setLtv(Number(customer.ltv_estimated));
-    setTags((customer.tags ?? []).join(", "));
+    setTags(customer.tags ?? []);
     if (open) loadSub(customer.user_id);
   }, [customer, open]);
 
@@ -107,7 +193,7 @@ export default function CustomerEditDialog({ open, onClose, customer, onSaved }:
         health_score: Math.max(0, Math.min(100, health)),
         churn_risk_score: Math.max(0, Math.min(100, risk)),
         ltv_estimated: ltv,
-        tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
+        tags: tags.map((t) => t.trim()).filter(Boolean),
       });
       toast.success(t("crm.edit_customer_modal.updated"));
       onSaved?.();
@@ -218,7 +304,7 @@ export default function CustomerEditDialog({ open, onClose, customer, onSaved }:
               </div>
               <div>
                 <FieldLabel label={t("crm.edit_customer_modal.tags")} hint="Comma-separated labels for manual segmentation." />
-                <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="vip, recorrente, lisboa" className="h-9 mt-1" />
+                <TagsMultiSelect value={tags} onChange={setTags} />
               </div>
 
               <Separator className="my-2" />
