@@ -195,8 +195,7 @@ export function useSubscriptions() {
     const { data } = await supabase
       .from("subscriptions")
       .select(`*,
-        plan_version:plan_versions!inner(*, plan:plans!inner(name, slug, color_hex)),
-        profile:profiles!subscriptions_user_id_fkey(full_name, email)`)
+        plan_version:plan_versions!inner(*, plan:plans!inner(name, slug, color_hex))`)
       .order("started_at", { ascending: false });
     let merged = (data ?? []) as any[];
     // No FK between subscriptions.user_id and profiles.user_id, so the embed
