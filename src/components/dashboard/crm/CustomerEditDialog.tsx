@@ -61,6 +61,7 @@ export default function CustomerEditDialog({ open, onClose, customer, onSaved }:
   const [selectedVersionId, setSelectedVersionId] = useState<string>("");
   const [payMethod, setPayMethod] = useState<PayMethod>("cash");
   const [hasPaymentMethod, setHasPaymentMethod] = useState(false);
+  const [billingDate, setBillingDate] = useState<string>(""); // YYYY-MM-DD — next monthly charge
   const [loadingSub, setLoadingSub] = useState(false);
   const [busy, setBusy] = useState<null | "assign" | "cancel">(null);
 
@@ -69,7 +70,7 @@ export default function CustomerEditDialog({ open, onClose, customer, onSaved }:
     const [{ data: subs }, { data: pms }] = await Promise.all([
       supabase
         .from("subscriptions")
-        .select("id, plan_version_id, status, payment_method")
+        .select("id, plan_version_id, status, payment_method, current_period_end")
         .eq("user_id", userId)
         .in("status", ["active", "trialing", "past_due"])
         .order("started_at", { ascending: false })
@@ -81,6 +82,7 @@ export default function CustomerEditDialog({ open, onClose, customer, onSaved }:
     setCurrentVersionId(sub?.plan_version_id ?? null);
     setSelectedVersionId(sub?.plan_version_id ?? "");
     setPayMethod((sub?.payment_method as PayMethod) ?? "cash");
+    setBillingDate(sub?.current_period_end ? String(sub.current_period_end).slice(0, 10) : "");
     setHasPaymentMethod((pms ?? []).length > 0);
     setLoadingSub(false);
   };
@@ -134,7 +136,10 @@ export default function CustomerEditDialog({ open, onClose, customer, onSaved }:
         }
         const { error: e2 } = await supabase
           .from("subscriptions")
-          .update({ payment_method: payMethod } as any)
+          .update({
+            payment_method: payMethod,
+            ...(billingDate ? { current_period_end: new Date(billingDate).toISOString() } : {}),
+          } as any)
           .eq("id", subId);
         if (e2) throw e2;
         toast.success("Subscription updated");
@@ -144,6 +149,7 @@ export default function CustomerEditDialog({ open, onClose, customer, onSaved }:
           plan_version_id: selectedVersionId,
           status: "active",
           payment_method: payMethod,
+          ...(billingDate ? { current_period_end: new Date(billingDate).toISOString() } : {}),
         } as any);
         if (error) throw error;
         toast.success("Plan assigned");
@@ -278,6 +284,19 @@ export default function CustomerEditDialog({ open, onClose, customer, onSaved }:
                       );
                     })}
                   </div>
+                </div>
+
+                <div>
+                  <FieldLabel
+                    label="Next monthly payment date"
+                    hint="Date of the next subscription charge / cash collection. Updates current_period_end. Renewals follow this anchor day."
+                  />
+                  <Input
+                    type="date"
+                    value={billingDate}
+                    onChange={(e) => setBillingDate(e.target.value)}
+                    className="h-9 mt-1"
+                  />
                 </div>
 
                 {bankRequiresMethod && (
