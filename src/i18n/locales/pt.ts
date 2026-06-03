@@ -314,6 +314,9 @@ const pt = {
       deleted: "Exceção removida",
       legend_closed: "Fechado",
       legend_special: "Horário especial",
+      sync_nl: "Importar feriados (NL)",
+      sync_nl_done: "{{n}} feriados holandeses adicionados como fechados",
+      sync_nl_none: "Todos os feriados holandeses já estão no calendário",
     },
     heatmap: {
       title: "Mapa de Carga",
