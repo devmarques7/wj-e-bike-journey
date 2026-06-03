@@ -167,10 +167,20 @@ export function usePlanDetail(planId: string | undefined) {
     if (versionIds.length) {
       const { data: subs } = await supabase
         .from("subscriptions")
-        .select("*, profile:profiles!inner(full_name, email)")
+        .select("*")
         .in("plan_version_id", versionIds)
         .order("started_at", { ascending: false });
-      setSubscribers((subs ?? []) as any[]);
+      let mergedSubs = (subs ?? []) as any[];
+      const uids = Array.from(new Set(mergedSubs.map((r) => r.user_id).filter(Boolean)));
+      if (uids.length) {
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("user_id, full_name, email")
+          .in("user_id", uids);
+        const byId = new Map((profs ?? []).map((p: any) => [p.user_id, p]));
+        mergedSubs = mergedSubs.map((r) => ({ ...r, profile: byId.get(r.user_id) ?? null }));
+      }
+      setSubscribers(mergedSubs);
     } else {
       setSubscribers([]);
     }
