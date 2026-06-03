@@ -224,17 +224,18 @@ export default function AdminPlans() {
                 <div>
                   <h3 className="text-sm font-medium text-foreground">Revenue Potential per Plan</h3>
                   <p className="text-[11px] text-muted-foreground">
-                    Monthly recurring revenue contribution by plan — {timeRange === "7d" ? "last 7 days" : timeRange === "30d" ? "last 30 days" : "last 3 months"}
+                    Projected MRR by plan — next {forecastRange === "3m" ? "3 months" : forecastRange === "6m" ? "6 months" : forecastRange === "12m" ? "12 months" : "24 months"} at +3%/mo growth
                   </p>
                 </div>
-                <Select value={timeRange} onValueChange={(v) => setTimeRange(v as any)}>
-                  <SelectTrigger className="w-[150px] h-8 rounded-lg text-xs" aria-label="Select time range">
-                    <SelectValue placeholder="Last 3 months" />
+                <Select value={forecastRange} onValueChange={(v) => setForecastRange(v as any)}>
+                  <SelectTrigger className="w-[170px] h-8 rounded-lg text-xs" aria-label="Select forecast horizon">
+                    <SelectValue placeholder="Next 12 months" />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl">
-                    <SelectItem value="90d" className="rounded-lg text-xs">Last 3 months</SelectItem>
-                    <SelectItem value="30d" className="rounded-lg text-xs">Last 30 days</SelectItem>
-                    <SelectItem value="7d" className="rounded-lg text-xs">Last 7 days</SelectItem>
+                    <SelectItem value="3m" className="rounded-lg text-xs">Next 3 months</SelectItem>
+                    <SelectItem value="6m" className="rounded-lg text-xs">Next 6 months</SelectItem>
+                    <SelectItem value="12m" className="rounded-lg text-xs">Next 12 months</SelectItem>
+                    <SelectItem value="24m" className="rounded-lg text-xs">Next 24 months</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
