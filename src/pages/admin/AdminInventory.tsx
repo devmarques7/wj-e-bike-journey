@@ -26,6 +26,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Info } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -263,8 +265,34 @@ export default function AdminInventory() {
                       <TableHead className="text-muted-foreground text-xs text-right">Avail.</TableHead>
                       <TableHead className="text-muted-foreground text-xs text-right hidden sm:table-cell">Res.</TableHead>
                       <TableHead className="text-muted-foreground text-xs text-right hidden md:table-cell">In</TableHead>
-                      <TableHead className="text-muted-foreground text-xs text-right hidden md:table-cell">Unit €</TableHead>
-                      <TableHead className="text-muted-foreground text-xs text-right hidden md:table-cell">Value</TableHead>
+                      <TableHead className="text-muted-foreground text-xs text-right hidden md:table-cell">
+                        <TooltipProvider delayDuration={150}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex items-center gap-1 cursor-help">
+                                Unit € <Info className="h-3 w-3 opacity-60" />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-[240px] text-[11px] leading-snug">
+                              Unit cost resolved as: variant price override → product sale price → product base price. Drives the Stock Value KPI.
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </TableHead>
+                      <TableHead className="text-muted-foreground text-xs text-right hidden md:table-cell">
+                        <TooltipProvider delayDuration={150}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="inline-flex items-center gap-1 cursor-help">
+                                Value <Info className="h-3 w-3 opacity-60" />
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-[240px] text-[11px] leading-snug">
+                              Line value = Unit € × Available qty. The sum of this column equals the Stock Value KPI above.
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </TableHead>
                       <TableHead className="text-muted-foreground text-xs">Status</TableHead>
                       <TableHead className="text-muted-foreground text-xs text-right hidden lg:table-cell">Actions</TableHead>
                     </TableRow>
