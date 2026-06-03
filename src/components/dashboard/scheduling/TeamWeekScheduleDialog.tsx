@@ -90,6 +90,7 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
   const [bulkSaving, setBulkSaving] = useState(false);
   const [bulkStart, setBulkStart] = useState("09:00");
   const [bulkEnd, setBulkEnd] = useState("18:00");
+  const [assignOpen, setAssignOpen] = useState(false);
 
   const cellKey = (staffId: string, date: Date) => `${staffId}|${ymd(date)}`;
   const toggleSelect = (staffId: string, date: Date) => {
