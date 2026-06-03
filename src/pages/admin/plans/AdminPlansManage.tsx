@@ -51,7 +51,7 @@ export default function AdminPlansManage() {
                 {p.description && <p className="text-xs text-muted-foreground line-clamp-2">{p.description}</p>}
                 <div className="flex items-baseline gap-1">
                   <span className="text-2xl font-light">€{Number(p.activeVersion?.price ?? 0).toFixed(2)}</span>
-                  <span className="text-xs text-muted-foreground">/ {p.activeVersion?.interval ? t(`plans.intervals.${p.activeVersion.interval}`, p.activeVersion.interval) : "—"}</span>
+                  <span className="text-xs text-muted-foreground">/ {p.activeVersion?.interval ? String(t(`plans.intervals.${p.activeVersion.interval}`, { defaultValue: p.activeVersion.interval })) : "—"}</span>
                 </div>
                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {t("plans.manage.subs", { n: p.activeSubs })}</span>
