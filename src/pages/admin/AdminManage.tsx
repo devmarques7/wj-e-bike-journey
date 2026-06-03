@@ -299,16 +299,15 @@ export default function AdminManage() {
               )}
             </motion.div>
 
-        {/* Main Content Grid */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl overflow-hidden"
-        >
-          <div className="grid grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-border/30">
+        {/* Main Content Grid — independent glass blocks */}
+        <div className="grid grid-cols-12 gap-4 lg:gap-5">
             {/* Heatmap — compact, no longer the highlight */}
-            <div className="col-span-12 lg:col-span-4 p-4">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.10 }}
+              className="col-span-12 lg:col-span-4 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
+            >
               <div className="flex items-center gap-2 mb-4">
                 <CalendarIcon className="h-4 w-4 text-wj-green" />
                 <h3 className="text-sm font-medium text-foreground">{t("manage.heatmap.title")}</h3>
@@ -429,10 +428,15 @@ export default function AdminManage() {
                   {appointments.length} {t("manage.heatmap.appointments", { n: appointments.length })}
                 </span>
               </div>
-            </div>
+            </motion.div>
 
             {/* Week Overview — middle column */}
-            <div className="col-span-12 lg:col-span-5 p-4">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="col-span-12 lg:col-span-5 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
+            >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-medium text-foreground">{t("manage.week.title")}</h3>
                 <Button
@@ -481,10 +485,15 @@ export default function AdminManage() {
                   );
                 })}
               </div>
-            </div>
+            </motion.div>
 
             {/* Workload + Team week button */}
-            <div className="col-span-12 lg:col-span-3 p-4 flex flex-col">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.20 }}
+              className="col-span-12 lg:col-span-3 p-4 lg:p-5 flex flex-col bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
+            >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-wj-green" />
@@ -532,10 +541,15 @@ export default function AdminManage() {
                 <LayoutGrid className="h-3.5 w-3.5" />
                 {t("manage.team_week.open_button")}
               </Button>
-            </div>
+            </motion.div>
 
             {/* Team Members Workload — bottom row left */}
-            <div className="col-span-12 lg:col-span-7 p-4">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="col-span-12 lg:col-span-7 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
+            >
               <div className="flex items-center gap-2 mb-4">
                 <Users className="h-4 w-4 text-wj-green" />
                 <h3 className="text-sm font-medium text-foreground">{t("manage.team.title")}</h3>
@@ -614,10 +628,15 @@ export default function AdminManage() {
                 })}
               </div>
               )}
-            </div>
+            </motion.div>
 
             {/* Exceptions — bottom row right */}
-            <div className="col-span-12 lg:col-span-5 p-4">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.30 }}
+              className="col-span-12 lg:col-span-5 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
+            >
               <div className="flex items-center gap-2 mb-4">
                 <CalendarOff className="h-4 w-4 text-wj-green" />
                 <h3 className="text-sm font-medium text-foreground">{t("manage.exceptions.title")}</h3>
@@ -664,9 +683,8 @@ export default function AdminManage() {
                   ))}
                 </div>
               )}
-            </div>
-          </div>
-        </motion.div>
+            </motion.div>
+        </div>
       </div>
 
       {/* Opening Hours Modal */}
