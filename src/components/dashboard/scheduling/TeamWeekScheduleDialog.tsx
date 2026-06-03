@@ -395,6 +395,7 @@ export default function TeamWeekScheduleDialog({ open, onOpenChange, mechanics, 
                   </div>
                 ))}
               </div>
+              </div>
             </div>
           )}
 
