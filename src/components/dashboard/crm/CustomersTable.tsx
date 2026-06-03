@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   flexRender,
   getCoreRowModel,
@@ -37,6 +38,7 @@ interface Props {
 
 export default function CustomersTable({ rows, loading, onMutate }: Props) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { can } = usePermissions();
   const canEdit = can("crm.edit");
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -49,10 +51,10 @@ export default function CustomersTable({ rows, loading, onMutate }: Props) {
   const [editing, setEditing] = useState<CrmCustomer | null>(null);
 
   const handleDelete = async (c: CrmCustomer) => {
-    if (!confirm(`Eliminar perfil CRM de ${c.full_name}? (Não apaga o utilizador)`)) return;
+    if (!confirm(t("crm.table.confirm_delete", { name: c.full_name }))) return;
     try {
       await deleteCustomerProfile(c.id);
-      toast.success("Perfil eliminado");
+      toast.success(t("crm.table.deleted"));
       onMutate?.();
     } catch (e: any) {
       toast.error(e.message);
@@ -117,7 +119,7 @@ export default function CustomersTable({ rows, loading, onMutate }: Props) {
         accessorKey: "full_name",
         header: ({ column }) => (
           <button className="flex items-center gap-1" onClick={() => column.toggleSorting()}>
-            Cliente <ArrowUpDown className="h-3 w-3" />
+            {t("crm.table.columns.customer")} <ArrowUpDown className="h-3 w-3" />
           </button>
         ),
         cell: ({ row }) => (
@@ -136,7 +138,7 @@ export default function CustomersTable({ rows, loading, onMutate }: Props) {
       },
       {
         accessorKey: "plan_name",
-        header: "Plano",
+        header: t("crm.table.columns.plan"),
         cell: ({ row }) =>
           row.original.plan_name ? (
             <Badge variant="outline" className="text-[10px]">{row.original.plan_name}</Badge>
@@ -146,7 +148,7 @@ export default function CustomersTable({ rows, loading, onMutate }: Props) {
       },
       {
         accessorKey: "lifecycle_stage",
-        header: "Etapa",
+        header: t("crm.table.columns.stage"),
         cell: ({ row }) => {
           const meta = LIFECYCLE_META[row.original.lifecycle_stage];
           return (
@@ -155,7 +157,7 @@ export default function CustomersTable({ rows, loading, onMutate }: Props) {
               className="text-[10px]"
               style={{ borderColor: meta.color, color: meta.color }}
             >
-              {meta.label}
+              {t(`crm.lifecycle.${row.original.lifecycle_stage}`)}
             </Badge>
           );
         },
@@ -164,7 +166,7 @@ export default function CustomersTable({ rows, loading, onMutate }: Props) {
         accessorKey: "health_score",
         header: ({ column }) => (
           <button className="flex items-center gap-1" onClick={() => column.toggleSorting()}>
-            Health <ArrowUpDown className="h-3 w-3" />
+            {t("crm.table.columns.health")} <ArrowUpDown className="h-3 w-3" />
           </button>
         ),
         cell: ({ row }) => (
@@ -184,7 +186,7 @@ export default function CustomersTable({ rows, loading, onMutate }: Props) {
         accessorKey: "churn_risk_score",
         header: ({ column }) => (
           <button className="flex items-center gap-1" onClick={() => column.toggleSorting()}>
-            Risco <ArrowUpDown className="h-3 w-3" />
+            {t("crm.table.columns.risk")} <ArrowUpDown className="h-3 w-3" />
           </button>
         ),
         cell: ({ row }) => {
@@ -204,19 +206,19 @@ export default function CustomersTable({ rows, loading, onMutate }: Props) {
         accessorKey: "ltv_estimated",
         header: ({ column }) => (
           <button className="flex items-center gap-1" onClick={() => column.toggleSorting()}>
-            LTV <ArrowUpDown className="h-3 w-3" />
+            {t("crm.table.columns.ltv")} <ArrowUpDown className="h-3 w-3" />
           </button>
         ),
         cell: ({ row }) => <span className="font-mono text-xs">€{Number(row.original.ltv_estimated).toFixed(0)}</span>,
       },
       {
         accessorKey: "last_contact_at",
-        header: "Últ. contacto",
+        header: t("crm.table.columns.last_contact"),
         cell: ({ row }) => <span className="text-xs text-muted-foreground">{relativeTime(row.original.last_contact_at)}</span>,
       },
       {
         accessorKey: "tags",
-        header: "Tags",
+        header: t("crm.table.columns.tags"),
         cell: ({ row }) => {
           const tags = row.original.tags ?? [];
           const visible = tags.slice(0, 3);
@@ -244,25 +246,25 @@ export default function CustomersTable({ rows, loading, onMutate }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
               <DropdownMenuItem onClick={() => navigate(`/dashboard/admin/crm/${row.original.id}`)}>
-                Ver perfil
+                {t("crm.actions.view_profile")}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate(`/dashboard/admin/crm/${row.original.id}?action=contact`)}>
-                Registar contacto
+                {t("crm.actions.log_contact")}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate(`/dashboard/admin/crm/${row.original.id}?action=note`)}>
-                Adicionar nota
+                {t("crm.actions.add_note")}
               </DropdownMenuItem>
               {canEdit && (
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => setEditing(row.original)}>
-                    Editar perfil
+                    {t("crm.actions.edit")}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => handleDelete(row.original)}
                     className="text-red-400 focus:text-red-400"
                   >
-                    Eliminar
+                    {t("crm.actions.delete")}
                   </DropdownMenuItem>
                 </>
               )}
@@ -272,7 +274,7 @@ export default function CustomersTable({ rows, loading, onMutate }: Props) {
         enableSorting: false,
       },
     ],
-    [navigate, canEdit],
+    [navigate, canEdit, t],
   );
 
   const table = useReactTable({
@@ -314,37 +316,37 @@ export default function CustomersTable({ rows, loading, onMutate }: Props) {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Pesquisar..."
+            placeholder={t("crm.table.search")}
             className="pl-7 h-9 bg-background/60"
           />
         </div>
         <Select value={planFilter} onValueChange={setPlanFilter}>
-          <SelectTrigger className="w-[130px] h-9"><SelectValue placeholder="Plano" /></SelectTrigger>
+          <SelectTrigger className="w-[130px] h-9"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos os planos</SelectItem>
+            <SelectItem value="all">{t("crm.table.all_plans")}</SelectItem>
             {allPlans.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={stageFilter} onValueChange={setStageFilter}>
-          <SelectTrigger className="w-[140px] h-9"><SelectValue placeholder="Etapa" /></SelectTrigger>
+          <SelectTrigger className="w-[140px] h-9"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todas etapas</SelectItem>
-            {Object.entries(LIFECYCLE_META).map(([k, v]) => (
-              <SelectItem key={k} value={k}>{v.label}</SelectItem>
+            <SelectItem value="all">{t("crm.table.all_stages")}</SelectItem>
+            {Object.keys(LIFECYCLE_META).map((k) => (
+              <SelectItem key={k} value={k}>{t(`crm.lifecycle.${k}`)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
         {allTags.length > 0 && (
           <Select value={tagFilter} onValueChange={setTagFilter}>
-            <SelectTrigger className="w-[120px] h-9"><SelectValue placeholder="Tag" /></SelectTrigger>
+            <SelectTrigger className="w-[120px] h-9"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas tags</SelectItem>
+              <SelectItem value="all">{t("crm.table.all_tags")}</SelectItem>
               {allTags.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
             </SelectContent>
           </Select>
         )}
         <div className="flex items-center gap-2 px-3 h-9 rounded-md border border-border bg-background/60">
-          <span className="text-xs text-muted-foreground">Health ≥</span>
+          <span className="text-xs text-muted-foreground">{t("crm.table.health_min")}</span>
           <Slider value={[healthMin]} onValueChange={(v) => setHealthMin(v[0])} max={100} step={5} className="w-24" />
           <span className="text-xs font-mono w-6">{healthMin}</span>
         </div>
@@ -356,11 +358,11 @@ export default function CustomersTable({ rows, loading, onMutate }: Props) {
       {/* Bulk bar */}
       {selectedCount > 0 && (
         <div className="flex items-center gap-3 p-3 rounded-xl bg-wj-green/10 border border-wj-green/30">
-          <span className="text-sm font-medium">{selectedCount} seleccionado(s)</span>
+          <span className="text-sm font-medium">{t("crm.table.selected", { n: selectedCount })}</span>
           <div className="flex gap-2 ml-auto">
-            <Button size="sm" variant="outline">Enviar campanha</Button>
-            <Button size="sm" variant="outline">Adicionar tag</Button>
-            <Button size="sm" variant="ghost" onClick={() => setRowSelection({})}>Limpar</Button>
+            <Button size="sm" variant="outline">{t("crm.actions.send_campaign")}</Button>
+            <Button size="sm" variant="outline">{t("crm.actions.add_tag")}</Button>
+            <Button size="sm" variant="ghost" onClick={() => setRowSelection({})}>{t("crm.actions.clear")}</Button>
           </div>
         </div>
       )}
@@ -383,14 +385,14 @@ export default function CustomersTable({ rows, loading, onMutate }: Props) {
             {loading && (
               <TableRow>
                 <TableCell colSpan={columns.length} className="text-center text-xs text-muted-foreground py-8">
-                  A carregar...
+                  {t("crm.table.loading")}
                 </TableCell>
               </TableRow>
             )}
             {!loading && table.getRowModel().rows.length === 0 && (
               <TableRow>
                 <TableCell colSpan={columns.length} className="text-center text-xs text-muted-foreground py-8">
-                  Sem clientes.
+                  {t("crm.table.empty")}
                 </TableCell>
               </TableRow>
             )}
@@ -418,7 +420,7 @@ export default function CustomersTable({ rows, loading, onMutate }: Props) {
       {/* Pagination */}
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>
-          {filtered.length} cliente(s) · página {table.getState().pagination.pageIndex + 1} de {table.getPageCount() || 1}
+          {t("crm.table.count", { n: filtered.length })} · {t("crm.table.page_of", { page: table.getState().pagination.pageIndex + 1, total: table.getPageCount() || 1 })}
         </span>
         <div className="flex gap-1">
           <Button size="sm" variant="outline" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()} className="h-7 px-2">
