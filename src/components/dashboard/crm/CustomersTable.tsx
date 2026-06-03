@@ -323,6 +323,7 @@ export default function CustomersTable({ rows, loading, onMutate }: Props) {
   };
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="space-y-3">
       {/* Filters */}
       <div className="flex flex-wrap gap-2 items-center">
@@ -454,5 +455,6 @@ export default function CustomersTable({ rows, loading, onMutate }: Props) {
         onSaved={onMutate}
       />
     </div>
+    </TooltipProvider>
   );
 }
