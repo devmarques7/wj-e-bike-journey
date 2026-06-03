@@ -39,6 +39,7 @@ export default function PlanFormModal({
   const [features, setFeatures] = useState<string[]>([]);
   const [newFeature, setNewFeature] = useState("");
   const [isDefault, setIsDefault] = useState(false);
+  const [unlimitedTrial, setUnlimitedTrial] = useState(false);
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState<"single" | "bulk">("single");
   const [bulkText, setBulkText] = useState("");
@@ -170,13 +171,15 @@ export default function PlanFormModal({
       setColor(plan.color_hex ?? "#058c42");
       setPrice(Number(plan.activeVersion?.price ?? 0));
       setInterval((plan.activeVersion?.interval ?? "monthly") as any);
-      setTrial(plan.activeVersion?.trial_days ?? 0);
+      const td = plan.activeVersion?.trial_days ?? 0;
+      setUnlimitedTrial(td === -1);
+      setTrial(td === -1 ? 0 : td);
       setFeatures(plan.activeVersion?.features ?? []);
       setIsDefault(Boolean((plan as any).is_default));
     } else {
       setName(""); setSlug(""); setTier(1); setDescription(""); setColor("#058c42");
       setPrice(0); setInterval("monthly"); setTrial(0); setFeatures([]);
-      setIsDefault(false);
+      setIsDefault(false); setUnlimitedTrial(false);
     }
   }, [plan, open]);
 
@@ -195,18 +198,19 @@ export default function PlanFormModal({
         if (error) throw error;
         planId = data!.id;
       }
+      const effectiveTrial = unlimitedTrial ? -1 : trial;
       const priceChanged =
         !plan?.activeVersion ||
         Number(plan.activeVersion.price) !== Number(price) ||
         plan.activeVersion.interval !== interval ||
-        plan.activeVersion.trial_days !== trial ||
+        plan.activeVersion.trial_days !== effectiveTrial ||
         JSON.stringify(plan.activeVersion.features) !== JSON.stringify(features);
       if (priceChanged && planId) {
         const { error } = await createPlanVersion({
           p_plan_id: planId,
           p_price: price,
           p_interval: interval,
-          p_trial_days: trial,
+          p_trial_days: effectiveTrial,
           p_features: features,
           p_activate: true,
         });
@@ -313,8 +317,25 @@ export default function PlanFormModal({
             </Select>
           </div>
           <div>
-            <Label>Trial Days</Label>
-            <Input type="number" value={trial} onChange={(e) => setTrial(Number(e.target.value))} />
+            <div className="flex items-center justify-between">
+              <Label>Trial Days</Label>
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={unlimitedTrial}
+                  onChange={(e) => setUnlimitedTrial(e.target.checked)}
+                  className="h-3.5 w-3.5 rounded border-border/50 accent-wj-green"
+                />
+                <span className="text-[11px] text-muted-foreground">Unlimited</span>
+              </label>
+            </div>
+            <Input
+              type="number"
+              value={unlimitedTrial ? "" : trial}
+              disabled={unlimitedTrial}
+              onChange={(e) => setTrial(Number(e.target.value))}
+              placeholder={unlimitedTrial ? "Unlimited" : "0"}
+            />
           </div>
 
           <div className="col-span-2">

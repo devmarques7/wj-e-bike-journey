@@ -159,7 +159,8 @@ export default function PlanSpatialHero({
                   <Layers className="h-3.5 w-3.5" /> v{activeVersion.version_number}
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <Zap className="h-3.5 w-3.5" /> Trial {activeVersion.trial_days}d
+                  <Zap className="h-3.5 w-3.5" />
+                  {activeVersion.trial_days === -1 ? "Trial Unlimited" : `Trial ${activeVersion.trial_days}d`}
                 </span>
               </div>
             )}
