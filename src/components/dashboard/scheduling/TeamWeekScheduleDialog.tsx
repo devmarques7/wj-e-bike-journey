@@ -590,6 +590,9 @@ function DayCell({
   load,
   saving,
   isToday,
+  selected,
+  hasSelection,
+  onToggleSelect,
   onSave,
   onClear,
 }: {
@@ -603,6 +606,9 @@ function DayCell({
   load: { pct: number; busyMin: number; totalMin: number };
   saving: boolean;
   isToday: boolean;
+  selected: boolean;
+  hasSelection: boolean;
+  onToggleSelect: () => void;
   onSave: (p: { is_working: boolean; start_time: string; end_time: string }) => void;
   onClear: () => void;
 }) {
@@ -623,10 +629,21 @@ function DayCell({
   const dow = date.getDay(); // 0 = Sun, 6 = Sat
   const isWeekend = dow === 0 || dow === 6;
 
+  const handleClick = (e: React.MouseEvent) => {
+    // Modifier click OR any click while in selection mode toggles selection.
+    if (e.metaKey || e.ctrlKey || e.shiftKey || hasSelection) {
+      e.preventDefault();
+      onToggleSelect();
+    } else {
+      setOpen(true);
+    }
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
+          onClick={handleClick}
           className={cn(
             "relative h-[130px] rounded-xl p-2.5 text-left transition-all border overflow-hidden",
             isWeekend || off
@@ -638,8 +655,14 @@ function DayCell({
                   : "bg-muted/25 border-border/30 hover:bg-muted/40",
             isToday && "ring-2 ring-wj-green/70",
             isCustom && "border-wj-green/50",
+            selected && "ring-2 ring-wj-green ring-offset-2 ring-offset-background",
           )}
         >
+          {selected && (
+            <div className="absolute top-1.5 right-1.5 z-10 h-4 w-4 rounded-full bg-wj-green flex items-center justify-center">
+              <Check className="h-2.5 w-2.5 text-white" />
+            </div>
+          )}
           {/* Bottom-up load fill */}
           {!off && (
             <div
