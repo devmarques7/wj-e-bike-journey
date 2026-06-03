@@ -414,7 +414,7 @@ function DayCell({
   onClear,
 }: {
   date: Date;
-  eff: ReturnType<typeof Object> & {
+  eff: {
     is_working: boolean;
     start_time: string;
     end_time: string;
