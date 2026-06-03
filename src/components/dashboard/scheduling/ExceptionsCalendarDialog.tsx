@@ -169,6 +169,23 @@ export default function ExceptionsCalendarDialog({ open, onOpenChange, exception
           <DialogDescription>{t("manage.exceptions_modal.description")}</DialogDescription>
         </DialogHeader>
 
+        <div className="flex items-center justify-end -mt-1">
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 h-8 text-xs"
+            onClick={handleSyncNL}
+            disabled={syncing}
+          >
+            {syncing ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Download className="h-3.5 w-3.5" />
+            )}
+            {t("manage.exceptions_modal.sync_nl")}
+          </Button>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">
           {/* Calendar */}
           <div className="flex flex-col items-center">
