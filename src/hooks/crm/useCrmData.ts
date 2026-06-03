@@ -273,6 +273,55 @@ export async function deleteCustomerProfile(id: string) {
   if (error) throw error;
 }
 
+/** Call admin-create-customer edge function. */
+export async function adminCreateCustomer(input: {
+  email: string;
+  full_name: string;
+  phone?: string | null;
+  password?: string;
+  role?: "member" | "staff" | "admin" | "guest";
+  lifecycle_stage?: LifecycleStage;
+  plan_version_id?: string | null;
+  tags?: string[];
+}): Promise<{ user_id: string; email: string; temp_password: string }> {
+  const { data, error } = await supabase.functions.invoke("admin-create-customer", {
+    body: input,
+  });
+  if (error) throw error;
+  if ((data as any)?.error) throw new Error((data as any).error);
+  return data as any;
+}
+
+/** Create / update / delete customer_segments. */
+export async function createSegment(args: {
+  name: string;
+  description?: string | null;
+  color?: string;
+  segment_type?: "dynamic" | "static";
+}) {
+  const { error } = await supabase.from("customer_segments").insert({
+    name: args.name,
+    description: args.description ?? null,
+    color: args.color ?? "#e8593c",
+    segment_type: args.segment_type ?? "dynamic",
+    conditions: [],
+  } as any);
+  if (error) throw error;
+}
+
+export async function updateSegment(
+  id: string,
+  patch: Partial<{ name: string; description: string | null; color: string; segment_type: "dynamic" | "static" }>,
+) {
+  const { error } = await supabase.from("customer_segments").update(patch as any).eq("id", id);
+  if (error) throw error;
+}
+
+export async function deleteSegment(id: string) {
+  const { error } = await supabase.from("customer_segments").delete().eq("id", id);
+  if (error) throw error;
+}
+
 /** Aggregate KPIs for overview tab. */
 export function useCrmKpis(rows: CrmCustomer[]) {
   return useMemo(() => {
