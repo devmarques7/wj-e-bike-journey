@@ -117,7 +117,7 @@ export default function LogContactSheet({ open, onClose, customerId, customerNam
           </div>
           <div>
             <Label className="text-xs">Follow-up em (opcional)</Label>
-            <Input type="date" value={followup} onChange={(e) => setFollowup(e.target.value)} className="mt-2" />
+            <DatePicker value={followup} onChange={setFollowup} className="mt-2" placeholder="Selecionar data" />
           </div>
           <div className="flex gap-2 pt-4">
             <Button variant="outline" className="flex-1" onClick={onClose} disabled={saving}>Cancelar</Button>
