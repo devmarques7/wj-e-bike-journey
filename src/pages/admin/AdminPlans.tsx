@@ -304,7 +304,6 @@ export default function AdminPlans() {
                       />
                     }
                   />
-                  <ChartLegend content={<ChartLegendContent />} />
                   {planNames.map((name) => (
                     <Area
                       key={name}
@@ -317,6 +316,30 @@ export default function AdminPlans() {
                   ))}
                 </AreaChart>
               </ChartContainer>
+              <div className="mt-2 flex items-center justify-center flex-wrap gap-1.5">
+                {planNames.map((name) => {
+                  const color = (chartConfig[name]?.color as string) ?? "hsl(var(--muted-foreground))";
+                  const row = planRows.find((p) => p.name === name);
+                  const members = row?.members ?? 0;
+                  const mrr = row?.mrr ?? 0;
+                  return (
+                    <div
+                      key={name}
+                      className="group flex items-center gap-1.5 px-2 py-1 rounded-full border border-border/40 bg-background/40 hover:bg-muted/40 hover:border-border transition-all duration-300 overflow-hidden cursor-default"
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: color }} />
+                      <span className="text-[10px] uppercase tracking-wider text-foreground/80">{name}</span>
+                      <span className="grid grid-cols-[0fr] group-hover:grid-cols-[1fr] transition-[grid-template-columns] duration-300 ease-out">
+                        <span className="overflow-hidden whitespace-nowrap">
+                          <span className="pl-1.5 text-[10px] text-muted-foreground">
+                            {members} · €{mrr.toFixed(2)}
+                          </span>
+                        </span>
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </motion.div>
           </div>
 
