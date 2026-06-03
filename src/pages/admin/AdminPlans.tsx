@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useEffect, useMemo, useState } from "react";
 import { CreditCard, TrendingUp, Users, Euro, CheckCircle2, XCircle, Clock, Award, Settings2 } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
@@ -7,8 +8,10 @@ import { Navigate, useNavigate, Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Area, AreaChart, Bar, ComposedChart, CartesianGrid, Line, XAxis, YAxis } from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent, type ChartConfig } from "@/components/ui/chart";
 import { usePlansKPIs, useSubscriptions } from "@/hooks/plans/usePlansData";
+import { supabase } from "@/integrations/supabase/client";
 
 const getStatusBadge = (status: string) => {
   switch (status) {
