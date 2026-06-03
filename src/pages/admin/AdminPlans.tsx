@@ -228,9 +228,9 @@ export default function AdminPlans() {
               className="bg-background/60 backdrop-blur-md border border-border/30 rounded-2xl p-4 h-[380px] flex flex-col">
               <div className="flex items-center justify-between gap-3 mb-2">
                 <div>
-                  <h3 className="text-sm font-medium text-foreground">Active Members per Plan</h3>
+                  <h3 className="text-sm font-medium text-foreground">Revenue Potential per Plan</h3>
                   <p className="text-[11px] text-muted-foreground">
-                    Daily active subscribers — {timeRange === "7d" ? "last 7 days" : timeRange === "30d" ? "last 30 days" : "last 3 months"}
+                    Monthly recurring revenue contribution by plan — {timeRange === "7d" ? "last 7 days" : timeRange === "30d" ? "last 30 days" : "last 3 months"}
                   </p>
                 </div>
                 <Select value={timeRange} onValueChange={(v) => setTimeRange(v as any)}>
@@ -249,8 +249,8 @@ export default function AdminPlans() {
                   <defs>
                     {planNames.map((name) => (
                       <linearGradient key={name} id={`fill-${name}`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={chartConfig[name]?.color as string} stopOpacity={0.8} />
-                        <stop offset="95%" stopColor={chartConfig[name]?.color as string} stopOpacity={0.1} />
+                        <stop offset="5%" stopColor={chartConfig[name]?.color as string} stopOpacity={0.45} />
+                        <stop offset="95%" stopColor={chartConfig[name]?.color as string} stopOpacity={0.02} />
                       </linearGradient>
                     ))}
                   </defs>
@@ -265,11 +265,25 @@ export default function AdminPlans() {
                       new Date(v).toLocaleDateString("en-US", { month: "short", day: "numeric" })
                     }
                   />
-                  <YAxis tickLine={false} axisLine={false} fontSize={10} allowDecimals={false} />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    fontSize={10}
+                    width={48}
+                    tickFormatter={(v: number) => `€${v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v.toFixed(0)}`}
+                  />
                   <ChartTooltip
                     content={
                       <ChartTooltipContent
                         indicator="dot"
+                        formatter={(value, name) => (
+                          <div className="flex w-full items-center justify-between gap-3">
+                            <span className="text-muted-foreground">{name as string}</span>
+                            <span className="font-mono font-medium tabular-nums text-foreground">
+                              €{Number(value).toFixed(2)}
+                            </span>
+                          </div>
+                        )}
                         labelFormatter={(value) =>
                           new Date(value as string).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
                         }
@@ -282,7 +296,6 @@ export default function AdminPlans() {
                       key={name}
                       type="monotone"
                       dataKey={name}
-                      stackId="members"
                       stroke={chartConfig[name]?.color as string}
                       fill={`url(#fill-${name})`}
                       strokeWidth={2}
