@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import {
   ClipboardCheck,
   Clock,
@@ -51,9 +52,9 @@ const fmtDur = (s: number | null) => {
   return `${m}m ${String(x).padStart(2, "0")}s`;
 };
 
-const fmtAbs = (iso: string | null) => {
+const fmtAbs = (iso: string | null, locale = "pt") => {
   if (!iso) return "—";
-  return new Date(iso).toLocaleString("pt-PT", {
+  return new Date(iso).toLocaleString(locale === "pt" ? "pt-PT" : "en-GB", {
     day: "2-digit",
     month: "2-digit",
     hour: "2-digit",
@@ -66,6 +67,7 @@ export default function AppointmentReviewHistoryDialog({
   open,
   onOpenChange,
 }: Props) {
+  const { t, i18n } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [rows, setRows] = useState<ProgressRow[]>([]);
 
@@ -109,10 +111,10 @@ export default function AppointmentReviewHistoryDialog({
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-border/30">
           <DialogTitle className="text-base font-light flex items-center gap-2">
             <ClipboardCheck className="h-4 w-4 text-wj-green" />
-            Histórico de Revisão
+            {t("workshop.review.title")}
           </DialogTitle>
           <DialogDescription className="text-xs">
-            Detalhes de conclusão do controlo de qualidade.
+            {t("workshop.review.desc")}
           </DialogDescription>
         </DialogHeader>
 
@@ -120,7 +122,7 @@ export default function AppointmentReviewHistoryDialog({
           <div className="px-6 py-4 border-b border-border/30 grid grid-cols-3 gap-4 text-xs">
             <div>
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1">
-                <User className="h-3 w-3" /> Cliente
+                <User className="h-3 w-3" /> {t("workshop.review.customer")}
               </div>
               <div className="font-medium truncate">
                 {appointment.customer_name ?? "—"}
@@ -128,7 +130,7 @@ export default function AppointmentReviewHistoryDialog({
             </div>
             <div>
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1">
-                <Wrench className="h-3 w-3" /> Serviço
+                <Wrench className="h-3 w-3" /> {t("workshop.review.service")}
               </div>
               <div className="font-medium truncate">
                 {appointment.service_name ?? "—"}
@@ -136,7 +138,7 @@ export default function AppointmentReviewHistoryDialog({
             </div>
             <div>
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1">
-                <Clock className="h-3 w-3" /> Duração total
+                <Clock className="h-3 w-3" /> {t("workshop.review.total_duration")}
               </div>
               <div className="font-medium tabular-nums">
                 {totalSeconds != null ? fmtDur(totalSeconds) : "—"}
@@ -149,11 +151,11 @@ export default function AppointmentReviewHistoryDialog({
           <div className="px-6 py-5">
             {loading ? (
               <div className="flex items-center justify-center py-12 gap-2 text-xs text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" /> A carregar histórico…
+                <Loader2 className="h-4 w-4 animate-spin" /> {t("workshop.review.loading")}
               </div>
             ) : rows.length === 0 ? (
               <div className="py-12 text-center text-xs text-muted-foreground">
-                Sem registos de controlo de qualidade para este agendamento.
+                {t("workshop.review.empty")}
               </div>
             ) : (
               <ol className="relative space-y-3">
@@ -189,17 +191,17 @@ export default function AppointmentReviewHistoryDialog({
                           </div>
                           <div className="min-w-0">
                             <div className="text-sm font-medium truncate">
-                              {r.stage_name ?? `Etapa ${r.stage_position + 1}`}
+                              {r.stage_name ?? t("workshop.review.stage_fallback", { n: r.stage_position + 1 })}
                             </div>
                             <div className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-2">
                               <span className="inline-flex items-center gap-1">
                                 <Clock className="h-3 w-3" />
-                                {fmtAbs(r.completed_at)}
+                                {fmtAbs(r.completed_at, i18n.language)}
                               </span>
                               <span className="text-muted-foreground/40">·</span>
                               <span className="inline-flex items-center gap-1">
                                 <ListChecks className="h-3 w-3" />
-                                {doneCount}/{taskCount} tarefas
+                                {t("workshop.review.tasks", { done: doneCount, total: taskCount })}
                               </span>
                             </div>
                           </div>
@@ -207,7 +209,7 @@ export default function AppointmentReviewHistoryDialog({
 
                         <div className="text-right shrink-0">
                           <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                            Tempo acumulado
+                            {t("workshop.review.accumulated")}
                           </div>
                           <div className="text-sm font-light tabular-nums text-wj-green">
                             {fmtDur(
@@ -226,17 +228,17 @@ export default function AppointmentReviewHistoryDialog({
                       <div className="mt-3 flex items-center gap-2">
                         <Badge className="text-[10px] gap-1 bg-muted/40 border-border/40 text-muted-foreground font-normal">
                           <Camera className="h-3 w-3" />
-                          Foto confirmada
+                          {t("workshop.review.photo_confirmed")}
                         </Badge>
                         {completed ? (
                           <Badge className="text-[10px] gap-1 bg-muted/30 text-foreground/80 border-border/40 font-normal">
                             <span className="w-1.5 h-1.5 rounded-full bg-wj-green inline-block" />
-                            Concluída
+                            {t("workshop.review.status_done")}
                           </Badge>
                         ) : (
                           <Badge className="text-[10px] gap-1 bg-muted/30 text-foreground/80 border-border/40 font-normal">
                             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
-                            Em curso
+                            {t("workshop.review.status_running")}
                           </Badge>
                         )}
                       </div>
