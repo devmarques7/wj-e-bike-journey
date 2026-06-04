@@ -280,9 +280,9 @@ export default function ReorderModal({ open, rows, onClose, onDone }: Props) {
   const buildImportTemplate = (): Record<string, string>[] => {
     const loc = (locations as any[])[0]?.name ?? "Main Warehouse";
     return [
-      { sku: "VIS-001-BLK", location: loc, qty: "10", movement_type: "incoming", notes: "PO #1024" },
-      { sku: "HLM-LRG", location: loc, qty: "5", movement_type: "incoming", notes: "" },
-      { sku: "VIS-001-BLK", location: loc, qty: "-1", movement_type: "adjustment", notes: "damaged unit" },
+      { sku: "VIS-001-BLK", location: loc, qty: "10", unit_cost: "1299.00", movement_type: "incoming", notes: "PO #1024" },
+      { sku: "HLM-LRG", location: loc, qty: "5", unit_cost: "59.90", movement_type: "incoming", notes: "" },
+      { sku: "VIS-001-BLK", location: loc, qty: "-1", unit_cost: "1299.00", movement_type: "adjustment", notes: "damaged unit" },
     ];
   };
 
