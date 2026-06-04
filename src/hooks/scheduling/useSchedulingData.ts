@@ -79,6 +79,9 @@ export type AppointmentRow = {
   plan_name: string | null;
   plan_color: string | null;
   plan_tier: number | null;
+  updated_at: string | null;
+  work_started_at: string | null;
+  work_ended_at: string | null;
 };
 
 /* ------------------------------------------------------------------ */
