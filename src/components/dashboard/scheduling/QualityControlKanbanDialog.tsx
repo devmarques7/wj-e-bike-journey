@@ -54,6 +54,7 @@ export default function QualityControlKanbanDialog({ open, onOpenChange, templat
     createTask,
     updateTask,
     deleteTask,
+    refetch,
   } = useQualityControl();
 
   const template = templates.find((t) => t.id === templateId) ?? null;
@@ -71,6 +72,11 @@ export default function QualityControlKanbanDialog({ open, onOpenChange, templat
   const [cols, setCols] = useState<Col>({});
   const [newStageName, setNewStageName] = useState("");
   const [importOpen, setImportOpen] = useState(false);
+
+  // Always refetch when opening so the kanban reflects the latest server state.
+  useEffect(() => {
+    if (open) refetch();
+  }, [open, refetch]);
 
   useEffect(() => {
     if (!open) return;
