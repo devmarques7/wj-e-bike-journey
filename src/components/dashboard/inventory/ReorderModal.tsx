@@ -130,6 +130,7 @@ export default function ReorderModal({ open, rows, onClose, onDone }: Props) {
   const [importRows, setImportRows] = useState<ImportRowResult[]>([]);
   const [importing, setImporting] = useState(false);
   const [templateOpen, setTemplateOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewFmt, setPreviewFmt] = useState<"csv" | "json">("csv");
   const [copied, setCopied] = useState(false);
