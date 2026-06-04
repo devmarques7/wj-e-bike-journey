@@ -12,6 +12,7 @@ export type ServiceTypeImportItem = {
   buffer_minutes_override?: number | null;
   covered_by_plan_levels?: number[] | null;
   display_order?: number;
+  reward_points?: number;
 };
 
 export type ServiceTypesImportPayload = { services: ServiceTypeImportItem[] };
@@ -31,6 +32,7 @@ export const SERVICE_TYPES_JSON_TEMPLATE: ServiceTypesImportPayload = {
       priority_score: 1,
       buffer_minutes_override: 10,
       covered_by_plan_levels: [1, 2, 3],
+      reward_points: 10,
     },
     {
       name: "Revisão Completa",
@@ -45,6 +47,7 @@ export const SERVICE_TYPES_JSON_TEMPLATE: ServiceTypesImportPayload = {
       priority_score: 2,
       buffer_minutes_override: 15,
       covered_by_plan_levels: [2, 3],
+      reward_points: 25,
     },
     {
       name: "Urgência",
@@ -59,14 +62,15 @@ export const SERVICE_TYPES_JSON_TEMPLATE: ServiceTypesImportPayload = {
       priority_score: 10,
       buffer_minutes_override: 5,
       covered_by_plan_levels: [3],
+      reward_points: 50,
     },
   ],
 };
 
-export const SERVICE_TYPES_CSV_TEMPLATE = `name,slug,description,duration_minutes,base_price,color,icon,is_active,is_emergency,priority_score,buffer_minutes_override,covered_by_plan_levels
-Revisão Básica,basic-service,Verificação geral e ajustes,60,49.99,#058c42,wrench,true,false,1,10,"1|2|3"
-Revisão Completa,full-service,Manutenção completa multi-ponto,120,89.99,#058c42,wrench,true,false,2,15,"2|3"
-Urgência,emergency,Intervenção urgente,60,129.99,#ef4444,zap,true,true,10,5,"3"
+export const SERVICE_TYPES_CSV_TEMPLATE = `name,slug,description,duration_minutes,base_price,color,icon,is_active,is_emergency,priority_score,buffer_minutes_override,covered_by_plan_levels,reward_points
+Revisão Básica,basic-service,Verificação geral e ajustes,60,49.99,#058c42,wrench,true,false,1,10,"1|2|3",10
+Revisão Completa,full-service,Manutenção completa multi-ponto,120,89.99,#058c42,wrench,true,false,2,15,"2|3",25
+Urgência,emergency,Intervenção urgente,60,129.99,#ef4444,zap,true,true,10,5,"3",50
 `;
 
 function parseCsvLine(line: string): string[] {
@@ -121,6 +125,7 @@ export function parseServiceTypesCsv(csv: string): ServiceTypesImportPayload {
     priority: idx("priority_score"),
     buffer: idx("buffer_minutes_override"),
     plans: idx("covered_by_plan_levels"),
+    points: idx("reward_points"),
   };
 
   const services: ServiceTypeImportItem[] = [];
@@ -149,6 +154,7 @@ export function parseServiceTypesCsv(csv: string): ServiceTypesImportPayload {
       buffer_minutes_override:
         cols.buffer >= 0 ? num(row[cols.buffer]) ?? null : null,
       covered_by_plan_levels: plans,
+      reward_points: cols.points >= 0 ? num(row[cols.points]) ?? 0 : 0,
     });
   }
   return { services };
@@ -181,6 +187,7 @@ export function parseServiceTypesJson(text: string): ServiceTypesImportPayload {
         ? s.covered_by_plan_levels.map(Number)
         : null,
       display_order: s.display_order != null ? Number(s.display_order) : undefined,
+      reward_points: s.reward_points != null ? Number(s.reward_points) : 0,
     };
   });
   return { services };
