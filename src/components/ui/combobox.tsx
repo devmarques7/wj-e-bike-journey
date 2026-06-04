@@ -373,7 +373,7 @@ export const ComboboxItem = React.forwardRef<
         ctx.setOpen(false);
       }}
       className={cn(
-        "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none data-[disabled=true]:pointer-events-none data-[selected='true']:bg-accent data-[selected=true]:text-accent-foreground data-[disabled=true]:opacity-50",
+        "relative flex cursor-default select-none items-center rounded-md px-2 py-1.5 text-sm outline-none transition-colors data-[disabled=true]:pointer-events-none data-[selected=true]:bg-foreground/5 data-[selected=true]:text-foreground data-[selected=true]:ring-1 data-[selected=true]:ring-foreground/15 data-[disabled=true]:opacity-50 [&_.text-muted-foreground]:data-[selected=true]:text-foreground/70",
         className,
       )}
       {...props}
