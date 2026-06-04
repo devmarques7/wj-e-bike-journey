@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
-import { pt } from "date-fns/locale";
+import { pt, enGB } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
 import {
   MoreHorizontal,
   PlayCircle,
@@ -106,6 +107,8 @@ export default function AppointmentActionsMenu({
   onCancel,
   onDelete,
 }: Props) {
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language === "pt" ? pt : enGB;
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
   const [mechanicOpen, setMechanicOpen] = useState(false);
   const [serviceOpen, setServiceOpen] = useState(false);
@@ -150,7 +153,7 @@ export default function AppointmentActionsMenu({
             className="h-7 w-7 p-0 hover:bg-muted/60"
           >
             <MoreHorizontal className="h-3.5 w-3.5" />
-            <span className="sr-only">Ações</span>
+            <span className="sr-only">{t("workshop.actions.menu_aria")}</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
@@ -158,60 +161,60 @@ export default function AppointmentActionsMenu({
           className="w-52 bg-background/95 backdrop-blur-xl border-border/40"
         >
           <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
-            Estado
+            {t("workshop.actions.status_label")}
           </DropdownMenuLabel>
           <DropdownMenuItem
             disabled={!canStart}
             onClick={onStart}
             className="text-xs"
           >
-            <PlayCircle className="h-3.5 w-3.5 mr-2 text-blue-400" /> Iniciar
+            <PlayCircle className="h-3.5 w-3.5 mr-2 text-blue-400" /> {t("workshop.actions.start")}
           </DropdownMenuItem>
           <DropdownMenuItem
             disabled={!canComplete}
             onClick={onComplete}
             className="text-xs"
           >
-            <CheckCircle className="h-3.5 w-3.5 mr-2 text-wj-green" /> Concluir
+            <CheckCircle className="h-3.5 w-3.5 mr-2 text-wj-green" /> {t("workshop.actions.complete")}
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={onReviewHistory}
             className="text-xs"
           >
-            <History className="h-3.5 w-3.5 mr-2 text-wj-green" /> Histórico de revisão
+            <History className="h-3.5 w-3.5 mr-2 text-wj-green" /> {t("workshop.actions.history")}
           </DropdownMenuItem>
           <DropdownMenuItem
             disabled={!canComplete}
             onClick={() => setExtraOpen(true)}
             className="text-xs"
           >
-            <TimerReset className="h-3.5 w-3.5 mr-2 text-amber-400" /> Precisa mais tempo
+            <TimerReset className="h-3.5 w-3.5 mr-2 text-amber-400" /> {t("workshop.actions.more_time")}
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />
           <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
-            Modificar
+            {t("workshop.actions.modify_label")}
           </DropdownMenuLabel>
           <DropdownMenuItem
             disabled={isTerminal}
             onClick={() => setRescheduleOpen(true)}
             className="text-xs"
           >
-            <CalendarClock className="h-3.5 w-3.5 mr-2" /> Reagendar
+            <CalendarClock className="h-3.5 w-3.5 mr-2" /> {t("workshop.actions.reschedule")}
           </DropdownMenuItem>
           <DropdownMenuItem
             disabled={isTerminal}
             onClick={() => setMechanicOpen(true)}
             className="text-xs"
           >
-            <UserCog className="h-3.5 w-3.5 mr-2" /> Mudar mecânico
+            <UserCog className="h-3.5 w-3.5 mr-2" /> {t("workshop.actions.change_mechanic")}
           </DropdownMenuItem>
           <DropdownMenuItem
             disabled={isTerminal}
             onClick={() => setServiceOpen(true)}
             className="text-xs"
           >
-            <Wrench className="h-3.5 w-3.5 mr-2" /> Mudar serviço
+            <Wrench className="h-3.5 w-3.5 mr-2" /> {t("workshop.actions.change_service")}
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />
@@ -220,13 +223,13 @@ export default function AppointmentActionsMenu({
             onClick={() => setCancelOpen(true)}
             className="text-xs text-amber-400 focus:text-amber-300"
           >
-            <Ban className="h-3.5 w-3.5 mr-2" /> Cancelar
+            <Ban className="h-3.5 w-3.5 mr-2" /> {t("workshop.actions.cancel")}
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => setDeleteOpen(true)}
             className="text-xs text-red-400 focus:text-red-300"
           >
-            <Trash2 className="h-3.5 w-3.5 mr-2" /> Excluir
+            <Trash2 className="h-3.5 w-3.5 mr-2" /> {t("workshop.actions.delete")}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -236,17 +239,18 @@ export default function AppointmentActionsMenu({
         <DialogContent className="bg-background/95 backdrop-blur-xl border-border/40 max-w-md">
           <DialogHeader>
             <DialogTitle className="text-base font-light flex items-center gap-2">
-              <CalendarClock className="h-4 w-4 text-wj-green" /> Reagendar
+              <CalendarClock className="h-4 w-4 text-wj-green" /> {t("workshop.actions.reschedule_title")}
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Escolha uma nova data e hora para o agendamento de{" "}
-              {appointment.customer_name ?? "cliente"}.
+              {t("workshop.actions.reschedule_desc", {
+                name: appointment.customer_name ?? t("workshop.actions.reschedule_customer_fallback"),
+              })}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
               <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                Data
+                {t("workshop.actions.date")}
               </Label>
               <Popover>
                 <PopoverTrigger asChild>
@@ -257,7 +261,7 @@ export default function AppointmentActionsMenu({
                     )}
                   >
                     <CalIcon className="mr-2 h-3.5 w-3.5" />
-                    {format(date, "EEEE, d 'de' LLLL yyyy", { locale: pt })}
+                    {format(date, "EEEE, d 'de' LLLL yyyy", { locale: dateLocale })}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent
@@ -276,11 +280,11 @@ export default function AppointmentActionsMenu({
             </div>
             <div className="space-y-1.5">
               <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                Hora
+                {t("workshop.actions.time")}
               </Label>
               <Select value={time} onValueChange={setTime}>
                 <SelectTrigger className="h-9 text-xs border-border/40">
-                  <SelectValue placeholder="Selecione" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="max-h-64">
                   {slots.map((s) => (
@@ -298,7 +302,7 @@ export default function AppointmentActionsMenu({
               size="sm"
               onClick={() => setRescheduleOpen(false)}
             >
-              Cancelar
+              {t("workshop.actions.cancel")}
             </Button>
             <Button
               size="sm"
@@ -313,7 +317,7 @@ export default function AppointmentActionsMenu({
                 if (ok) setRescheduleOpen(false);
               }}
             >
-              <CalendarClock className="h-3.5 w-3.5 mr-1" /> Confirmar
+              <CalendarClock className="h-3.5 w-3.5 mr-1" /> {t("workshop.actions.confirm")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -324,23 +328,23 @@ export default function AppointmentActionsMenu({
         <DialogContent className="bg-background/95 backdrop-blur-xl border-border/40 max-w-md">
           <DialogHeader>
             <DialogTitle className="text-base font-light flex items-center gap-2">
-              <UserCog className="h-4 w-4 text-wj-green" /> Mudar mecânico
+              <UserCog className="h-4 w-4 text-wj-green" /> {t("workshop.actions.mechanic_title")}
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Atribua um novo responsável para este agendamento.
+              {t("workshop.actions.mechanic_desc")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1.5">
             <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              Mecânico
+              {t("workshop.actions.mechanic_label")}
             </Label>
             <Select value={mechanicId} onValueChange={setMechanicId}>
               <SelectTrigger className="h-9 text-xs border-border/40">
-                <SelectValue placeholder="Selecione" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="unassigned" className="text-xs">
-                  Sem atribuição
+                  {t("workshop.actions.mechanic_unassigned")}
                 </SelectItem>
                 {mechanics.map((m) => (
                   <SelectItem key={m.user_id} value={m.user_id} className="text-xs">
@@ -359,7 +363,7 @@ export default function AppointmentActionsMenu({
               size="sm"
               onClick={() => setMechanicOpen(false)}
             >
-              Cancelar
+              {t("workshop.actions.cancel")}
             </Button>
             <Button
               size="sm"
@@ -372,7 +376,7 @@ export default function AppointmentActionsMenu({
                 if (ok) setMechanicOpen(false);
               }}
             >
-              Guardar
+              {t("workshop.actions.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -383,19 +387,19 @@ export default function AppointmentActionsMenu({
         <DialogContent className="bg-background/95 backdrop-blur-xl border-border/40 max-w-md">
           <DialogHeader>
             <DialogTitle className="text-base font-light flex items-center gap-2">
-              <Wrench className="h-4 w-4 text-wj-green" /> Mudar serviço
+              <Wrench className="h-4 w-4 text-wj-green" /> {t("workshop.actions.service_title")}
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Escolha o tipo de serviço a executar.
+              {t("workshop.actions.service_desc")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1.5">
             <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              Serviço
+              {t("workshop.actions.service_label")}
             </Label>
             <Select value={serviceId} onValueChange={setServiceId}>
               <SelectTrigger className="h-9 text-xs border-border/40">
-                <SelectValue placeholder="Selecione" />
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {serviceTypes.map((s) => (
@@ -419,7 +423,7 @@ export default function AppointmentActionsMenu({
               size="sm"
               onClick={() => setServiceOpen(false)}
             >
-              Cancelar
+              {t("workshop.actions.cancel")}
             </Button>
             <Button
               size="sm"
@@ -432,7 +436,7 @@ export default function AppointmentActionsMenu({
                 if (ok) setServiceOpen(false);
               }}
             >
-              Guardar
+              {t("workshop.actions.save")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -443,22 +447,21 @@ export default function AppointmentActionsMenu({
         <AlertDialogContent className="bg-background/95 backdrop-blur-xl border-border/40">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-base font-light">
-              Cancelar agendamento?
+              {t("workshop.actions.cancel_title")}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-xs">
-              O agendamento mantém-se no histórico mas será marcado como
-              cancelado. Esta ação pode ser revertida.
+              {t("workshop.actions.cancel_desc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="text-xs">Voltar</AlertDialogCancel>
+            <AlertDialogCancel className="text-xs">{t("workshop.actions.back")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-amber-500 hover:bg-amber-500/90 text-black text-xs"
               onClick={async () => {
                 await onCancel(appointment.id);
               }}
             >
-              Cancelar agendamento
+              {t("workshop.actions.cancel_btn")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -469,22 +472,21 @@ export default function AppointmentActionsMenu({
         <AlertDialogContent className="bg-background/95 backdrop-blur-xl border-border/40">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-base font-light">
-              Excluir definitivamente?
+              {t("workshop.actions.delete_title")}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-xs">
-              Esta ação remove permanentemente o agendamento da base de dados e
-              não pode ser desfeita.
+              {t("workshop.actions.delete_desc")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="text-xs">Voltar</AlertDialogCancel>
+            <AlertDialogCancel className="text-xs">{t("workshop.actions.back")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-500 hover:bg-red-500/90 text-white text-xs"
               onClick={async () => {
                 await onDelete(appointment.id);
               }}
             >
-              Excluir
+              {t("workshop.actions.delete_btn")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -495,15 +497,15 @@ export default function AppointmentActionsMenu({
         <DialogContent className="bg-background/95 backdrop-blur-xl border-border/40 max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-base font-light flex items-center gap-2">
-              <TimerReset className="h-4 w-4 text-amber-400" /> Precisa mais tempo
+              <TimerReset className="h-4 w-4 text-amber-400" /> {t("workshop.actions.extra_title")}
             </DialogTitle>
             <DialogDescription className="text-xs">
-              Sinaliza atraso e estende a duração prevista do agendamento.
+              {t("workshop.actions.extra_desc")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1.5">
             <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              Minutos extra
+              {t("workshop.actions.extra_label")}
             </Label>
             <Select value={extraMin} onValueChange={setExtraMin}>
               <SelectTrigger className="h-9 text-xs border-border/40">
@@ -520,7 +522,7 @@ export default function AppointmentActionsMenu({
           </div>
           <DialogFooter>
             <Button variant="ghost" size="sm" onClick={() => setExtraOpen(false)}>
-              Cancelar
+              {t("workshop.actions.cancel")}
             </Button>
             <Button
               size="sm"
@@ -530,7 +532,7 @@ export default function AppointmentActionsMenu({
                 setExtraOpen(false);
               }}
             >
-              Confirmar
+              {t("workshop.actions.confirm")}
             </Button>
           </DialogFooter>
         </DialogContent>
