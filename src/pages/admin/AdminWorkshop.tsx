@@ -10,6 +10,7 @@ import {
   PlayCircle,
   CheckCircle,
   Plus,
+  ListChecks,
 } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
@@ -28,6 +29,8 @@ import {
 } from "@/components/ui/table";
 import { useSchedulingData } from "@/hooks/scheduling/useSchedulingData";
 import BookAppointmentDialog from "@/components/dashboard/scheduling/BookAppointmentDialog";
+import QualityControlManagerDialog from "@/components/dashboard/scheduling/QualityControlManagerDialog";
+import QualityControlPreviewCard from "@/components/dashboard/scheduling/QualityControlPreviewCard";
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -52,6 +55,7 @@ export default function AdminWorkshop() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState("day");
   const [bookOpen, setBookOpen] = useState(false);
+  const [qcOpen, setQcOpen] = useState(false);
   const { loading, appointments, serviceTypes, updateAppointmentStatus, refetch } = useSchedulingData();
 
   // Service type usage ranking (today) — must be before any early returns
@@ -107,14 +111,25 @@ export default function AdminWorkshop() {
               Agendamentos de serviço e diagnóstico em tempo real
             </p>
           </div>
-          <Button
-            onClick={() => setBookOpen(true)}
-            className="bg-wj-green hover:bg-wj-green/90 text-black h-9"
-            size="sm"
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Novo Agendamento
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => setQcOpen(true)}
+              variant="outline"
+              size="sm"
+              className="h-9 border-border/40"
+            >
+              <ListChecks className="h-4 w-4 mr-1" />
+              Controlo de Qualidade
+            </Button>
+            <Button
+              onClick={() => setBookOpen(true)}
+              className="bg-wj-green hover:bg-wj-green/90 text-black h-9"
+              size="sm"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Novo Agendamento
+            </Button>
+          </div>
         </motion.div>
 
         {/* KPI Cards */}
@@ -125,6 +140,9 @@ export default function AdminWorkshop() {
             </div>
           ))}
         </div>
+
+        {/* Quality Control sequence */}
+        <QualityControlPreviewCard onEdit={() => setQcOpen(true)} />
 
         {/* Main Content */}
         <div className="grid grid-cols-12 gap-4 lg:gap-6">
@@ -285,6 +303,8 @@ export default function AdminWorkshop() {
           serviceTypes={serviceTypes}
           onCreated={refetch}
         />
+
+        <QualityControlManagerDialog open={qcOpen} onOpenChange={setQcOpen} />
       </div>
     </AdminDashboardLayout>
   );

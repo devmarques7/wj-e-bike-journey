@@ -1550,6 +1550,121 @@ export type Database = {
         }
         Relationships: []
       }
+      qc_stages: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          photo_min_count: number
+          position: number
+          requires_photo: boolean
+          template_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          photo_min_count?: number
+          position?: number
+          requires_photo?: boolean
+          template_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          photo_min_count?: number
+          position?: number
+          requires_photo?: boolean
+          template_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qc_stages_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "qc_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qc_tasks: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_required: boolean
+          label: string
+          position: number
+          stage_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_required?: boolean
+          label: string
+          position?: number
+          stage_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_required?: boolean
+          label?: string
+          position?: number
+          stage_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qc_tasks_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "qc_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qc_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          is_default: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       service_types: {
         Row: {
           base_price: number | null
