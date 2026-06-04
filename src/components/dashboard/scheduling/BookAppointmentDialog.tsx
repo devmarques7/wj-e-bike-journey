@@ -161,6 +161,42 @@ export default function BookAppointmentDialog({
     };
   }, [open]);
 
+  /* ---------- bikes of selected customer ---------- */
+  useEffect(() => {
+    if (!customer) {
+      setCustomerBikes([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setCustomerBikesLoading(true);
+      const { data: cps } = await supabase
+        .from("customer_profiles")
+        .select("id")
+        .eq("user_id", customer.user_id);
+      const ids = (cps ?? []).map((c: any) => c.id);
+      if (ids.length === 0) {
+        if (!cancelled) {
+          setCustomerBikes([]);
+          setCustomerBikesLoading(false);
+        }
+        return;
+      }
+      const { data: bikes } = await supabase
+        .from("customer_bikes")
+        .select("id, model, serial, color")
+        .in("customer_id", ids)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
+      if (cancelled) return;
+      setCustomerBikes((bikes ?? []) as CustomerBike[]);
+      setCustomerBikesLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [customer]);
+
   /* ---------- customer search ---------- */
   // Preload all users that have at least one registered bike when the dialog opens
   useEffect(() => {
