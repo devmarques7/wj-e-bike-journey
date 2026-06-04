@@ -12,6 +12,7 @@ import {
   Trash2,
   Calendar as CalIcon,
   History,
+  TimerReset,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -64,6 +65,7 @@ interface Props {
   onStart: () => void;
   onComplete: () => void;
   onReviewHistory: () => void;
+  onExtendTime: (extraMinutes: number) => void;
   onUpdateFields: (
     id: string,
     patch: Partial<{
@@ -98,6 +100,7 @@ export default function AppointmentActionsMenu({
   onStart,
   onComplete,
   onReviewHistory,
+  onExtendTime,
   onUpdateFields,
   onReschedule,
   onCancel,
@@ -108,6 +111,8 @@ export default function AppointmentActionsMenu({
   const [serviceOpen, setServiceOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [extraOpen, setExtraOpen] = useState(false);
+  const [extraMin, setExtraMin] = useState<string>("15");
 
   const canStart =
     appointment.status === "confirmed" || appointment.status === "pending";
@@ -174,6 +179,13 @@ export default function AppointmentActionsMenu({
             className="text-xs"
           >
             <History className="h-3.5 w-3.5 mr-2 text-wj-green" /> Histórico de revisão
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={!canComplete}
+            onClick={() => setExtraOpen(true)}
+            className="text-xs"
+          >
+            <TimerReset className="h-3.5 w-3.5 mr-2 text-amber-400" /> Precisa mais tempo
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />
@@ -477,6 +489,52 @@ export default function AppointmentActionsMenu({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Need extra time */}
+      <Dialog open={extraOpen} onOpenChange={setExtraOpen}>
+        <DialogContent className="bg-background/95 backdrop-blur-xl border-border/40 max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-base font-light flex items-center gap-2">
+              <TimerReset className="h-4 w-4 text-amber-400" /> Precisa mais tempo
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Sinaliza atraso e estende a duração prevista do agendamento.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              Minutos extra
+            </Label>
+            <Select value={extraMin} onValueChange={setExtraMin}>
+              <SelectTrigger className="h-9 text-xs border-border/40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {["10", "15", "30", "45", "60"].map((v) => (
+                  <SelectItem key={v} value={v} className="text-xs">
+                    +{v} min
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" size="sm" onClick={() => setExtraOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              size="sm"
+              className="bg-amber-500 hover:bg-amber-500/90 text-black"
+              onClick={() => {
+                onExtendTime(parseInt(extraMin, 10) || 15);
+                setExtraOpen(false);
+              }}
+            >
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
