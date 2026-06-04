@@ -134,6 +134,10 @@ const getStatusBadge = (status: string) => {
 export default function AdminWorkshop() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState("day");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "ongoing" | "completed">("all");
+  const [groupBy, setGroupBy] = useState<"none" | "status" | "mechanic" | "service" | "plan">("none");
+  const [sortAsc, setSortAsc] = useState(true);
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [bookOpen, setBookOpen] = useState(false);
   const [qcOpen, setQcOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
@@ -169,6 +173,52 @@ export default function AdminWorkshop() {
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
   }, [appointments, serviceTypes]);
+
+  // Filter + sort + group
+  const filteredSorted = useMemo(() => {
+    const matchStatus = (s: string) => {
+      if (statusFilter === "all") return true;
+      if (statusFilter === "pending") return s === "pending" || s === "confirmed" || s === "rescheduled";
+      if (statusFilter === "ongoing") return s === "in_progress";
+      if (statusFilter === "completed") return s === "completed";
+      return true;
+    };
+    const arr = appointments.filter((a) => matchStatus(a.status));
+    arr.sort((a, b) => {
+      const cmp = a.scheduled_start_time.localeCompare(b.scheduled_start_time);
+      return sortAsc ? cmp : -cmp;
+    });
+    return arr;
+  }, [appointments, statusFilter, sortAsc]);
+
+  const groupedAppointments = useMemo(() => {
+    if (groupBy === "none") return [{ key: "all", label: "", items: filteredSorted }];
+    const map = new Map<string, { key: string; label: string; items: AppointmentRow[] }>();
+    const labelFor = (a: AppointmentRow): { key: string; label: string } => {
+      switch (groupBy) {
+        case "status":
+          return { key: a.status, label: a.status };
+        case "mechanic":
+          return { key: a.assigned_mechanic_id ?? "none", label: a.mechanic_name ?? "Não atribuído" };
+        case "service":
+          return { key: a.service_type_id ?? "none", label: a.service_name ?? "Sem serviço" };
+        case "plan":
+          return { key: a.plan_name ?? "none", label: a.plan_name ?? "Sem plano" };
+        default:
+          return { key: "all", label: "" };
+      }
+    };
+    for (const a of filteredSorted) {
+      const { key, label } = labelFor(a);
+      const g = map.get(key) ?? { key, label, items: [] };
+      g.items.push(a);
+      map.set(key, g);
+    }
+    return Array.from(map.values());
+  }, [filteredSorted, groupBy]);
+
+  const toggleGroup = (key: string) =>
+    setCollapsedGroups((prev) => ({ ...prev, [key]: !prev[key] }));
 
   if (authLoading) return null;
   if (!isAuthenticated) return <Navigate to="/auth" replace />;
