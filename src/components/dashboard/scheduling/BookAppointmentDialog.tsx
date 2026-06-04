@@ -1,15 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  Loader2,
-  Bike,
-  CalendarDays,
-  Clock,
-  UserCheck,
-  CheckCircle2,
-  Wrench,
-  ShieldCheck,
-  Sparkles,
-} from "lucide-react";
+import { Loader2, Bike, CalendarDays, Clock, UserCheck, CheckCircle2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -90,112 +80,6 @@ const toMinutes = (t: string) => {
   return h * 60 + m;
 };
 const fromMinutes = (m: number) => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
-
-/* ------------------------------------------------------------------ */
-/* Confirmation cards (Blacklane-style, scoped to our design system)   */
-/* ------------------------------------------------------------------ */
-
-function ConfirmationCards({
-  customer,
-  service,
-  date,
-  slot,
-}: {
-  customer: Customer | null;
-  service: ServiceType | null;
-  date: string;
-  slot: Slot;
-}) {
-  const dateLabel = new Date(date + "T00:00:00").toLocaleDateString("pt-PT", {
-    weekday: "long",
-    day: "2-digit",
-    month: "long",
-  });
-
-  const cards = [
-    {
-      step: "01",
-      icon: CheckCircle2,
-      title: "Confirmado em segundos.",
-      hook: `${dateLabel} · ${slot.start}–${slot.end}`,
-      detail: "Data e horário garantidos. Sem renegociação, sem retorno.",
-    },
-    {
-      step: "02",
-      icon: Wrench,
-      title: "O serviço exato. Não uma aproximação.",
-      hook: `${service?.name ?? "Serviço"} · ${service?.duration_minutes ?? 0} min`,
-      detail: "O serviço escolhido é o serviço executado. Sem substituições.",
-    },
-    {
-      step: "03",
-      icon: UserCheck,
-      title: "O mecânico já está atribuído.",
-      hook: slot.mechanicName,
-      detail: "Profissional dedicado, alocado antes da sua chegada.",
-    },
-    {
-      step: "04",
-      icon: ShieldCheck,
-      title: "O preço que vê é o preço final.",
-      hook:
-        service?.base_price != null
-          ? `€ ${Number(service.base_price).toFixed(2)} fixos`
-          : "Sem custos surpresa",
-      detail: "Sem acréscimos no fim. O valor confirmado é o valor cobrado.",
-    },
-    {
-      step: "05",
-      icon: Sparkles,
-      title: "Nada a gerir depois.",
-      hook: customer?.full_name ?? customer?.email ?? "Cliente",
-      detail: "Recibo emitido. Histórico atualizado. Sem chamadas, sem follow-up.",
-    },
-  ];
-
-  return (
-    <div className="space-y-2 animate-in fade-in-0 slide-in-from-bottom-2 duration-300">
-      <div className="flex items-center gap-2 px-1">
-        <CheckCircle2 className="h-3.5 w-3.5 text-wj-green" />
-        <span className="text-xs font-medium tracking-wide">Pronto a confirmar</span>
-        <div className="h-px flex-1 bg-border/40" />
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1">
-        {cards.map((c) => {
-          const Icon = c.icon;
-          return (
-            <div
-              key={c.step}
-              className="group relative p-3 rounded-lg border border-border/30 bg-muted/20 hover:bg-muted/40 hover:border-wj-green/40 transition-colors"
-            >
-              <div className="flex items-start gap-2.5">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-background/60 border border-border/40">
-                  <Icon className="h-3.5 w-3.5 text-wj-green" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] font-mono text-muted-foreground/70 tracking-widest">
-                      {c.step}
-                    </span>
-                    <span className="text-[11px] font-medium leading-tight">
-                      {c.title}
-                    </span>
-                  </div>
-                  <div className="mt-1 text-[11px] font-medium text-wj-green truncate">
-                    {c.hook}
-                  </div>
-                  <div className="text-[10px] text-muted-foreground leading-snug mt-0.5">
-                    {c.detail}
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 /* ------------------------------------------------------------------ */
 
@@ -925,12 +809,14 @@ export default function BookAppointmentDialog({
             </div>
 
             {slot && (
-              <ConfirmationCards
-                customer={customer}
-                service={selectedService}
-                date={date}
-                slot={slot}
-              />
+              <div className="p-3 rounded-lg border border-wj-green/30 bg-wj-green/5 text-xs space-y-1">
+                <div className="flex items-center gap-2 font-medium">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-wj-green" /> Pronto a confirmar
+                </div>
+                <div className="text-muted-foreground">
+                  {customer?.full_name} · {selectedService?.name} · {date} {slot.start}–{slot.end} · {slot.mechanicName}
+                </div>
+              </div>
             )}
           </div>
         )}
