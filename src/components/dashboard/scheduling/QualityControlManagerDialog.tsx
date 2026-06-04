@@ -504,6 +504,24 @@ export default function QualityControlManagerDialog({ open, onOpenChange }: Prop
                       size="sm"
                       variant="ghost"
                       className="h-7 px-2.5 text-[10px] text-muted-foreground hover:text-foreground"
+                      onClick={toggleAllStages}
+                      disabled={activeStages.length === 0}
+                      title={allCollapsed ? "Expandir todas" : "Fechar todas"}
+                    >
+                      {allCollapsed ? (
+                        <>
+                          <ChevronsUpDown className="h-3 w-3 mr-1" /> Expandir
+                        </>
+                      ) : (
+                        <>
+                          <ChevronsDownUp className="h-3 w-3 mr-1" /> Fechar tudo
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2.5 text-[10px] text-muted-foreground hover:text-foreground"
                       onClick={() => setImportAppendOpen(true)}
                       title="Importar etapas via CSV ou JSON"
                     >
