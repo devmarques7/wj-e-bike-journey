@@ -117,25 +117,6 @@ const getStatusBadge = (status: string) => {
   }
 };
 
-function LiveElapsed({ since }: { since: string }) {
-  const [, setTick] = useState(0);
-  useEffect(() => {
-    const i = setInterval(() => setTick((t) => t + 1), 1000);
-    return () => clearInterval(i);
-  }, []);
-  const startMs = new Date(since).getTime();
-  const s = Math.max(0, Math.floor((Date.now() - startMs) / 1000));
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const x = s % 60;
-  const text = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(x).padStart(2, "0")}`;
-  return (
-    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-[9px] font-mono text-blue-300 tabular-nums">
-      <Clock className="h-2.5 w-2.5" />
-      {text}
-    </span>
-  );
-}
 
 export default function AdminWorkshop() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -313,9 +294,6 @@ export default function AdminWorkshop() {
                             )}
                             {apt.priority === "emergency" && (
                               <Badge className="text-[9px] h-4 px-1.5 bg-red-500/15 text-red-400 border-red-500/30">SOS</Badge>
-                            )}
-                            {apt.status === "in_progress" && apt.work_started_at && (
-                              <LiveElapsed since={apt.work_started_at} />
                             )}
                           </div>
                           {apt.duration_minutes ? (
