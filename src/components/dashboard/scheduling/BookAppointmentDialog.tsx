@@ -534,9 +534,9 @@ export default function BookAppointmentDialog({
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs flex items-center gap-1">
+            <div className="grid grid-cols-2 gap-3 items-end">
+              <div className="flex flex-col">
+                <Label className="text-xs flex items-center gap-1 h-4 leading-4">
                   <Bike className="h-3 w-3" /> Modelo da bicicleta
                 </Label>
                 <div className="mt-1">
@@ -613,8 +613,8 @@ export default function BookAppointmentDialog({
                   })()}
                 </div>
               </div>
-              <div>
-                <Label className="text-xs">Nº série / matrícula</Label>
+              <div className="flex flex-col">
+                <Label className="text-xs h-4 leading-4">Nº série / matrícula</Label>
                 <div className="mt-1">
                   <Combobox<CustomerBike>
                     items={
