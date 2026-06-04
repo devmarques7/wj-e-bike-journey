@@ -577,35 +577,37 @@ function StageEditor({
   useEffect(() => setDesc(stage.description ?? ""), [stage.description]);
 
   return (
-    <li className="border border-border/30 rounded-lg bg-muted/10 overflow-hidden">
-      <div className="flex items-start gap-2 p-2.5">
-        <div className="flex flex-col items-center gap-0.5 pt-1">
-          <span className="w-6 h-6 rounded-full bg-wj-green/15 text-wj-green text-[10px] font-semibold flex items-center justify-center">
-            {index + 1}
+    <li className="group/stage border border-border/20 rounded-xl bg-background/30 hover:bg-background/50 hover:border-border/40 transition-colors overflow-hidden">
+      <div className="flex items-start gap-3 p-3">
+        <div className="flex flex-col items-center gap-1 pt-1.5">
+          <span className="w-7 h-7 rounded-full bg-wj-green/10 text-wj-green text-[11px] font-medium flex items-center justify-center ring-1 ring-wj-green/20">
+            {String(index + 1).padStart(2, "0")}
           </span>
-          <button
-            disabled={isFirst}
-            onClick={onMoveUp}
-            className="text-muted-foreground/50 hover:text-foreground disabled:opacity-20"
-          >
-            <ChevronUp className="h-3 w-3" />
-          </button>
-          <button
-            disabled={isLast}
-            onClick={onMoveDown}
-            className="text-muted-foreground/50 hover:text-foreground disabled:opacity-20"
-          >
-            <ChevronDown className="h-3 w-3" />
-          </button>
+          <div className="flex flex-col items-center opacity-0 group-hover/stage:opacity-100 transition-opacity">
+            <button
+              disabled={isFirst}
+              onClick={onMoveUp}
+              className="text-muted-foreground/40 hover:text-foreground disabled:opacity-20 p-0.5"
+            >
+              <ChevronUp className="h-3 w-3" />
+            </button>
+            <button
+              disabled={isLast}
+              onClick={onMoveDown}
+              className="text-muted-foreground/40 hover:text-foreground disabled:opacity-20 p-0.5"
+            >
+              <ChevronDown className="h-3 w-3" />
+            </button>
+          </div>
         </div>
 
-        <div className="flex-1 min-w-0 space-y-1.5">
+        <div className="flex-1 min-w-0 space-y-2">
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
             onBlur={() => name !== stage.name && onUpdate({ name: name.trim() || stage.name })}
             placeholder="Nome da etapa"
-            className="text-sm h-8"
+            className="text-sm h-8 bg-transparent border-transparent hover:border-border/40 focus:border-border/60 px-2 font-medium"
           />
           <Textarea
             value={desc}
@@ -614,21 +616,29 @@ function StageEditor({
               (desc || "") !== (stage.description ?? "") &&
               onUpdate({ description: desc.trim() || null })
             }
-            placeholder="Descrição da etapa (opcional)"
-            className="text-xs min-h-10"
+            placeholder="Descrição (opcional)"
+            className="text-xs min-h-9 bg-transparent border-transparent hover:border-border/40 focus:border-border/60 px-2 resize-none"
           />
-          <div className="flex flex-wrap items-center gap-3 pt-1">
-            <label className="flex items-center gap-1.5 text-[11px] cursor-pointer">
+          <div className="flex flex-wrap items-center gap-2 pt-0.5">
+            <label
+              className={cn(
+                "inline-flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full cursor-pointer transition-colors",
+                stage.requires_photo
+                  ? "bg-wj-green/10 text-wj-green"
+                  : "bg-muted/30 text-muted-foreground hover:bg-muted/50",
+              )}
+            >
+              <Camera className="h-3 w-3" />
+              Fotografia
               <Switch
                 checked={stage.requires_photo}
                 onCheckedChange={(v) => onUpdate({ requires_photo: v })}
+                className="scale-75 -my-1"
               />
-              <Camera className="h-3 w-3" />
-              Exige fotografia
             </label>
             {stage.requires_photo && (
-              <div className="flex items-center gap-1.5 text-[11px]">
-                <span className="text-muted-foreground">Mín. fotos</span>
+              <div className="inline-flex items-center gap-1.5 text-[10px] bg-muted/30 rounded-full pl-2 pr-1 py-0.5">
+                <span className="text-muted-foreground">Mín.</span>
                 <Input
                   type="number"
                   min={1}
@@ -637,7 +647,7 @@ function StageEditor({
                   onChange={(e) =>
                     onUpdate({ photo_min_count: Math.max(1, Number(e.target.value) || 1) })
                   }
-                  className="h-7 w-14 text-xs"
+                  className="h-5 w-10 text-[10px] text-center px-1 bg-background/50 border-border/30"
                 />
               </div>
             )}
@@ -647,7 +657,7 @@ function StageEditor({
         <Button
           size="sm"
           variant="ghost"
-          className="h-7 px-2 text-red-400 hover:text-red-300"
+          className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-red-400 opacity-0 group-hover/stage:opacity-100 transition-opacity"
           onClick={() => {
             if (confirm("Remover esta etapa?")) onDelete();
           }}
@@ -657,24 +667,24 @@ function StageEditor({
       </div>
 
       {/* Tasks */}
-      <div className="border-t border-border/20 bg-background/40 px-3 py-2 space-y-1.5">
+      <div className="border-t border-border/15 bg-muted/[0.03] px-3 py-2.5 space-y-1.5">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-            Tarefas ({tasks.length})
+          <span className="text-[9px] uppercase tracking-[0.15em] text-muted-foreground/70">
+            Tarefas · {tasks.length}
           </span>
           <Button
             size="sm"
             variant="ghost"
-            className="h-6 px-2 text-[10px]"
+            className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
             onClick={onAddTask}
           >
-            <Plus className="h-3 w-3 mr-1" /> Tarefa
+            <Plus className="h-3 w-3 mr-1" /> Adicionar
           </Button>
         </div>
         {tasks.length === 0 ? (
-          <p className="text-[10px] text-muted-foreground italic py-1">Sem tarefas.</p>
+          <p className="text-[10px] text-muted-foreground/60 italic py-1">Sem tarefas.</p>
         ) : (
-          <ul className="space-y-1">
+          <ul className="space-y-0.5">
             {tasks.map((t) => (
               <TaskRow
                 key={t.id}
@@ -703,25 +713,33 @@ function TaskRow({
   useEffect(() => setLabel(task.label), [task.label]);
 
   return (
-    <li className="flex items-center gap-1.5 group">
-      <GripVertical className="h-3 w-3 text-muted-foreground/40 shrink-0" />
+    <li className="flex items-center gap-1.5 group rounded-md hover:bg-background/50 px-1 py-0.5 transition-colors">
+      <GripVertical className="h-3 w-3 text-muted-foreground/30 shrink-0 cursor-grab" />
       <Input
         value={label}
         onChange={(e) => setLabel(e.target.value)}
         onBlur={() => label !== task.label && onUpdate({ label: label.trim() || task.label })}
-        className="h-7 text-xs"
+        className="h-7 text-xs bg-transparent border-transparent hover:border-border/30 focus:border-border/50 px-2"
       />
-      <label className="flex items-center gap-1 text-[10px] text-muted-foreground shrink-0">
+      <label
+        className={cn(
+          "inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-full shrink-0 cursor-pointer transition-colors",
+          task.is_required
+            ? "bg-wj-green/10 text-wj-green"
+            : "bg-muted/20 text-muted-foreground/70",
+        )}
+      >
+        Obrig.
         <Switch
           checked={task.is_required}
           onCheckedChange={(v) => onUpdate({ is_required: v })}
+          className="scale-[0.6] -my-1"
         />
-        Obrig.
       </label>
       <Button
         size="sm"
         variant="ghost"
-        className="h-6 w-6 p-0 text-red-400/70 hover:text-red-300 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="h-6 w-6 p-0 text-muted-foreground/40 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
         onClick={onDelete}
       >
         <Trash2 className="h-3 w-3" />
