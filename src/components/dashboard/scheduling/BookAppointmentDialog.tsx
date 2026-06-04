@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Search, Bike, CalendarDays, Clock, UserCheck, CheckCircle2, ChevronsUpDown, Check } from "lucide-react";
+import { Loader2, Bike, CalendarDays, Clock, UserCheck, CheckCircle2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -21,15 +21,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxTrigger,
+} from "@/components/ui/combobox";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -96,8 +96,6 @@ export default function BookAppointmentDialog({
   const [notes, setNotes] = useState("");
   const [bikeModels, setBikeModels] = useState<BikeModel[]>([]);
   const [modelsLoading, setModelsLoading] = useState(false);
-  const [modelOpen, setModelOpen] = useState(false);
-  const [modelSearch, setModelSearch] = useState("");
 
   // Service & date
   const [serviceId, setServiceId] = useState<string>("");
@@ -128,8 +126,6 @@ export default function BookAppointmentDialog({
       setDate(todayISO());
       setSlot(null);
       setSlots([]);
-      setModelSearch("");
-      setModelOpen(false);
     }
   }, [open]);
 
