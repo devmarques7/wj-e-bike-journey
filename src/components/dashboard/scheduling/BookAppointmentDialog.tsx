@@ -1,5 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Bike, CalendarDays, Clock, UserCheck, CheckCircle2 } from "lucide-react";
+import {
+  Loader2,
+  Bike,
+  CalendarDays,
+  Clock,
+  UserCheck,
+  CheckCircle2,
+  Wrench,
+  ShieldCheck,
+  Sparkles,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
