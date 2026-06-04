@@ -251,7 +251,24 @@ export default function QualityControlKanbanDialog({ open, onOpenChange, templat
       onOpenChange={setImportOpen}
       appendToTemplateId={templateId ?? undefined}
       appendTemplateName={template?.name}
-      onImported={() => setImportOpen(false)}
+      currentStages={activeStages.map((s) => ({
+        name: s.name,
+        description: s.description ?? null,
+        requires_photo: !!s.requires_photo,
+        photo_min_count: s.photo_min_count ?? 1,
+        tasks: tasks
+          .filter((t) => t.stage_id === s.id)
+          .sort((a, b) => a.position - b.position)
+          .map((t) => ({
+            label: t.label,
+            description: t.description ?? null,
+            is_required: !!t.is_required,
+          })),
+      }))}
+      onImported={async () => {
+        await refetch();
+        setImportOpen(false);
+      }}
     />
     </>
   );
