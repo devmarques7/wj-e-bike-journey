@@ -122,7 +122,7 @@ export function LocationTag({
       onMouseLeave={() => setIsHovered(false)}
       style={{ position: "fixed", left: 0, top: 0, touchAction: "none" }}
       className={cn(
-        "group z-50 hidden sm:flex items-center gap-2 rounded-full border border-border/40 bg-background/60 backdrop-blur px-3 py-1.5 shadow-lg shadow-black/10 transition-colors duration-500 hover:border-wj-green/40",
+        "group z-[9999] hidden sm:flex items-center gap-2 rounded-full border border-border/40 bg-background/60 backdrop-blur px-3 py-1.5 shadow-lg shadow-black/10 transition-colors duration-500 hover:border-wj-green/40",
         dragging ? "cursor-grabbing" : "cursor-grab",
       )}
     >
