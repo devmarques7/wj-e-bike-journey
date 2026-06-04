@@ -259,28 +259,28 @@ export default function AdminWorkshop() {
                           ) : null}
                         </TableCell>
                         <TableCell className="text-xs align-middle">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <Avatar className="h-7 w-7 shrink-0 border border-border/30">
-                              <AvatarFallback className="text-[10px] bg-muted/50">
-                                {(apt.customer_name ?? apt.customer_email ?? "?")
-                                  .split(" ")
-                                  .map((s) => s[0])
-                                  .slice(0, 2)
-                                  .join("")
-                                  .toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="min-w-0">
-                              <div className="text-xs text-foreground truncate">
-                                {apt.customer_name ?? "—"}
-                              </div>
-                              {apt.customer_email && (
-                                <div className="text-[10px] text-muted-foreground truncate">
-                                  {apt.customer_email}
-                                </div>
-                              )}
-                            </div>
-                          </div>
+                          <TooltipProvider delayDuration={150}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Avatar className="h-8 w-8 border border-border/30 cursor-default">
+                                  <AvatarFallback className="text-[10px] bg-muted/50">
+                                    {(apt.customer_name ?? apt.customer_email ?? "?")
+                                      .split(" ")
+                                      .map((s) => s[0])
+                                      .slice(0, 2)
+                                      .join("")
+                                      .toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-xs">
+                                <div className="font-medium">{apt.customer_name ?? "—"}</div>
+                                {apt.customer_email && (
+                                  <div className="text-muted-foreground text-[10px]">{apt.customer_email}</div>
+                                )}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </TableCell>
                         <TableCell className="align-middle">
                           {apt.plan_name ? (
@@ -316,7 +316,34 @@ export default function AdminWorkshop() {
                             <span className="text-muted-foreground/60 italic">Não atribuído</span>
                           )}
                         </TableCell>
-                        <TableCell className="align-middle">{getStatusBadge(apt.status)}</TableCell>
+                        <TableCell className="align-middle">
+                          <TooltipProvider delayDuration={150}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="inline-flex cursor-default">{getStatusBadge(apt.status)}</span>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="text-xs space-y-1">
+                                <div className="flex items-center gap-1.5">
+                                  <Clock className="h-3 w-3" />
+                                  <span className="font-medium">{formatRelative(apt.updated_at)}</span>
+                                </div>
+                                <div className="text-muted-foreground text-[10px]">
+                                  Última alteração: {formatAbsolute(apt.updated_at)}
+                                </div>
+                                {apt.work_started_at && (
+                                  <div className="text-muted-foreground text-[10px]">
+                                    Iniciado: {formatAbsolute(apt.work_started_at)}
+                                  </div>
+                                )}
+                                {apt.work_ended_at && (
+                                  <div className="text-muted-foreground text-[10px]">
+                                    Concluído: {formatAbsolute(apt.work_ended_at)}
+                                  </div>
+                                )}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </TableCell>
                         <TableCell className="text-right align-middle">
                           <AppointmentActionsMenu
                             appointment={apt}
