@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import FieldLabel from "@/components/dashboard/inventory/FieldLabel";
 import {
   useServiceTypesCrud,
@@ -21,16 +22,41 @@ interface Props {
   onSaved?: () => void;
 }
 
-const PLAN_LEVELS = [
-  { value: 1, label: "Light" },
-  { value: 2, label: "Plus" },
-  { value: 3, label: "Black" },
-];
+type PlanOption = {
+  value: number;
+  label: string;
+  color: string | null;
+};
 
 export default function ServiceTypeEditDialog({ service, open, onClose, onSaved }: Props) {
   const { upsert } = useServiceTypesCrud();
   const [form, setForm] = useState<Partial<ServiceTypeRow>>({});
   const [busy, setBusy] = useState(false);
+  const [planOptions, setPlanOptions] = useState<PlanOption[]>([]);
+
+  useEffect(() => {
+    if (!open) return;
+    (async () => {
+      const { data, error } = await supabase
+        .from("plans")
+        .select("name, tier_level, color_hex, is_active")
+        .eq("is_active", true)
+        .order("tier_level", { ascending: true });
+      if (error) {
+        console.error("[ServiceTypeEditDialog] plans fetch", error);
+        return;
+      }
+      setPlanOptions(
+        (data ?? [])
+          .filter((p: any) => typeof p.tier_level === "number" && p.tier_level > 0)
+          .map((p: any) => ({
+            value: p.tier_level,
+            label: p.name,
+            color: p.color_hex ?? null,
+          })),
+      );
+    })();
+  }, [open]);
 
   useEffect(() => {
     setForm(
@@ -43,6 +69,7 @@ export default function ServiceTypeEditDialog({ service, open, onClose, onSaved 
         icon: "wrench",
         display_order: 0,
         priority_score: 0,
+        reward_points: 0,
         is_active: true,
         is_emergency: false,
         covered_by_plan_levels: [],
@@ -71,6 +98,7 @@ export default function ServiceTypeEditDialog({ service, open, onClose, onSaved 
       duration_minutes: Number(form.duration_minutes),
       display_order: Number(form.display_order ?? 0),
       priority_score: Number(form.priority_score ?? 0),
+      reward_points: Number(form.reward_points ?? 0),
       buffer_minutes_override:
         form.buffer_minutes_override != null && form.buffer_minutes_override !== ("" as any)
           ? Number(form.buffer_minutes_override)
@@ -224,6 +252,25 @@ export default function ServiceTypeEditDialog({ service, open, onClose, onSaved 
 
           <div className="col-span-2">
             <FieldLabel
+              label="Pontos de recompensa"
+              hint="Pontos creditados na carteira (vault) do cliente sempre que este serviço é concluído. Aplica-se a qualquer cliente, em qualquer plano."
+            />
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-wj-green shrink-0" />
+              <Input
+                type="number"
+                min={0}
+                value={form.reward_points ?? 0}
+                onChange={(e) => update("reward_points", Number(e.target.value) as any)}
+                className="bg-background/60"
+                placeholder="0"
+              />
+              <span className="text-[10px] text-muted-foreground whitespace-nowrap">pts / serviço</span>
+            </div>
+          </div>
+
+          <div className="col-span-2">
+            <FieldLabel
               label="Descrição"
               hint="Resumo apresentado ao cliente na altura do agendamento."
             />
@@ -238,26 +285,38 @@ export default function ServiceTypeEditDialog({ service, open, onClose, onSaved 
           <div className="col-span-2">
             <FieldLabel
               label="Coberto pelos planos"
-              hint="Quais níveis de subscrição incluem este serviço sem custo extra."
+              hint="Quais planos de subscrição (carregados diretamente da base de dados) incluem este serviço sem custo extra."
             />
             <div className="flex flex-wrap gap-2 mt-1">
-              {PLAN_LEVELS.map((p) => {
-                const active = (form.covered_by_plan_levels ?? []).includes(p.value);
-                return (
-                  <button
-                    key={p.value}
-                    type="button"
-                    onClick={() => togglePlan(p.value)}
-                    className={`px-3 h-8 rounded-full text-xs border transition ${
-                      active
-                        ? "bg-wj-green/15 border-wj-green/40 text-wj-green"
-                        : "border-border/40 text-muted-foreground hover:bg-muted/40"
-                    }`}
-                  >
-                    {p.label}
-                  </button>
-                );
-              })}
+              {planOptions.length === 0 ? (
+                <span className="text-[11px] text-muted-foreground italic">
+                  Sem planos ativos registados na base de dados.
+                </span>
+              ) : (
+                planOptions.map((p) => {
+                  const active = (form.covered_by_plan_levels ?? []).includes(p.value);
+                  const accent = p.color ?? "#058c42";
+                  return (
+                    <button
+                      key={p.value}
+                      type="button"
+                      onClick={() => togglePlan(p.value)}
+                      className="px-3 h-8 rounded-full text-xs border transition flex items-center gap-1.5"
+                      style={{
+                        borderColor: active ? `${accent}80` : "hsl(var(--border) / 0.4)",
+                        backgroundColor: active ? `${accent}26` : "transparent",
+                        color: active ? accent : "hsl(var(--muted-foreground))",
+                      }}
+                    >
+                      <span
+                        className="w-1.5 h-1.5 rounded-full"
+                        style={{ backgroundColor: accent }}
+                      />
+                      {p.label}
+                    </button>
+                  );
+                })
+              )}
             </div>
           </div>
 
