@@ -118,6 +118,8 @@ export default function BookAppointmentDialog({
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [slots, setSlots] = useState<Slot[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [mechanicsList, setMechanicsList] = useState<{ id: string; name: string }[]>([]);
+  const [mechanicFilter, setMechanicFilter] = useState<string>("any");
 
   // Calendar availability hints (for step 3)
   const [closedDows, setClosedDows] = useState<Set<number>>(new Set());
@@ -370,6 +372,10 @@ export default function BookAppointmentDialog({
         busyByMech.set(a.assigned_mechanic_id, arr);
       });
 
+      setMechanicsList(
+        staffIds.map((id) => ({ id, name: nameMap.get(id) ?? "Mecânico" })),
+      );
+
       // 6. Generate slots: step = service duration + buffer, snapped to 15min
       const dur = selectedService.duration_minutes;
       const stepMin = 30;
@@ -377,7 +383,7 @@ export default function BookAppointmentDialog({
       const closeM = toMinutes(closeTime);
       const out: Slot[] = [];
       for (let t = openM; t + dur <= closeM; t += stepMin) {
-        // find first available mechanic
+        // collect every available mechanic for this time
         for (const staffId of staffIds) {
           const sched = ssByStaff.get(staffId);
           const sStart = toMinutes(sched.start_time);
@@ -394,7 +400,6 @@ export default function BookAppointmentDialog({
             mechanicId: staffId,
             mechanicName: nameMap.get(staffId) ?? "Mecânico",
           });
-          break;
         }
       }
       setSlots(out);
