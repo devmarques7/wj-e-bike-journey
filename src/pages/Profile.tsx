@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { ArrowLeft, Loader2, Save, Shield, Smile, User as UserIcon, Mail, Pencil, X, Check, Phone, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,11 +15,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { z } from "zod";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import { PhoneInput } from "@/components/PhoneInput";
-
-const profileSchema = z.object({
-  full_name: z.string().trim().min(1, "Name is required").max(120, "Max 120 chars"),
-  email: z.string().trim().email("Invalid email").max(255),
-});
 
 type Role = "admin" | "staff" | "customer" | "guest";
 
@@ -46,17 +42,24 @@ type AvatarOption = { url: string; gender: Gender; seed: string };
 const AVATAR_OPTIONS: AvatarOption[] = (Object.entries(SEEDS_BY_GENDER) as [Gender, string[]][])
   .flatMap(([gender, seeds]) => seeds.map((seed) => ({ url: buildAvatar(seed), gender, seed })));
 
-const GENDER_FILTERS: { id: Gender | "all"; label: string }[] = [
-  { id: "all", label: "All" },
-  { id: "female", label: "Female" },
-  { id: "male", label: "Male" },
-  { id: "neutral", label: "Neutral" },
-];
-
 export default function Profile() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user: mockUser, isAuthenticated, updateAvatar } = useAuth();
+  const { t } = useTranslation();
+  const tp = (k: string, opts?: any) => t(`workshop.profile.${k}`, opts) as string;
+
+  const profileSchema = z.object({
+    full_name: z.string().trim().min(1, tp("name_required")).max(120, tp("name_max")),
+    email: z.string().trim().email(tp("email_invalid")).max(255),
+  });
+
+  const GENDER_FILTERS: { id: Gender | "all"; label: string }[] = [
+    { id: "all", label: tp("filter_all") },
+    { id: "female", label: tp("filter_female") },
+    { id: "male", label: tp("filter_male") },
+    { id: "neutral", label: tp("filter_neutral") },
+  ];
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -139,25 +142,25 @@ export default function Profile() {
   const handleSave = async () => {
     const parsed = profileSchema.safeParse({ full_name: draftName, email: draftEmail });
     if (!parsed.success) {
-      toast({ title: "Invalid input", description: parsed.error.issues[0].message, variant: "destructive" });
+      toast({ title: tp("invalid_input"), description: parsed.error.issues[0].message, variant: "destructive" });
       return;
     }
     if (draftPhone && !draftPhoneValid) {
-      toast({ title: "Invalid phone", description: "Check the phone format.", variant: "destructive" });
+      toast({ title: tp("invalid_phone"), description: tp("invalid_phone_desc"), variant: "destructive" });
       return;
     }
     const phoneChanged = draftPhone !== phone;
     if (phoneChanged && draftPhone && !draftPhoneVerified) {
       toast({
-        title: "Phone not verified",
-        description: "Verify your new number via WhatsApp before saving.",
+        title: tp("phone_not_verified"),
+        description: tp("phone_not_verified_desc"),
         variant: "destructive",
       });
       return;
     }
     if (!userId) return;
     if (isDemo) {
-      toast({ title: "Demo mode", description: "Sign in with a real account to persist changes." });
+      toast({ title: tp("demo_mode"), description: tp("demo_mode_desc") });
       return;
     }
     setSaving(true);
@@ -173,14 +176,14 @@ export default function Profile() {
       .eq("user_id", userId);
 
     if (error) {
-      toast({ title: "Save failed", description: error.message, variant: "destructive" });
+      toast({ title: tp("save_failed"), description: error.message, variant: "destructive" });
     } else {
       setFullName(parsed.data.full_name);
       setEmail(parsed.data.email);
       setPhone(draftPhone);
       if (phoneChanged) setPhoneVerified(draftPhoneVerified);
       setEditing(false);
-      toast({ title: "Profile updated", description: "Your changes were saved." });
+      toast({ title: tp("profile_updated"), description: tp("profile_updated_desc") });
     }
     setSaving(false);
   };
@@ -191,7 +194,7 @@ export default function Profile() {
       setAvatarUrl(url);
       updateAvatar(url);
       setPickerOpen(false);
-      toast({ title: "Avatar updated", description: "Saved to your demo session." });
+      toast({ title: tp("avatar_updated"), description: tp("avatar_updated_demo") });
       return;
     }
     setSavingAvatar(true);
@@ -203,12 +206,12 @@ export default function Profile() {
         { onConflict: "user_id" }
       );
     if (error) {
-      toast({ title: "Could not save avatar", description: error.message, variant: "destructive" });
+      toast({ title: tp("avatar_save_failed"), description: error.message, variant: "destructive" });
     } else {
       setAvatarUrl(url);
       updateAvatar(url);
       setPickerOpen(false);
-      toast({ title: "Avatar updated" });
+      toast({ title: tp("avatar_updated") });
     }
     setSavingAvatar(false);
   };
