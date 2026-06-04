@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { MapPin, ArrowUpRight, GripVertical } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -99,7 +100,9 @@ export function LocationTag({
 
   const displayTime = isHovered || showTime;
 
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <motion.div
       ref={elRef}
       drag
@@ -160,7 +163,8 @@ export function LocationTag({
         </AnimatePresence>
       </div>
       <ArrowUpRight className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-    </motion.div>
+    </motion.div>,
+    document.body,
   );
 }
 
