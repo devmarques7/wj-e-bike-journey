@@ -52,6 +52,13 @@ type BikeModel = {
   short_description: string | null;
 };
 
+type CustomerBike = {
+  id: string;
+  model: string;
+  serial: string | null;
+  color: string | null;
+};
+
 type Slot = {
   start: string; // "HH:MM"
   end: string;
@@ -96,6 +103,8 @@ export default function BookAppointmentDialog({
   const [notes, setNotes] = useState("");
   const [bikeModels, setBikeModels] = useState<BikeModel[]>([]);
   const [modelsLoading, setModelsLoading] = useState(false);
+  const [customerBikes, setCustomerBikes] = useState<CustomerBike[]>([]);
+  const [customerBikesLoading, setCustomerBikesLoading] = useState(false);
 
   // Service & date
   const [serviceId, setServiceId] = useState<string>("");
@@ -121,6 +130,7 @@ export default function BookAppointmentDialog({
       setCustomer(null);
       setBikeModel("");
       setBikeSerial("");
+      setCustomerBikes([]);
       setNotes("");
       setServiceId("");
       setDate(todayISO());
@@ -150,6 +160,42 @@ export default function BookAppointmentDialog({
       cancelled = true;
     };
   }, [open]);
+
+  /* ---------- bikes of selected customer ---------- */
+  useEffect(() => {
+    if (!customer) {
+      setCustomerBikes([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setCustomerBikesLoading(true);
+      const { data: cps } = await supabase
+        .from("customer_profiles")
+        .select("id")
+        .eq("user_id", customer.user_id);
+      const ids = (cps ?? []).map((c: any) => c.id);
+      if (ids.length === 0) {
+        if (!cancelled) {
+          setCustomerBikes([]);
+          setCustomerBikesLoading(false);
+        }
+        return;
+      }
+      const { data: bikes } = await supabase
+        .from("customer_bikes")
+        .select("id, model, serial, color")
+        .in("customer_id", ids)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
+      if (cancelled) return;
+      setCustomerBikes((bikes ?? []) as CustomerBike[]);
+      setCustomerBikesLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [customer]);
 
   /* ---------- customer search ---------- */
   // Preload all users that have at least one registered bike when the dialog opens
@@ -537,12 +583,60 @@ export default function BookAppointmentDialog({
               </div>
               <div>
                 <Label className="text-xs">Nº série / matrícula</Label>
-                <Input
-                  value={bikeSerial}
-                  onChange={(e) => setBikeSerial(e.target.value)}
-                  placeholder="VIN-XXXX"
-                  className="mt-1 text-sm"
-                />
+                <div className="mt-1">
+                  <Combobox<CustomerBike>
+                    items={customerBikes}
+                    itemToValue={(b) => b.id}
+                    itemToLabel={(b) => b.serial ?? b.model}
+                    value={
+                      customerBikes.find((b) => (b.serial ?? "") === bikeSerial)?.id ?? null
+                    }
+                    autoHighlight
+                    disabled={!customer}
+                    placeholder={
+                      !customer
+                        ? "Selecione um cliente…"
+                        : customerBikes.length === 0
+                          ? "Sem bicicletas registadas"
+                          : "Selecionar bicicleta…"
+                    }
+                    onSelect={(b) => {
+                      setBikeSerial(b.serial ?? "");
+                      if (b.model) setBikeModel(b.model);
+                    }}
+                  >
+                    <ComboboxTrigger className="text-sm h-9" />
+                    <ComboboxContent innerSearchPlaceholder="Procurar série…">
+                      <ComboboxList<CustomerBike>
+                        className="max-h-56"
+                        loading={customerBikesLoading}
+                        loadingNode={
+                          <div className="py-4 text-center text-xs text-muted-foreground flex items-center justify-center gap-1">
+                            <Loader2 className="h-3 w-3 animate-spin" /> A carregar…
+                          </div>
+                        }
+                      >
+                        {(b) => (
+                          <ComboboxItem
+                            key={b.id}
+                            value={b.id}
+                            className="flex-col items-start gap-0 py-2"
+                            showCheck={false}
+                          >
+                            <span className="text-xs font-medium">
+                              {b.serial ?? "Sem nº série"}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">
+                              {b.model}
+                              {b.color ? ` · ${b.color}` : ""}
+                            </span>
+                          </ComboboxItem>
+                        )}
+                      </ComboboxList>
+                      <ComboboxEmpty>Sem bicicletas registadas para este cliente.</ComboboxEmpty>
+                    </ComboboxContent>
+                  </Combobox>
+                </div>
               </div>
             </div>
 
