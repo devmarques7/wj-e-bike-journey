@@ -39,6 +39,8 @@ import {
   Sparkles,
   Maximize2,
   ChevronRight,
+  ChevronsDownUp,
+  ChevronsUpDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -89,6 +91,41 @@ export default function QualityControlManagerDialog({ open, onOpenChange }: Prop
   const [collapsedStages, setCollapsedStages] = useState<Record<string, boolean>>({});
   const toggleStage = (id: string) =>
     setCollapsedStages((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  const allCollapsed =
+    activeId != null &&
+    stages.filter((s) => s.template_id === activeId).every((s) => collapsedStages[s.id]);
+  const toggleAllStages = () => {
+    if (!activeId) return;
+    const ids = stages.filter((s) => s.template_id === activeId).map((s) => s.id);
+    if (ids.length === 0) return;
+    const next = { ...collapsedStages };
+    const shouldCollapse = !allCollapsed;
+    ids.forEach((id) => (next[id] = shouldCollapse));
+    setCollapsedStages(next);
+  };
+
+  // Map current stages → import payload shape (for "Usar exemplo" pre-fill)
+  const currentStagesForImport = useMemo(() => {
+    if (!activeId) return [];
+    return stages
+      .filter((s) => s.template_id === activeId)
+      .sort((a, b) => a.position - b.position)
+      .map((s) => ({
+        name: s.name,
+        description: s.description ?? null,
+        requires_photo: !!s.requires_photo,
+        photo_min_count: s.photo_min_count ?? 1,
+        tasks: tasks
+          .filter((t) => t.stage_id === s.id)
+          .sort((a, b) => a.position - b.position)
+          .map((t) => ({
+            label: t.label,
+            description: t.description ?? null,
+            is_required: !!t.is_required,
+          })),
+      }));
+  }, [activeId, stages, tasks]);
 
   useEffect(() => {
     if (open) {
