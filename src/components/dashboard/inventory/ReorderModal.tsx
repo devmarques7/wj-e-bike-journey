@@ -130,6 +130,7 @@ export default function ReorderModal({ open, rows, onClose, onDone }: Props) {
   const [importRows, setImportRows] = useState<ImportRowResult[]>([]);
   const [importing, setImporting] = useState(false);
   const [templateOpen, setTemplateOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewFmt, setPreviewFmt] = useState<"csv" | "json">("csv");
   const [copied, setCopied] = useState(false);
@@ -709,40 +710,131 @@ export default function ReorderModal({ open, rows, onClose, onDone }: Props) {
               <code>adjustment</code> to remove units.
             </p>
 
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="sm" onClick={() => setTemplateOpen(true)}>
-                <Download className="h-3 w-3 mr-1" /> Download template
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setPreviewOpen(true)}>
-                <Eye className="h-3 w-3 mr-1" /> Preview template
-              </Button>
-              <div className="ml-auto">
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept=".csv,.json,text/csv,application/json"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) handleFile(f);
-                  }}
-                />
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".csv,.json,text/csv,application/json"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleFile(f);
+              }}
+            />
+
+            {/* Drag & drop zone */}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => fileRef.current?.click()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  fileRef.current?.click();
+                }
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (!isDragging) setIsDragging(true);
+              }}
+              onDragEnter={(e) => {
+                e.preventDefault();
+                setIsDragging(true);
+              }}
+              onDragLeave={(e) => {
+                e.preventDefault();
+                if (e.currentTarget === e.target) setIsDragging(false);
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDragging(false);
+                const f = e.dataTransfer.files?.[0];
+                if (!f) return;
+                const okType =
+                  /\.(csv|json)$/i.test(f.name) ||
+                  f.type === "text/csv" ||
+                  f.type === "application/json";
+                if (!okType) {
+                  setFileError("Unsupported file. Use .csv or .json");
+                  return;
+                }
+                handleFile(f);
+              }}
+              className={cn(
+                "relative group rounded-2xl border border-dashed transition-all duration-200 cursor-pointer overflow-hidden",
+                "px-6 py-8 flex flex-col items-center justify-center text-center gap-3",
+                isDragging
+                  ? "border-wj-green bg-wj-green/10 scale-[1.01]"
+                  : "border-border/40 bg-background/40 hover:border-wj-green/60 hover:bg-wj-green/[0.04]",
+              )}
+            >
+              <div
+                className={cn(
+                  "h-12 w-12 rounded-full flex items-center justify-center transition-colors",
+                  isDragging
+                    ? "bg-wj-green/20 text-wj-green"
+                    : "bg-muted/40 text-muted-foreground group-hover:bg-wj-green/15 group-hover:text-wj-green",
+                )}
+              >
+                <Upload className="h-5 w-5" />
+              </div>
+              <div className="space-y-0.5">
+                <p className="text-sm font-medium">
+                  {isDragging ? "Drop to upload" : "Drag & drop your CSV or JSON file"}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  or <span className="text-wj-green underline underline-offset-2">click to browse</span> · max 1 file
+                </p>
+              </div>
+              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                <Badge variant="outline" className="h-4 px-1.5 text-[9px] uppercase tracking-wider border-border/40">
+                  .csv
+                </Badge>
+                <Badge variant="outline" className="h-4 px-1.5 text-[9px] uppercase tracking-wider border-border/40">
+                  .json
+                </Badge>
+              </div>
+            </div>
+
+            {/* Secondary actions — perfectly aligned */}
+            <div className="flex items-center justify-between gap-2 px-1">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                Need a starting point?
+              </span>
+              <div className="flex items-center gap-1">
                 <Button
+                  variant="ghost"
                   size="sm"
-                  onClick={() => fileRef.current?.click()}
-                  className="bg-wj-green hover:bg-wj-green/90"
+                  className="h-7 px-2 text-[11px] text-muted-foreground hover:text-foreground"
+                  onClick={() => setPreviewOpen(true)}
                 >
-                  <Upload className="h-3 w-3 mr-1" /> Choose file
+                  <Eye className="h-3 w-3 mr-1" /> Preview
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-[11px] text-wj-green hover:text-wj-green hover:bg-wj-green/10"
+                  onClick={() => setTemplateOpen(true)}
+                >
+                  <Download className="h-3 w-3 mr-1" /> Download template
                 </Button>
               </div>
             </div>
 
             {fileName && (
-              <div className="flex items-center gap-2 text-xs bg-background/60 border border-border/30 rounded-lg p-2">
-                <FileSpreadsheet className="h-3.5 w-3.5 text-wj-green" />
-                <span className="truncate">{fileName}</span>
+              <div className="flex items-center gap-2 text-xs bg-background/60 border border-border/30 rounded-lg p-2.5">
+                <div className="h-7 w-7 rounded-md bg-wj-green/15 text-wj-green flex items-center justify-center shrink-0">
+                  <FileSpreadsheet className="h-3.5 w-3.5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium">{fileName}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {importRows.length > 0 ? `${importRows.length} row(s) parsed` : "Parsing…"}
+                  </p>
+                </div>
                 <button
-                  className="ml-auto text-muted-foreground hover:text-foreground"
+                  className="text-muted-foreground hover:text-foreground p-1 rounded hover:bg-muted/40"
                   onClick={() => {
                     setFileName(null);
                     setImportRows([]);
