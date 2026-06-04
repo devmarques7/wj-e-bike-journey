@@ -295,14 +295,25 @@ export default function AdminWorkshop() {
                 </div>
               )}
 
-              <div className="mt-6 pt-4 border-t border-border/30">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-                  Catálogo de serviços
-                </p>
-                <p className="text-sm text-foreground">
-                  <span className="text-2xl font-light">{serviceTypes.length}</span>{" "}
-                  <span className="text-xs text-muted-foreground">tipos ativos</span>
-                </p>
+              <div className="mt-6 pt-4 border-t border-border/30 flex items-end justify-between">
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+                    Catálogo de serviços
+                  </p>
+                  <p className="text-sm text-foreground">
+                    <span className="text-2xl font-light">{serviceTypes.length}</span>{" "}
+                    <span className="text-xs text-muted-foreground">tipos ativos</span>
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 text-xs border-border/40"
+                  onClick={() => setServicesOpen(true)}
+                >
+                  <Wrench className="h-3.5 w-3.5 mr-1" />
+                  Gerir serviços
+                </Button>
               </div>
             </motion.div>
           </div>
