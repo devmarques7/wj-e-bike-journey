@@ -609,6 +609,7 @@ export default function QualityControlManagerDialog({ open, onOpenChange }: Prop
       onOpenChange={setImportAppendOpen}
       appendToTemplateId={active?.id}
       appendTemplateName={active?.name}
+      currentStages={currentStagesForImport}
       onImported={async () => {
         await refetch();
         setImportAppendOpen(false);
