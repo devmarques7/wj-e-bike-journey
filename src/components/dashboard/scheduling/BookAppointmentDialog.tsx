@@ -498,7 +498,7 @@ export default function BookAppointmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl bg-background/95 backdrop-blur-xl border-border/40">
+      <DialogContent className="max-w-4xl bg-background/95 backdrop-blur-xl border-border/40">
         <DialogHeader>
           <DialogTitle className="text-lg font-light flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-wj-green" />
