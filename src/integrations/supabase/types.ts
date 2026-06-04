@@ -77,6 +77,57 @@ export type Database = {
           },
         ]
       }
+      appointment_qc_progress: {
+        Row: {
+          appointment_id: string
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          duration_seconds: number | null
+          id: string
+          notes: string | null
+          stage_id: string
+          stage_name: string | null
+          stage_position: number
+          started_at: string | null
+          task_results: Json
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          appointment_id: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration_seconds?: number | null
+          id?: string
+          notes?: string | null
+          stage_id: string
+          stage_name?: string | null
+          stage_position?: number
+          started_at?: string | null
+          task_results?: Json
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          appointment_id?: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          duration_seconds?: number | null
+          id?: string
+          notes?: string | null
+          stage_id?: string
+          stage_name?: string | null
+          stage_position?: number
+          started_at?: string | null
+          task_results?: Json
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       appointment_waitlist: {
         Row: {
           booked_appointment_id: string | null
