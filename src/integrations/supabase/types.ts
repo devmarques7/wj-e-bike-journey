@@ -84,6 +84,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           duration_seconds: number | null
+          elapsed_from_start_seconds: number | null
           id: string
           notes: string | null
           stage_id: string
@@ -100,6 +101,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           duration_seconds?: number | null
+          elapsed_from_start_seconds?: number | null
           id?: string
           notes?: string | null
           stage_id: string
@@ -116,6 +118,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           duration_seconds?: number | null
+          elapsed_from_start_seconds?: number | null
           id?: string
           notes?: string | null
           stage_id?: string
