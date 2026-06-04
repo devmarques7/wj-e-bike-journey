@@ -7,8 +7,6 @@ import {
   CheckCircle2, 
   AlertTriangle,
   Loader2,
-  PlayCircle,
-  CheckCircle,
   Plus,
   ListChecks,
 } from "lucide-react";
@@ -32,6 +30,8 @@ import BookAppointmentDialog from "@/components/dashboard/scheduling/BookAppoint
 import QualityControlManagerDialog from "@/components/dashboard/scheduling/QualityControlManagerDialog";
 import QualityControlPreviewCard from "@/components/dashboard/scheduling/QualityControlPreviewCard";
 import ServiceTypesManagerDialog from "@/components/dashboard/scheduling/ServiceTypesManagerDialog";
+import AppointmentActionsMenu from "@/components/dashboard/scheduling/AppointmentActionsMenu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -58,7 +58,18 @@ export default function AdminWorkshop() {
   const [bookOpen, setBookOpen] = useState(false);
   const [qcOpen, setQcOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
-  const { loading, appointments, serviceTypes, updateAppointmentStatus, refetch } = useSchedulingData();
+  const {
+    loading,
+    appointments,
+    serviceTypes,
+    mechanics,
+    updateAppointmentStatus,
+    updateAppointmentFields,
+    rescheduleAppointment,
+    cancelAppointment,
+    deleteAppointment,
+    refetch,
+  } = useSchedulingData();
 
   // Service type usage ranking (today) — must be before any early returns
   const serviceUsage = useMemo(() => {
@@ -191,58 +202,108 @@ export default function AdminWorkshop() {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-border/30 hover:bg-transparent">
-                      <TableHead className="text-muted-foreground text-xs">Hora</TableHead>
-                      <TableHead className="text-muted-foreground text-xs">Cliente</TableHead>
-                      <TableHead className="text-muted-foreground text-xs">Serviço</TableHead>
-                      <TableHead className="text-muted-foreground text-xs">Mecânico</TableHead>
-                      <TableHead className="text-muted-foreground text-xs">Estado</TableHead>
-                      <TableHead className="text-muted-foreground text-xs text-right">Ações</TableHead>
+                      <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium w-[80px]">Hora</TableHead>
+                      <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">Cliente</TableHead>
+                      <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">Plano</TableHead>
+                      <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">Serviço</TableHead>
+                      <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">Mecânico</TableHead>
+                      <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">Estado</TableHead>
+                      <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium text-right w-[80px]">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {appointments.map((apt) => (
-                      <TableRow key={apt.id} className="border-border/30 hover:bg-muted/30">
-                        <TableCell className="text-xs font-medium">
-                          {apt.scheduled_start_time.slice(0, 5)}
-                          {apt.priority === "vip" && (
-                            <Badge className="ml-1 text-[9px] bg-amber-500/20 text-amber-400 border-amber-500/30">VIP</Badge>
-                          )}
-                          {apt.priority === "emergency" && (
-                            <Badge className="ml-1 text-[9px] bg-red-500/20 text-red-400 border-red-500/30">!</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          {apt.customer_name ?? apt.customer_email ?? "—"}
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          <span
-                            className="inline-block w-2 h-2 rounded-full mr-2 align-middle"
-                            style={{ backgroundColor: apt.service_color ?? "#9ca3af" }}
-                          />
-                          {apt.service_name ?? "—"}
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground">{apt.mechanic_name ?? "—"}</TableCell>
-                        <TableCell>{getStatusBadge(apt.status)}</TableCell>
-                        <TableCell className="text-right">
-                          {apt.status === "confirmed" || apt.status === "pending" ? (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-7 px-2 text-[10px]"
-                              onClick={() => updateAppointmentStatus(apt.id, "in_progress")}
-                            >
-                              <PlayCircle className="h-3 w-3 mr-1" /> Iniciar
-                            </Button>
-                          ) : apt.status === "in_progress" ? (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-7 px-2 text-[10px] text-wj-green"
-                              onClick={() => updateAppointmentStatus(apt.id, "completed")}
-                            >
-                              <CheckCircle className="h-3 w-3 mr-1" /> Concluir
-                            </Button>
+                      <TableRow
+                        key={apt.id}
+                        className="border-border/20 hover:bg-muted/30 transition-colors"
+                      >
+                        <TableCell className="text-xs font-medium align-middle">
+                          <div className="flex items-center gap-1.5">
+                            <span className="tabular-nums">{apt.scheduled_start_time.slice(0, 5)}</span>
+                            {apt.priority === "vip" && (
+                              <Badge className="text-[9px] h-4 px-1.5 bg-amber-500/15 text-amber-400 border-amber-500/30">VIP</Badge>
+                            )}
+                            {apt.priority === "emergency" && (
+                              <Badge className="text-[9px] h-4 px-1.5 bg-red-500/15 text-red-400 border-red-500/30">SOS</Badge>
+                            )}
+                          </div>
+                          {apt.duration_minutes ? (
+                            <span className="text-[10px] text-muted-foreground/60 tabular-nums">
+                              {apt.duration_minutes}min
+                            </span>
                           ) : null}
+                        </TableCell>
+                        <TableCell className="text-xs align-middle">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Avatar className="h-7 w-7 shrink-0 border border-border/30">
+                              <AvatarFallback className="text-[10px] bg-muted/50">
+                                {(apt.customer_name ?? apt.customer_email ?? "?")
+                                  .split(" ")
+                                  .map((s) => s[0])
+                                  .slice(0, 2)
+                                  .join("")
+                                  .toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0">
+                              <div className="text-xs text-foreground truncate">
+                                {apt.customer_name ?? "—"}
+                              </div>
+                              {apt.customer_email && (
+                                <div className="text-[10px] text-muted-foreground truncate">
+                                  {apt.customer_email}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="align-middle">
+                          {apt.plan_name ? (
+                            <span
+                              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium border"
+                              style={{
+                                color: apt.plan_color ?? "#9ca3af",
+                                borderColor: `${apt.plan_color ?? "#9ca3af"}40`,
+                                backgroundColor: `${apt.plan_color ?? "#9ca3af"}15`,
+                              }}
+                            >
+                              <span
+                                className="w-1.5 h-1.5 rounded-full"
+                                style={{ backgroundColor: apt.plan_color ?? "#9ca3af" }}
+                              />
+                              {apt.plan_name}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground/60">Sem plano</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-xs align-middle">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="inline-block w-1.5 h-6 rounded-full shrink-0"
+                              style={{ backgroundColor: apt.service_color ?? "#9ca3af" }}
+                            />
+                            <span className="truncate">{apt.service_name ?? "—"}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground align-middle">
+                          {apt.mechanic_name ?? (
+                            <span className="text-muted-foreground/60 italic">Não atribuído</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="align-middle">{getStatusBadge(apt.status)}</TableCell>
+                        <TableCell className="text-right align-middle">
+                          <AppointmentActionsMenu
+                            appointment={apt}
+                            mechanics={mechanics}
+                            serviceTypes={serviceTypes}
+                            onStart={() => updateAppointmentStatus(apt.id, "in_progress")}
+                            onComplete={() => updateAppointmentStatus(apt.id, "completed")}
+                            onUpdateFields={updateAppointmentFields}
+                            onReschedule={rescheduleAppointment}
+                            onCancel={cancelAppointment}
+                            onDelete={deleteAppointment}
+                          />
                         </TableCell>
                       </TableRow>
                     ))}
