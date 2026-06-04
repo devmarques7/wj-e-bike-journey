@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Search, Bike, CalendarDays, Clock, UserCheck, CheckCircle2, ChevronsUpDown, Check } from "lucide-react";
+import { Loader2, Bike, CalendarDays, Clock, UserCheck, CheckCircle2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -21,15 +21,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxTrigger,
+} from "@/components/ui/combobox";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -96,8 +96,6 @@ export default function BookAppointmentDialog({
   const [notes, setNotes] = useState("");
   const [bikeModels, setBikeModels] = useState<BikeModel[]>([]);
   const [modelsLoading, setModelsLoading] = useState(false);
-  const [modelOpen, setModelOpen] = useState(false);
-  const [modelSearch, setModelSearch] = useState("");
 
   // Service & date
   const [serviceId, setServiceId] = useState<string>("");
@@ -128,8 +126,6 @@ export default function BookAppointmentDialog({
       setDate(todayISO());
       setSlot(null);
       setSlots([]);
-      setModelSearch("");
-      setModelOpen(false);
     }
   }, [open]);
 
@@ -382,35 +378,59 @@ export default function BookAppointmentDialog({
           <div className="space-y-4">
             <div>
               <Label className="text-xs">Procurar cliente</Label>
-              <div className="relative mt-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Nome ou email…"
-                  className="pl-9 text-sm"
-                />
-              </div>
-              {searching && (
-                <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1">
-                  <Loader2 className="h-3 w-3 animate-spin" /> A procurar…
-                </p>
-              )}
-              {customers.length > 0 && !customer && (
-                <div className="mt-2 max-h-44 overflow-y-auto border border-border/30 rounded-lg divide-y divide-border/30">
-                  {customers.map((c) => (
-                    <button
-                      key={c.user_id}
-                      onClick={() => setCustomer(c)}
-                      className="w-full text-left p-2 hover:bg-muted/40 text-xs"
-                    >
-                      <div className="font-medium">{c.full_name ?? "—"}</div>
-                      <div className="text-muted-foreground">{c.email}</div>
-                    </button>
-                  ))}
+              {!customer ? (
+                <div className="mt-1">
+                  <Combobox<Customer>
+                    items={customers}
+                    itemToValue={(c) => c.user_id}
+                    itemToLabel={(c) => c.full_name ?? c.email ?? ""}
+                    autoHighlight
+                    placeholder="Nome ou email…"
+                    searchValue={search}
+                    onSearchChange={setSearch}
+                    onSelect={(c) => {
+                      setCustomer(c);
+                      setSearch("");
+                    }}
+                  >
+                    <ComboboxInput
+                      placeholder="Nome ou email…"
+                      className="text-sm"
+                    />
+                    <ComboboxContent hideInnerSearch className="p-0">
+                      <ComboboxList<Customer>
+                        className="max-h-56"
+                        loading={searching}
+                        loadingNode={
+                          <div className="py-4 text-center text-xs text-muted-foreground flex items-center justify-center gap-1">
+                            <Loader2 className="h-3 w-3 animate-spin" /> A procurar…
+                          </div>
+                        }
+                      >
+                        {(c) => (
+                          <ComboboxItem
+                            key={c.user_id}
+                            value={c.user_id}
+                            showCheck={false}
+                            className="flex-col items-start gap-0 py-2"
+                          >
+                            <span className="text-xs font-medium">{c.full_name ?? "—"}</span>
+                            <span className="text-[10px] text-muted-foreground">{c.email}</span>
+                          </ComboboxItem>
+                        )}
+                      </ComboboxList>
+                      {!searching && search.trim().length >= 2 && customers.length === 0 && (
+                        <ComboboxEmpty>Nenhum cliente encontrado.</ComboboxEmpty>
+                      )}
+                      {!searching && search.trim().length < 2 && (
+                        <div className="py-3 text-center text-[11px] text-muted-foreground">
+                          Digite pelo menos 2 caracteres…
+                        </div>
+                      )}
+                    </ComboboxContent>
+                  </Combobox>
                 </div>
-              )}
-              {customer && (
+              ) : (
                 <div className="mt-2 p-3 border border-wj-green/30 bg-wj-green/5 rounded-lg flex items-center justify-between">
                   <div className="text-xs">
                     <div className="font-medium">{customer.full_name ?? "—"}</div>
@@ -433,93 +453,47 @@ export default function BookAppointmentDialog({
                 <Label className="text-xs flex items-center gap-1">
                   <Bike className="h-3 w-3" /> Modelo da bicicleta
                 </Label>
-                <Popover open={modelOpen} onOpenChange={setModelOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={modelOpen}
-                      className="mt-1 w-full justify-between text-sm font-normal h-9 px-3"
-                    >
-                      <span className={cn("truncate", !bikeModel && "text-muted-foreground")}>
-                        {bikeModel || "Selecionar modelo…"}
-                      </span>
-                      <ChevronsUpDown className="h-3.5 w-3.5 opacity-50 shrink-0 ml-2" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    className="p-0 w-[var(--radix-popover-trigger-width)] bg-background/95 backdrop-blur-xl border-border/40"
-                    align="start"
+                <div className="mt-1">
+                  <Combobox<BikeModel>
+                    items={bikeModels}
+                    itemToValue={(m) => m.name}
+                    itemToLabel={(m) => m.name}
+                    value={bikeModel || null}
+                    autoHighlight
+                    placeholder="Selecionar modelo…"
+                    onSelect={(m) => setBikeModel(m.name)}
                   >
-                    <Command shouldFilter={false}>
-                      <CommandInput
-                        placeholder="Procurar modelo…"
-                        value={modelSearch}
-                        onValueChange={setModelSearch}
-                        className="h-9 text-sm"
-                      />
-                      <CommandList className="max-h-56">
-                        {modelsLoading ? (
+                    <ComboboxTrigger className="text-sm h-9" />
+                    <ComboboxContent innerSearchPlaceholder="Procurar modelo…">
+                      <ComboboxList<BikeModel>
+                        className="max-h-56"
+                        loading={modelsLoading}
+                        loadingNode={
                           <div className="py-4 text-center text-xs text-muted-foreground flex items-center justify-center gap-1">
                             <Loader2 className="h-3 w-3 animate-spin" /> A carregar…
                           </div>
-                        ) : (
-                          <>
-                            <CommandEmpty>
-                              <div className="py-2 text-xs text-muted-foreground">
-                                Sem modelos. Pode escrever manualmente:
-                                <button
-                                  type="button"
-                                  className="block mt-1 text-wj-green hover:underline"
-                                  onClick={() => {
-                                    setBikeModel(modelSearch.trim());
-                                    setModelOpen(false);
-                                  }}
-                                >
-                                  Usar "{modelSearch}"
-                                </button>
-                              </div>
-                            </CommandEmpty>
-                            <CommandGroup>
-                              {bikeModels
-                                .filter((m) =>
-                                  modelSearch
-                                    ? m.name.toLowerCase().includes(modelSearch.toLowerCase())
-                                    : true,
-                                )
-                                .map((m) => (
-                                  <CommandItem
-                                    key={m.id}
-                                    value={m.name}
-                                    onSelect={() => {
-                                      setBikeModel(m.name);
-                                      setModelOpen(false);
-                                    }}
-                                    className="text-sm"
-                                  >
-                                    <Check
-                                      className={cn(
-                                        "mr-2 h-3.5 w-3.5",
-                                        bikeModel === m.name ? "opacity-100" : "opacity-0",
-                                      )}
-                                    />
-                                    {m.color_hex && (
-                                      <span
-                                        className="inline-block w-2 h-2 rounded-full mr-2"
-                                        style={{ backgroundColor: m.color_hex }}
-                                      />
-                                    )}
-                                    <span className="flex-1 truncate">{m.name}</span>
-                                  </CommandItem>
-                                ))}
-                            </CommandGroup>
-                          </>
+                        }
+                      >
+                        {(m) => (
+                          <ComboboxItem
+                            key={m.id}
+                            value={m.name}
+                            className="text-sm"
+                          >
+                            {m.color_hex && (
+                              <span
+                                className="inline-block w-2 h-2 rounded-full mr-2"
+                                style={{ backgroundColor: m.color_hex }}
+                              />
+                            )}
+                            <span className="flex-1 truncate">{m.name}</span>
+                          </ComboboxItem>
                         )}
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                      </ComboboxList>
+                      <ComboboxEmpty>Nenhum modelo encontrado.</ComboboxEmpty>
+                    </ComboboxContent>
+                  </Combobox>
+                </div>
               </div>
               <div>
                 <Label className="text-xs">Nº série / matrícula</Label>
