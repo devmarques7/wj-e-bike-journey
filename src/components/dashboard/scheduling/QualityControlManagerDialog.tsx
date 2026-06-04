@@ -37,6 +37,8 @@ import {
   Upload,
   ArrowLeft,
   Sparkles,
+  Maximize2,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -46,6 +48,7 @@ import {
   type QcTemplate,
 } from "@/hooks/qc/useQualityControl";
 import QualityControlImportDialog from "./QualityControlImportDialog";
+import QualityControlKanbanDialog from "./QualityControlKanbanDialog";
 
 interface Props {
   open: boolean;
@@ -82,6 +85,10 @@ export default function QualityControlManagerDialog({ open, onOpenChange }: Prop
   const [creating, setCreating] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [importAppendOpen, setImportAppendOpen] = useState(false);
+  const [kanbanOpen, setKanbanOpen] = useState(false);
+  const [collapsedStages, setCollapsedStages] = useState<Record<string, boolean>>({});
+  const toggleStage = (id: string) =>
+    setCollapsedStages((prev) => ({ ...prev, [id]: !prev[id] }));
 
   useEffect(() => {
     if (open) {
@@ -451,6 +458,15 @@ export default function QualityControlManagerDialog({ open, onOpenChange }: Prop
                       size="sm"
                       variant="ghost"
                       className="h-7 px-2.5 text-[10px] text-muted-foreground hover:text-foreground"
+                      onClick={() => setKanbanOpen(true)}
+                      title="Abrir Kanban em ecrã cheio"
+                    >
+                      <Maximize2 className="h-3 w-3 mr-1" /> Kanban
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2.5 text-[10px] text-muted-foreground hover:text-foreground"
                       onClick={() => setImportAppendOpen(true)}
                       title="Importar etapas via CSV ou JSON"
                     >
@@ -504,6 +520,8 @@ export default function QualityControlManagerDialog({ open, onOpenChange }: Prop
                           tasks={stageTasks(s.id)}
                           isFirst={idx === 0}
                           isLast={idx === activeStages.length - 1}
+                          collapsed={!!collapsedStages[s.id]}
+                          onToggleCollapsed={() => toggleStage(s.id)}
                           onUpdate={(p) => updateStage(s.id, p)}
                           onDelete={() => deleteStage(s.id)}
                           onMoveUp={() => moveStage(s.id, -1)}
@@ -535,6 +553,11 @@ export default function QualityControlManagerDialog({ open, onOpenChange }: Prop
       appendTemplateName={active?.name}
       onImported={() => setImportAppendOpen(false)}
     />
+    <QualityControlKanbanDialog
+      open={kanbanOpen}
+      onOpenChange={setKanbanOpen}
+      templateId={active?.id ?? null}
+    />
     </>
   );
 }
@@ -549,6 +572,8 @@ function StageEditor({
   tasks,
   isFirst,
   isLast,
+  collapsed,
+  onToggleCollapsed,
   onUpdate,
   onDelete,
   onMoveUp,
@@ -562,6 +587,8 @@ function StageEditor({
   tasks: QcTask[];
   isFirst: boolean;
   isLast: boolean;
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
   onUpdate: (p: Partial<QcStage>) => void;
   onDelete: () => void;
   onMoveUp: () => void;
@@ -602,13 +629,35 @@ function StageEditor({
         </div>
 
         <div className="flex-1 min-w-0 space-y-2">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={onToggleCollapsed}
+              className="shrink-0 h-6 w-6 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors"
+              title={collapsed ? "Expandir" : "Recolher"}
+            >
+              <ChevronRight
+                className={cn(
+                  "h-3 w-3 transition-transform",
+                  !collapsed && "rotate-90",
+                )}
+              />
+            </button>
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
             onBlur={() => name !== stage.name && onUpdate({ name: name.trim() || stage.name })}
             placeholder="Nome da etapa"
-            className="text-sm h-8 bg-transparent border-transparent hover:border-border/40 focus:border-border/60 px-2 font-medium"
+              className="text-sm h-8 bg-transparent border-transparent hover:border-border/40 focus:border-border/60 px-2 font-medium flex-1"
           />
+            {collapsed && (
+              <span className="text-[10px] text-muted-foreground bg-muted/30 rounded-full px-2 py-0.5 shrink-0">
+                {tasks.length} tarefa(s)
+              </span>
+            )}
+          </div>
+
+          {!collapsed && (
+            <>
           <Textarea
             value={desc}
             onChange={(e) => setDesc(e.target.value)}
@@ -652,6 +701,8 @@ function StageEditor({
               </div>
             )}
           </div>
+            </>
+          )}
         </div>
 
         <Button
@@ -667,6 +718,7 @@ function StageEditor({
       </div>
 
       {/* Tasks */}
+      {!collapsed && (
       <div className="border-t border-border/15 bg-muted/[0.03] px-3 py-2.5 space-y-1.5">
         <div className="flex items-center justify-between">
           <span className="text-[9px] uppercase tracking-[0.15em] text-muted-foreground/70">
@@ -696,6 +748,7 @@ function StageEditor({
           </ul>
         )}
       </div>
+      )}
     </li>
   );
 }
