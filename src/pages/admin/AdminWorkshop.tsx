@@ -32,6 +32,31 @@ import QualityControlPreviewCard from "@/components/dashboard/scheduling/Quality
 import ServiceTypesManagerDialog from "@/components/dashboard/scheduling/ServiceTypesManagerDialog";
 import AppointmentActionsMenu from "@/components/dashboard/scheduling/AppointmentActionsMenu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+const formatRelative = (iso: string | null) => {
+  if (!iso) return "Sem registo";
+  const d = new Date(iso);
+  const diff = Date.now() - d.getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "agora mesmo";
+  if (mins < 60) return `há ${mins} min`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `há ${hrs}h`;
+  const days = Math.floor(hrs / 24);
+  return `há ${days}d`;
+};
+
+const formatAbsolute = (iso: string | null) => {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString("pt-PT", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
 
 const getStatusBadge = (status: string) => {
   switch (status) {
