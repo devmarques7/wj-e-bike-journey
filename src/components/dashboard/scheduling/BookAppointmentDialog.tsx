@@ -819,14 +819,12 @@ export default function BookAppointmentDialog({
             </div>
 
             {slot && (
-              <div className="p-3 rounded-lg border border-wj-green/30 bg-wj-green/5 text-xs space-y-1">
-                <div className="flex items-center gap-2 font-medium">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-wj-green" /> Pronto a confirmar
-                </div>
-                <div className="text-muted-foreground">
-                  {customer?.full_name} · {selectedService?.name} · {date} {slot.start}–{slot.end} · {slot.mechanicName}
-                </div>
-              </div>
+              <ConfirmationCards
+                customer={customer}
+                service={selectedService}
+                date={date}
+                slot={slot}
+              />
             )}
           </div>
         )}
