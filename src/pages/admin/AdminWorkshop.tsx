@@ -320,6 +320,51 @@ export default function AdminWorkshop() {
                     </TabsList>
                   </div>
                 </Tabs>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                  <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+                    <TabsList className="bg-muted/40 h-8">
+                      <TabsTrigger value="all" className="text-[11px] h-6 px-2.5">Todos</TabsTrigger>
+                      <TabsTrigger value="pending" className="text-[11px] h-6 px-2.5">
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 mr-1.5" />
+                        Pendentes
+                      </TabsTrigger>
+                      <TabsTrigger value="ongoing" className="text-[11px] h-6 px-2.5">
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-wj-green animate-pulse mr-1.5" />
+                        Em curso
+                      </TabsTrigger>
+                      <TabsTrigger value="completed" className="text-[11px] h-6 px-2.5">
+                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-wj-green mr-1.5" />
+                        Concluídos
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <Layers className="h-3.5 w-3.5 text-muted-foreground" />
+                      <Select value={groupBy} onValueChange={(v) => setGroupBy(v as typeof groupBy)}>
+                        <SelectTrigger className="h-8 text-[11px] border-border/40 w-[150px]">
+                          <SelectValue placeholder="Agrupar" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none" className="text-xs">Sem agrupamento</SelectItem>
+                          <SelectItem value="status" className="text-xs">Por estado</SelectItem>
+                          <SelectItem value="mechanic" className="text-xs">Por mecânico</SelectItem>
+                          <SelectItem value="service" className="text-xs">Por serviço</SelectItem>
+                          <SelectItem value="plan" className="text-xs">Por plano</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-[11px] border-border/40 gap-1.5"
+                      onClick={() => setSortAsc((v) => !v)}
+                    >
+                      <ArrowUpDown className="h-3.5 w-3.5" />
+                      Hora {sortAsc ? "↑" : "↓"}
+                    </Button>
+                  </div>
+                </div>
               </div>
 
               <div className="overflow-x-auto">
@@ -327,7 +372,7 @@ export default function AdminWorkshop() {
                   <div className="flex items-center justify-center py-12 gap-2 text-sm text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" /> A carregar agendamentos…
                   </div>
-                ) : appointments.length === 0 ? (
+                ) : filteredSorted.length === 0 ? (
                   <div className="py-12 text-center text-sm text-muted-foreground">
                     Sem agendamentos para hoje.
                   </div>
@@ -345,7 +390,31 @@ export default function AdminWorkshop() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {appointments.map((apt) => (
+                    {groupedAppointments.map((group) => (
+                      <>
+                        {groupBy !== "none" && (
+                          <TableRow
+                            key={`group-${group.key}`}
+                            className="border-border/30 bg-muted/20 hover:bg-muted/30 cursor-pointer"
+                            onClick={() => toggleGroup(group.key)}
+                          >
+                            <TableCell colSpan={7} className="py-2">
+                              <div className="flex items-center gap-2 text-xs">
+                                {collapsedGroups[group.key] ? (
+                                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                                ) : (
+                                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                                )}
+                                <span className="font-medium text-foreground">{group.label}</span>
+                                <span className="text-[10px] text-muted-foreground">
+                                  {group.items.length} {group.items.length === 1 ? "item" : "itens"}
+                                </span>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                        {!collapsedGroups[group.key] &&
+                          group.items.map((apt) => (
                       <TableRow
                         key={apt.id}
                         className="border-border/20 hover:bg-muted/30 transition-colors"
@@ -460,6 +529,13 @@ export default function AdminWorkshop() {
                             onStart={() => updateAppointmentStatus(apt.id, "in_progress")}
                             onComplete={() => setCompletionTarget(apt)}
                             onReviewHistory={() => setReviewTarget(apt)}
+                            onExtendTime={async (extra) => {
+                              const newDuration = (apt.duration_minutes ?? 0) + extra;
+                              await updateAppointmentFields(apt.id, {
+                                duration_minutes: newDuration,
+                              });
+                              toast.warning(`+${extra} min adicionados ao agendamento`);
+                            }}
                             onUpdateFields={updateAppointmentFields}
                             onReschedule={rescheduleAppointment}
                             onCancel={cancelAppointment}
@@ -467,6 +543,8 @@ export default function AdminWorkshop() {
                           />
                         </TableCell>
                       </TableRow>
+                          ))}
+                      </>
                     ))}
                   </TableBody>
                 </Table>
