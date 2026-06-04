@@ -28,10 +28,20 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onImported?: (templateId: string) => void;
+  /** When provided, the dialog imports stages/tasks INTO this template instead of creating a new one. */
+  appendToTemplateId?: string;
+  appendTemplateName?: string;
 }
 
-export default function QualityControlImportDialog({ open, onOpenChange, onImported }: Props) {
-  const { importTemplate } = useQualityControl();
+export default function QualityControlImportDialog({
+  open,
+  onOpenChange,
+  onImported,
+  appendToTemplateId,
+  appendTemplateName,
+}: Props) {
+  const { importTemplate, importStagesIntoTemplate } = useQualityControl();
+  const isAppend = !!appendToTemplateId;
   const [format, setFormat] = useState<"json" | "csv">("json");
   const [text, setText] = useState("");
   const [name, setName] = useState("");
@@ -64,13 +74,24 @@ export default function QualityControlImportDialog({ open, onOpenChange, onImpor
       return;
     }
     setSubmitting(true);
-    const tpl = await importTemplate(parsed.data);
-    setSubmitting(false);
-    if (tpl) {
-      onImported?.(tpl.id);
-      onOpenChange(false);
-      setText("");
-      setName("");
+    if (isAppend && appendToTemplateId) {
+      const ok = await importStagesIntoTemplate(appendToTemplateId, parsed.data.stages);
+      setSubmitting(false);
+      if (ok) {
+        onImported?.(appendToTemplateId);
+        onOpenChange(false);
+        setText("");
+        setName("");
+      }
+    } else {
+      const tpl = await importTemplate(parsed.data);
+      setSubmitting(false);
+      if (tpl) {
+        onImported?.(tpl.id);
+        onOpenChange(false);
+        setText("");
+        setName("");
+      }
     }
   };
 
@@ -80,10 +101,12 @@ export default function QualityControlImportDialog({ open, onOpenChange, onImpor
         <DialogHeader>
           <DialogTitle className="text-lg font-light flex items-center gap-2">
             <Upload className="h-4 w-4 text-wj-green" />
-            Importar Controlo de Qualidade
+            {isAppend ? "Importar etapas" : "Importar Controlo de Qualidade"}
           </DialogTitle>
           <DialogDescription className="text-xs">
-            Importe um modelo completo via JSON ou CSV. Faça download do template para começar.
+            {isAppend
+              ? `As etapas serão adicionadas ao modelo "${appendTemplateName ?? ""}". O nome do ficheiro é ignorado.`
+              : "Importe um modelo completo via JSON ou CSV. Faça download do template para começar."}
           </DialogDescription>
         </DialogHeader>
 
