@@ -314,9 +314,6 @@ export default function AdminWorkshop() {
                             {apt.priority === "emergency" && (
                               <Badge className="text-[9px] h-4 px-1.5 bg-red-500/15 text-red-400 border-red-500/30">SOS</Badge>
                             )}
-                            {apt.status === "in_progress" && apt.work_started_at && (
-                              <LiveElapsed since={apt.work_started_at} />
-                            )}
                           </div>
                           {apt.duration_minutes ? (
                             <span className="text-[10px] text-muted-foreground/60 tabular-nums">
