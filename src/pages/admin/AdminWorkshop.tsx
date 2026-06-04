@@ -31,6 +31,7 @@ import { useSchedulingData } from "@/hooks/scheduling/useSchedulingData";
 import BookAppointmentDialog from "@/components/dashboard/scheduling/BookAppointmentDialog";
 import QualityControlManagerDialog from "@/components/dashboard/scheduling/QualityControlManagerDialog";
 import QualityControlPreviewCard from "@/components/dashboard/scheduling/QualityControlPreviewCard";
+import ServiceTypesManagerDialog from "@/components/dashboard/scheduling/ServiceTypesManagerDialog";
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -56,6 +57,7 @@ export default function AdminWorkshop() {
   const [activeTab, setActiveTab] = useState("day");
   const [bookOpen, setBookOpen] = useState(false);
   const [qcOpen, setQcOpen] = useState(false);
+  const [servicesOpen, setServicesOpen] = useState(false);
   const { loading, appointments, serviceTypes, updateAppointmentStatus, refetch } = useSchedulingData();
 
   // Service type usage ranking (today) — must be before any early returns
@@ -112,6 +114,15 @@ export default function AdminWorkshop() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              onClick={() => setServicesOpen(true)}
+              variant="outline"
+              size="sm"
+              className="h-9 border-border/40"
+            >
+              <Wrench className="h-4 w-4 mr-1" />
+              Serviços
+            </Button>
             <Button
               onClick={() => setQcOpen(true)}
               variant="outline"
@@ -305,6 +316,11 @@ export default function AdminWorkshop() {
         />
 
         <QualityControlManagerDialog open={qcOpen} onOpenChange={setQcOpen} />
+
+        <ServiceTypesManagerDialog open={servicesOpen} onOpenChange={(v) => {
+          setServicesOpen(v);
+          if (!v) refetch();
+        }} />
       </div>
     </AdminDashboardLayout>
   );
