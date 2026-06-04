@@ -54,6 +54,9 @@ export interface ComboboxProps<T> {
   open?: boolean;
   onOpenChange?: (v: boolean) => void;
   defaultOpen?: boolean;
+  /** Controlled search text. */
+  searchValue?: string;
+  onSearchChange?: (s: string) => void;
   placeholder?: string;
   disabled?: boolean;
   className?: string;
@@ -77,6 +80,8 @@ export function Combobox<T>({
   open: openProp,
   onOpenChange,
   defaultOpen = false,
+  searchValue,
+  onSearchChange,
   placeholder,
   disabled,
   className,
@@ -97,7 +102,15 @@ export function Combobox<T>({
     if (valueProp !== undefined) setValueState(valueProp);
   }, [valueProp]);
 
-  const [search, setSearch] = React.useState("");
+  const [searchState, setSearchState] = React.useState("");
+  const search = searchValue ?? searchState;
+  const setSearch = React.useCallback(
+    (s: string) => {
+      if (searchValue === undefined) setSearchState(s);
+      onSearchChange?.(s);
+    },
+    [searchValue, onSearchChange],
+  );
 
   const filtered = React.useMemo(() => {
     const list = items as T[];
