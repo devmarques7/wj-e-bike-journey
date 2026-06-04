@@ -386,6 +386,8 @@ export default function BookAppointmentDialog({
                     itemToLabel={(c) => c.full_name ?? c.email ?? ""}
                     autoHighlight
                     placeholder="Nome ou email…"
+                    searchValue={search}
+                    onSearchChange={setSearch}
                     onSelect={(c) => {
                       setCustomer(c);
                       setSearch("");
