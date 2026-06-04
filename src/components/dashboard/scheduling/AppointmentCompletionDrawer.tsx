@@ -446,7 +446,7 @@ export default function AppointmentCompletionDrawer({
                       <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-wj-green/10 border border-wj-green/20 shrink-0">
                         <Clock className="h-3 w-3 text-wj-green" />
                         <span className="text-[11px] font-mono font-bold text-wj-green tabular-nums">
-                          {fmt(elapsedActiveSeconds)}
+                          {fmt(displayStageSeconds)}
                         </span>
                       </div>
                     </div>
