@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download, Upload, FileJson, FileSpreadsheet, Camera, ListChecks } from "lucide-react";
+import { Download, Upload, FileJson, FileSpreadsheet, Camera, ListChecks, Copy, Eye, EyeOff, ClipboardPaste } from "lucide-react";
 import { toast } from "sonner";
 import {
   QC_CSV_TEMPLATE,
@@ -46,6 +46,29 @@ export default function QualityControlImportDialog({
   const [text, setText] = useState("");
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [showExample, setShowExample] = useState(true);
+
+  const exampleText = useMemo(
+    () =>
+      format === "json"
+        ? JSON.stringify(QC_JSON_TEMPLATE, null, 2)
+        : QC_CSV_TEMPLATE,
+    [format],
+  );
+
+  const copyExample = async () => {
+    try {
+      await navigator.clipboard.writeText(exampleText);
+      toast.success("Exemplo copiado");
+    } catch {
+      toast.error("Não foi possível copiar");
+    }
+  };
+
+  const useExample = () => {
+    setText(exampleText);
+    toast.success("Exemplo carregado no editor");
+  };
 
   const parsed = useMemo<{ ok: boolean; data?: QcImportPayload; error?: string }>(() => {
     if (!text.trim()) return { ok: false };
@@ -202,6 +225,64 @@ export default function QualityControlImportDialog({
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Exemplo / Template preview */}
+        <div className="border border-border/30 rounded-lg bg-muted/10 overflow-hidden">
+          <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-border/20">
+            <div className="flex items-center gap-2">
+              {format === "json" ? (
+                <FileJson className="h-3.5 w-3.5 text-wj-green" />
+              ) : (
+                <FileSpreadsheet className="h-3.5 w-3.5 text-wj-green" />
+              )}
+              <span className="text-[11px] font-medium">
+                Exemplo {format.toUpperCase()}
+              </span>
+              <Badge className="text-[9px] h-4 bg-muted/40 border-border/40">
+                somente leitura
+              </Badge>
+            </div>
+            <div className="flex items-center gap-1">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 text-[10px] gap-1"
+                onClick={useExample}
+              >
+                <ClipboardPaste className="h-3 w-3" /> Usar exemplo
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 text-[10px] gap-1"
+                onClick={copyExample}
+              >
+                <Copy className="h-3 w-3" /> Copiar
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 text-[10px] gap-1"
+                onClick={() => setShowExample((v) => !v)}
+              >
+                {showExample ? (
+                  <>
+                    <EyeOff className="h-3 w-3" /> Ocultar
+                  </>
+                ) : (
+                  <>
+                    <Eye className="h-3 w-3" /> Mostrar
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+          {showExample && (
+            <pre className="text-[10.5px] leading-relaxed font-mono p-3 max-h-44 overflow-auto bg-background/40 text-muted-foreground whitespace-pre">
+              {exampleText}
+            </pre>
+          )}
+        </div>
 
         {/* Preview */}
         <div className="border border-border/30 rounded-lg p-3 bg-muted/10 max-h-56 overflow-y-auto">
