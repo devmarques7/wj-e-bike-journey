@@ -17,10 +17,12 @@ import { toast } from "sonner";
 import {
   QC_CSV_TEMPLATE,
   QC_JSON_TEMPLATE,
+  QC_STAGES_JSON_TEMPLATE,
   downloadFile,
   parseQcCsv,
   parseQcJson,
   type QcImportPayload,
+  type QcStageImport,
 } from "./qcImport";
 import { useQualityControl } from "@/hooks/qc/useQualityControl";
 
@@ -31,6 +33,8 @@ interface Props {
   /** When provided, the dialog imports stages/tasks INTO this template instead of creating a new one. */
   appendToTemplateId?: string;
   appendTemplateName?: string;
+  /** Current stages of the target template — used to pre-fill the example when appending. */
+  currentStages?: QcStageImport[];
 }
 
 export default function QualityControlImportDialog({
@@ -39,6 +43,7 @@ export default function QualityControlImportDialog({
   onImported,
   appendToTemplateId,
   appendTemplateName,
+  currentStages,
 }: Props) {
   const { importTemplate, importStagesIntoTemplate } = useQualityControl();
   const isAppend = !!appendToTemplateId;
@@ -48,13 +53,19 @@ export default function QualityControlImportDialog({
   const [submitting, setSubmitting] = useState(false);
   const [showExample, setShowExample] = useState(true);
 
-  const exampleText = useMemo(
-    () =>
-      format === "json"
-        ? JSON.stringify(QC_JSON_TEMPLATE, null, 2)
-        : QC_CSV_TEMPLATE,
-    [format],
-  );
+  const exampleText = useMemo(() => {
+    if (format === "csv") return QC_CSV_TEMPLATE;
+    if (isAppend) {
+      // Stages-only example. When the active template already has stages,
+      // use them so the user can copy/paste and tweak in place.
+      const stages =
+        currentStages && currentStages.length > 0
+          ? currentStages
+          : QC_STAGES_JSON_TEMPLATE.stages;
+      return JSON.stringify({ stages }, null, 2);
+    }
+    return JSON.stringify(QC_JSON_TEMPLATE, null, 2);
+  }, [format, isAppend, currentStages]);
 
   const copyExample = async () => {
     try {
@@ -152,7 +163,18 @@ export default function QualityControlImportDialog({
                   format === "json"
                     ? downloadFile(
                         "qc-template.json",
-                        JSON.stringify(QC_JSON_TEMPLATE, null, 2),
+                        JSON.stringify(
+                          isAppend
+                            ? {
+                                stages:
+                                  currentStages && currentStages.length > 0
+                                    ? currentStages
+                                    : QC_STAGES_JSON_TEMPLATE.stages,
+                              }
+                            : QC_JSON_TEMPLATE,
+                          null,
+                          2,
+                        ),
                         "application/json",
                       )
                     : downloadFile("qc-template.csv", QC_CSV_TEMPLATE, "text/csv")

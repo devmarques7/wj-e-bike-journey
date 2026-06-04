@@ -39,6 +39,8 @@ import {
   Sparkles,
   Maximize2,
   ChevronRight,
+  ChevronsDownUp,
+  ChevronsUpDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -89,6 +91,41 @@ export default function QualityControlManagerDialog({ open, onOpenChange }: Prop
   const [collapsedStages, setCollapsedStages] = useState<Record<string, boolean>>({});
   const toggleStage = (id: string) =>
     setCollapsedStages((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  const allCollapsed =
+    activeId != null &&
+    stages.filter((s) => s.template_id === activeId).every((s) => collapsedStages[s.id]);
+  const toggleAllStages = () => {
+    if (!activeId) return;
+    const ids = stages.filter((s) => s.template_id === activeId).map((s) => s.id);
+    if (ids.length === 0) return;
+    const next = { ...collapsedStages };
+    const shouldCollapse = !allCollapsed;
+    ids.forEach((id) => (next[id] = shouldCollapse));
+    setCollapsedStages(next);
+  };
+
+  // Map current stages → import payload shape (for "Usar exemplo" pre-fill)
+  const currentStagesForImport = useMemo(() => {
+    if (!activeId) return [];
+    return stages
+      .filter((s) => s.template_id === activeId)
+      .sort((a, b) => a.position - b.position)
+      .map((s) => ({
+        name: s.name,
+        description: s.description ?? null,
+        requires_photo: !!s.requires_photo,
+        photo_min_count: s.photo_min_count ?? 1,
+        tasks: tasks
+          .filter((t) => t.stage_id === s.id)
+          .sort((a, b) => a.position - b.position)
+          .map((t) => ({
+            label: t.label,
+            description: t.description ?? null,
+            is_required: !!t.is_required,
+          })),
+      }));
+  }, [activeId, stages, tasks]);
 
   useEffect(() => {
     if (open) {
@@ -467,6 +504,24 @@ export default function QualityControlManagerDialog({ open, onOpenChange }: Prop
                       size="sm"
                       variant="ghost"
                       className="h-7 px-2.5 text-[10px] text-muted-foreground hover:text-foreground"
+                      onClick={toggleAllStages}
+                      disabled={activeStages.length === 0}
+                      title={allCollapsed ? "Expandir todas" : "Fechar todas"}
+                    >
+                      {allCollapsed ? (
+                        <>
+                          <ChevronsUpDown className="h-3 w-3 mr-1" /> Expandir
+                        </>
+                      ) : (
+                        <>
+                          <ChevronsDownUp className="h-3 w-3 mr-1" /> Fechar tudo
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2.5 text-[10px] text-muted-foreground hover:text-foreground"
                       onClick={() => setImportAppendOpen(true)}
                       title="Importar etapas via CSV ou JSON"
                     >
@@ -554,6 +609,7 @@ export default function QualityControlManagerDialog({ open, onOpenChange }: Prop
       onOpenChange={setImportAppendOpen}
       appendToTemplateId={active?.id}
       appendTemplateName={active?.name}
+      currentStages={currentStagesForImport}
       onImported={async () => {
         await refetch();
         setImportAppendOpen(false);

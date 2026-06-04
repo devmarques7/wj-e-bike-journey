@@ -10,6 +10,32 @@ export type QcImportPayload = {
   }>;
 };
 
+export type QcStageImport = NonNullable<QcImportPayload["stages"]>[number];
+
+export const QC_STAGES_JSON_TEMPLATE: { stages: QcStageImport[] } = {
+  stages: [
+    {
+      name: "Receção da bicicleta",
+      description: "Inspeção visual e registo de estado",
+      requires_photo: true,
+      photo_min_count: 2,
+      tasks: [
+        { label: "Confirmar n.º de série", is_required: true },
+        { label: "Registar acessórios entregues", is_required: true },
+      ],
+    },
+    {
+      name: "Diagnóstico técnico",
+      requires_photo: false,
+      photo_min_count: 1,
+      tasks: [
+        { label: "Testar travões", is_required: true },
+        { label: "Testar motor e bateria", is_required: true },
+      ],
+    },
+  ],
+};
+
 export const QC_JSON_TEMPLATE: QcImportPayload = {
   name: "Controlo de Qualidade — Modelo",
   description: "Descrição opcional do modelo",
@@ -119,7 +145,12 @@ export function parseQcCsv(csv: string, fallbackName = "Modelo importado"): QcIm
 
 export function parseQcJson(text: string): QcImportPayload {
   const data = JSON.parse(text);
-  if (!data || typeof data !== "object") throw new Error("JSON inválido");
+  if (!data) throw new Error("JSON inválido");
+  // Accept: array of stages, { stages: [...] }, or full template object
+  if (Array.isArray(data)) {
+    return { name: "Etapas importadas", stages: data as QcStageImport[] };
+  }
+  if (typeof data !== "object") throw new Error("JSON inválido");
   if (!data.name) data.name = "Modelo importado";
   if (!Array.isArray(data.stages)) data.stages = [];
   return data as QcImportPayload;
