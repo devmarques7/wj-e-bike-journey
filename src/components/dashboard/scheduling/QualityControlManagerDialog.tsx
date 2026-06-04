@@ -544,14 +544,20 @@ export default function QualityControlManagerDialog({ open, onOpenChange }: Prop
     <QualityControlImportDialog
       open={importOpen}
       onOpenChange={setImportOpen}
-      onImported={(id) => openTemplate(id)}
+      onImported={async (id) => {
+        await refetch();
+        openTemplate(id);
+      }}
     />
     <QualityControlImportDialog
       open={importAppendOpen}
       onOpenChange={setImportAppendOpen}
       appendToTemplateId={active?.id}
       appendTemplateName={active?.name}
-      onImported={() => setImportAppendOpen(false)}
+      onImported={async () => {
+        await refetch();
+        setImportAppendOpen(false);
+      }}
     />
     <QualityControlKanbanDialog
       open={kanbanOpen}
