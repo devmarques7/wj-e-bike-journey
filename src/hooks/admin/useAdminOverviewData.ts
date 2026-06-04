@@ -129,6 +129,7 @@ export function useAdminOverviewData() {
       planAgg.set(planId, cur);
     }
     const totalSubs = Array.from(planAgg.values()).reduce((a, b) => a + b.active_subs, 0) || 1;
+    const totalPlansMrr = Array.from(planAgg.values()).reduce((a, b) => a + b.mrr, 0);
     const ranking: PlanRanking[] = plans
       .map((p: any) => {
         const agg = planAgg.get(p.id) ?? { active_subs: 0, mrr: 0 };
@@ -183,7 +184,8 @@ export function useAdminOverviewData() {
 
     // ---- KPIs ----
     setKpis({
-      monthly_revenue: curRev,
+      // Accumulated monthly revenue across all active plans (matches the Plans page MRR calc)
+      monthly_revenue: totalPlansMrr,
       monthly_revenue_prev: prevRev,
       active_members: activeMembers,
       active_members_prev: prevActiveMembers,
