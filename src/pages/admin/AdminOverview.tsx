@@ -10,7 +10,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Navigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAdminOverviewData } from "@/hooks/admin/useAdminOverviewData";
-import { useMemo } from "react";
 
 export default function AdminOverview() {
   const { user, isAuthenticated, isLoading } = useAuth();
