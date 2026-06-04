@@ -81,6 +81,7 @@ export default function QualityControlManagerDialog({ open, onOpenChange }: Prop
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [importAppendOpen, setImportAppendOpen] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -321,7 +322,7 @@ export default function QualityControlManagerDialog({ open, onOpenChange }: Prop
               )}
             </div>
           ) : (
-            <section className="p-4 max-h-[70vh] overflow-hidden flex flex-col">
+            <section className="p-5 max-h-[72vh] overflow-hidden flex flex-col">
               {!active ? (
                 <div className="flex-1 flex items-center justify-center text-xs text-muted-foreground">
                   Modelo não encontrado.
@@ -329,7 +330,7 @@ export default function QualityControlManagerDialog({ open, onOpenChange }: Prop
               ) : (
                 <>
                 {/* Template header */}
-                <div className="space-y-2 pb-3">
+                <div className="space-y-3 pb-4">
                   {editingTpl ? (
                     <div className="space-y-2">
                       <Input
@@ -363,19 +364,24 @@ export default function QualityControlManagerDialog({ open, onOpenChange }: Prop
                   ) : (
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <h3 className="text-sm font-medium truncate">{active.name}</h3>
-                        {active.description && (
-                          <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
+                        <h3 className="text-base font-light tracking-tight truncate">{active.name}</h3>
+                        {active.description ? (
+                          <p className="text-[11px] text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
                             {active.description}
+                          </p>
+                        ) : (
+                          <p className="text-[11px] text-muted-foreground/60 mt-1 italic">
+                            Sem descrição
                           </p>
                         )}
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex items-center gap-0.5 shrink-0">
                         <Button
                           size="sm"
                           variant="ghost"
                           className="h-7 px-2 text-[10px]"
                           onClick={startEditTpl}
+                          title="Editar"
                         >
                           <Pencil className="h-3 w-3" />
                         </Button>
@@ -400,48 +406,93 @@ export default function QualityControlManagerDialog({ open, onOpenChange }: Prop
                               deleteTemplate(active.id);
                             }
                           }}
+                          title="Remover"
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
                       </div>
                     </div>
                   )}
-                  <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-1">
-                    <span>
-                      {activeStages.length} etapa(s) ·{" "}
-                      {activeStages.reduce((acc, s) => acc + stageTasks(s.id).length, 0)} tarefa(s)
-                    </span>
+                  {/* Stat chips */}
+                  <div className="flex items-center justify-between gap-2 pt-1">
                     <div className="flex items-center gap-1.5">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted/30 text-[10px] text-muted-foreground">
+                        <ListChecks className="h-2.5 w-2.5" />
+                        {activeStages.length} etapas
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted/30 text-[10px] text-muted-foreground">
+                        {activeStages.reduce((acc, s) => acc + stageTasks(s.id).length, 0)} tarefas
+                      </span>
+                      {active.is_default && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-wj-green/10 text-[10px] text-wj-green">
+                          <Star className="h-2.5 w-2.5" /> Padrão
+                        </span>
+                      )}
+                    </div>
+                    <label className="flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer">
                       <Switch
                         checked={active.is_active}
                         onCheckedChange={(v) => updateTemplate(active.id, { is_active: v })}
                       />
-                      <span>Ativo</span>
-                    </div>
+                      Ativo
+                    </label>
                   </div>
                 </div>
 
-                <Separator />
+                <Separator className="opacity-50" />
 
-                {/* Stages */}
-                <div className="flex items-center justify-between py-2">
-                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                    Sequência de etapas
+                {/* Stages toolbar */}
+                <div className="flex items-center justify-between py-3">
+                  <Label className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+                    Sequência
                   </Label>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 px-2 text-[10px]"
-                    onClick={() => createStage(active.id, { name: "Nova etapa" })}
-                  >
-                    <Plus className="h-3 w-3 mr-1" /> Etapa
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2.5 text-[10px] text-muted-foreground hover:text-foreground"
+                      onClick={() => setImportAppendOpen(true)}
+                      title="Importar etapas via CSV ou JSON"
+                    >
+                      <Upload className="h-3 w-3 mr-1" /> Importar
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="h-7 px-2.5 text-[10px] bg-wj-green hover:bg-wj-green/90"
+                      onClick={() => createStage(active.id, { name: "Nova etapa" })}
+                    >
+                      <Plus className="h-3 w-3 mr-1" /> Etapa
+                    </Button>
+                  </div>
                 </div>
 
-                <ScrollArea className="flex-1 pr-2">
+                <ScrollArea className="flex-1 pr-2 -mr-2">
                   {activeStages.length === 0 ? (
-                    <div className="py-8 text-center text-xs text-muted-foreground border border-dashed border-border/40 rounded-lg">
-                      Sem etapas. Adicione a primeira etapa do controlo de qualidade.
+                    <div className="py-12 text-center border border-dashed border-border/30 rounded-xl bg-muted/5">
+                      <div className="h-10 w-10 rounded-full bg-muted/20 flex items-center justify-center mx-auto mb-2">
+                        <ListChecks className="h-4 w-4 text-muted-foreground/60" />
+                      </div>
+                      <p className="text-xs text-muted-foreground">Sem etapas ainda</p>
+                      <p className="text-[10px] text-muted-foreground/60 mt-0.5">
+                        Adicione manualmente ou importe uma sequência
+                      </p>
+                      <div className="flex items-center justify-center gap-1.5 mt-3">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-[10px]"
+                          onClick={() => setImportAppendOpen(true)}
+                        >
+                          <Upload className="h-3 w-3 mr-1" /> Importar
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="h-7 text-[10px] bg-wj-green hover:bg-wj-green/90"
+                          onClick={() => createStage(active.id, { name: "Nova etapa" })}
+                        >
+                          <Plus className="h-3 w-3 mr-1" /> Nova etapa
+                        </Button>
+                      </div>
                     </div>
                   ) : (
                     <ol className="space-y-2">
@@ -476,6 +527,13 @@ export default function QualityControlManagerDialog({ open, onOpenChange }: Prop
       open={importOpen}
       onOpenChange={setImportOpen}
       onImported={(id) => openTemplate(id)}
+    />
+    <QualityControlImportDialog
+      open={importAppendOpen}
+      onOpenChange={setImportAppendOpen}
+      appendToTemplateId={active?.id}
+      appendTemplateName={active?.name}
+      onImported={() => setImportAppendOpen(false)}
     />
     </>
   );
