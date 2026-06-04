@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { 
   Calendar, 
   Wrench, 
@@ -49,22 +50,25 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 
-const formatRelative = (iso: string | null) => {
-  if (!iso) return "Sem registo";
+const formatRelative = (
+  iso: string | null,
+  t: (k: string, o?: any) => string,
+) => {
+  if (!iso) return t("workshop.rel.no_record");
   const d = new Date(iso);
   const diff = Date.now() - d.getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "agora mesmo";
-  if (mins < 60) return `há ${mins} min`;
+  if (mins < 1) return t("workshop.rel.just_now");
+  if (mins < 60) return t("workshop.rel.min", { n: mins });
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `há ${hrs}h`;
+  if (hrs < 24) return t("workshop.rel.hour", { n: hrs });
   const days = Math.floor(hrs / 24);
-  return `há ${days}d`;
+  return t("workshop.rel.day", { n: days });
 };
 
-const formatAbsolute = (iso: string | null) => {
+const formatAbsolute = (iso: string | null, locale: string) => {
   if (!iso) return "—";
-  return new Date(iso).toLocaleString("pt-PT", {
+  return new Date(iso).toLocaleString(locale === "pt" ? "pt-PT" : "en-GB", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -73,7 +77,7 @@ const formatAbsolute = (iso: string | null) => {
   });
 };
 
-const getStatusBadge = (status: string) => {
+const getStatusBadge = (status: string, t: (k: string) => string) => {
   // Padronização duotone monocromática:
   // verde → concluído/confirmado · amarelo → atenção · vermelho → erro · neutro → resto
   const base = "border font-normal text-[10px] gap-1 pl-1.5 pr-2 py-0.5";
@@ -82,43 +86,43 @@ const getStatusBadge = (status: string) => {
     case "completed":
       return (
         <Badge className={`${base} bg-muted/30 text-foreground/80 border-border/40`}>
-          <span className={`${dot} bg-wj-green`} /> Concluído
+          <span className={`${dot} bg-wj-green`} /> {t("workshop.status.completed")}
         </Badge>
       );
     case "confirmed":
       return (
         <Badge className={`${base} bg-muted/30 text-foreground/80 border-border/40`}>
-          <span className={`${dot} bg-wj-green/70`} /> Confirmado
+          <span className={`${dot} bg-wj-green/70`} /> {t("workshop.status.confirmed")}
         </Badge>
       );
     case "in_progress":
       return (
         <Badge className={`${base} bg-muted/30 text-foreground/80 border-border/40`}>
-          <span className={`${dot} bg-wj-green animate-pulse`} /> Em curso
+          <span className={`${dot} bg-wj-green animate-pulse`} /> {t("workshop.status.in_progress")}
         </Badge>
       );
     case "pending":
       return (
         <Badge className={`${base} bg-muted/30 text-foreground/80 border-border/40`}>
-          <span className={`${dot} bg-amber-400`} /> Pendente
+          <span className={`${dot} bg-amber-400`} /> {t("workshop.status.pending")}
         </Badge>
       );
     case "rescheduled":
       return (
         <Badge className={`${base} bg-muted/30 text-foreground/80 border-border/40`}>
-          <span className={`${dot} bg-amber-400`} /> Reagendado
+          <span className={`${dot} bg-amber-400`} /> {t("workshop.status.rescheduled")}
         </Badge>
       );
     case "canceled":
       return (
         <Badge className={`${base} bg-muted/30 text-foreground/80 border-border/40`}>
-          <span className={`${dot} bg-red-500`} /> Cancelado
+          <span className={`${dot} bg-red-500`} /> {t("workshop.status.canceled")}
         </Badge>
       );
     case "no_show":
       return (
         <Badge className={`${base} bg-muted/30 text-foreground/80 border-border/40`}>
-          <span className={`${dot} bg-red-500/70`} /> No-show
+          <span className={`${dot} bg-red-500/70`} /> {t("workshop.status.no_show")}
         </Badge>
       );
     default:
@@ -132,6 +136,7 @@ const getStatusBadge = (status: string) => {
 
 
 export default function AdminWorkshop() {
+  const { t, i18n } = useTranslation();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState("day");
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "ongoing" | "completed">("all");
@@ -197,13 +202,13 @@ export default function AdminWorkshop() {
     const labelFor = (a: AppointmentRow): { key: string; label: string } => {
       switch (groupBy) {
         case "status":
-          return { key: a.status, label: a.status };
+          return { key: a.status, label: t(`workshop.status.${a.status}`, a.status) };
         case "mechanic":
-          return { key: a.assigned_mechanic_id ?? "none", label: a.mechanic_name ?? "Não atribuído" };
+          return { key: a.assigned_mechanic_id ?? "none", label: a.mechanic_name ?? t("workshop.cols.unassigned") };
         case "service":
-          return { key: a.service_type_id ?? "none", label: a.service_name ?? "Sem serviço" };
+          return { key: a.service_type_id ?? "none", label: a.service_name ?? t("workshop.cols.no_plan") };
         case "plan":
-          return { key: a.plan_name ?? "none", label: a.plan_name ?? "Sem plano" };
+          return { key: a.plan_name ?? "none", label: a.plan_name ?? t("workshop.cols.no_plan") };
         default:
           return { key: "all", label: "" };
       }
@@ -215,7 +220,7 @@ export default function AdminWorkshop() {
       map.set(key, g);
     }
     return Array.from(map.values());
-  }, [filteredSorted, groupBy]);
+  }, [filteredSorted, groupBy, t]);
 
   const toggleGroup = (key: string) =>
     setCollapsedGroups((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -235,10 +240,10 @@ export default function AdminWorkshop() {
     : 0;
 
   const workshopKPIs = [
-    { label: "Agendamentos Hoje", value: String(totalToday), change: "", trend: "up" as const, icon: Calendar },
-    { label: "Em Curso", value: String(inProgress), change: "", trend: "up" as const, icon: Wrench },
-    { label: "Concluídos Hoje", value: String(completed), change: "", trend: "up" as const, icon: CheckCircle2 },
-    { label: "Duração Média", value: `${Math.round(avgDuration)}m`, change: "", trend: "up" as const, icon: Clock },
+    { label: t("workshop.kpi.today"), value: String(totalToday), change: "", trend: "up" as const, icon: Calendar },
+    { label: t("workshop.kpi.in_progress"), value: String(inProgress), change: "", trend: "up" as const, icon: Wrench },
+    { label: t("workshop.kpi.completed"), value: String(completed), change: "", trend: "up" as const, icon: CheckCircle2 },
+    { label: t("workshop.kpi.avg_duration"), value: `${Math.round(avgDuration)}m`, change: "", trend: "up" as const, icon: Clock },
   ];
 
   return (
@@ -252,9 +257,9 @@ export default function AdminWorkshop() {
           className="flex items-start justify-between gap-4 flex-wrap"
         >
           <div>
-            <h1 className="text-xl sm:text-2xl font-light text-foreground">Oficina</h1>
+            <h1 className="text-xl sm:text-2xl font-light text-foreground">{t("workshop.title")}</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Agendamentos de serviço e diagnóstico em tempo real
+              {t("workshop.subtitle")}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -265,7 +270,7 @@ export default function AdminWorkshop() {
               className="h-9 border-border/40"
             >
               <Wrench className="h-4 w-4 mr-1" />
-              Serviços
+              {t("workshop.services_btn")}
             </Button>
             <Button
               onClick={() => setQcOpen(true)}
@@ -274,7 +279,7 @@ export default function AdminWorkshop() {
               className="h-9 border-border/40"
             >
               <ListChecks className="h-4 w-4 mr-1" />
-              Controlo de Qualidade
+              {t("workshop.qc_btn")}
             </Button>
             <Button
               onClick={() => setBookOpen(true)}
@@ -282,7 +287,7 @@ export default function AdminWorkshop() {
               size="sm"
             >
               <Plus className="h-4 w-4 mr-1" />
-              Novo Agendamento
+              {t("workshop.new_btn")}
             </Button>
           </div>
         </motion.div>
@@ -312,29 +317,29 @@ export default function AdminWorkshop() {
               <div className="p-4 border-b border-border/30">
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-foreground">Agendamentos</h3>
+                    <h3 className="text-sm font-medium text-foreground">{t("workshop.appts.title")}</h3>
                     <TabsList className="bg-muted/50">
-                      <TabsTrigger value="day" className="text-xs">Hoje</TabsTrigger>
-                      <TabsTrigger value="week" className="text-xs" disabled>Semana</TabsTrigger>
-                      <TabsTrigger value="month" className="text-xs" disabled>Mês</TabsTrigger>
+                      <TabsTrigger value="day" className="text-xs">{t("workshop.appts.day")}</TabsTrigger>
+                      <TabsTrigger value="week" className="text-xs" disabled>{t("workshop.appts.week")}</TabsTrigger>
+                      <TabsTrigger value="month" className="text-xs" disabled>{t("workshop.appts.month")}</TabsTrigger>
                     </TabsList>
                   </div>
                 </Tabs>
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                   <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
                     <TabsList className="bg-muted/40 h-8">
-                      <TabsTrigger value="all" className="text-[11px] h-6 px-2.5">Todos</TabsTrigger>
+                      <TabsTrigger value="all" className="text-[11px] h-6 px-2.5">{t("workshop.appts.all")}</TabsTrigger>
                       <TabsTrigger value="pending" className="text-[11px] h-6 px-2.5">
                         <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-400 mr-1.5" />
-                        Pendentes
+                        {t("workshop.appts.pending")}
                       </TabsTrigger>
                       <TabsTrigger value="ongoing" className="text-[11px] h-6 px-2.5">
                         <span className="inline-block w-1.5 h-1.5 rounded-full bg-wj-green animate-pulse mr-1.5" />
-                        Em curso
+                        {t("workshop.appts.ongoing")}
                       </TabsTrigger>
                       <TabsTrigger value="completed" className="text-[11px] h-6 px-2.5">
                         <span className="inline-block w-1.5 h-1.5 rounded-full bg-wj-green mr-1.5" />
-                        Concluídos
+                        {t("workshop.appts.completed")}
                       </TabsTrigger>
                     </TabsList>
                   </Tabs>
@@ -343,14 +348,14 @@ export default function AdminWorkshop() {
                       <Layers className="h-3.5 w-3.5 text-muted-foreground" />
                       <Select value={groupBy} onValueChange={(v) => setGroupBy(v as typeof groupBy)}>
                         <SelectTrigger className="h-8 text-[11px] border-border/40 w-[150px]">
-                          <SelectValue placeholder="Agrupar" />
+                          <SelectValue placeholder={t("workshop.appts.group_placeholder")} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="none" className="text-xs">Sem agrupamento</SelectItem>
-                          <SelectItem value="status" className="text-xs">Por estado</SelectItem>
-                          <SelectItem value="mechanic" className="text-xs">Por mecânico</SelectItem>
-                          <SelectItem value="service" className="text-xs">Por serviço</SelectItem>
-                          <SelectItem value="plan" className="text-xs">Por plano</SelectItem>
+                          <SelectItem value="none" className="text-xs">{t("workshop.appts.group_none")}</SelectItem>
+                          <SelectItem value="status" className="text-xs">{t("workshop.appts.group_status")}</SelectItem>
+                          <SelectItem value="mechanic" className="text-xs">{t("workshop.appts.group_mechanic")}</SelectItem>
+                          <SelectItem value="service" className="text-xs">{t("workshop.appts.group_service")}</SelectItem>
+                          <SelectItem value="plan" className="text-xs">{t("workshop.appts.group_plan")}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -361,7 +366,7 @@ export default function AdminWorkshop() {
                       onClick={() => setSortAsc((v) => !v)}
                     >
                       <ArrowUpDown className="h-3.5 w-3.5" />
-                      Hora {sortAsc ? "↑" : "↓"}
+                      {t("workshop.appts.sort_time")} {sortAsc ? "↑" : "↓"}
                     </Button>
                   </div>
                 </div>
@@ -370,23 +375,23 @@ export default function AdminWorkshop() {
               <div className="overflow-x-auto">
                 {loading ? (
                   <div className="flex items-center justify-center py-12 gap-2 text-sm text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" /> A carregar agendamentos…
+                    <Loader2 className="h-4 w-4 animate-spin" /> {t("workshop.appts.loading")}
                   </div>
                 ) : filteredSorted.length === 0 ? (
                   <div className="py-12 text-center text-sm text-muted-foreground">
-                    Sem agendamentos para hoje.
+                    {t("workshop.appts.empty")}
                   </div>
                 ) : (
                 <Table>
                   <TableHeader>
                     <TableRow className="border-border/30 hover:bg-transparent">
-                      <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium w-[80px]">Hora</TableHead>
-                      <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">Cliente</TableHead>
-                      <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">Plano</TableHead>
-                      <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">Serviço</TableHead>
-                      <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">Mecânico</TableHead>
-                      <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">Estado</TableHead>
-                      <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium text-right w-[80px]">Ações</TableHead>
+                      <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium w-[80px]">{t("workshop.cols.time")}</TableHead>
+                      <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">{t("workshop.cols.customer")}</TableHead>
+                      <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">{t("workshop.cols.plan")}</TableHead>
+                      <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">{t("workshop.cols.service")}</TableHead>
+                      <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">{t("workshop.cols.mechanic")}</TableHead>
+                      <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium">{t("workshop.cols.status")}</TableHead>
+                      <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium text-right w-[80px]">{t("workshop.cols.actions")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -406,7 +411,7 @@ export default function AdminWorkshop() {
                                 )}
                                 <span className="font-medium text-foreground">{group.label}</span>
                                 <span className="text-[10px] text-muted-foreground">
-                                  {group.items.length} {group.items.length === 1 ? "item" : "itens"}
+                                  {group.items.length} {group.items.length === 1 ? t("workshop.appts.item_one") : t("workshop.appts.item_other")}
                                 </span>
                               </div>
                             </TableCell>
@@ -430,7 +435,7 @@ export default function AdminWorkshop() {
                           </div>
                           {apt.duration_minutes ? (
                             <span className="text-[10px] text-muted-foreground/60 tabular-nums">
-                              {apt.duration_minutes}min
+                              {apt.duration_minutes}{t("workshop.cols.min")}
                             </span>
                           ) : null}
                         </TableCell>
@@ -475,7 +480,7 @@ export default function AdminWorkshop() {
                               {apt.plan_name}
                             </span>
                           ) : (
-                            <span className="text-[10px] text-muted-foreground/60">Sem plano</span>
+                            <span className="text-[10px] text-muted-foreground/60">{t("workshop.cols.no_plan")}</span>
                           )}
                         </TableCell>
                         <TableCell className="text-xs align-middle">
@@ -489,31 +494,31 @@ export default function AdminWorkshop() {
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground align-middle">
                           {apt.mechanic_name ?? (
-                            <span className="text-muted-foreground/60 italic">Não atribuído</span>
+                            <span className="text-muted-foreground/60 italic">{t("workshop.cols.unassigned")}</span>
                           )}
                         </TableCell>
                         <TableCell className="align-middle">
                           <TooltipProvider delayDuration={150}>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <span className="inline-flex cursor-default">{getStatusBadge(apt.status)}</span>
+                                <span className="inline-flex cursor-default">{getStatusBadge(apt.status, t)}</span>
                               </TooltipTrigger>
                               <TooltipContent side="top" className="text-xs space-y-1">
                                 <div className="flex items-center gap-1.5">
                                   <Clock className="h-3 w-3" />
-                                  <span className="font-medium">{formatRelative(apt.updated_at)}</span>
+                                  <span className="font-medium">{formatRelative(apt.updated_at, t)}</span>
                                 </div>
                                 <div className="text-muted-foreground text-[10px]">
-                                  Última alteração: {formatAbsolute(apt.updated_at)}
+                                  {t("workshop.status_tip.last_change")}: {formatAbsolute(apt.updated_at, i18n.language)}
                                 </div>
                                 {apt.work_started_at && (
                                   <div className="text-muted-foreground text-[10px]">
-                                    Iniciado: {formatAbsolute(apt.work_started_at)}
+                                    {t("workshop.status_tip.started")}: {formatAbsolute(apt.work_started_at, i18n.language)}
                                   </div>
                                 )}
                                 {apt.work_ended_at && (
                                   <div className="text-muted-foreground text-[10px]">
-                                    Concluído: {formatAbsolute(apt.work_ended_at)}
+                                    {t("workshop.status_tip.ended")}: {formatAbsolute(apt.work_ended_at, i18n.language)}
                                   </div>
                                 )}
                               </TooltipContent>
@@ -533,7 +538,7 @@ export default function AdminWorkshop() {
                               await updateAppointmentFields(apt.id, {
                                 duration_minutes: newDuration,
                               });
-                              toast.warning(`+${extra} min adicionados ao agendamento`);
+                              toast.warning(t("workshop.actions.extra_added", { n: extra }));
                             }}
                             onUpdateFields={updateAppointmentFields}
                             onReschedule={rescheduleAppointment}
@@ -562,11 +567,11 @@ export default function AdminWorkshop() {
             >
               <div className="flex items-center gap-2 mb-4">
                 <AlertTriangle className="h-4 w-4 text-amber-400" />
-                <h3 className="text-sm font-medium text-foreground">Serviços do Dia</h3>
+                <h3 className="text-sm font-medium text-foreground">{t("workshop.services_panel.title")}</h3>
               </div>
 
               {serviceUsage.length === 0 ? (
-                <p className="text-xs text-muted-foreground">Sem dados para hoje.</p>
+                <p className="text-xs text-muted-foreground">{t("workshop.services_panel.empty")}</p>
               ) : (
                 <div className="space-y-3">
                   {serviceUsage.map((problem, index) => (
@@ -597,11 +602,11 @@ export default function AdminWorkshop() {
               <div className="mt-6 pt-4 border-t border-border/30 flex items-end justify-between">
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-                    Catálogo de serviços
+                    {t("workshop.services_panel.catalog")}
                   </p>
                   <p className="text-sm text-foreground">
                     <span className="text-2xl font-light">{serviceTypes.length}</span>{" "}
-                    <span className="text-xs text-muted-foreground">tipos ativos</span>
+                    <span className="text-xs text-muted-foreground">{t("workshop.services_panel.types_active")}</span>
                   </p>
                 </div>
                 <Button
@@ -611,7 +616,7 @@ export default function AdminWorkshop() {
                   onClick={() => setServicesOpen(true)}
                 >
                   <Wrench className="h-3.5 w-3.5 mr-1" />
-                  Gerir serviços
+                  {t("workshop.services_panel.manage")}
                 </Button>
               </div>
             </motion.div>

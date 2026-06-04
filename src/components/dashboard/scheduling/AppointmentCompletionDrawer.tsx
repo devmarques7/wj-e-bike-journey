@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import {
   Clock,
   CheckCircle2,
@@ -73,6 +74,7 @@ export default function AppointmentCompletionDrawer({
   onOpenChange,
   onCompleted,
 }: Props) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [stages, setStages] = useState<Stage[]>([]);
@@ -166,11 +168,11 @@ export default function AppointmentCompletionDrawer({
       const firstIncomplete = st.find((s) => !map[s.id]?.completed_at) ?? st[0] ?? null;
       setActiveStageId(firstIncomplete?.id ?? null);
     } catch (e: any) {
-      toast.error(e.message ?? "Falha a carregar Controlo de Qualidade");
+      toast.error(e.message ?? t("workshop.drawer.load_error"));
     } finally {
       setLoading(false);
     }
-  }, [appointment]);
+  }, [appointment, t]);
 
   useEffect(() => {
     if (open && appointment) loadTemplate();
@@ -321,7 +323,7 @@ export default function AppointmentCompletionDrawer({
       toast.error(error.message);
       return;
     }
-    toast.success("Agendamento concluído");
+    toast.success(t("workshop.drawer.done_toast"));
     onCompleted();
     onOpenChange(false);
   };
@@ -335,27 +337,22 @@ export default function AppointmentCompletionDrawer({
         <SheetHeader className="px-6 pt-6 pb-3 text-left">
           <SheetTitle className="flex items-center gap-2 text-base font-light">
             <ShieldCheck className="h-4 w-4 text-wj-green" />
-            Controlo de Qualidade
+            {t("workshop.drawer.title")}
           </SheetTitle>
           <SheetDescription className="text-xs">
-            Conclua cada etapa de QC antes de finalizar o agendamento de{" "}
-            <span className="text-foreground">
-              {appointment?.customer_name ?? "—"}
-            </span>
-            .
+            {t("workshop.drawer.desc", { name: appointment?.customer_name ?? t("workshop.drawer.desc_fallback") })}
           </SheetDescription>
         </SheetHeader>
 
         {loading ? (
           <div className="flex-1 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> A carregar etapas…
+            <Loader2 className="h-4 w-4 animate-spin" /> {t("workshop.drawer.loading")}
           </div>
         ) : stages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center">
             <ListChecks className="h-8 w-8 text-muted-foreground/40" />
             <p className="text-sm text-muted-foreground">
-              Nenhum modelo de Controlo de Qualidade ativo. Pode concluir o
-              agendamento mesmo assim.
+              {t("workshop.drawer.no_template")}
             </p>
             <Button
               size="sm"
@@ -364,7 +361,7 @@ export default function AppointmentCompletionDrawer({
               disabled={saving}
             >
               {saving ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5 mr-1" />}
-              Concluir agendamento
+              {t("workshop.drawer.complete_anyway")}
             </Button>
           </div>
         ) : (
@@ -432,7 +429,7 @@ export default function AppointmentCompletionDrawer({
                     <div className="p-4 border-b border-border/30 flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                          Etapa {activeStage.position}
+                          {t("workshop.drawer.stage_label", { n: activeStage.position })}
                         </p>
                         <h3 className="text-sm font-medium text-foreground truncate">
                           {activeStage.name}
@@ -455,17 +452,17 @@ export default function AppointmentCompletionDrawer({
                       <div className="p-4 space-y-2">
                         {activeTasks.length === 0 ? (
                           <p className="text-xs text-muted-foreground italic">
-                            Sem tarefas registadas para esta etapa.
+                            {t("workshop.drawer.no_tasks")}
                           </p>
                         ) : (
-                          activeTasks.map((t) => {
-                            const checked = !!activeProgress.task_done[t.id];
+                          activeTasks.map((task) => {
+                            const checked = !!activeProgress.task_done[task.id];
                             const disabled = !!activeProgress.completed_at;
                             return (
                               <button
-                                key={t.id}
+                                key={task.id}
                                 disabled={disabled}
-                                onClick={() => toggleTask(t.id)}
+                                onClick={() => toggleTask(task.id)}
                                 className={cn(
                                   "w-full flex items-start gap-3 p-3 rounded-xl border text-left transition-all",
                                   checked
@@ -494,17 +491,17 @@ export default function AppointmentCompletionDrawer({
                                           : "text-foreground",
                                       )}
                                     >
-                                      {t.label}
+                                      {task.label}
                                     </p>
-                                    {t.is_required && (
+                                    {task.is_required && (
                                       <Badge className="text-[9px] h-4 px-1.5 bg-amber-500/15 text-amber-400 border-amber-500/30">
-                                        Obrigatório
+                                        {t("workshop.drawer.required_badge")}
                                       </Badge>
                                     )}
                                   </div>
-                                  {t.description && (
+                                  {task.description && (
                                     <p className="text-[10px] text-muted-foreground mt-0.5">
-                                      {t.description}
+                                      {task.description}
                                     </p>
                                   )}
                                 </div>
@@ -530,8 +527,8 @@ export default function AppointmentCompletionDrawer({
                               <Camera className="h-3.5 w-3.5" />
                             )}
                             {activeProgress.has_photo
-                              ? "Evidência fotográfica anexada"
-                              : `Adicionar evidência (mín. ${activeStage.photo_min_count})`}
+                              ? t("workshop.drawer.photo_attached")
+                              : t("workshop.drawer.photo_add", { n: activeStage.photo_min_count })}
                           </button>
                         )}
                       </div>
@@ -540,8 +537,8 @@ export default function AppointmentCompletionDrawer({
                     <div className="p-3 border-t border-border/30 flex items-center justify-between gap-2">
                       <span className="text-[10px] text-muted-foreground">
                         {activeProgress.completed_at
-                          ? `Concluída em ${fmt(activeProgress.duration_seconds ?? 0)}`
-                          : "Marque todas as tarefas obrigatórias para concluir"}
+                          ? t("workshop.drawer.completed_in", { time: fmt(activeProgress.duration_seconds ?? 0) })
+                          : t("workshop.drawer.mark_required")}
                       </span>
                       <Button
                         size="sm"
@@ -558,7 +555,7 @@ export default function AppointmentCompletionDrawer({
                         ) : (
                           <Check className="h-3.5 w-3.5 mr-1" />
                         )}
-                        {activeProgress.completed_at ? "Concluída" : "Concluir etapa"}
+                        {activeProgress.completed_at ? t("workshop.drawer.completed") : t("workshop.drawer.complete_stage")}
                       </Button>
                     </div>
                   </motion.div>
@@ -568,8 +565,10 @@ export default function AppointmentCompletionDrawer({
               {/* Final completion */}
               <div className="mt-3 flex items-center justify-between gap-3 px-1">
                 <div className="text-[11px] text-muted-foreground">
-                  {stages.filter((s) => !!progress[s.id]?.completed_at).length}/
-                  {stages.length} etapas concluídas
+                  {t("workshop.drawer.stages_done", {
+                    done: stages.filter((s) => !!progress[s.id]?.completed_at).length,
+                    total: stages.length,
+                  })}
                 </div>
                 <Button
                   size="sm"
@@ -587,7 +586,7 @@ export default function AppointmentCompletionDrawer({
                   ) : (
                     <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
                   )}
-                  Concluir agendamento
+                  {t("workshop.drawer.complete_appointment")}
                 </Button>
               </div>
             </div>
