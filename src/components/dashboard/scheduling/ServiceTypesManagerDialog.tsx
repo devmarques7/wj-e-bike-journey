@@ -31,7 +31,7 @@ interface Props {
 }
 
 export default function ServiceTypesManagerDialog({ open, onOpenChange }: Props) {
-  const { rows, loading, remove, toggleActive } = useServiceTypesCrud();
+  const { rows, loading, remove, toggleActive, refetch } = useServiceTypesCrud();
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<ServiceTypeRow | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -186,6 +186,7 @@ export default function ServiceTypesManagerDialog({ open, onOpenChange }: Props)
         service={editing}
         open={editorOpen}
         onClose={() => setEditorOpen(false)}
+        onSaved={refetch}
       />
 
       <Dialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
