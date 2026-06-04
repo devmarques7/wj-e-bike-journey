@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { 
   Calendar, 
   Wrench, 
@@ -49,22 +50,25 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 
-const formatRelative = (iso: string | null) => {
-  if (!iso) return "Sem registo";
+const formatRelative = (
+  iso: string | null,
+  t: (k: string, o?: any) => string,
+) => {
+  if (!iso) return t("workshop.rel.no_record");
   const d = new Date(iso);
   const diff = Date.now() - d.getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "agora mesmo";
-  if (mins < 60) return `há ${mins} min`;
+  if (mins < 1) return t("workshop.rel.just_now");
+  if (mins < 60) return t("workshop.rel.min", { n: mins });
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `há ${hrs}h`;
+  if (hrs < 24) return t("workshop.rel.hour", { n: hrs });
   const days = Math.floor(hrs / 24);
-  return `há ${days}d`;
+  return t("workshop.rel.day", { n: days });
 };
 
-const formatAbsolute = (iso: string | null) => {
+const formatAbsolute = (iso: string | null, locale: string) => {
   if (!iso) return "—";
-  return new Date(iso).toLocaleString("pt-PT", {
+  return new Date(iso).toLocaleString(locale === "pt" ? "pt-PT" : "en-GB", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -73,7 +77,7 @@ const formatAbsolute = (iso: string | null) => {
   });
 };
 
-const getStatusBadge = (status: string) => {
+const getStatusBadge = (status: string, t: (k: string) => string) => {
   // Padronização duotone monocromática:
   // verde → concluído/confirmado · amarelo → atenção · vermelho → erro · neutro → resto
   const base = "border font-normal text-[10px] gap-1 pl-1.5 pr-2 py-0.5";
@@ -82,43 +86,43 @@ const getStatusBadge = (status: string) => {
     case "completed":
       return (
         <Badge className={`${base} bg-muted/30 text-foreground/80 border-border/40`}>
-          <span className={`${dot} bg-wj-green`} /> Concluído
+          <span className={`${dot} bg-wj-green`} /> {t("workshop.status.completed")}
         </Badge>
       );
     case "confirmed":
       return (
         <Badge className={`${base} bg-muted/30 text-foreground/80 border-border/40`}>
-          <span className={`${dot} bg-wj-green/70`} /> Confirmado
+          <span className={`${dot} bg-wj-green/70`} /> {t("workshop.status.confirmed")}
         </Badge>
       );
     case "in_progress":
       return (
         <Badge className={`${base} bg-muted/30 text-foreground/80 border-border/40`}>
-          <span className={`${dot} bg-wj-green animate-pulse`} /> Em curso
+          <span className={`${dot} bg-wj-green animate-pulse`} /> {t("workshop.status.in_progress")}
         </Badge>
       );
     case "pending":
       return (
         <Badge className={`${base} bg-muted/30 text-foreground/80 border-border/40`}>
-          <span className={`${dot} bg-amber-400`} /> Pendente
+          <span className={`${dot} bg-amber-400`} /> {t("workshop.status.pending")}
         </Badge>
       );
     case "rescheduled":
       return (
         <Badge className={`${base} bg-muted/30 text-foreground/80 border-border/40`}>
-          <span className={`${dot} bg-amber-400`} /> Reagendado
+          <span className={`${dot} bg-amber-400`} /> {t("workshop.status.rescheduled")}
         </Badge>
       );
     case "canceled":
       return (
         <Badge className={`${base} bg-muted/30 text-foreground/80 border-border/40`}>
-          <span className={`${dot} bg-red-500`} /> Cancelado
+          <span className={`${dot} bg-red-500`} /> {t("workshop.status.canceled")}
         </Badge>
       );
     case "no_show":
       return (
         <Badge className={`${base} bg-muted/30 text-foreground/80 border-border/40`}>
-          <span className={`${dot} bg-red-500/70`} /> No-show
+          <span className={`${dot} bg-red-500/70`} /> {t("workshop.status.no_show")}
         </Badge>
       );
     default:
@@ -132,6 +136,7 @@ const getStatusBadge = (status: string) => {
 
 
 export default function AdminWorkshop() {
+  const { t, i18n } = useTranslation();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState("day");
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "ongoing" | "completed">("all");
@@ -197,13 +202,13 @@ export default function AdminWorkshop() {
     const labelFor = (a: AppointmentRow): { key: string; label: string } => {
       switch (groupBy) {
         case "status":
-          return { key: a.status, label: a.status };
+          return { key: a.status, label: t(`workshop.status.${a.status}`, a.status) };
         case "mechanic":
-          return { key: a.assigned_mechanic_id ?? "none", label: a.mechanic_name ?? "Não atribuído" };
+          return { key: a.assigned_mechanic_id ?? "none", label: a.mechanic_name ?? t("workshop.cols.unassigned") };
         case "service":
-          return { key: a.service_type_id ?? "none", label: a.service_name ?? "Sem serviço" };
+          return { key: a.service_type_id ?? "none", label: a.service_name ?? t("workshop.cols.no_plan") };
         case "plan":
-          return { key: a.plan_name ?? "none", label: a.plan_name ?? "Sem plano" };
+          return { key: a.plan_name ?? "none", label: a.plan_name ?? t("workshop.cols.no_plan") };
         default:
           return { key: "all", label: "" };
       }
@@ -215,7 +220,7 @@ export default function AdminWorkshop() {
       map.set(key, g);
     }
     return Array.from(map.values());
-  }, [filteredSorted, groupBy]);
+  }, [filteredSorted, groupBy, t]);
 
   const toggleGroup = (key: string) =>
     setCollapsedGroups((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -235,10 +240,10 @@ export default function AdminWorkshop() {
     : 0;
 
   const workshopKPIs = [
-    { label: "Agendamentos Hoje", value: String(totalToday), change: "", trend: "up" as const, icon: Calendar },
-    { label: "Em Curso", value: String(inProgress), change: "", trend: "up" as const, icon: Wrench },
-    { label: "Concluídos Hoje", value: String(completed), change: "", trend: "up" as const, icon: CheckCircle2 },
-    { label: "Duração Média", value: `${Math.round(avgDuration)}m`, change: "", trend: "up" as const, icon: Clock },
+    { label: t("workshop.kpi.today"), value: String(totalToday), change: "", trend: "up" as const, icon: Calendar },
+    { label: t("workshop.kpi.in_progress"), value: String(inProgress), change: "", trend: "up" as const, icon: Wrench },
+    { label: t("workshop.kpi.completed"), value: String(completed), change: "", trend: "up" as const, icon: CheckCircle2 },
+    { label: t("workshop.kpi.avg_duration"), value: `${Math.round(avgDuration)}m`, change: "", trend: "up" as const, icon: Clock },
   ];
 
   return (
