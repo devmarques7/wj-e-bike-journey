@@ -252,6 +252,25 @@ export default function ServiceTypeEditDialog({ service, open, onClose, onSaved 
 
           <div className="col-span-2">
             <FieldLabel
+              label="Pontos de recompensa"
+              hint="Pontos creditados na carteira (vault) do cliente sempre que este serviço é concluído. Aplica-se a qualquer cliente, em qualquer plano."
+            />
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-wj-green shrink-0" />
+              <Input
+                type="number"
+                min={0}
+                value={form.reward_points ?? 0}
+                onChange={(e) => update("reward_points", Number(e.target.value) as any)}
+                className="bg-background/60"
+                placeholder="0"
+              />
+              <span className="text-[10px] text-muted-foreground whitespace-nowrap">pts / serviço</span>
+            </div>
+          </div>
+
+          <div className="col-span-2">
+            <FieldLabel
               label="Descrição"
               hint="Resumo apresentado ao cliente na altura do agendamento."
             />
@@ -266,26 +285,38 @@ export default function ServiceTypeEditDialog({ service, open, onClose, onSaved 
           <div className="col-span-2">
             <FieldLabel
               label="Coberto pelos planos"
-              hint="Quais níveis de subscrição incluem este serviço sem custo extra."
+              hint="Quais planos de subscrição (carregados diretamente da base de dados) incluem este serviço sem custo extra."
             />
             <div className="flex flex-wrap gap-2 mt-1">
-              {PLAN_LEVELS.map((p) => {
-                const active = (form.covered_by_plan_levels ?? []).includes(p.value);
-                return (
-                  <button
-                    key={p.value}
-                    type="button"
-                    onClick={() => togglePlan(p.value)}
-                    className={`px-3 h-8 rounded-full text-xs border transition ${
-                      active
-                        ? "bg-wj-green/15 border-wj-green/40 text-wj-green"
-                        : "border-border/40 text-muted-foreground hover:bg-muted/40"
-                    }`}
-                  >
-                    {p.label}
-                  </button>
-                );
-              })}
+              {planOptions.length === 0 ? (
+                <span className="text-[11px] text-muted-foreground italic">
+                  Sem planos ativos registados na base de dados.
+                </span>
+              ) : (
+                planOptions.map((p) => {
+                  const active = (form.covered_by_plan_levels ?? []).includes(p.value);
+                  const accent = p.color ?? "#058c42";
+                  return (
+                    <button
+                      key={p.value}
+                      type="button"
+                      onClick={() => togglePlan(p.value)}
+                      className="px-3 h-8 rounded-full text-xs border transition flex items-center gap-1.5"
+                      style={{
+                        borderColor: active ? `${accent}80` : "hsl(var(--border) / 0.4)",
+                        backgroundColor: active ? `${accent}26` : "transparent",
+                        color: active ? accent : "hsl(var(--muted-foreground))",
+                      }}
+                    >
+                      <span
+                        className="w-1.5 h-1.5 rounded-full"
+                        style={{ backgroundColor: accent }}
+                      />
+                      {p.label}
+                    </button>
+                  );
+                })
+              )}
             </div>
           </div>
 
