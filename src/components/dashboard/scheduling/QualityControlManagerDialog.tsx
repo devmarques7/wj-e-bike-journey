@@ -147,7 +147,7 @@ export default function QualityControlManagerDialog({ open, onOpenChange }: Prop
       <DialogContent
         className={cn(
           "bg-background/95 backdrop-blur-xl border-border/40 p-0 overflow-hidden",
-          phase === "picker" ? "max-w-xl" : "max-w-4xl",
+          phase === "picker" ? "max-w-3xl" : "max-w-4xl",
         )}
       >
         <DialogHeader className="px-5 pt-5">
@@ -176,77 +176,106 @@ export default function QualityControlManagerDialog({ open, onOpenChange }: Prop
 
         <div className="border-t border-border/30 mt-3">
           {phase === "picker" ? (
-            <div className="p-5 space-y-5">
+            <div className="p-5 space-y-4">
               {loading && templates.length === 0 ? (
                 <div className="py-10 flex items-center justify-center text-xs text-muted-foreground gap-2">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" /> A carregar modelos…
                 </div>
               ) : (
                 <>
-                  {templates.length > 0 && (
-                    <div className="space-y-1.5">
-                      <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                        Selecionar modelo existente
-                      </Label>
-                      <div className="flex gap-2">
-                        <Select
-                          value={activeId ?? ""}
-                          onValueChange={(v) => setActiveId(v)}
-                        >
-                          <SelectTrigger className="h-10 text-sm flex-1">
-                            <SelectValue placeholder="Escolha um modelo…" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {templates.map((t) => {
-                              const count = stages.filter((s) => s.template_id === t.id).length;
-                              return (
-                                <SelectItem key={t.id} value={t.id}>
-                                  <div className="flex items-center gap-2">
-                                    <span>{t.name}</span>
-                                    {t.is_default && (
-                                      <Badge className="text-[9px] h-4 bg-wj-green/15 text-wj-green border-wj-green/30 px-1.5">
-                                        Padrão
-                                      </Badge>
-                                    )}
-                                    <span className="text-[10px] text-muted-foreground">
-                                      · {count} etapa(s)
-                                    </span>
-                                  </div>
-                                </SelectItem>
-                              );
-                            })}
-                          </SelectContent>
-                        </Select>
-                        <Button
-                          size="sm"
-                          className="h-10 bg-wj-green hover:bg-wj-green/90"
-                          disabled={!activeId}
-                          onClick={() => activeId && openTemplate(activeId)}
-                        >
-                          Gerir etapas
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-border/30" />
-                    </div>
-                    <div className="relative flex justify-center text-[10px] uppercase tracking-wider text-muted-foreground">
-                      <span className="bg-background px-2">
-                        {templates.length > 0 ? "ou criar novo" : "criar primeiro modelo"}
-                      </span>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      Modelos disponíveis ({templates.length})
+                    </Label>
+                    <span className="text-[10px] text-muted-foreground">
+                      Clique para gerir as etapas
+                    </span>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    {templates.map((t, i) => {
+                      const tplStages = stages.filter((s) => s.template_id === t.id);
+                      const tplTasks = tasks.filter((k) =>
+                        tplStages.some((s) => s.id === k.stage_id),
+                      );
+                      return (
+                        <button
+                          key={t.id}
+                          onClick={() => openTemplate(t.id)}
+                          className={cn(
+                            "group relative text-left rounded-xl border bg-background/40 hover:bg-wj-green/[0.04]",
+                            "border-border/40 hover:border-wj-green/50 transition-all p-3 flex flex-col gap-2 min-h-[112px]",
+                          )}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="h-6 w-6 rounded-md bg-wj-green/15 text-wj-green text-[10px] font-semibold flex items-center justify-center shrink-0">
+                              {String(i + 1).padStart(2, "0")}
+                            </span>
+                            {t.is_default && (
+                              <Badge className="text-[9px] h-4 bg-wj-green/15 text-wj-green border-wj-green/30 px-1.5">
+                                <Star className="h-2.5 w-2.5 mr-0.5" />
+                                Padrão
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-medium leading-tight line-clamp-2">
+                              {t.name}
+                            </p>
+                            {t.description && (
+                              <p className="text-[10px] text-muted-foreground mt-1 line-clamp-2">
+                                {t.description}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-1 border-t border-border/20">
+                            <span>
+                              {tplStages.length} etapa(s) · {tplTasks.length} tarefa(s)
+                            </span>
+                            <span
+                              className={cn(
+                                "h-1.5 w-1.5 rounded-full",
+                                t.is_active ? "bg-wj-green" : "bg-muted-foreground/40",
+                              )}
+                            />
+                          </div>
+                        </button>
+                      );
+                    })}
+
+                    {/* Always-present "Add new" card */}
+                    <button
+                      onClick={() => {
+                        const el = document.getElementById("qc-new-name-input");
+                        el?.focus();
+                        el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                      }}
+                      className={cn(
+                        "rounded-xl border border-dashed border-border/40 hover:border-wj-green/60",
+                        "bg-background/20 hover:bg-wj-green/[0.04] transition-all p-3",
+                        "flex flex-col items-center justify-center gap-1.5 min-h-[112px] text-muted-foreground hover:text-wj-green",
+                      )}
+                    >
+                      <div className="h-9 w-9 rounded-full border border-dashed border-current flex items-center justify-center">
+                        <Plus className="h-4 w-4" />
+                      </div>
+                      <span className="text-[11px] font-medium">Adicionar novo</span>
+                      <span className="text-[10px] opacity-70">Criar modelo personalizado</span>
+                    </button>
+                  </div>
+
+                  {/* Inline create */}
+                  <div className="space-y-1.5 pt-1">
+                    <Label
+                      htmlFor="qc-new-name-input"
+                      className="text-[10px] uppercase tracking-wider text-muted-foreground"
+                    >
                       <Sparkles className="h-3 w-3 inline mr-1" />
-                      Novo modelo
+                      Criar novo modelo
                     </Label>
                     <div className="flex gap-2">
                       <Input
+                        id="qc-new-name-input"
                         value={newName}
                         onChange={(e) => setNewName(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleCreateNew()}
@@ -255,8 +284,7 @@ export default function QualityControlManagerDialog({ open, onOpenChange }: Prop
                       />
                       <Button
                         size="sm"
-                        variant="outline"
-                        className="h-10"
+                        className="h-10 bg-wj-green hover:bg-wj-green/90"
                         onClick={handleCreateNew}
                         disabled={!newName.trim() || creating}
                       >
