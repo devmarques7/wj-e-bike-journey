@@ -1684,6 +1684,7 @@ export type Database = {
           name_nl: string | null
           priority_score: number
           required_specializations: string[] | null
+          reward_points: number
           slug: string
         }
         Insert: {
@@ -1704,6 +1705,7 @@ export type Database = {
           name_nl?: string | null
           priority_score?: number
           required_specializations?: string[] | null
+          reward_points?: number
           slug: string
         }
         Update: {
@@ -1724,6 +1726,7 @@ export type Database = {
           name_nl?: string | null
           priority_score?: number
           required_specializations?: string[] | null
+          reward_points?: number
           slug?: string
         }
         Relationships: []

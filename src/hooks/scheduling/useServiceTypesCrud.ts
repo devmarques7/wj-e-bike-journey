@@ -20,6 +20,7 @@ export type ServiceTypeRow = {
   covered_by_plan_levels: number[] | null;
   required_specializations: string[] | null;
   buffer_minutes_override: number | null;
+  reward_points: number;
   created_at?: string;
 };
 
