@@ -90,6 +90,7 @@ export default function QualityControlKanbanDialog({ open, onOpenChange, templat
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-background/95 backdrop-blur-xl border-border/40 max-w-[95vw] w-[95vw] h-[92vh] p-0 overflow-hidden flex flex-col">
         <DialogHeader className="px-6 pt-5 pb-3 border-b border-border/20">
