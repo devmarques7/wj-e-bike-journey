@@ -75,7 +75,10 @@ export function useQualityControl() {
       })
       .select()
       .single();
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return null;
+    }
     toast.success("Modelo criado");
     await fetchAll();
     return data as QcTemplate;
