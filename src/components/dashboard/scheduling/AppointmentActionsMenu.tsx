@@ -11,6 +11,7 @@ import {
   Ban,
   Trash2,
   Calendar as CalIcon,
+  History,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -62,6 +63,7 @@ interface Props {
   serviceTypes: ServiceType[];
   onStart: () => void;
   onComplete: () => void;
+  onReviewHistory: () => void;
   onUpdateFields: (
     id: string,
     patch: Partial<{
@@ -95,6 +97,7 @@ export default function AppointmentActionsMenu({
   serviceTypes,
   onStart,
   onComplete,
+  onReviewHistory,
   onUpdateFields,
   onReschedule,
   onCancel,
@@ -165,6 +168,12 @@ export default function AppointmentActionsMenu({
             className="text-xs"
           >
             <CheckCircle className="h-3.5 w-3.5 mr-2 text-wj-green" /> Concluir
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={onReviewHistory}
+            className="text-xs"
+          >
+            <History className="h-3.5 w-3.5 mr-2 text-wj-green" /> Histórico de revisão
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />
