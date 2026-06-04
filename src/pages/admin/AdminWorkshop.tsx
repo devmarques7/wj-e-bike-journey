@@ -7,8 +7,6 @@ import {
   CheckCircle2, 
   AlertTriangle,
   Loader2,
-  PlayCircle,
-  CheckCircle,
   Plus,
   ListChecks,
 } from "lucide-react";
