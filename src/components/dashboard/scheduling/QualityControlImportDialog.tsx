@@ -163,7 +163,18 @@ export default function QualityControlImportDialog({
                   format === "json"
                     ? downloadFile(
                         "qc-template.json",
-                        JSON.stringify(QC_JSON_TEMPLATE, null, 2),
+                        JSON.stringify(
+                          isAppend
+                            ? {
+                                stages:
+                                  currentStages && currentStages.length > 0
+                                    ? currentStages
+                                    : QC_STAGES_JSON_TEMPLATE.stages,
+                              }
+                            : QC_JSON_TEMPLATE,
+                          null,
+                          2,
+                        ),
                         "application/json",
                       )
                     : downloadFile("qc-template.csv", QC_CSV_TEMPLATE, "text/csv")
