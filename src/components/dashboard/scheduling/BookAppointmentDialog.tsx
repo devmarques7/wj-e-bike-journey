@@ -21,6 +21,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Calendar } from "@/components/ui/calendar";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import {
   Combobox,
   ComboboxContent,
@@ -115,6 +118,11 @@ export default function BookAppointmentDialog({
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [slots, setSlots] = useState<Slot[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  // Calendar availability hints (for step 3)
+  const [closedDows, setClosedDows] = useState<Set<number>>(new Set());
+  const [forcedClosedDates, setForcedClosedDates] = useState<Set<string>>(new Set());
+  const [forcedOpenDates, setForcedOpenDates] = useState<Set<string>>(new Set());
 
   const selectedService = useMemo(
     () => serviceTypes.find((s) => s.id === serviceId) ?? null,
@@ -402,6 +410,45 @@ export default function BookAppointmentDialog({
   useEffect(() => {
     if (open && step === 3 && selectedService) computeSlots();
   }, [open, step, computeSlots, selectedService]);
+
+  /* ---------- preload calendar availability (closed days/exceptions) ---------- */
+  useEffect(() => {
+    if (!open || step !== 3) return;
+    let cancelled = false;
+    (async () => {
+      const today = todayISO();
+      const [bhRes, exRes] = await Promise.all([
+        supabase.from("business_hours").select("day_of_week, is_open, valid_from, valid_until"),
+        supabase
+          .from("business_hour_exceptions")
+          .select("exception_date, is_open")
+          .gte("exception_date", today),
+      ]);
+      if (cancelled) return;
+      // Pick latest valid per day_of_week
+      const map = new Map<number, any>();
+      for (const r of (bhRes.data ?? []) as any[]) {
+        if (r.valid_from > today) continue;
+        if (r.valid_until && r.valid_until < today) continue;
+        const prev = map.get(r.day_of_week);
+        if (!prev || prev.valid_from < r.valid_from) map.set(r.day_of_week, r);
+      }
+      const closed = new Set<number>();
+      for (const [dow, r] of map) if (!r.is_open) closed.add(dow);
+      setClosedDows(closed);
+      const fClosed = new Set<string>();
+      const fOpen = new Set<string>();
+      for (const e of (exRes.data ?? []) as any[]) {
+        if (e.is_open) fOpen.add(e.exception_date);
+        else fClosed.add(e.exception_date);
+      }
+      setForcedClosedDates(fClosed);
+      setForcedOpenDates(fOpen);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, step]);
 
   /* ---------- submit ---------- */
   const submit = async () => {
@@ -747,69 +794,115 @@ export default function BookAppointmentDialog({
         {/* STEP 3: Date + slots */}
         {step === 3 && (
           <div className="space-y-4">
-            <div className="grid grid-cols-[1fr_auto] items-end gap-3">
-              <div>
-                <Label className="text-xs h-4 leading-4">Data</Label>
-                <DatePicker
-                  value={date}
-                  onChange={setDate}
-                  min={todayISO()}
-                  className="mt-1 text-sm"
-                  placeholder="Selecionar data"
-                />
-              </div>
+            <div className="flex items-center justify-between gap-3">
+              <Label className="text-xs flex items-center gap-1.5 text-muted-foreground">
+                <CalendarDays className="h-3 w-3" /> Selecione data e horário
+              </Label>
               <Badge
                 variant="outline"
-                className="h-9 px-3 rounded-md border-border/40 bg-muted/30 text-[11px] font-normal text-muted-foreground gap-1.5"
+                className="h-7 px-2.5 rounded-md border-border/40 bg-muted/30 text-[11px] font-normal text-muted-foreground gap-1.5"
               >
                 <Clock className="h-3 w-3" />
                 {selectedService?.name} · {selectedService?.duration_minutes}m
               </Badge>
             </div>
 
-            <div>
-              <Label className="text-xs flex items-center gap-1">
-                <UserCheck className="h-3 w-3" /> Horários disponíveis
-              </Label>
-              {loadingSlots ? (
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mt-2">
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="h-12 rounded-lg border border-border/20 bg-muted/30 animate-pulse"
-                      style={{ animationDelay: `${i * 60}ms` }}
-                    />
-                  ))}
+            <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-4 rounded-xl border border-border/30 bg-muted/10 p-3">
+              {/* Calendar */}
+              <div className="flex justify-center md:justify-start">
+                <Calendar
+                  mode="single"
+                  selected={date ? new Date(date + "T00:00:00") : undefined}
+                  onSelect={(d) => {
+                    if (!d) return;
+                    const iso = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+                    setDate(iso);
+                  }}
+                  disabled={(d) => {
+                    const iso = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    if (d < today) return true;
+                    if (forcedClosedDates.has(iso)) return true;
+                    if (forcedOpenDates.has(iso)) return false;
+                    return closedDows.has(d.getDay());
+                  }}
+                  className="rounded-lg p-2 pointer-events-auto"
+                />
+              </div>
+
+              <Separator orientation="vertical" className="hidden md:block" />
+
+              {/* Time slots */}
+              <div className="flex flex-col min-w-0">
+                <div className="flex items-center justify-between mb-2 px-1">
+                  <Label className="text-[11px] uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                    <Clock className="h-3 w-3" />
+                    {new Date(date + "T00:00:00").toLocaleDateString("pt-PT", {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                    })}
+                  </Label>
+                  {!loadingSlots && slots.length > 0 && (
+                    <span className="text-[10px] text-muted-foreground">
+                      {slots.length} disponíveis
+                    </span>
+                  )}
                 </div>
-              ) : slots.length === 0 ? (
-                <div className="py-6 text-center text-xs text-muted-foreground border border-dashed border-border/40 rounded-lg mt-2">
-                  Sem horários disponíveis nesta data.
-                </div>
-              ) : (
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mt-2 max-h-64 overflow-y-auto pr-1 animate-in fade-in-0 duration-200">
-                  {slots.map((s) => (
-                    <button
-                      key={`${s.start}-${s.mechanicId}`}
-                      onClick={() => setSlot(s)}
-                      className={cn(
-                        "p-2 rounded-lg border text-center transition-all hover:scale-[1.02]",
-                        slot?.start === s.start && slot?.mechanicId === s.mechanicId
-                          ? "border-wj-green/60 bg-wj-green/10"
-                          : "border-border/30 hover:bg-muted/40",
-                      )}
-                    >
-                      <div className="text-sm font-medium">{s.start}</div>
-                      <div className="text-[9px] text-muted-foreground truncate">
-                        {s.mechanicName}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
+                <ScrollArea className="h-[260px] pr-2">
+                  {loadingSlots ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {Array.from({ length: 9 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className="h-11 rounded-lg border border-border/20 bg-muted/30 animate-pulse"
+                          style={{ animationDelay: `${i * 50}ms` }}
+                        />
+                      ))}
+                    </div>
+                  ) : slots.length === 0 ? (
+                    <div className="h-full min-h-[200px] flex flex-col items-center justify-center text-center gap-1 border border-dashed border-border/40 rounded-lg">
+                      <CalendarDays className="h-5 w-5 text-muted-foreground/60" />
+                      <p className="text-xs text-muted-foreground">
+                        Sem horários disponíveis nesta data.
+                      </p>
+                      <p className="text-[10px] text-muted-foreground/70">
+                        Tente outra data no calendário.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 animate-in fade-in-0 duration-200">
+                      {slots.map((s) => {
+                        const active =
+                          slot?.start === s.start && slot?.mechanicId === s.mechanicId;
+                        return (
+                          <button
+                            key={`${s.start}-${s.mechanicId}`}
+                            onClick={() => setSlot(s)}
+                            className={cn(
+                              "group flex flex-col items-start p-2 rounded-lg border text-left transition-all",
+                              active
+                                ? "border-wj-green/60 bg-wj-green/10 ring-1 ring-wj-green/40"
+                                : "border-border/30 hover:bg-muted/40 hover:border-border/60",
+                            )}
+                          >
+                            <span className="text-sm font-medium">{s.start}</span>
+                            <span className="text-[9px] text-muted-foreground truncate w-full flex items-center gap-1">
+                              <UserCheck className="h-2.5 w-2.5" />
+                              {s.mechanicName}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </ScrollArea>
+              </div>
             </div>
 
             {slot && (
-              <div className="p-3 rounded-lg border border-wj-green/30 bg-wj-green/5 text-xs space-y-1">
+              <div className="p-3 rounded-lg border border-wj-green/30 bg-wj-green/5 text-xs space-y-1 animate-in fade-in-0 slide-in-from-bottom-1 duration-200">
                 <div className="flex items-center gap-2 font-medium">
                   <CheckCircle2 className="h-3.5 w-3.5 text-wj-green" /> Pronto a confirmar
                 </div>
