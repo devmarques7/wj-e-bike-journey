@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { 
   Calendar, 
@@ -391,10 +391,9 @@ export default function AdminWorkshop() {
                   </TableHeader>
                   <TableBody>
                     {groupedAppointments.map((group) => (
-                      <>
+                      <Fragment key={`g-${group.key}`}>
                         {groupBy !== "none" && (
                           <TableRow
-                            key={`group-${group.key}`}
                             className="border-border/30 bg-muted/20 hover:bg-muted/30 cursor-pointer"
                             onClick={() => toggleGroup(group.key)}
                           >
@@ -544,7 +543,7 @@ export default function AdminWorkshop() {
                         </TableCell>
                       </TableRow>
                           ))}
-                      </>
+                      </Fragment>
                     ))}
                   </TableBody>
                 </Table>
