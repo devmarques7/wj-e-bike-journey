@@ -464,13 +464,8 @@ export default function BookAppointmentDialog({
                           </ComboboxItem>
                         )}
                       </ComboboxList>
-                      {!searching && search.trim().length >= 2 && customers.length === 0 && (
-                        <ComboboxEmpty>Nenhum cliente encontrado.</ComboboxEmpty>
-                      )}
-                      {!searching && search.trim().length < 2 && (
-                        <div className="py-3 text-center text-[11px] text-muted-foreground">
-                          Digite pelo menos 2 caracteres…
-                        </div>
+                      {!searching && customers.length === 0 && (
+                        <ComboboxEmpty>Nenhum cliente com bicicleta registada.</ComboboxEmpty>
                       )}
                     </ComboboxContent>
                   </Combobox>
