@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Camera, ListChecks, Pencil, Star } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQualityControl } from "@/hooks/qc/useQualityControl";
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default function QualityControlPreviewCard({ onEdit }: Props) {
+  const { t } = useTranslation();
   const { templates, stages, tasks, loading } = useQualityControl();
 
   const active =
@@ -32,21 +34,20 @@ export default function QualityControlPreviewCard({ onEdit }: Props) {
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <ListChecks className="h-4 w-4 text-wj-green" />
-            <h3 className="text-sm font-medium text-foreground">Controlo de Qualidade</h3>
+            <h3 className="text-sm font-medium text-foreground">{t("workshop.qc_preview.title")}</h3>
             {active?.is_default && (
               <Badge className="text-[9px] h-4 bg-wj-green/15 text-wj-green border-wj-green/30 px-1.5">
-                <Star className="h-2.5 w-2.5 mr-0.5" /> Padrão
+                <Star className="h-2.5 w-2.5 mr-0.5" /> {t("workshop.qc_preview.default_tag")}
               </Badge>
             )}
           </div>
           <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
-            {active?.name ?? "Sem modelo definido"} ·{" "}
-            {activeStages.length} etapa(s) ·{" "}
-            {activeStages.reduce(
-              (acc, s) => acc + tasks.filter((t) => t.stage_id === s.id).length,
-              0,
-            )}{" "}
-            tarefa(s)
+            {active?.name ?? t("workshop.qc_preview.no_template")} ·{" "}
+            {t("workshop.qc_preview.stages_count", { n: activeStages.length, count: activeStages.length })} ·{" "}
+            {t("workshop.qc_preview.tasks_count", {
+              n: activeStages.reduce((acc, s) => acc + tasks.filter((tk) => tk.stage_id === s.id).length, 0),
+              count: activeStages.reduce((acc, s) => acc + tasks.filter((tk) => tk.stage_id === s.id).length, 0),
+            })}
           </p>
         </div>
         <Button
@@ -56,7 +57,7 @@ export default function QualityControlPreviewCard({ onEdit }: Props) {
           onClick={onEdit}
         >
           <Pencil className="h-3 w-3 mr-1" />
-          Gerir
+          {t("workshop.qc_preview.manage")}
         </Button>
       </div>
 
@@ -67,12 +68,12 @@ export default function QualityControlPreviewCard({ onEdit }: Props) {
           onClick={onEdit}
           className="w-full py-6 text-center text-xs text-muted-foreground border border-dashed border-border/40 rounded-lg hover:bg-muted/30 transition-colors"
         >
-          Defina a primeira etapa do controlo de qualidade.
+          {t("workshop.qc_preview.define_first")}
         </button>
       ) : (
         <ol className="flex items-stretch gap-2 overflow-x-auto pb-1 -mx-1 px-1">
           {activeStages.map((s, idx) => {
-            const count = tasks.filter((t) => t.stage_id === s.id).length;
+            const count = tasks.filter((tk) => tk.stage_id === s.id).length;
             return (
               <li
                 key={s.id}
@@ -83,13 +84,13 @@ export default function QualityControlPreviewCard({ onEdit }: Props) {
                     {idx + 1}
                   </span>
                   {s.requires_photo && (
-                    <Camera className="h-3 w-3 text-wj-green" aria-label="Exige fotografia" />
+                    <Camera className="h-3 w-3 text-wj-green" aria-label={t("workshop.qc_preview.photo_aria")} />
                   )}
                 </div>
                 <p className="text-[11px] font-medium mt-1.5 line-clamp-2">{s.name}</p>
                 <p className="text-[9px] text-muted-foreground mt-0.5">
-                  {count} tarefa(s)
-                  {s.requires_photo ? ` · ${s.photo_min_count}+ foto` : ""}
+                  {t("workshop.qc_preview.tasks_count", { n: count, count })}
+                  {s.requires_photo ? ` · ${t("workshop.qc_preview.photos_min", { n: s.photo_min_count })}` : ""}
                 </p>
                 {idx < activeStages.length - 1 && (
                   <span

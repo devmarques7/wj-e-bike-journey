@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Clock, Wrench, ShieldCheck, ChevronUp } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { AppointmentRow } from "@/hooks/scheduling/useSchedulingData";
 
 interface Props {
@@ -16,6 +17,7 @@ const fmt = (s: number) => {
 };
 
 export default function FloatingActiveAppointment({ appointment, onOpen }: Props) {
+  const { t } = useTranslation();
   const [, setTick] = useState(0);
   useEffect(() => {
     if (!appointment?.work_started_at) return;
@@ -50,10 +52,10 @@ export default function FloatingActiveAppointment({ appointment, onOpen }: Props
 
             <div className="text-left min-w-0 max-w-[200px]">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground leading-none">
-                Em curso
+                {t("workshop.floating.running")}
               </p>
               <p className="text-xs font-medium text-foreground truncate mt-0.5">
-                {appointment.customer_name ?? appointment.service_name ?? "Agendamento"}
+                {appointment.customer_name ?? appointment.service_name ?? t("workshop.floating.appointment_fallback")}
               </p>
               <p className="text-[10px] text-muted-foreground truncate">
                 {appointment.service_name ?? "—"}
