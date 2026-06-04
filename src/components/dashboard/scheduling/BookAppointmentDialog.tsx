@@ -52,6 +52,13 @@ type BikeModel = {
   short_description: string | null;
 };
 
+type CustomerBike = {
+  id: string;
+  model: string;
+  serial: string | null;
+  color: string | null;
+};
+
 type Slot = {
   start: string; // "HH:MM"
   end: string;
@@ -96,6 +103,8 @@ export default function BookAppointmentDialog({
   const [notes, setNotes] = useState("");
   const [bikeModels, setBikeModels] = useState<BikeModel[]>([]);
   const [modelsLoading, setModelsLoading] = useState(false);
+  const [customerBikes, setCustomerBikes] = useState<CustomerBike[]>([]);
+  const [customerBikesLoading, setCustomerBikesLoading] = useState(false);
 
   // Service & date
   const [serviceId, setServiceId] = useState<string>("");
