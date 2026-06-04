@@ -32,6 +32,7 @@ import QualityControlPreviewCard from "@/components/dashboard/scheduling/Quality
 import ServiceTypesManagerDialog from "@/components/dashboard/scheduling/ServiceTypesManagerDialog";
 import AppointmentActionsMenu from "@/components/dashboard/scheduling/AppointmentActionsMenu";
 import AppointmentCompletionDrawer from "@/components/dashboard/scheduling/AppointmentCompletionDrawer";
+import AppointmentReviewHistoryDialog from "@/components/dashboard/scheduling/AppointmentReviewHistoryDialog";
 import FloatingActiveAppointment from "@/components/dashboard/scheduling/FloatingActiveAppointment";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -125,6 +126,7 @@ export default function AdminWorkshop() {
   const [qcOpen, setQcOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
   const [completionTarget, setCompletionTarget] = useState<AppointmentRow | null>(null);
+  const [reviewTarget, setReviewTarget] = useState<AppointmentRow | null>(null);
   const {
     loading,
     appointments,
@@ -395,6 +397,7 @@ export default function AdminWorkshop() {
                             serviceTypes={serviceTypes}
                             onStart={() => updateAppointmentStatus(apt.id, "in_progress")}
                             onComplete={() => setCompletionTarget(apt)}
+                            onReviewHistory={() => setReviewTarget(apt)}
                             onUpdateFields={updateAppointmentFields}
                             onReschedule={rescheduleAppointment}
                             onCancel={cancelAppointment}
@@ -495,6 +498,12 @@ export default function AdminWorkshop() {
           open={!!completionTarget}
           onOpenChange={(v) => { if (!v) setCompletionTarget(null); }}
           onCompleted={() => { setCompletionTarget(null); refetch(); }}
+        />
+
+        <AppointmentReviewHistoryDialog
+          appointment={reviewTarget}
+          open={!!reviewTarget}
+          onOpenChange={(v) => { if (!v) setReviewTarget(null); }}
         />
 
         <FloatingActiveAppointment
