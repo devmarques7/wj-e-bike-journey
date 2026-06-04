@@ -747,9 +747,9 @@ export default function BookAppointmentDialog({
         {/* STEP 3: Date + slots */}
         {step === 3 && (
           <div className="space-y-4">
-            <div className="flex items-end gap-3">
-              <div className="flex-1">
-                <Label className="text-xs">Data</Label>
+            <div className="grid grid-cols-[1fr_auto] items-end gap-3">
+              <div>
+                <Label className="text-xs h-4 leading-4">Data</Label>
                 <DatePicker
                   value={date}
                   onChange={setDate}
@@ -758,9 +758,13 @@ export default function BookAppointmentDialog({
                   placeholder="Selecionar data"
                 />
               </div>
-              <div className="text-xs text-muted-foreground pb-2">
+              <Badge
+                variant="outline"
+                className="h-9 px-3 rounded-md border-border/40 bg-muted/30 text-[11px] font-normal text-muted-foreground gap-1.5"
+              >
+                <Clock className="h-3 w-3" />
                 {selectedService?.name} · {selectedService?.duration_minutes}m
-              </div>
+              </Badge>
             </div>
 
             <div>
@@ -768,21 +772,27 @@ export default function BookAppointmentDialog({
                 <UserCheck className="h-3 w-3" /> Horários disponíveis
               </Label>
               {loadingSlots ? (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground py-6">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> A analisar disponibilidade…
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mt-2">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-12 rounded-lg border border-border/20 bg-muted/30 animate-pulse"
+                      style={{ animationDelay: `${i * 60}ms` }}
+                    />
+                  ))}
                 </div>
               ) : slots.length === 0 ? (
                 <div className="py-6 text-center text-xs text-muted-foreground border border-dashed border-border/40 rounded-lg mt-2">
                   Sem horários disponíveis nesta data.
                 </div>
               ) : (
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mt-2 max-h-64 overflow-y-auto pr-1">
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mt-2 max-h-64 overflow-y-auto pr-1 animate-in fade-in-0 duration-200">
                   {slots.map((s) => (
                     <button
                       key={`${s.start}-${s.mechanicId}`}
                       onClick={() => setSlot(s)}
                       className={cn(
-                        "p-2 rounded-lg border text-center transition-colors",
+                        "p-2 rounded-lg border text-center transition-all hover:scale-[1.02]",
                         slot?.start === s.start && slot?.mechanicId === s.mechanicId
                           ? "border-wj-green/60 bg-wj-green/10"
                           : "border-border/30 hover:bg-muted/40",
