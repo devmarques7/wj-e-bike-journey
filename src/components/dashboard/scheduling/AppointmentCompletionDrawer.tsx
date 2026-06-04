@@ -55,6 +55,7 @@ type StageProgress = {
   started_at: number | null;
   completed_at: number | null;
   duration_seconds: number | null;
+  elapsed_from_start_seconds: number | null;
   task_done: Record<string, boolean>;
   has_photo: boolean;
 };
@@ -86,6 +87,18 @@ export default function AppointmentCompletionDrawer({
     const i = setInterval(() => setTick((t) => t + 1), 1000);
     return () => clearInterval(i);
   }, [open]);
+
+  // Global appointment start (drives the live cumulative timer)
+  const workStartedAtMs = useMemo(() => {
+    const v = (appointment as any)?.work_started_at;
+    return v ? new Date(v).getTime() : null;
+  }, [appointment]);
+
+  const elapsedFromStartSeconds = useMemo(() => {
+    if (!workStartedAtMs) return 0;
+    return Math.max(0, Math.floor((Date.now() - workStartedAtMs) / 1000));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workStartedAtMs, tick]);
 
   const loadTemplate = useCallback(async () => {
     if (!appointment) return;
@@ -138,6 +151,7 @@ export default function AppointmentCompletionDrawer({
           started_at: row?.started_at ? new Date(row.started_at).getTime() : null,
           completed_at: row?.completed_at ? new Date(row.completed_at).getTime() : null,
           duration_seconds: row?.duration_seconds ?? null,
+          elapsed_from_start_seconds: (row as any)?.elapsed_from_start_seconds ?? null,
           task_done: Object.fromEntries(tr.map((t) => [t.task_id, !!t.done])),
           has_photo: !s.requires_photo
             ? true
@@ -169,16 +183,17 @@ export default function AppointmentCompletionDrawer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, appointment?.id]);
 
-  // auto-start stage timer when active stage changes
+  // Stage "started_at" is anchored to the appointment work_started_at — the
+  // QC timer is a single cumulative counter for the whole appointment.
   useEffect(() => {
-    if (!activeStageId) return;
+    if (!activeStageId || !workStartedAtMs) return;
     setProgress((prev) => {
       const cur = prev[activeStageId];
       if (!cur) return prev;
       if (cur.started_at || cur.completed_at) return prev;
-      return { ...prev, [activeStageId]: { ...cur, started_at: Date.now() } };
+      return { ...prev, [activeStageId]: { ...cur, started_at: workStartedAtMs } };
     });
-  }, [activeStageId]);
+  }, [activeStageId, workStartedAtMs]);
 
   const tasksByStage = useMemo(() => {
     const m = new Map<string, Task[]>();
@@ -197,14 +212,18 @@ export default function AppointmentCompletionDrawer({
   const allStagesCompleted =
     stages.length > 0 && stages.every((s) => !!progress[s.id]?.completed_at);
 
-  const elapsedActiveSeconds = useMemo(() => {
-    if (!activeProgress?.started_at) return 0;
+  // For the active stage we show the live cumulative timer from work_started_at,
+  // or the frozen cumulative value at the moment the stage was completed.
+  const displayStageSeconds = useMemo(() => {
+    if (!activeProgress) return elapsedFromStartSeconds;
     if (activeProgress.completed_at)
-      return Math.floor((activeProgress.completed_at - activeProgress.started_at) / 1000);
-    return Math.floor((Date.now() - activeProgress.started_at) / 1000);
-    // tick triggers re-render
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeProgress, tick]);
+      return (
+        activeProgress.elapsed_from_start_seconds ??
+        activeProgress.duration_seconds ??
+        0
+      );
+    return elapsedFromStartSeconds;
+  }, [activeProgress, elapsedFromStartSeconds]);
 
   const toggleTask = (taskId: string) => {
     if (!activeStageId) return;
@@ -251,8 +270,9 @@ export default function AppointmentCompletionDrawer({
       started_at: prog.started_at ? new Date(prog.started_at).toISOString() : null,
       completed_at: prog.completed_at ? new Date(prog.completed_at).toISOString() : null,
       duration_seconds: prog.duration_seconds,
+      elapsed_from_start_seconds: prog.elapsed_from_start_seconds,
       task_results: tr,
-    };
+    } as any;
     const { error } = await supabase
       .from("appointment_qc_progress")
       .upsert(payload, { onConflict: "appointment_id,stage_id" });
@@ -266,13 +286,17 @@ export default function AppointmentCompletionDrawer({
   const completeActiveStage = async () => {
     if (!activeStage || !activeProgress || !canCompleteActive) return;
     const now = Date.now();
-    const duration = activeProgress.started_at
-      ? Math.floor((now - activeProgress.started_at) / 1000)
-      : 0;
+    // duration_seconds = cumulative seconds from appointment start to now
+    const cumulative = workStartedAtMs
+      ? Math.max(0, Math.floor((now - workStartedAtMs) / 1000))
+      : activeProgress.started_at
+        ? Math.floor((now - activeProgress.started_at) / 1000)
+        : 0;
     const updated: StageProgress = {
       ...activeProgress,
       completed_at: now,
-      duration_seconds: duration,
+      duration_seconds: cumulative,
+      elapsed_from_start_seconds: cumulative,
     };
     setSaving(true);
     const ok = await persistStage(activeStage, updated);
@@ -422,7 +446,7 @@ export default function AppointmentCompletionDrawer({
                       <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-wj-green/10 border border-wj-green/20 shrink-0">
                         <Clock className="h-3 w-3 text-wj-green" />
                         <span className="text-[11px] font-mono font-bold text-wj-green tabular-nums">
-                          {fmt(elapsedActiveSeconds)}
+                          {fmt(displayStageSeconds)}
                         </span>
                       </div>
                     </div>
