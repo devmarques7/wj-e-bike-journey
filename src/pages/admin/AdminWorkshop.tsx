@@ -500,6 +500,12 @@ export default function AdminWorkshop() {
           onCompleted={() => { setCompletionTarget(null); refetch(); }}
         />
 
+        <AppointmentReviewHistoryDialog
+          appointment={reviewTarget}
+          open={!!reviewTarget}
+          onOpenChange={(v) => { if (!v) setReviewTarget(null); }}
+        />
+
         <FloatingActiveAppointment
           appointment={activeAppointment}
           onOpen={() => activeAppointment && setCompletionTarget(activeAppointment)}
