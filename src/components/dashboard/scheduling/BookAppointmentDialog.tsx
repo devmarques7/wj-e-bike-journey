@@ -840,8 +840,8 @@ export default function BookAppointmentDialog({
 
               {/* Time slots */}
               <div className="flex flex-col min-w-0">
-                <div className="flex items-center justify-between mb-2 px-1">
-                  <Label className="text-[11px] uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                <div className="flex items-center justify-between gap-2 mb-2 px-1">
+                  <Label className="text-[11px] uppercase tracking-wide text-muted-foreground flex items-center gap-1.5 truncate">
                     <Clock className="h-3 w-3" />
                     {new Date(date + "T00:00:00").toLocaleDateString("pt-PT", {
                       weekday: "long",
@@ -849,11 +849,17 @@ export default function BookAppointmentDialog({
                       month: "long",
                     })}
                   </Label>
-                  {!loadingSlots && slots.length > 0 && (
-                    <span className="text-[10px] text-muted-foreground">
-                      {slots.length} disponíveis
-                    </span>
-                  )}
+                  <Select value={mechanicFilter} onValueChange={(v) => { setMechanicFilter(v); setSlot(null); }}>
+                    <SelectTrigger className="h-7 w-[180px] text-[11px]">
+                      <SelectValue placeholder="Qualquer mecânico" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="any">Qualquer mecânico</SelectItem>
+                      {mechanicsList.map((m) => (
+                        <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <ScrollArea className="h-[260px] pr-2">
                   {loadingSlots ? (
@@ -866,7 +872,11 @@ export default function BookAppointmentDialog({
                         />
                       ))}
                     </div>
-                  ) : slots.length === 0 ? (
+                  ) : (() => {
+                    const filtered = mechanicFilter === "any"
+                      ? Array.from(new Map(slots.map((s) => [s.start, s])).values())
+                      : slots.filter((s) => s.mechanicId === mechanicFilter);
+                    if (filtered.length === 0) return (
                     <div className="h-full min-h-[200px] flex flex-col items-center justify-center text-center gap-1 border border-dashed border-border/40 rounded-lg">
                       <CalendarDays className="h-5 w-5 text-muted-foreground/60" />
                       <p className="text-xs text-muted-foreground">
@@ -875,10 +885,10 @@ export default function BookAppointmentDialog({
                       <p className="text-[10px] text-muted-foreground/70">
                         Tente outra data no calendário.
                       </p>
-                    </div>
-                  ) : (
+                    </div>);
+                    return (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 animate-in fade-in-0 duration-200">
-                      {slots.map((s) => {
+                      {filtered.map((s) => {
                         const active =
                           slot?.start === s.start && slot?.mechanicId === s.mechanicId;
                         return (
@@ -900,8 +910,8 @@ export default function BookAppointmentDialog({
                           </button>
                         );
                       })}
-                    </div>
-                  )}
+                    </div>);
+                  })()}
                 </ScrollArea>
               </div>
             </div>
