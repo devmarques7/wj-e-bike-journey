@@ -130,6 +130,7 @@ export default function BookAppointmentDialog({
       setCustomer(null);
       setBikeModel("");
       setBikeSerial("");
+      setCustomerBikes([]);
       setNotes("");
       setServiceId("");
       setDate(todayISO());
