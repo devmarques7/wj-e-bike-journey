@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import FieldLabel from "@/components/dashboard/inventory/FieldLabel";
 import {
   useServiceTypesCrud,
@@ -21,16 +22,41 @@ interface Props {
   onSaved?: () => void;
 }
 
-const PLAN_LEVELS = [
-  { value: 1, label: "Light" },
-  { value: 2, label: "Plus" },
-  { value: 3, label: "Black" },
-];
+type PlanOption = {
+  value: number;
+  label: string;
+  color: string | null;
+};
 
 export default function ServiceTypeEditDialog({ service, open, onClose, onSaved }: Props) {
   const { upsert } = useServiceTypesCrud();
   const [form, setForm] = useState<Partial<ServiceTypeRow>>({});
   const [busy, setBusy] = useState(false);
+  const [planOptions, setPlanOptions] = useState<PlanOption[]>([]);
+
+  useEffect(() => {
+    if (!open) return;
+    (async () => {
+      const { data, error } = await supabase
+        .from("plans")
+        .select("name, tier_level, color_hex, is_active")
+        .eq("is_active", true)
+        .order("tier_level", { ascending: true });
+      if (error) {
+        console.error("[ServiceTypeEditDialog] plans fetch", error);
+        return;
+      }
+      setPlanOptions(
+        (data ?? [])
+          .filter((p: any) => typeof p.tier_level === "number" && p.tier_level > 0)
+          .map((p: any) => ({
+            value: p.tier_level,
+            label: p.name,
+            color: p.color_hex ?? null,
+          })),
+      );
+    })();
+  }, [open]);
 
   useEffect(() => {
     setForm(
@@ -43,6 +69,7 @@ export default function ServiceTypeEditDialog({ service, open, onClose, onSaved 
         icon: "wrench",
         display_order: 0,
         priority_score: 0,
+        reward_points: 0,
         is_active: true,
         is_emergency: false,
         covered_by_plan_levels: [],
@@ -71,6 +98,7 @@ export default function ServiceTypeEditDialog({ service, open, onClose, onSaved 
       duration_minutes: Number(form.duration_minutes),
       display_order: Number(form.display_order ?? 0),
       priority_score: Number(form.priority_score ?? 0),
+      reward_points: Number(form.reward_points ?? 0),
       buffer_minutes_override:
         form.buffer_minutes_override != null && form.buffer_minutes_override !== ("" as any)
           ? Number(form.buffer_minutes_override)
