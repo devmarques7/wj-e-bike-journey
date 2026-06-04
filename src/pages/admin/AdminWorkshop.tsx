@@ -25,7 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useSchedulingData } from "@/hooks/scheduling/useSchedulingData";
+import { useSchedulingData, type AppointmentRow } from "@/hooks/scheduling/useSchedulingData";
 import BookAppointmentDialog from "@/components/dashboard/scheduling/BookAppointmentDialog";
 import QualityControlManagerDialog from "@/components/dashboard/scheduling/QualityControlManagerDialog";
 import QualityControlPreviewCard from "@/components/dashboard/scheduling/QualityControlPreviewCard";
@@ -104,7 +104,7 @@ export default function AdminWorkshop() {
   const [bookOpen, setBookOpen] = useState(false);
   const [qcOpen, setQcOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
-  const [completionTarget, setCompletionTarget] = useState<typeof appointments[number] | null>(null);
+  const [completionTarget, setCompletionTarget] = useState<AppointmentRow | null>(null);
   const {
     loading,
     appointments,
