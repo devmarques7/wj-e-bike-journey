@@ -583,12 +583,60 @@ export default function BookAppointmentDialog({
               </div>
               <div>
                 <Label className="text-xs">Nº série / matrícula</Label>
-                <Input
-                  value={bikeSerial}
-                  onChange={(e) => setBikeSerial(e.target.value)}
-                  placeholder="VIN-XXXX"
-                  className="mt-1 text-sm"
-                />
+                <div className="mt-1">
+                  <Combobox<CustomerBike>
+                    items={customerBikes}
+                    itemToValue={(b) => b.id}
+                    itemToLabel={(b) => b.serial ?? b.model}
+                    value={
+                      customerBikes.find((b) => (b.serial ?? "") === bikeSerial)?.id ?? null
+                    }
+                    autoHighlight
+                    disabled={!customer}
+                    placeholder={
+                      !customer
+                        ? "Selecione um cliente…"
+                        : customerBikes.length === 0
+                          ? "Sem bicicletas registadas"
+                          : "Selecionar bicicleta…"
+                    }
+                    onSelect={(b) => {
+                      setBikeSerial(b.serial ?? "");
+                      if (b.model) setBikeModel(b.model);
+                    }}
+                  >
+                    <ComboboxTrigger className="text-sm h-9" />
+                    <ComboboxContent innerSearchPlaceholder="Procurar série…">
+                      <ComboboxList<CustomerBike>
+                        className="max-h-56"
+                        loading={customerBikesLoading}
+                        loadingNode={
+                          <div className="py-4 text-center text-xs text-muted-foreground flex items-center justify-center gap-1">
+                            <Loader2 className="h-3 w-3 animate-spin" /> A carregar…
+                          </div>
+                        }
+                      >
+                        {(b) => (
+                          <ComboboxItem
+                            key={b.id}
+                            value={b.id}
+                            className="flex-col items-start gap-0 py-2"
+                            showCheck={false}
+                          >
+                            <span className="text-xs font-medium">
+                              {b.serial ?? "Sem nº série"}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">
+                              {b.model}
+                              {b.color ? ` · ${b.color}` : ""}
+                            </span>
+                          </ComboboxItem>
+                        )}
+                      </ComboboxList>
+                      <ComboboxEmpty>Sem bicicletas registadas para este cliente.</ComboboxEmpty>
+                    </ComboboxContent>
+                  </Combobox>
+                </div>
               </div>
             </div>
 
