@@ -152,13 +152,58 @@ export default function BookAppointmentDialog({
   }, [open]);
 
   /* ---------- customer search ---------- */
+  // Preload all users that have at least one registered bike when the dialog opens
+  useEffect(() => {
+    if (!open || step !== 1) return;
+    let cancelled = false;
+    (async () => {
+      setSearching(true);
+      const { data: bikes } = await supabase
+        .from("customer_bikes")
+        .select("customer_id");
+      const customerIds = Array.from(
+        new Set((bikes ?? []).map((b: any) => b.customer_id).filter(Boolean)),
+      );
+      if (customerIds.length === 0) {
+        if (!cancelled) {
+          setCustomers([]);
+          setSearching(false);
+        }
+        return;
+      }
+      const { data: cps } = await supabase
+        .from("customer_profiles")
+        .select("user_id")
+        .in("id", customerIds);
+      const userIds = Array.from(
+        new Set((cps ?? []).map((c: any) => c.user_id).filter(Boolean)),
+      );
+      if (userIds.length === 0) {
+        if (!cancelled) {
+          setCustomers([]);
+          setSearching(false);
+        }
+        return;
+      }
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, email")
+        .in("user_id", userIds)
+        .order("full_name", { ascending: true });
+      if (cancelled) return;
+      setCustomers((profs ?? []) as Customer[]);
+      setSearching(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, step]);
+
+  // Refine via DB search only when the user actually types something
   useEffect(() => {
     if (!open || step !== 1) return;
     const term = search.trim();
-    if (term.length < 2) {
-      setCustomers([]);
-      return;
-    }
+    if (term.length < 2) return; // keep the preloaded "bike owners" list
     let cancelled = false;
     setSearching(true);
     const t = setTimeout(async () => {
@@ -419,13 +464,8 @@ export default function BookAppointmentDialog({
                           </ComboboxItem>
                         )}
                       </ComboboxList>
-                      {!searching && search.trim().length >= 2 && customers.length === 0 && (
-                        <ComboboxEmpty>Nenhum cliente encontrado.</ComboboxEmpty>
-                      )}
-                      {!searching && search.trim().length < 2 && (
-                        <div className="py-3 text-center text-[11px] text-muted-foreground">
-                          Digite pelo menos 2 caracteres…
-                        </div>
+                      {!searching && customers.length === 0 && (
+                        <ComboboxEmpty>Nenhum cliente com bicicleta registada.</ComboboxEmpty>
                       )}
                     </ComboboxContent>
                   </Combobox>
