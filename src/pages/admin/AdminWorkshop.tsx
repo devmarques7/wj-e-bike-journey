@@ -9,6 +9,10 @@ import {
   Loader2,
   Plus,
   ListChecks,
+  ChevronDown,
+  ChevronRight,
+  ArrowUpDown,
+  Layers,
 } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
@@ -36,6 +40,14 @@ import AppointmentReviewHistoryDialog from "@/components/dashboard/scheduling/Ap
 import FloatingActiveAppointment from "@/components/dashboard/scheduling/FloatingActiveAppointment";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
 
 const formatRelative = (iso: string | null) => {
   if (!iso) return "Sem registo";
