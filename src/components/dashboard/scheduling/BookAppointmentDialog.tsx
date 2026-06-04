@@ -540,65 +540,103 @@ export default function BookAppointmentDialog({
                   <Bike className="h-3 w-3" /> Modelo da bicicleta
                 </Label>
                 <div className="mt-1">
-                  <Combobox<BikeModel>
-                    items={bikeModels}
-                    itemToValue={(m) => m.name}
-                    itemToLabel={(m) => m.name}
-                    value={bikeModel || null}
-                    autoHighlight
-                    placeholder="Selecionar modelo…"
-                    onSelect={(m) => setBikeModel(m.name)}
-                  >
-                    <ComboboxTrigger className="text-sm h-9" />
-                    <ComboboxContent innerSearchPlaceholder="Procurar modelo…">
-                      <ComboboxList<BikeModel>
-                        className="max-h-56"
-                        loading={modelsLoading}
-                        loadingNode={
-                          <div className="py-4 text-center text-xs text-muted-foreground flex items-center justify-center gap-1">
-                            <Loader2 className="h-3 w-3 animate-spin" /> A carregar…
-                          </div>
+                  {(() => {
+                    const uniqueModels = Array.from(
+                      new Map(
+                        customerBikes
+                          .filter((b) => !!b.model)
+                          .map((b) => [b.model, b]),
+                      ).values(),
+                    );
+                    return (
+                      <Combobox<CustomerBike>
+                        items={uniqueModels}
+                        itemToValue={(b) => b.model}
+                        itemToLabel={(b) => b.model}
+                        value={bikeModel || null}
+                        autoHighlight
+                        disabled={!customer}
+                        placeholder={
+                          !customer
+                            ? "Selecione um cliente…"
+                            : uniqueModels.length === 0
+                              ? "Sem modelos registados"
+                              : "Selecionar modelo…"
                         }
+                        onSelect={(b) => {
+                          setBikeModel(b.model);
+                          // reset serial if it doesn't belong to this model
+                          const stillValid = customerBikes.some(
+                            (cb) => cb.model === b.model && (cb.serial ?? "") === bikeSerial,
+                          );
+                          if (!stillValid) setBikeSerial("");
+                        }}
                       >
-                        {(m) => (
-                          <ComboboxItem
-                            key={m.id}
-                            value={m.name}
-                            className="text-sm"
+                        <ComboboxTrigger className="text-sm h-9" />
+                        <ComboboxContent innerSearchPlaceholder="Procurar modelo…">
+                          <ComboboxList<CustomerBike>
+                            className="max-h-56"
+                            loading={customerBikesLoading}
+                            loadingNode={
+                              <div className="py-4 text-center text-xs text-muted-foreground flex items-center justify-center gap-1">
+                                <Loader2 className="h-3 w-3 animate-spin" /> A carregar…
+                              </div>
+                            }
                           >
-                            {m.color_hex && (
-                              <span
-                                className="inline-block w-2 h-2 rounded-full mr-2"
-                                style={{ backgroundColor: m.color_hex }}
-                              />
+                            {(b) => (
+                              <ComboboxItem
+                                key={b.id}
+                                value={b.model}
+                                className="flex-col items-start gap-0 py-2"
+                                showCheck={false}
+                              >
+                                <span className="text-xs font-medium flex items-center gap-2">
+                                  {b.color && (
+                                    <span
+                                      className="inline-block w-2 h-2 rounded-full"
+                                      style={{ backgroundColor: b.color }}
+                                    />
+                                  )}
+                                  {b.model}
+                                </span>
+                                <span className="text-[10px] text-muted-foreground">
+                                  {customerBikes.filter((cb) => cb.model === b.model).length}{" "}
+                                  unidade(s) registada(s)
+                                </span>
+                              </ComboboxItem>
                             )}
-                            <span className="flex-1 truncate">{m.name}</span>
-                          </ComboboxItem>
-                        )}
-                      </ComboboxList>
-                      <ComboboxEmpty>Nenhum modelo encontrado.</ComboboxEmpty>
-                    </ComboboxContent>
-                  </Combobox>
+                          </ComboboxList>
+                          <ComboboxEmpty>Sem modelos registados para este cliente.</ComboboxEmpty>
+                        </ComboboxContent>
+                      </Combobox>
+                    );
+                  })()}
                 </div>
               </div>
               <div>
                 <Label className="text-xs">Nº série / matrícula</Label>
                 <div className="mt-1">
                   <Combobox<CustomerBike>
-                    items={customerBikes}
+                    items={
+                      bikeModel
+                        ? customerBikes.filter((b) => b.model === bikeModel)
+                        : customerBikes
+                    }
                     itemToValue={(b) => b.id}
                     itemToLabel={(b) => b.serial ?? b.model}
                     value={
                       customerBikes.find((b) => (b.serial ?? "") === bikeSerial)?.id ?? null
                     }
                     autoHighlight
-                    disabled={!customer}
+                    disabled={!customer || !bikeModel}
                     placeholder={
                       !customer
                         ? "Selecione um cliente…"
-                        : customerBikes.length === 0
-                          ? "Sem bicicletas registadas"
-                          : "Selecionar bicicleta…"
+                        : !bikeModel
+                          ? "Selecione o modelo…"
+                          : customerBikes.filter((b) => b.model === bikeModel).length === 0
+                            ? "Sem nº de série"
+                            : "Selecionar nº de série…"
                     }
                     onSelect={(b) => {
                       setBikeSerial(b.serial ?? "");
@@ -623,7 +661,13 @@ export default function BookAppointmentDialog({
                             className="flex-col items-start gap-0 py-2"
                             showCheck={false}
                           >
-                            <span className="text-xs font-medium">
+                            <span className="text-xs font-medium flex items-center gap-2">
+                              {b.color && (
+                                <span
+                                  className="inline-block w-2 h-2 rounded-full"
+                                  style={{ backgroundColor: b.color }}
+                                />
+                              )}
                               {b.serial ?? "Sem nº série"}
                             </span>
                             <span className="text-[10px] text-muted-foreground">
@@ -633,7 +677,7 @@ export default function BookAppointmentDialog({
                           </ComboboxItem>
                         )}
                       </ComboboxList>
-                      <ComboboxEmpty>Sem bicicletas registadas para este cliente.</ComboboxEmpty>
+                      <ComboboxEmpty>Sem nº de série para este modelo.</ComboboxEmpty>
                     </ComboboxContent>
                   </Combobox>
                 </div>
