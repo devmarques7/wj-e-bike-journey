@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { 
   Calendar, 
@@ -25,12 +25,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useSchedulingData } from "@/hooks/scheduling/useSchedulingData";
+import { useSchedulingData, type AppointmentRow } from "@/hooks/scheduling/useSchedulingData";
 import BookAppointmentDialog from "@/components/dashboard/scheduling/BookAppointmentDialog";
 import QualityControlManagerDialog from "@/components/dashboard/scheduling/QualityControlManagerDialog";
 import QualityControlPreviewCard from "@/components/dashboard/scheduling/QualityControlPreviewCard";
 import ServiceTypesManagerDialog from "@/components/dashboard/scheduling/ServiceTypesManagerDialog";
 import AppointmentActionsMenu from "@/components/dashboard/scheduling/AppointmentActionsMenu";
+import AppointmentCompletionDrawer from "@/components/dashboard/scheduling/AppointmentCompletionDrawer";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -77,12 +78,33 @@ const getStatusBadge = (status: string) => {
   }
 };
 
+function LiveElapsed({ since }: { since: string }) {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const i = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(i);
+  }, []);
+  const startMs = new Date(since).getTime();
+  const s = Math.max(0, Math.floor((Date.now() - startMs) / 1000));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const x = s % 60;
+  const text = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(x).padStart(2, "0")}`;
+  return (
+    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-[9px] font-mono text-blue-300 tabular-nums">
+      <Clock className="h-2.5 w-2.5" />
+      {text}
+    </span>
+  );
+}
+
 export default function AdminWorkshop() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState("day");
   const [bookOpen, setBookOpen] = useState(false);
   const [qcOpen, setQcOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
+  const [completionTarget, setCompletionTarget] = useState<AppointmentRow | null>(null);
   const {
     loading,
     appointments,
@@ -251,6 +273,9 @@ export default function AdminWorkshop() {
                             {apt.priority === "emergency" && (
                               <Badge className="text-[9px] h-4 px-1.5 bg-red-500/15 text-red-400 border-red-500/30">SOS</Badge>
                             )}
+                            {apt.status === "in_progress" && apt.work_started_at && (
+                              <LiveElapsed since={apt.work_started_at} />
+                            )}
                           </div>
                           {apt.duration_minutes ? (
                             <span className="text-[10px] text-muted-foreground/60 tabular-nums">
@@ -350,7 +375,7 @@ export default function AdminWorkshop() {
                             mechanics={mechanics}
                             serviceTypes={serviceTypes}
                             onStart={() => updateAppointmentStatus(apt.id, "in_progress")}
-                            onComplete={() => updateAppointmentStatus(apt.id, "completed")}
+                            onComplete={() => setCompletionTarget(apt)}
                             onUpdateFields={updateAppointmentFields}
                             onReschedule={rescheduleAppointment}
                             onCancel={cancelAppointment}
@@ -445,6 +470,13 @@ export default function AdminWorkshop() {
           setServicesOpen(v);
           if (!v) refetch();
         }} />
+
+        <AppointmentCompletionDrawer
+          appointment={completionTarget}
+          open={!!completionTarget}
+          onOpenChange={(v) => { if (!v) setCompletionTarget(null); }}
+          onCompleted={() => { setCompletionTarget(null); refetch(); }}
+        />
       </div>
     </AdminDashboardLayout>
   );
