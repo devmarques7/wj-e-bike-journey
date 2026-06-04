@@ -470,6 +470,13 @@ export default function AdminWorkshop() {
           setServicesOpen(v);
           if (!v) refetch();
         }} />
+
+        <AppointmentCompletionDrawer
+          appointment={completionTarget}
+          open={!!completionTarget}
+          onOpenChange={(v) => { if (!v) setCompletionTarget(null); }}
+          onCompleted={() => { setCompletionTarget(null); refetch(); }}
+        />
       </div>
     </AdminDashboardLayout>
   );
