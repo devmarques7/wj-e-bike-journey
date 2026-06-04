@@ -501,24 +501,24 @@ export default function AdminWorkshop() {
                           <TooltipProvider delayDuration={150}>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <span className="inline-flex cursor-default">{getStatusBadge(apt.status)}</span>
+                                <span className="inline-flex cursor-default">{getStatusBadge(apt.status, t)}</span>
                               </TooltipTrigger>
                               <TooltipContent side="top" className="text-xs space-y-1">
                                 <div className="flex items-center gap-1.5">
                                   <Clock className="h-3 w-3" />
-                                  <span className="font-medium">{formatRelative(apt.updated_at)}</span>
+                                  <span className="font-medium">{formatRelative(apt.updated_at, t)}</span>
                                 </div>
                                 <div className="text-muted-foreground text-[10px]">
-                                  Última alteração: {formatAbsolute(apt.updated_at)}
+                                  {t("workshop.status_tip.last_change")}: {formatAbsolute(apt.updated_at, i18n.language)}
                                 </div>
                                 {apt.work_started_at && (
                                   <div className="text-muted-foreground text-[10px]">
-                                    Iniciado: {formatAbsolute(apt.work_started_at)}
+                                    {t("workshop.status_tip.started")}: {formatAbsolute(apt.work_started_at, i18n.language)}
                                   </div>
                                 )}
                                 {apt.work_ended_at && (
                                   <div className="text-muted-foreground text-[10px]">
-                                    Concluído: {formatAbsolute(apt.work_ended_at)}
+                                    {t("workshop.status_tip.ended")}: {formatAbsolute(apt.work_ended_at, i18n.language)}
                                   </div>
                                 )}
                               </TooltipContent>
