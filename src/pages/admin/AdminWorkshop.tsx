@@ -60,21 +60,59 @@ const formatAbsolute = (iso: string | null) => {
 };
 
 const getStatusBadge = (status: string) => {
+  // Padronização duotone monocromática:
+  // verde → concluído/confirmado · amarelo → atenção · vermelho → erro · neutro → resto
+  const base = "border font-normal text-[10px] gap-1 pl-1.5 pr-2 py-0.5";
+  const dot = "inline-block w-1.5 h-1.5 rounded-full";
   switch (status) {
     case "completed":
-      return <Badge className="bg-wj-green/20 text-wj-green border-wj-green/30">Concluído</Badge>;
-    case "in_progress":
-      return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Em curso</Badge>;
-    case "pending":
-      return <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">Pendente</Badge>;
+      return (
+        <Badge className={`${base} bg-muted/30 text-foreground/80 border-border/40`}>
+          <span className={`${dot} bg-wj-green`} /> Concluído
+        </Badge>
+      );
     case "confirmed":
-      return <Badge className="bg-cyan-500/20 text-cyan-400 border-cyan-500/30">Confirmado</Badge>;
+      return (
+        <Badge className={`${base} bg-muted/30 text-foreground/80 border-border/40`}>
+          <span className={`${dot} bg-wj-green/70`} /> Confirmado
+        </Badge>
+      );
+    case "in_progress":
+      return (
+        <Badge className={`${base} bg-muted/30 text-foreground/80 border-border/40`}>
+          <span className={`${dot} bg-wj-green animate-pulse`} /> Em curso
+        </Badge>
+      );
+    case "pending":
+      return (
+        <Badge className={`${base} bg-muted/30 text-foreground/80 border-border/40`}>
+          <span className={`${dot} bg-amber-400`} /> Pendente
+        </Badge>
+      );
+    case "rescheduled":
+      return (
+        <Badge className={`${base} bg-muted/30 text-foreground/80 border-border/40`}>
+          <span className={`${dot} bg-amber-400`} /> Reagendado
+        </Badge>
+      );
     case "canceled":
-      return <Badge className="bg-red-500/20 text-red-400 border-red-500/30">Cancelado</Badge>;
+      return (
+        <Badge className={`${base} bg-muted/30 text-foreground/80 border-border/40`}>
+          <span className={`${dot} bg-red-500`} /> Cancelado
+        </Badge>
+      );
     case "no_show":
-      return <Badge className="bg-zinc-500/20 text-zinc-400 border-zinc-500/30">No-show</Badge>;
+      return (
+        <Badge className={`${base} bg-muted/30 text-foreground/80 border-border/40`}>
+          <span className={`${dot} bg-red-500/70`} /> No-show
+        </Badge>
+      );
     default:
-      return <Badge variant="outline">{status}</Badge>;
+      return (
+        <Badge className={`${base} bg-muted/30 text-foreground/80 border-border/40`}>
+          <span className={`${dot} bg-muted-foreground/60`} /> {status}
+        </Badge>
+      );
   }
 };
 
