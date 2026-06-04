@@ -27,6 +27,7 @@ import {
   Check,
   X,
   Maximize2,
+  Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -34,6 +35,7 @@ import {
   type QcStage,
   type QcTask,
 } from "@/hooks/qc/useQualityControl";
+import QualityControlImportDialog from "./QualityControlImportDialog";
 
 interface Props {
   open: boolean;
@@ -68,6 +70,7 @@ export default function QualityControlKanbanDialog({ open, onOpenChange, templat
   type Col = Record<string, QcTask[]>;
   const [cols, setCols] = useState<Col>({});
   const [newStageName, setNewStageName] = useState("");
+  const [importOpen, setImportOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -111,6 +114,17 @@ export default function QualityControlKanbanDialog({ open, onOpenChange, templat
               onClick={handleAddStage}
             >
               <Plus className="h-3 w-3 mr-1" /> Adicionar etapa
+            </Button>
+            <div className="h-5 w-px bg-border/40 mx-1" />
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 text-[11px]"
+              onClick={() => setImportOpen(true)}
+              disabled={!templateId}
+              title="Importar sequência via CSV ou JSON"
+            >
+              <Upload className="h-3 w-3 mr-1" /> Importar sequência
             </Button>
           </div>
         </DialogHeader>
@@ -225,6 +239,14 @@ export default function QualityControlKanbanDialog({ open, onOpenChange, templat
         </div>
       </DialogContent>
     </Dialog>
+    <QualityControlImportDialog
+      open={importOpen}
+      onOpenChange={setImportOpen}
+      appendToTemplateId={templateId ?? undefined}
+      appendTemplateName={template?.name}
+      onImported={() => setImportOpen(false)}
+    />
+    </>
   );
 }
 
