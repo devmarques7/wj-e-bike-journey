@@ -18,12 +18,14 @@ import {
   Wrench,
   Loader2,
   Zap,
+  Upload,
 } from "lucide-react";
 import {
   useServiceTypesCrud,
   type ServiceTypeRow,
 } from "@/hooks/scheduling/useServiceTypesCrud";
 import ServiceTypeEditDialog from "./ServiceTypeEditDialog";
+import ServiceTypesImportDialog from "./ServiceTypesImportDialog";
 
 interface Props {
   open: boolean;
@@ -36,6 +38,7 @@ export default function ServiceTypesManagerDialog({ open, onOpenChange }: Props)
   const [editing, setEditing] = useState<ServiceTypeRow | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [confirmDel, setConfirmDel] = useState<string | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   const filtered = rows.filter((r) =>
     [r.name, r.slug, r.description ?? ""]
@@ -79,6 +82,14 @@ export default function ServiceTypesManagerDialog({ open, onOpenChange }: Props)
                 className="h-9 pl-8 bg-background/60 text-xs"
               />
             </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setImportOpen(true)}
+              className="h-9 text-xs"
+            >
+              <Upload className="h-3.5 w-3.5 mr-1" /> Importar
+            </Button>
             <Button
               size="sm"
               onClick={openNew}
@@ -187,6 +198,12 @@ export default function ServiceTypesManagerDialog({ open, onOpenChange }: Props)
         open={editorOpen}
         onClose={() => setEditorOpen(false)}
         onSaved={refetch}
+      />
+
+      <ServiceTypesImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onImported={refetch}
       />
 
       <Dialog open={!!confirmDel} onOpenChange={(o) => !o && setConfirmDel(null)}>
