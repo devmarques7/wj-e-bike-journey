@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { 
   Calendar, 
@@ -31,6 +31,7 @@ import QualityControlManagerDialog from "@/components/dashboard/scheduling/Quali
 import QualityControlPreviewCard from "@/components/dashboard/scheduling/QualityControlPreviewCard";
 import ServiceTypesManagerDialog from "@/components/dashboard/scheduling/ServiceTypesManagerDialog";
 import AppointmentActionsMenu from "@/components/dashboard/scheduling/AppointmentActionsMenu";
+import AppointmentCompletionDrawer from "@/components/dashboard/scheduling/AppointmentCompletionDrawer";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -77,12 +78,33 @@ const getStatusBadge = (status: string) => {
   }
 };
 
+function LiveElapsed({ since }: { since: string }) {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const i = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(i);
+  }, []);
+  const startMs = new Date(since).getTime();
+  const s = Math.max(0, Math.floor((Date.now() - startMs) / 1000));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const x = s % 60;
+  const text = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(x).padStart(2, "0")}`;
+  return (
+    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-[9px] font-mono text-blue-300 tabular-nums">
+      <Clock className="h-2.5 w-2.5" />
+      {text}
+    </span>
+  );
+}
+
 export default function AdminWorkshop() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState("day");
   const [bookOpen, setBookOpen] = useState(false);
   const [qcOpen, setQcOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
+  const [completionTarget, setCompletionTarget] = useState<typeof appointments[number] | null>(null);
   const {
     loading,
     appointments,
