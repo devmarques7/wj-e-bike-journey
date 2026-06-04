@@ -168,6 +168,86 @@ export function useQualityControl() {
     fetchAll();
   };
 
+  /* ---------- Import ---------- */
+  type ImportPayload = {
+    name: string;
+    description?: string | null;
+    is_default?: boolean;
+    is_active?: boolean;
+    stages?: Array<{
+      name: string;
+      description?: string | null;
+      requires_photo?: boolean;
+      photo_min_count?: number;
+      tasks?: Array<{ label: string; description?: string | null; is_required?: boolean }>;
+    }>;
+  };
+
+  const importTemplate = async (payload: ImportPayload) => {
+    if (!payload?.name?.trim()) {
+      toast.error("O modelo importado precisa de um nome.");
+      return null;
+    }
+    const { data: tpl, error: tplErr } = await supabase
+      .from("qc_templates")
+      .insert({
+        name: payload.name.trim(),
+        description: payload.description ?? null,
+        is_default: payload.is_default ?? false,
+        is_active: payload.is_active ?? true,
+      })
+      .select()
+      .single();
+    if (tplErr || !tpl) {
+      toast.error(tplErr?.message ?? "Falha a criar modelo");
+      return null;
+    }
+
+    const stagesPayload = (payload.stages ?? []).map((s, i) => ({
+      template_id: tpl.id,
+      name: s.name,
+      description: s.description ?? null,
+      position: i + 1,
+      requires_photo: !!s.requires_photo,
+      photo_min_count: s.photo_min_count ?? 1,
+    }));
+
+    if (stagesPayload.length) {
+      const { data: insertedStages, error: sErr } = await supabase
+        .from("qc_stages")
+        .insert(stagesPayload)
+        .select();
+      if (sErr) {
+        toast.error(sErr.message);
+      } else if (insertedStages) {
+        const tasksPayload: any[] = [];
+        insertedStages
+          .sort((a: any, b: any) => a.position - b.position)
+          .forEach((st: any, idx: number) => {
+            const src = payload.stages?.[idx];
+            (src?.tasks ?? []).forEach((t, j) => {
+              if (!t?.label) return;
+              tasksPayload.push({
+                stage_id: st.id,
+                label: t.label,
+                description: t.description ?? null,
+                position: j + 1,
+                is_required: t.is_required ?? true,
+              });
+            });
+          });
+        if (tasksPayload.length) {
+          const { error: kErr } = await supabase.from("qc_tasks").insert(tasksPayload);
+          if (kErr) toast.error(kErr.message);
+        }
+      }
+    }
+
+    toast.success("Modelo importado");
+    await fetchAll();
+    return tpl as QcTemplate;
+  };
+
   return {
     loading,
     templates,
@@ -184,5 +264,6 @@ export function useQualityControl() {
     createTask,
     updateTask,
     deleteTask,
+    importTemplate,
   };
 }
