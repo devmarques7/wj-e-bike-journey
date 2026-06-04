@@ -76,6 +76,9 @@ export type AppointmentRow = {
   mechanic_name: string | null;
   service_name: string | null;
   service_color: string | null;
+  plan_name: string | null;
+  plan_color: string | null;
+  plan_tier: number | null;
 };
 
 /* ------------------------------------------------------------------ */
@@ -209,11 +212,49 @@ export function useSchedulingData(opts?: { date?: string }) {
       const mechMap = new Map((mechProfsRes.data ?? []).map((p: any) => [p.user_id, p]));
       const svcMap = new Map((svcRes.data ?? []).map((s: any) => [s.id, s]));
 
+      // Pull active subscription → plan for each customer in today's appointments
+      const planMap = new Map<string, { name: string; color: string | null; tier: number | null }>();
+      if (userIds.length) {
+        const { data: subs } = await supabase
+          .from("subscriptions")
+          .select("user_id, plan_version_id, status")
+          .in("user_id", userIds)
+          .eq("status", "active");
+        const pvIds = Array.from(new Set((subs ?? []).map((s: any) => s.plan_version_id)));
+        if (pvIds.length) {
+          const { data: pvs } = await supabase
+            .from("plan_versions")
+            .select("id, plan_id")
+            .in("id", pvIds);
+          const planIds = Array.from(new Set((pvs ?? []).map((p: any) => p.plan_id)));
+          const { data: plans } = planIds.length
+            ? await supabase
+                .from("plans")
+                .select("id, name, color_hex, tier_level")
+                .in("id", planIds)
+            : { data: [] as any[] };
+          const pvToPlan = new Map((pvs ?? []).map((p: any) => [p.id, p.plan_id]));
+          const planById = new Map((plans ?? []).map((p: any) => [p.id, p]));
+          (subs ?? []).forEach((s: any) => {
+            const planId = pvToPlan.get(s.plan_version_id);
+            const plan = planId ? planById.get(planId) : null;
+            if (plan) {
+              planMap.set(s.user_id, {
+                name: plan.name,
+                color: plan.color_hex ?? null,
+                tier: plan.tier_level ?? null,
+              });
+            }
+          });
+        }
+      }
+
       setAppointments(
         (appts ?? []).map((a) => {
           const p = profMap.get(a.user_id);
           const m = a.assigned_mechanic_id ? mechMap.get(a.assigned_mechanic_id) : null;
           const s = a.service_type_id ? svcMap.get(a.service_type_id) : null;
+          const pl = planMap.get(a.user_id) ?? null;
           return {
             ...a,
             customer_name: p?.full_name ?? null,
@@ -221,6 +262,9 @@ export function useSchedulingData(opts?: { date?: string }) {
             mechanic_name: m?.full_name ?? null,
             service_name: s?.name ?? null,
             service_color: s?.color ?? null,
+            plan_name: pl?.name ?? null,
+            plan_color: pl?.color ?? null,
+            plan_tier: pl?.tier ?? null,
           } as AppointmentRow;
         }),
       );
@@ -302,6 +346,91 @@ export function useSchedulingData(opts?: { date?: string }) {
     [fetchAll],
   );
 
+  const updateAppointmentFields = useCallback(
+    async (
+      id: string,
+      patch: Partial<{
+        assigned_mechanic_id: string | null;
+        service_type_id: string | null;
+        scheduled_date: string;
+        scheduled_start_time: string;
+        scheduled_end_time: string | null;
+        duration_minutes: number | null;
+        status: AppointmentRow["status"];
+        notes: string | null;
+      }>,
+    ) => {
+      const { error } = await supabase.from("appointments").update(patch).eq("id", id);
+      if (error) {
+        toast.error(error.message);
+        return false;
+      }
+      toast.success("Agendamento atualizado");
+      fetchAll();
+      return true;
+    },
+    [fetchAll],
+  );
+
+  const rescheduleAppointment = useCallback(
+    async (id: string, date: string, startTime: string, durationMinutes?: number | null) => {
+      const patch: any = {
+        scheduled_date: date,
+        scheduled_start_time: startTime,
+        status: "confirmed",
+      };
+      if (durationMinutes && durationMinutes > 0) {
+        const [h, m] = startTime.split(":").map(Number);
+        const end = new Date(2000, 0, 1, h, m + durationMinutes);
+        patch.scheduled_end_time = `${String(end.getHours()).padStart(2, "0")}:${String(end.getMinutes()).padStart(2, "0")}:00`;
+        patch.duration_minutes = durationMinutes;
+      }
+      const { error } = await supabase
+        .from("appointments")
+        .update(patch)
+        .eq("id", id);
+      if (error) {
+        toast.error(error.message);
+        return false;
+      }
+      toast.success("Agendamento reagendado");
+      fetchAll();
+      return true;
+    },
+    [fetchAll],
+  );
+
+  const cancelAppointment = useCallback(
+    async (id: string) => {
+      const { error } = await supabase
+        .from("appointments")
+        .update({ status: "canceled" })
+        .eq("id", id);
+      if (error) {
+        toast.error(error.message);
+        return false;
+      }
+      toast.success("Agendamento cancelado");
+      fetchAll();
+      return true;
+    },
+    [fetchAll],
+  );
+
+  const deleteAppointment = useCallback(
+    async (id: string) => {
+      const { error } = await supabase.from("appointments").delete().eq("id", id);
+      if (error) {
+        toast.error(error.message);
+        return false;
+      }
+      toast.success("Agendamento removido");
+      fetchAll();
+      return true;
+    },
+    [fetchAll],
+  );
+
   return {
     loading,
     businessHours,
@@ -313,5 +442,9 @@ export function useSchedulingData(opts?: { date?: string }) {
     saveBusinessHourForDay,
     saveAllBusinessHours,
     updateAppointmentStatus,
+    updateAppointmentFields,
+    rescheduleAppointment,
+    cancelAppointment,
+    deleteAppointment,
   };
 }
