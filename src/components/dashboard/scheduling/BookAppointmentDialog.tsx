@@ -118,6 +118,8 @@ export default function BookAppointmentDialog({
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [slots, setSlots] = useState<Slot[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [mechanicsList, setMechanicsList] = useState<{ id: string; name: string }[]>([]);
+  const [mechanicFilter, setMechanicFilter] = useState<string>("any");
 
   // Calendar availability hints (for step 3)
   const [closedDows, setClosedDows] = useState<Set<number>>(new Set());
@@ -370,6 +372,10 @@ export default function BookAppointmentDialog({
         busyByMech.set(a.assigned_mechanic_id, arr);
       });
 
+      setMechanicsList(
+        staffIds.map((id) => ({ id, name: nameMap.get(id) ?? "Mecânico" })),
+      );
+
       // 6. Generate slots: step = service duration + buffer, snapped to 15min
       const dur = selectedService.duration_minutes;
       const stepMin = 30;
@@ -377,7 +383,7 @@ export default function BookAppointmentDialog({
       const closeM = toMinutes(closeTime);
       const out: Slot[] = [];
       for (let t = openM; t + dur <= closeM; t += stepMin) {
-        // find first available mechanic
+        // collect every available mechanic for this time
         for (const staffId of staffIds) {
           const sched = ssByStaff.get(staffId);
           const sStart = toMinutes(sched.start_time);
@@ -394,7 +400,6 @@ export default function BookAppointmentDialog({
             mechanicId: staffId,
             mechanicName: nameMap.get(staffId) ?? "Mecânico",
           });
-          break;
         }
       }
       setSlots(out);
@@ -493,7 +498,7 @@ export default function BookAppointmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl bg-background/95 backdrop-blur-xl border-border/40">
+      <DialogContent className="max-w-4xl bg-background/95 backdrop-blur-xl border-border/40">
         <DialogHeader>
           <DialogTitle className="text-lg font-light flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-wj-green" />
@@ -835,8 +840,8 @@ export default function BookAppointmentDialog({
 
               {/* Time slots */}
               <div className="flex flex-col min-w-0">
-                <div className="flex items-center justify-between mb-2 px-1">
-                  <Label className="text-[11px] uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                <div className="flex items-center justify-between gap-2 mb-2 px-1">
+                  <Label className="text-[11px] uppercase tracking-wide text-muted-foreground flex items-center gap-1.5 truncate">
                     <Clock className="h-3 w-3" />
                     {new Date(date + "T00:00:00").toLocaleDateString("pt-PT", {
                       weekday: "long",
@@ -844,11 +849,17 @@ export default function BookAppointmentDialog({
                       month: "long",
                     })}
                   </Label>
-                  {!loadingSlots && slots.length > 0 && (
-                    <span className="text-[10px] text-muted-foreground">
-                      {slots.length} disponíveis
-                    </span>
-                  )}
+                  <Select value={mechanicFilter} onValueChange={(v) => { setMechanicFilter(v); setSlot(null); }}>
+                    <SelectTrigger className="h-7 w-[180px] text-[11px]">
+                      <SelectValue placeholder="Qualquer mecânico" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="any">Qualquer mecânico</SelectItem>
+                      {mechanicsList.map((m) => (
+                        <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <ScrollArea className="h-[260px] pr-2">
                   {loadingSlots ? (
@@ -861,7 +872,11 @@ export default function BookAppointmentDialog({
                         />
                       ))}
                     </div>
-                  ) : slots.length === 0 ? (
+                  ) : (() => {
+                    const filtered = mechanicFilter === "any"
+                      ? Array.from(new Map(slots.map((s) => [s.start, s])).values())
+                      : slots.filter((s) => s.mechanicId === mechanicFilter);
+                    if (filtered.length === 0) return (
                     <div className="h-full min-h-[200px] flex flex-col items-center justify-center text-center gap-1 border border-dashed border-border/40 rounded-lg">
                       <CalendarDays className="h-5 w-5 text-muted-foreground/60" />
                       <p className="text-xs text-muted-foreground">
@@ -870,10 +885,10 @@ export default function BookAppointmentDialog({
                       <p className="text-[10px] text-muted-foreground/70">
                         Tente outra data no calendário.
                       </p>
-                    </div>
-                  ) : (
+                    </div>);
+                    return (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 animate-in fade-in-0 duration-200">
-                      {slots.map((s) => {
+                      {filtered.map((s) => {
                         const active =
                           slot?.start === s.start && slot?.mechanicId === s.mechanicId;
                         return (
@@ -895,8 +910,8 @@ export default function BookAppointmentDialog({
                           </button>
                         );
                       })}
-                    </div>
-                  )}
+                    </div>);
+                  })()}
                 </ScrollArea>
               </div>
             </div>
