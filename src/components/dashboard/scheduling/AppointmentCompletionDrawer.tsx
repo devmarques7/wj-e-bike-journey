@@ -455,14 +455,14 @@ export default function AppointmentCompletionDrawer({
                             {t("workshop.drawer.no_tasks")}
                           </p>
                         ) : (
-                          activeTasks.map((t) => {
-                            const checked = !!activeProgress.task_done[t.id];
+                          activeTasks.map((task) => {
+                            const checked = !!activeProgress.task_done[task.id];
                             const disabled = !!activeProgress.completed_at;
                             return (
                               <button
-                                key={t.id}
+                                key={task.id}
                                 disabled={disabled}
-                                onClick={() => toggleTask(t.id)}
+                                onClick={() => toggleTask(task.id)}
                                 className={cn(
                                   "w-full flex items-start gap-3 p-3 rounded-xl border text-left transition-all",
                                   checked
@@ -491,17 +491,17 @@ export default function AppointmentCompletionDrawer({
                                           : "text-foreground",
                                       )}
                                     >
-                                      {t.label}
+                                      {task.label}
                                     </p>
-                                    {t.is_required && (
+                                    {task.is_required && (
                                       <Badge className="text-[9px] h-4 px-1.5 bg-amber-500/15 text-amber-400 border-amber-500/30">
                                         {t("workshop.drawer.required_badge")}
                                       </Badge>
                                     )}
                                   </div>
-                                  {t.description && (
+                                  {task.description && (
                                     <p className="text-[10px] text-muted-foreground mt-0.5">
-                                      {t.description}
+                                      {task.description}
                                     </p>
                                   )}
                                 </div>
