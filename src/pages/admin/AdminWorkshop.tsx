@@ -32,6 +32,7 @@ import QualityControlPreviewCard from "@/components/dashboard/scheduling/Quality
 import ServiceTypesManagerDialog from "@/components/dashboard/scheduling/ServiceTypesManagerDialog";
 import AppointmentActionsMenu from "@/components/dashboard/scheduling/AppointmentActionsMenu";
 import AppointmentCompletionDrawer from "@/components/dashboard/scheduling/AppointmentCompletionDrawer";
+import FloatingActiveAppointment from "@/components/dashboard/scheduling/FloatingActiveAppointment";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -180,6 +181,8 @@ export default function AdminWorkshop() {
 
   const totalToday = appointments.length;
   const inProgress = appointments.filter((a) => a.status === "in_progress").length;
+  const activeAppointment =
+    appointments.find((a) => a.status === "in_progress" && a.work_started_at) ?? null;
   const completed = appointments.filter((a) => a.status === "completed").length;
   const durs = appointments.filter((a) => a.duration_minutes);
   const avgDuration = durs.length
@@ -514,6 +517,11 @@ export default function AdminWorkshop() {
           open={!!completionTarget}
           onOpenChange={(v) => { if (!v) setCompletionTarget(null); }}
           onCompleted={() => { setCompletionTarget(null); refetch(); }}
+        />
+
+        <FloatingActiveAppointment
+          appointment={activeAppointment}
+          onOpen={() => activeAppointment && setCompletionTarget(activeAppointment)}
         />
       </div>
     </AdminDashboardLayout>
