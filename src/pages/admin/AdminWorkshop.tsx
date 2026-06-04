@@ -317,7 +317,7 @@ export default function AdminWorkshop() {
               <div className="p-4 border-b border-border/30">
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-foreground">Agendamentos</h3>
+                    <h3 className="text-sm font-medium text-foreground">{t("workshop.appts.title")}</h3>
                     <TabsList className="bg-muted/50">
                       <TabsTrigger value="day" className="text-xs">{t("workshop.appts.day")}</TabsTrigger>
                       <TabsTrigger value="week" className="text-xs" disabled>{t("workshop.appts.week")}</TabsTrigger>
