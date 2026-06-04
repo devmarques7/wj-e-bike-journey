@@ -276,22 +276,41 @@ export default function BookAppointmentDialog({
     try {
       const dow = new Date(date + "T00:00:00").getDay();
 
-      // 1. Business hours for that day (latest valid version)
-      const { data: bhData } = await supabase
-        .from("business_hours")
-        .select("*")
-        .eq("day_of_week", dow)
-        .lte("valid_from", date);
-      const validBh = (bhData ?? [])
-        .filter((r: any) => !r.valid_until || r.valid_until >= date)
-        .sort((a: any, b: any) => (a.valid_from < b.valid_from ? 1 : -1))[0];
+      // Fetch business hours, exceptions, staff schedules and appointments in parallel
+      const [bhRes, bheRes, ssRes, apptsRes] = await Promise.all([
+        supabase
+          .from("business_hours")
+          .select("*")
+          .eq("day_of_week", dow)
+          .lte("valid_from", date),
+        supabase
+          .from("business_hour_exceptions")
+          .select("*")
+          .eq("exception_date", date)
+          .maybeSingle(),
+        supabase
+          .from("staff_schedules")
+          .select("*")
+          .eq("day_of_week", dow)
+          .eq("is_working", true)
+          .lte("valid_from", date),
+        supabase
+          .from("appointments")
+          .select("assigned_mechanic_id, scheduled_start_time, duration_minutes")
+          .eq("scheduled_date", date)
+          .in("status", ["pending", "confirmed", "in_progress"]),
+      ]);
 
-      // 2. Holiday/exception override
-      const { data: bheData } = await supabase
-        .from("business_hour_exceptions")
-        .select("*")
-        .eq("exception_date", date)
-        .maybeSingle();
+      // Pick the latest valid business hours row that actually has open/close times.
+      // Falls back through older versions if the newest one was saved incomplete.
+      const validBh = (bhRes.data ?? [])
+        .filter((r: any) => !r.valid_until || r.valid_until >= date)
+        .sort((a: any, b: any) => (a.valid_from < b.valid_from ? 1 : -1))
+        .find((r: any) => r.is_open && r.open_time && r.close_time)
+        ?? (bhRes.data ?? [])
+          .filter((r: any) => !r.valid_until || r.valid_until >= date)
+          .sort((a: any, b: any) => (a.valid_from < b.valid_from ? 1 : -1))[0];
+      const bheData = bheRes.data;
 
       let openTime: string | null = validBh?.open_time ?? null;
       let closeTime: string | null = validBh?.close_time ?? null;
@@ -309,14 +328,7 @@ export default function BookAppointmentDialog({
         return;
       }
 
-      // 3. Staff schedules for that day
-      const { data: ssData } = await supabase
-        .from("staff_schedules")
-        .select("*")
-        .eq("day_of_week", dow)
-        .eq("is_working", true)
-        .lte("valid_from", date);
-      const validSs = (ssData ?? []).filter(
+      const validSs = (ssRes.data ?? []).filter(
         (r: any) => !r.valid_until || r.valid_until >= date,
       );
       // Keep latest version per staff
@@ -331,7 +343,7 @@ export default function BookAppointmentDialog({
         return;
       }
 
-      // 4. Staff names
+      // Staff names (only call once we know there are working mechanics)
       const { data: profs } = await supabase
         .from("profiles")
         .select("user_id, full_name")
@@ -340,14 +352,8 @@ export default function BookAppointmentDialog({
         (profs ?? []).map((p: any) => [p.user_id, p.full_name ?? "Mecânico"]),
       );
 
-      // 5. Existing appointments that day
-      const { data: appts } = await supabase
-        .from("appointments")
-        .select("assigned_mechanic_id, scheduled_start_time, duration_minutes")
-        .eq("scheduled_date", date)
-        .in("status", ["pending", "confirmed", "in_progress"]);
       const busyByMech = new Map<string, Array<[number, number]>>();
-      (appts ?? []).forEach((a: any) => {
+      (apptsRes.data ?? []).forEach((a: any) => {
         if (!a.assigned_mechanic_id) return;
         const s = toMinutes(a.scheduled_start_time);
         const e = s + (a.duration_minutes ?? selectedService.duration_minutes);
