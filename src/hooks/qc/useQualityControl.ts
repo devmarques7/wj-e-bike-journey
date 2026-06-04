@@ -251,6 +251,57 @@ export function useQualityControl() {
     return tpl as QcTemplate;
   };
 
+  const importStagesIntoTemplate = async (
+    templateId: string,
+    payloadStages: ImportPayload["stages"],
+  ) => {
+    if (!payloadStages || payloadStages.length === 0) {
+      toast.error("Nenhuma etapa para importar");
+      return false;
+    }
+    const basePos =
+      Math.max(0, ...stages.filter((s) => s.template_id === templateId).map((s) => s.position)) + 1;
+    const stagesPayload = payloadStages.map((s, i) => ({
+      template_id: templateId,
+      name: s.name,
+      description: s.description ?? null,
+      position: basePos + i,
+      requires_photo: !!s.requires_photo,
+      photo_min_count: s.photo_min_count ?? 1,
+    }));
+    const { data: inserted, error: sErr } = await supabase
+      .from("qc_stages")
+      .insert(stagesPayload)
+      .select();
+    if (sErr || !inserted) {
+      toast.error(sErr?.message ?? "Falha a importar etapas");
+      return false;
+    }
+    const tasksPayload: any[] = [];
+    inserted
+      .sort((a: any, b: any) => a.position - b.position)
+      .forEach((st: any, idx: number) => {
+        const src = payloadStages[idx];
+        (src?.tasks ?? []).forEach((t, j) => {
+          if (!t?.label) return;
+          tasksPayload.push({
+            stage_id: st.id,
+            label: t.label,
+            description: t.description ?? null,
+            position: j + 1,
+            is_required: t.is_required ?? true,
+          });
+        });
+      });
+    if (tasksPayload.length) {
+      const { error: kErr } = await supabase.from("qc_tasks").insert(tasksPayload);
+      if (kErr) toast.error(kErr.message);
+    }
+    toast.success(`${inserted.length} etapa(s) importada(s)`);
+    await fetchAll();
+    return true;
+  };
+
   return {
     loading,
     templates,
@@ -268,5 +319,6 @@ export function useQualityControl() {
     updateTask,
     deleteTask,
     importTemplate,
+    importStagesIntoTemplate,
   };
 }
