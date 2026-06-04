@@ -245,7 +245,7 @@ export default function Profile() {
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition mb-8"
         >
-          <ArrowLeft className="h-4 w-4" /> Back
+          <ArrowLeft className="h-4 w-4" /> {tp("back")}
         </button>
 
         <motion.div
@@ -253,8 +253,8 @@ export default function Profile() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h1 className="text-display-sm font-light mb-2">My Profile</h1>
-          <p className="text-muted-foreground mb-10">Manage your account information and avatar.</p>
+          <h1 className="text-display-sm font-light mb-2">{tp("title")}</h1>
+          <p className="text-muted-foreground mb-10">{tp("subtitle")}</p>
 
           {/* Avatar */}
           <div className="rounded-3xl bg-card/50 border border-border/50 backdrop-blur p-8 mb-6 flex items-center gap-6">
@@ -269,22 +269,22 @@ export default function Profile() {
                 onClick={() => setPickerOpen(true)}
                 disabled={savingAvatar}
                 className="absolute -bottom-1 -right-1 h-9 w-9 rounded-full bg-wj-green text-primary-foreground flex items-center justify-center hover:scale-105 transition disabled:opacity-60"
-                aria-label="Choose avatar"
+                aria-label={tp("avatar_aria")}
               >
                 {savingAvatar ? <Loader2 className="h-4 w-4 animate-spin" /> : <Smile className="h-4 w-4" />}
               </button>
             </div>
             <div className="flex-1">
-              <p className="text-sm text-muted-foreground">Profile avatar</p>
+              <p className="text-sm text-muted-foreground">{tp("avatar_label")}</p>
               <button
                 onClick={() => setPickerOpen(true)}
                 className="text-xs text-wj-green hover:underline"
               >
-                Choose from our avatar library →
+                {tp("avatar_cta")}
               </button>
               <div className="flex flex-wrap gap-2 mt-3">
                 {roles.length === 0 ? (
-                  <Badge variant="outline">No role assigned</Badge>
+                  <Badge variant="outline">{tp("no_role")}</Badge>
                 ) : (
                   roles.map((r) => (
                     <Badge
@@ -308,14 +308,14 @@ export default function Profile() {
           {/* Info card */}
           <div className="rounded-3xl bg-card/50 border border-border/50 backdrop-blur p-8">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-sm uppercase tracking-wider text-muted-foreground">Account information</h2>
+              <h2 className="text-sm uppercase tracking-wider text-muted-foreground">{tp("account_info")}</h2>
               {!editing ? (
                 <Button variant="ghost" size="sm" onClick={startEdit} className="text-wj-green hover:text-wj-green hover:bg-wj-green/10">
-                  <Pencil className="h-3.5 w-3.5 mr-2" /> Edit
+                  <Pencil className="h-3.5 w-3.5 mr-2" /> {tp("edit")}
                 </Button>
               ) : (
                 <Button variant="ghost" size="sm" onClick={cancelEdit} className="text-muted-foreground">
-                  <X className="h-3.5 w-3.5 mr-2" /> Cancel
+                  <X className="h-3.5 w-3.5 mr-2" /> {tp("cancel")}
                 </Button>
               )}
             </div>
@@ -324,19 +324,19 @@ export default function Profile() {
               <dl className="divide-y divide-border/40">
                 <div className="grid grid-cols-3 gap-4 py-4">
                   <dt className="text-sm text-muted-foreground flex items-center gap-2">
-                    <UserIcon className="h-3.5 w-3.5" /> Full name
+                    <UserIcon className="h-3.5 w-3.5" /> {tp("full_name")}
                   </dt>
                   <dd className="col-span-2 text-sm text-foreground">{fullName || <span className="text-muted-foreground/60">—</span>}</dd>
                 </div>
                 <div className="grid grid-cols-3 gap-4 py-4">
                   <dt className="text-sm text-muted-foreground flex items-center gap-2">
-                    <Mail className="h-3.5 w-3.5" /> Email
+                    <Mail className="h-3.5 w-3.5" /> {tp("email")}
                   </dt>
                   <dd className="col-span-2 text-sm text-foreground break-all">{email || <span className="text-muted-foreground/60">—</span>}</dd>
                 </div>
                 <div className="grid grid-cols-3 gap-4 py-4">
                   <dt className="text-sm text-muted-foreground flex items-center gap-2">
-                    <Phone className="h-3.5 w-3.5" /> Phone
+                    <Phone className="h-3.5 w-3.5" /> {tp("phone")}
                   </dt>
                   <dd className="col-span-2 text-sm text-foreground flex items-center gap-2">
                     {phone ? (
@@ -344,10 +344,10 @@ export default function Profile() {
                         <span>{phone}</span>
                         {phoneVerified ? (
                           <span className="inline-flex items-center gap-1 text-xs text-wj-green">
-                            <ShieldCheck className="h-3.5 w-3.5" /> Verified
+                            <ShieldCheck className="h-3.5 w-3.5" /> {tp("verified")}
                           </span>
                         ) : (
-                          <span className="text-xs text-muted-foreground">Not verified</span>
+                          <span className="text-xs text-muted-foreground">{tp("not_verified")}</span>
                         )}
                       </>
                     ) : (
@@ -357,18 +357,18 @@ export default function Profile() {
                 </div>
                 <div className="grid grid-cols-3 gap-4 py-4">
                   <dt className="text-sm text-muted-foreground flex items-center gap-2">
-                    <Shield className="h-3.5 w-3.5" /> Active role
+                    <Shield className="h-3.5 w-3.5" /> {tp("active_role")}
                   </dt>
                   <dd className="col-span-2 text-sm text-foreground flex items-center gap-2">
                     <span className="text-wj-green">{primaryRole.toUpperCase()}</span>
-                    <span className="text-xs text-muted-foreground/70">· Managed by admin</span>
+                    <span className="text-xs text-muted-foreground/70">{tp("managed_by_admin")}</span>
                   </dd>
                 </div>
               </dl>
             ) : (
               <div className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Full name</Label>
+                  <Label htmlFor="name">{tp("full_name")}</Label>
                   <div className="relative">
                     <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -380,7 +380,7 @@ export default function Profile() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{tp("email")}</Label>
                   <div className="relative">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -392,14 +392,14 @@ export default function Profile() {
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Note: this updates the profile record only. Auth email change requires re-verification.
+                    {tp("email_note")}
                   </p>
                 </div>
                 <PhoneInput
                   value={draftPhone ?? undefined}
                   verified={draftPhoneVerified}
                   defaultCountry="NL"
-                  label="Phone (WhatsApp)"
+                  label={tp("phone_whatsapp")}
                   onChange={(e164, isValid) => {
                     setDraftPhone(e164);
                     setDraftPhoneValid(isValid);
@@ -409,9 +409,9 @@ export default function Profile() {
                 />
 
                 <div className="flex justify-end gap-2 pt-2">
-                  <Button variant="ghost" onClick={cancelEdit}>Cancel</Button>
+                  <Button variant="ghost" onClick={cancelEdit}>{tp("cancel")}</Button>
                   <Button onClick={handleSave} disabled={saving} className="gradient-wj">
-                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : (<><Save className="h-4 w-4 mr-2" /> Save changes</>)}
+                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : (<><Save className="h-4 w-4 mr-2" /> {tp("save_changes")}</>)}
                   </Button>
                 </div>
               </div>
@@ -424,9 +424,9 @@ export default function Profile() {
       <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
         <DialogContent className="max-w-2xl bg-card/95 backdrop-blur border-border/50">
           <DialogHeader>
-            <DialogTitle className="font-light text-2xl">Choose your avatar</DialogTitle>
+            <DialogTitle className="font-light text-2xl">{tp("picker_title")}</DialogTitle>
             <DialogDescription>
-              Pick a human persona from our diverse library.
+              {tp("picker_desc")}
             </DialogDescription>
           </DialogHeader>
 
@@ -436,7 +436,7 @@ export default function Profile() {
               <Input
                 value={seedQuery}
                 onChange={(e) => setSeedQuery(e.target.value)}
-                placeholder="Search by name (Aria, Leo, Maya...)"
+                placeholder={tp("picker_search")}
                 className="h-10 bg-muted/50 border-border/50 focus:border-wj-green"
               />
             </div>
