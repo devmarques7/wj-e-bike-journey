@@ -93,6 +93,8 @@ interface AppointmentsTableCardProps {
   readOnly?: boolean;
   /** Optional override for the card title. */
   title?: string;
+  /** Restrict the table to appointments assigned to this mechanic id. */
+  mineOnlyMechanicId?: string;
 }
 
 /**
@@ -103,6 +105,7 @@ interface AppointmentsTableCardProps {
 export default function AppointmentsTableCard({
   readOnly = false,
   title,
+  mineOnlyMechanicId,
 }: AppointmentsTableCardProps) {
   const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState("day");
@@ -141,13 +144,15 @@ export default function AppointmentsTableCard({
       if (statusFilter === "completed") return s === "completed";
       return true;
     };
-    const arr = appointments.filter((a) => matchStatus(a.status));
+    const arr = appointments
+      .filter((a) => (mineOnlyMechanicId ? a.assigned_mechanic_id === mineOnlyMechanicId : true))
+      .filter((a) => matchStatus(a.status));
     arr.sort((a, b) => {
       const cmp = a.scheduled_start_time.localeCompare(b.scheduled_start_time);
       return sortAsc ? cmp : -cmp;
     });
     return arr;
-  }, [appointments, statusFilter, sortAsc]);
+  }, [appointments, statusFilter, sortAsc, mineOnlyMechanicId]);
 
   const groupedAppointments = useMemo(() => {
     if (groupBy === "none") return [{ key: "all", label: "", items: filteredSorted }];
