@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Wrench, Calendar, Star, Clock } from "lucide-react";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import StaffKPICard from "@/components/dashboard/StaffKPICard";
-import StaffTasksTable from "@/components/dashboard/StaffTasksTable";
+import AppointmentsTableCard from "@/components/dashboard/scheduling/AppointmentsTableCard";
 import ShiftTracker from "@/components/dashboard/ShiftTracker";
 import StaffWorkloadMeter from "@/components/dashboard/StaffWorkloadMeter";
 import StaffCalendarHeatmap from "@/components/dashboard/StaffCalendarHeatmap";
@@ -81,9 +81,9 @@ export default function StaffOverview() {
 
         {/* Main Content Grid - 12 Columns */}
         <div className="grid grid-cols-12 gap-4 lg:gap-6">
-          {/* Today's Tasks Table - 8 columns */}
+          {/* Appointments / tasks table - 8 columns (same as Admin Workshop) */}
           <div className="col-span-12 lg:col-span-8">
-            <StaffTasksTable />
+            <AppointmentsTableCard />
           </div>
 
           {/* Right Sidebar - 4 columns (stacked) */}
