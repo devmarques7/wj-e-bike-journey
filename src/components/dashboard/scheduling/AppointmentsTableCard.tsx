@@ -257,13 +257,13 @@ export default function AppointmentsTableCard({
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto flex-1 flex flex-col">
           {loading ? (
-            <div className="flex items-center justify-center py-12 gap-2 text-sm text-muted-foreground">
+            <div className="flex-1 flex items-center justify-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" /> {t("workshop.appts.loading")}
             </div>
           ) : filteredSorted.length === 0 ? (
-            <div className="py-12 text-center text-sm text-muted-foreground">
+            <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground">
               {t("workshop.appts.empty")}
             </div>
           ) : (
