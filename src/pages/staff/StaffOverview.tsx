@@ -5,7 +5,6 @@ import StaffKPICard from "@/components/dashboard/StaffKPICard";
 import AppointmentsTableCard from "@/components/dashboard/scheduling/AppointmentsTableCard";
 import ShiftTracker from "@/components/dashboard/ShiftTracker";
 import StaffWorkloadMeter from "@/components/dashboard/StaffWorkloadMeter";
-import StaffCalendarHeatmap from "@/components/dashboard/StaffCalendarHeatmap";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 
@@ -101,13 +100,6 @@ export default function StaffOverview() {
               completedToday={2}
               totalToday={5}
             />
-          </div>
-        </div>
-
-        {/* Calendar Heatmap full width */}
-        <div className="grid grid-cols-12 gap-4 lg:gap-6">
-          <div className="col-span-12">
-            <StaffCalendarHeatmap />
           </div>
         </div>
       </div>
