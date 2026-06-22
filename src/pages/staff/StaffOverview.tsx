@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
 import { Wrench, Calendar, Star, Clock } from "lucide-react";
-import StaffDashboardLayout from "@/components/dashboard/StaffDashboardLayout";
+import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import StaffKPICard from "@/components/dashboard/StaffKPICard";
 import StaffTasksTable from "@/components/dashboard/StaffTasksTable";
 import ShiftTracker from "@/components/dashboard/ShiftTracker";
+import StaffWorkloadMeter from "@/components/dashboard/StaffWorkloadMeter";
 import StaffCalendarHeatmap from "@/components/dashboard/StaffCalendarHeatmap";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
@@ -52,7 +53,7 @@ export default function StaffOverview() {
   }
 
   return (
-    <StaffDashboardLayout>
+    <RoleDashboardLayout>
       <div className="p-4 lg:p-6 space-y-6">
         {/* Page Header */}
         <motion.div
@@ -92,13 +93,24 @@ export default function StaffOverview() {
               <ShiftTracker />
             </div>
 
-            {/* Calendar Heatmap */}
-            <div className="flex-1 min-h-[280px]">
-              <StaffCalendarHeatmap />
-            </div>
+            {/* Workload Meter (preserved & relocated into unified layout) */}
+            <StaffWorkloadMeter
+              currentLoad={75}
+              weeklyHours={32}
+              targetHours={40}
+              completedToday={2}
+              totalToday={5}
+            />
+          </div>
+        </div>
+
+        {/* Calendar Heatmap full width */}
+        <div className="grid grid-cols-12 gap-4 lg:gap-6">
+          <div className="col-span-12">
+            <StaffCalendarHeatmap />
           </div>
         </div>
       </div>
-    </StaffDashboardLayout>
+    </RoleDashboardLayout>
   );
 }
