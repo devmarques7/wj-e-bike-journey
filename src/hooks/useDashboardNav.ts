@@ -36,7 +36,26 @@ export type DashboardNavConfig = {
   settingsHref: string;
 };
 
+const CUSTOMER_CONFIG: DashboardNavConfig = {
+  role: "customer",
+  brand: { prefix: "WJ", suffix: " VISION" },
+  roleLabel: "Member",
+  homeHref: "/dashboard",
+  settingsHref: "/dashboard/settings",
+  primary: [
+    { icon: LayoutDashboard, label: "Overview",  href: "/dashboard" },
+    { icon: CreditCard,      label: "V-ID",      href: "/dashboard/v-id" },
+    { icon: Bike,            label: "Bike",      href: "/dashboard/bike" },
+    { icon: Wrench,          label: "Service",   href: "/dashboard/service" },
+    { icon: Heart,           label: "Favorites", href: "/dashboard/favorites" },
+    { icon: Crown,           label: "VIP",       href: "/dashboard/vip" },
+  ],
+  more: [],
+};
+
 const CONFIG: Record<UserRole, DashboardNavConfig> = {
+  guest: CUSTOMER_CONFIG,
+  customer: CUSTOMER_CONFIG,
   admin: {
     role: "admin",
     brand: { prefix: "WJ", suffix: " COMMAND" },
@@ -70,22 +89,6 @@ const CONFIG: Record<UserRole, DashboardNavConfig> = {
     ],
     more: [],
   },
-  customer: {
-    role: "customer",
-    brand: { prefix: "WJ", suffix: " VISION" },
-    roleLabel: "Member",
-    homeHref: "/dashboard",
-    settingsHref: "/dashboard/settings",
-    primary: [
-      { icon: LayoutDashboard, label: "Overview",  href: "/dashboard" },
-      { icon: CreditCard,      label: "V-ID",      href: "/dashboard/v-id" },
-      { icon: Bike,            label: "Bike",      href: "/dashboard/bike" },
-      { icon: Wrench,          label: "Service",   href: "/dashboard/service" },
-      { icon: Heart,           label: "Favorites", href: "/dashboard/favorites" },
-      { icon: Crown,           label: "VIP",       href: "/dashboard/vip" },
-    ],
-    more: [],
-  },
 };
 
 /**
@@ -96,5 +99,5 @@ const CONFIG: Record<UserRole, DashboardNavConfig> = {
 export function useDashboardNav(roleOverride?: UserRole): DashboardNavConfig {
   const { user } = useAuth();
   const role: UserRole = roleOverride ?? user?.role ?? "customer";
-  return useMemo(() => CONFIG[role] ?? CONFIG.customer, [role]);
+  return useMemo(() => CONFIG[role] ?? CUSTOMER_CONFIG, [role]);
 }
