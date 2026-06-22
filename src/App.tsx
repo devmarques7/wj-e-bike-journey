@@ -51,6 +51,8 @@ import AdminCrmCustomerDetail from "./pages/admin/crm/AdminCrmCustomerDetail";
 
 // Staff Pages
 import StaffOverview from "./pages/staff/StaffOverview";
+import StaffSchedule from "./pages/staff/StaffSchedule";
+
 
 const queryClient = new QueryClient();
 
@@ -110,6 +112,8 @@ const App = () => (
               
               {/* Staff Dashboard Routes */}
               <Route path="/dashboard/staff" element={<StaffOverview />} />
+              <Route path="/dashboard/staff/schedule" element={<StaffSchedule />} />
+
               
               <Route path="/urgent-service" element={<UrgentService />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
