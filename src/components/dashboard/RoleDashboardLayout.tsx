@@ -1,18 +1,11 @@
 import { ReactNode } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import AdminDashboardLayout from "./AdminDashboardLayout";
-import StaffDashboardLayout from "./StaffDashboardLayout";
-import DashboardLayout from "./DashboardLayout";
+import UnifiedDashboardLayout from "./UnifiedDashboardLayout";
 
 /**
  * Single entry point for any "in-dashboard" page.
- * Picks the correct shell (header + footer + bg) based on the user's role.
+ * Always renders the UnifiedDashboardLayout; nav/branding/role badge are
+ * resolved dynamically via the useDashboardNav() hook based on the user role.
  */
 export default function RoleDashboardLayout({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
-  const role = user?.role ?? "customer";
-
-  if (role === "admin") return <AdminDashboardLayout>{children}</AdminDashboardLayout>;
-  if (role === "staff") return <StaffDashboardLayout>{children}</StaffDashboardLayout>;
-  return <DashboardLayout>{children}</DashboardLayout>;
+  return <UnifiedDashboardLayout>{children}</UnifiedDashboardLayout>;
 }
