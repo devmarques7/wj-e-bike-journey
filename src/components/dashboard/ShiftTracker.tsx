@@ -3,14 +3,15 @@ import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { ArrowRight, Play, Pause, StopCircle, Clock, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { MeshGradient } from "@paper-design/shaders-react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 type ShiftState = "idle" | "active" | "paused";
 
 export default function ShiftTracker() {
+  const { theme } = useTheme();
   const [shiftState, setShiftState] = useState<ShiftState>("idle");
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [videoOpacity, setVideoOpacity] = useState(1);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const constraintsRef = useRef(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   
@@ -28,38 +29,10 @@ export default function ShiftTracker() {
   const textOpacity = useTransform(x, [0, maxDrag * 0.5], [1, 0]);
   const checkOpacity = useTransform(x, [maxDrag * 0.7, maxDrag], [0, 1]);
 
-  // Video smooth loop
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const handleTimeUpdate = () => {
-      if (!video.duration) return;
-      const timeLeft = video.duration - video.currentTime;
-      
-      if (timeLeft <= 1 && timeLeft > 0) {
-        const fadeProgress = 1 - timeLeft;
-        setVideoOpacity(1 - fadeProgress * 0.5);
-      }
-    };
-
-    const handleEnded = () => {
-      video.currentTime = 0;
-      video.play();
-      setVideoOpacity(0.5);
-      requestAnimationFrame(() => setVideoOpacity(1));
-    };
-
-    video.play().catch(() => {});
-
-    video.addEventListener("timeupdate", handleTimeUpdate);
-    video.addEventListener("ended", handleEnded);
-
-    return () => {
-      video.removeEventListener("timeupdate", handleTimeUpdate);
-      video.removeEventListener("ended", handleEnded);
-    };
-  }, []);
+  // Dynamic mesh gradient palette per theme
+  const shaderColors = theme === "dark"
+    ? ["#0a0a0a", "#0d2818", "#058c42", "#10b981", "#022c1a"]
+    : ["#f5f7f5", "#dff5e8", "#058c42", "#86efac", "#ecfdf5"];
 
   // Timer logic
   useEffect(() => {
@@ -140,22 +113,18 @@ export default function ShiftTracker() {
         transition={{ delay: 0.1 }}
         className="relative h-full rounded-2xl overflow-hidden bg-background"
       >
-        {/* Video Background */}
-        <motion.video
-          ref={videoRef}
-          autoPlay
-          muted
-          playsInline
-          loop
-          animate={{ opacity: videoOpacity * 0.6 }}
-          transition={{ duration: 0.8, ease: "easeInOut" }}
-          className="absolute inset-0 w-full h-full object-cover"
-        >
-          <source src="/videos/dashboard-background.mp4" type="video/mp4" />
-        </motion.video>
-        
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-background/40" />
+        {/* Animated Mesh Gradient Background */}
+        <MeshGradient
+          colors={shaderColors}
+          speed={0.25}
+          distortion={1}
+          swirl={0.8}
+          className="absolute inset-0 w-full h-full"
+          style={{ opacity: theme === "dark" ? 0.85 : 0.7 }}
+        />
+
+        {/* Overlay for legibility */}
+        <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/40 to-background/10 dark:from-background/80 dark:via-background/30 dark:to-transparent" />
         
         {/* Content */}
         <div className="relative z-10 h-full p-4 flex flex-col justify-between">
