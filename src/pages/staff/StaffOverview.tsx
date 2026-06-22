@@ -102,13 +102,6 @@ export default function StaffOverview() {
             />
           </div>
         </div>
-
-        {/* Calendar Heatmap full width */}
-        <div className="grid grid-cols-12 gap-4 lg:gap-6">
-          <div className="col-span-12">
-            <StaffCalendarHeatmap />
-          </div>
-        </div>
       </div>
     </RoleDashboardLayout>
   );
