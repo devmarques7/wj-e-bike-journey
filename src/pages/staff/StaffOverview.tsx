@@ -5,7 +5,6 @@ import StaffKPICard from "@/components/dashboard/StaffKPICard";
 import AppointmentsTableCard from "@/components/dashboard/scheduling/AppointmentsTableCard";
 import ShiftTracker from "@/components/dashboard/ShiftTracker";
 import StaffWorkloadMeter from "@/components/dashboard/StaffWorkloadMeter";
-import StaffCalendarHeatmap from "@/components/dashboard/StaffCalendarHeatmap";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 
