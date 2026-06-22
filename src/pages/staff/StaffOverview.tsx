@@ -80,16 +80,16 @@ export default function StaffOverview() {
         </div>
 
         {/* Main Content Grid - 12 Columns */}
-        <div className="grid grid-cols-12 gap-4 lg:gap-6">
+        <div className="grid grid-cols-12 gap-4 lg:gap-6 h-full">
           {/* Appointments / tasks table - 8 columns (same as Admin Workshop) */}
-          <div className="col-span-12 lg:col-span-8">
+          <div className="col-span-12 lg:col-span-8 h-full min-h-[500px]">
             <AppointmentsTableCard />
           </div>
 
           {/* Right Sidebar - 4 columns (stacked) */}
-          <div className="col-span-12 lg:col-span-4 flex flex-col gap-4 lg:gap-6">
+          <div className="col-span-12 lg:col-span-4 flex flex-col gap-4 lg:gap-6 h-full">
             {/* Shift Tracker */}
-            <div className="min-h-[200px]">
+            <div className="min-h-[200px] flex-1">
               <ShiftTracker />
             </div>
 
