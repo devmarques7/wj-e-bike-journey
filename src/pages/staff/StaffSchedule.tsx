@@ -1,0 +1,621 @@
+import { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import {
+  Calendar as CalendarIcon,
+  Clock,
+  Loader2,
+  CalendarOff,
+  ChevronRight,
+  ChevronLeft,
+  Activity,
+  CalendarDays,
+  LayoutGrid,
+  CheckCircle2,
+  Wrench,
+  TrendingUp,
+  Settings,
+} from "lucide-react";
+import { Navigate, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
+import StaffKPICard from "@/components/dashboard/StaffKPICard";
+import { useAuth } from "@/contexts/AuthContext";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
+import { useSchedulingData } from "@/hooks/scheduling/useSchedulingData";
+import StaffScheduleDialog from "@/components/dashboard/scheduling/StaffScheduleDialog";
+import TeamWeekWorkloadCompact from "@/components/dashboard/scheduling/TeamWeekWorkloadCompact";
+
+const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
+const WEEKDAYS_HEAT_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
+
+const getHeatColor = (v: number) => {
+  if (v === 0) return "bg-muted/30";
+  if (v === 1) return "bg-wj-green/20";
+  if (v === 2) return "bg-wj-green/40";
+  if (v === 3) return "bg-wj-green/60";
+  if (v === 4) return "bg-wj-green/80";
+  return "bg-wj-green";
+};
+
+export default function StaffSchedule() {
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const locale = i18n.language?.startsWith("pt") ? "pt-PT" : "en-GB";
+  const getHeatLabel = (v: number) => {
+    if (v === 0) return t("manage.heatmap.labels.none");
+    if (v === 1) return t("manage.heatmap.labels.light");
+    if (v <= 2) return t("manage.heatmap.labels.moderate");
+    if (v <= 4) return t("manage.heatmap.labels.busy");
+    return t("manage.heatmap.labels.very_busy");
+  };
+
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [mySchedOpen, setMySchedOpen] = useState(false);
+  const [heatMonth, setHeatMonth] = useState(new Date().getMonth());
+  const [heatYear, setHeatYear] = useState(new Date().getFullYear());
+  const [monthCounts, setMonthCounts] = useState<Record<string, number>>({});
+
+  const dateStr = (selectedDate ?? new Date()).toISOString().slice(0, 10);
+  const {
+    loading,
+    exceptions,
+    mechanics,
+    appointments,
+  } = useSchedulingData({ date: dateStr });
+
+  const mineUserId = user?.id ?? "";
+  const me = useMemo(
+    () => mechanics.find((m) => m.user_id === mineUserId) ?? null,
+    [mechanics, mineUserId],
+  );
+
+  // Personal monthly heatmap (own appointments only)
+  useEffect(() => {
+    if (!mineUserId) return;
+    const from = `${heatYear}-${String(heatMonth + 1).padStart(2, "0")}-01`;
+    const lastDay = new Date(heatYear, heatMonth + 1, 0).getDate();
+    const to = `${heatYear}-${String(heatMonth + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+    (async () => {
+      const { data, error } = await supabase
+        .from("appointments")
+        .select("scheduled_date")
+        .eq("assigned_mechanic_id", mineUserId)
+        .gte("scheduled_date", from)
+        .lte("scheduled_date", to)
+        .in("status", ["pending", "confirmed", "in_progress", "completed"]);
+      if (error) return;
+      const map: Record<string, number> = {};
+      (data ?? []).forEach((a: any) => {
+        map[a.scheduled_date] = (map[a.scheduled_date] ?? 0) + 1;
+      });
+      setMonthCounts(map);
+    })();
+  }, [heatMonth, heatYear, mineUserId, appointments.length]);
+
+  if (authLoading) return null;
+  if (!isAuthenticated) return <Navigate to="/auth" replace />;
+  if (user?.role !== "staff") return <Navigate to="/dashboard" replace />;
+
+  // --- Scoped to me only ---
+  const mineAppts = appointments.filter((a) => a.assigned_mechanic_id === mineUserId);
+  const dayList = mineAppts.filter((a) => a.scheduled_date === dateStr);
+
+  const weeklyCapacity = me?.weekly_capacity ?? 40;
+  const weeklyAppointments = me?.weekly_appointments ?? mineAppts.length;
+  const workloadPercentage = Math.min(
+    100,
+    Math.round((weeklyAppointments / Math.max(1, weeklyCapacity)) * 100),
+  );
+
+  const completed = mineAppts.filter((a) => a.status === "completed").length;
+  const inProgress = mineAppts.filter((a) => a.status === "in_progress").length;
+  const weeklyHours = Math.round(
+    mineAppts
+      .filter((a) => a.status === "completed" || a.status === "in_progress")
+      .reduce((acc, a) => acc + (a.duration_minutes ?? 0), 0) / 60,
+  );
+  const durs = mineAppts.filter((a) => a.duration_minutes);
+  const avgDuration = durs.length
+    ? Math.round(durs.reduce((acc, a) => acc + (a.duration_minutes ?? 0), 0) / durs.length)
+    : 0;
+
+  const kpiData = [
+    {
+      label: "My Appointments",
+      value: String(mineAppts.length),
+      change: `${weeklyAppointments}/${weeklyCapacity} this week`,
+      trend: "neutral" as const,
+      icon: CalendarDays,
+    },
+    {
+      label: "Weekly Hours",
+      value: `${weeklyHours}h`,
+      change: `target 40h`,
+      trend: weeklyHours >= 32 ? ("up" as const) : ("neutral" as const),
+      icon: Clock,
+    },
+    {
+      label: "Completed",
+      value: String(completed),
+      change: inProgress > 0 ? `${inProgress} in progress` : "no active task",
+      trend: "up" as const,
+      icon: CheckCircle2,
+    },
+    {
+      label: "My Workload",
+      value: `${workloadPercentage}%`,
+      change:
+        workloadPercentage > 80
+          ? "very busy"
+          : workloadPercentage > 60
+            ? "balanced"
+            : "light load",
+      trend: workloadPercentage > 80 ? ("down" as const) : ("up" as const),
+      icon: Activity,
+    },
+  ];
+
+  return (
+    <RoleDashboardLayout>
+      <div className="p-4 lg:p-6 space-y-6">
+        {/* Page Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="flex items-center justify-between flex-wrap gap-3"
+        >
+          <div>
+            <div className="flex items-center gap-2">
+              <CalendarDays className="h-5 w-5 text-wj-green" />
+              <h1 className="text-xl sm:text-2xl font-light text-foreground">Manage</h1>
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              My personal schedule, workload and weekly distribution
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setMySchedOpen(true)}
+            className="gap-2"
+          >
+            <Settings className="h-4 w-4" />
+            <span className="hidden sm:inline">My Working Hours</span>
+          </Button>
+        </motion.div>
+
+        {/* KPI Row */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+          {kpiData.map((kpi, index) => (
+            <StaffKPICard key={kpi.label} {...kpi} index={index} />
+          ))}
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-12 gap-4 lg:gap-5">
+          {/* Row 1 — My Workload bar */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="col-span-12 lg:col-span-8 p-4 lg:p-5 flex flex-col bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-wj-green" />
+                <h3 className="text-sm font-medium text-foreground">My Workload</h3>
+              </div>
+              <Badge
+                className={cn(
+                  "text-[10px]",
+                  workloadPercentage > 80
+                    ? "bg-red-500/20 text-red-400 border-red-500/30"
+                    : workloadPercentage > 60
+                      ? "bg-amber-500/20 text-amber-400 border-amber-500/30"
+                      : "bg-wj-green/20 text-wj-green border-wj-green/30",
+                )}
+              >
+                {workloadPercentage}% of capacity
+              </Badge>
+            </div>
+
+            <div className="h-2.5 bg-muted rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${workloadPercentage}%` }}
+                transition={{ delay: 0.3, duration: 0.8 }}
+                className={cn(
+                  "h-full rounded-full",
+                  workloadPercentage > 80
+                    ? "bg-gradient-to-r from-red-500 to-red-400"
+                    : workloadPercentage > 60
+                      ? "bg-gradient-to-r from-amber-500 to-amber-400"
+                      : "bg-gradient-to-r from-wj-green to-wj-green/60",
+                )}
+              />
+            </div>
+
+            <div className="flex justify-between mt-2 text-[11px] text-muted-foreground">
+              <span>{weeklyAppointments} appointments this week</span>
+              <span>capacity {weeklyCapacity}</span>
+            </div>
+          </motion.div>
+
+          {/* Today's Progress */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08 }}
+            className="col-span-12 lg:col-span-4 p-4 lg:p-5 rounded-3xl border border-border/30 backdrop-blur-md bg-background/60 flex flex-col"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <TrendingUp className="h-4 w-4 text-wj-green" />
+              <h3 className="text-sm font-medium text-foreground">Today's Progress</h3>
+              <Badge variant="outline" className="ml-auto text-[10px] border-border/40">
+                {dayList.filter((a) => a.status === "completed").length}/{dayList.length}
+              </Badge>
+            </div>
+            {dayList.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No appointments scheduled for today.</p>
+            ) : (
+              <div className="flex-1 flex flex-col gap-2 overflow-y-auto max-h-[180px] pr-1">
+                {dayList.slice(0, 4).map((a) => (
+                  <div
+                    key={a.id}
+                    className="flex items-center gap-2 p-2 rounded-lg bg-muted/30"
+                  >
+                    <div
+                      className={cn(
+                        "w-1.5 h-6 rounded-full shrink-0",
+                        a.status === "completed"
+                          ? "bg-wj-green"
+                          : a.status === "in_progress"
+                            ? "bg-wj-green animate-pulse"
+                            : "bg-amber-400",
+                      )}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-medium text-foreground truncate">
+                        {a.customer_name ?? a.customer_email ?? "—"}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground truncate">
+                        {a.service_name ?? "—"}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] shrink-0">
+                      {a.scheduled_start_time.slice(0, 5)}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+
+          {/* Row 2 — My Weekly Schedule (reusing team week with [me]) */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.12 }}
+            className="col-span-12 lg:col-span-8 lg:min-h-[560px] p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-sm font-medium text-foreground">My Weekly Schedule</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Distribution of personal appointments across the week
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs gap-1.5 h-8 border-wj-green/30 text-wj-green hover:bg-wj-green/10 hover:text-wj-green hover:border-wj-green/50"
+                onClick={() => setMySchedOpen(true)}
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+                Edit
+              </Button>
+            </div>
+            <div className="flex-1 min-h-0">
+              {me ? (
+                <TeamWeekWorkloadCompact mechanics={[me]} />
+              ) : (
+                <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
+                  Your mechanic profile is not configured yet.
+                </div>
+              )}
+            </div>
+          </motion.div>
+
+          {/* My profile card */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="col-span-12 lg:col-span-4 lg:min-h-[560px] p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Activity className="h-4 w-4 text-wj-green" />
+              <h3 className="text-sm font-medium text-foreground">My Profile</h3>
+            </div>
+
+            {loading ? (
+              <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+              </div>
+            ) : !me ? (
+              <div className="flex-1 flex items-center justify-center text-center text-xs text-muted-foreground">
+                No mechanic record found for your account.
+              </div>
+            ) : (
+              <div className="flex-1 flex flex-col gap-4">
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-muted/30">
+                  <div className="w-12 h-12 rounded-full bg-wj-green/20 text-wj-green text-sm font-bold flex items-center justify-center">
+                    {(me.full_name ?? me.email ?? "??")
+                      .split(" ")
+                      .map((s) => s[0])
+                      .join("")
+                      .slice(0, 2)
+                      .toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {me.full_name ?? me.email}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground truncate">{me.email}</p>
+                  </div>
+                  <Badge variant="outline" className="text-[10px] shrink-0">
+                    {me.weekly_appointments}/{me.weekly_capacity}
+                  </Badge>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="p-3 rounded-xl bg-muted/30">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      Avg. Time
+                    </p>
+                    <p className="text-lg font-light text-foreground mt-1">{avgDuration}m</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-muted/30">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      Completed
+                    </p>
+                    <p className="text-lg font-light text-foreground mt-1">{completed}</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-muted/30">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      In progress
+                    </p>
+                    <p className="text-lg font-light text-foreground mt-1">{inProgress}</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-muted/30">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      Hours
+                    </p>
+                    <p className="text-lg font-light text-foreground mt-1">{weeklyHours}h</p>
+                  </div>
+                </div>
+
+                <Button
+                  size="sm"
+                  className="mt-auto bg-wj-green hover:bg-wj-green/90 text-black gap-2"
+                  onClick={() => setMySchedOpen(true)}
+                >
+                  <Settings className="h-3.5 w-3.5" />
+                  Edit my working hours
+                </Button>
+              </div>
+            )}
+          </motion.div>
+
+          {/* Row 3 — Personal Heatmap (own appointments) */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.18 }}
+            className="col-span-12 lg:col-span-4 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl"
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <CalendarIcon className="h-4 w-4 text-wj-green" />
+              <h3 className="text-sm font-medium text-foreground">My Workload Calendar</h3>
+            </div>
+            <TooltipProvider>
+              <div className="flex items-center justify-between mb-3">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => {
+                    if (heatMonth === 0) {
+                      setHeatMonth(11);
+                      setHeatYear((y) => y - 1);
+                    } else setHeatMonth((m) => m - 1);
+                  }}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-xs font-medium text-foreground capitalize">
+                  {new Date(heatYear, heatMonth).toLocaleDateString(locale, {
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => {
+                    if (heatMonth === 11) {
+                      setHeatMonth(0);
+                      setHeatYear((y) => y + 1);
+                    } else setHeatMonth((m) => m + 1);
+                  }}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-7 gap-1 mb-1">
+                {WEEKDAYS_HEAT_KEYS.map((k, i) => (
+                  <div
+                    key={i}
+                    className="text-center text-[9px] text-muted-foreground uppercase"
+                  >
+                    {t(`manage.days_short.${k}`).charAt(0)}
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-1">
+                {(() => {
+                  const first = new Date(heatYear, heatMonth, 1);
+                  const last = new Date(heatYear, heatMonth + 1, 0);
+                  const pad = first.getDay();
+                  const cells: JSX.Element[] = [];
+                  for (let i = 0; i < pad; i++) {
+                    cells.push(<div key={`p-${i}`} className="aspect-square" />);
+                  }
+                  for (let day = 1; day <= last.getDate(); day++) {
+                    const date = new Date(heatYear, heatMonth, day);
+                    const key = `${heatYear}-${String(heatMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                    const count = monthCounts[key] ?? 0;
+                    const dow = date.getDay();
+                    const isWeekend = dow === 0 || dow === 6;
+                    const isToday = date.toDateString() === new Date().toDateString();
+                    const isSelected =
+                      selectedDate && date.toDateString() === selectedDate.toDateString();
+                    cells.push(
+                      <Tooltip key={key}>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={() => setSelectedDate(date)}
+                            className={cn(
+                              "aspect-square rounded-md flex items-center justify-center text-[10px] transition-all hover:ring-1 hover:ring-wj-green/50",
+                              isWeekend && !count && "opacity-40",
+                              isToday && "ring-1 ring-wj-green",
+                              isSelected && "ring-2 ring-wj-green",
+                              getHeatColor(count),
+                            )}
+                          >
+                            {day}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="text-xs">
+                          <p className="font-medium">
+                            {date.toLocaleDateString(locale, {
+                              weekday: "short",
+                              day: "numeric",
+                              month: "short",
+                            })}
+                          </p>
+                          <p className="text-muted-foreground">
+                            {t("manage.heatmap.appointments", { n: count })} ·{" "}
+                            {getHeatLabel(count)}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>,
+                    );
+                  }
+                  return cells;
+                })()}
+              </div>
+
+              <div className="mt-3 flex items-center justify-between text-[10px] text-muted-foreground">
+                <span>{t("manage.heatmap.less")}</span>
+                <div className="flex gap-0.5">
+                  {[0, 1, 2, 3, 4, 5].map((l) => (
+                    <div key={l} className={cn("w-3 h-3 rounded-sm", getHeatColor(l))} />
+                  ))}
+                </div>
+                <span>{t("manage.heatmap.more")}</span>
+              </div>
+            </TooltipProvider>
+
+            <div className="mt-3 pt-3 border-t border-border/30 flex items-center justify-between text-[11px]">
+              <span className="text-muted-foreground truncate">
+                {selectedDate?.toLocaleDateString(locale, { day: "numeric", month: "short" })}
+              </span>
+              <span className="text-foreground font-medium">
+                {dayList.length} {t("manage.heatmap.appointments", { n: dayList.length })}
+              </span>
+            </div>
+          </motion.div>
+
+          {/* Exceptions (read-only) */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="col-span-12 lg:col-span-8 p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <CalendarOff className="h-4 w-4 text-wj-green" />
+              <h3 className="text-sm font-medium text-foreground">Workshop Exceptions</h3>
+              <Badge variant="outline" className="ml-auto text-[10px] border-border/40">
+                read-only
+              </Badge>
+            </div>
+            {exceptions.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No upcoming exceptions.</p>
+            ) : (
+              <div className="space-y-2 flex-1 overflow-y-auto pr-1">
+                {exceptions.slice(0, 8).map((ex) => (
+                  <div
+                    key={ex.id}
+                    className="flex items-center justify-between p-2 rounded-lg bg-muted/30"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-lg bg-wj-green/10 flex items-center justify-center shrink-0">
+                        <span className="text-xs font-bold text-wj-green">
+                          {new Date(ex.exception_date).getDate()}
+                        </span>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-foreground truncate">{ex.reason}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">
+                          {new Date(ex.exception_date).toLocaleDateString(locale, {
+                            weekday: "short",
+                            day: "numeric",
+                            month: "short",
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge
+                      className={cn(
+                        "text-[10px] shrink-0",
+                        ex.exception_type === "closed"
+                          ? "bg-red-500/20 text-red-400 border-red-500/30"
+                          : "bg-amber-500/20 text-amber-400 border-amber-500/30",
+                      )}
+                    >
+                      {ex.exception_type === "closed" ? "Closed" : "Special"}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        </div>
+      </div>
+
+      {/* My working hours editor — scoped to current user only */}
+      {me && (
+        <StaffScheduleDialog
+          open={mySchedOpen}
+          onOpenChange={setMySchedOpen}
+          staffId={me.user_id}
+          staffName={me.full_name ?? me.email ?? "Me"}
+          staffEmail={me.email}
+          weeklyAppointments={me.weekly_appointments}
+          weeklyCapacity={me.weekly_capacity}
+        />
+      )}
+    </RoleDashboardLayout>
+  );
+}
