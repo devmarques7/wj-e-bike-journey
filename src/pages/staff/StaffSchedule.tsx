@@ -302,9 +302,9 @@ export default function StaffSchedule() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.12 }}
-            className="col-span-12 lg:col-span-8 lg:min-h-[560px] p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
+            className="col-span-12 lg:col-span-8 lg:min-h-[340px] p-3 lg:p-4 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
           >
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-3">
               <div>
                 <h3 className="text-sm font-medium text-foreground">My Weekly Schedule</h3>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
