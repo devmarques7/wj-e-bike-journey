@@ -82,7 +82,7 @@ export default function StaffOverview() {
         {/* Main Content Grid - 12 Columns */}
         <div className="grid grid-cols-12 gap-4 lg:gap-6">
           {/* Appointments / tasks table - 8 columns (same as Admin Workshop) */}
-          <div className="col-span-12 lg:col-span-8">
+          <div className="col-span-12 lg:col-span-8 h-full min-h-[500px]">
             <AppointmentsTableCard />
           </div>
 

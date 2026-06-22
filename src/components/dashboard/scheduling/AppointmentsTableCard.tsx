@@ -267,7 +267,7 @@ export default function AppointmentsTableCard({
               {t("workshop.appts.empty")}
             </div>
           ) : (
-            <Table>
+            <Table className="h-full">
               <TableHeader>
                 <TableRow className="border-border/30 hover:bg-transparent">
                   <TableHead className="text-muted-foreground text-[10px] uppercase tracking-wider font-medium w-[80px]">{t("workshop.cols.time")}</TableHead>
