@@ -551,7 +551,7 @@ export default function StaffSchedule() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="col-span-12 lg:col-span-8 p-3 lg:p-4 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
+            className="col-span-12 lg:col-span-8 p-3 lg:p-4 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col min-h-0"
           >
             <div className="flex items-center gap-2 mb-3">
               <CalendarOff className="h-4 w-4 text-wj-green" />
@@ -563,20 +563,20 @@ export default function StaffSchedule() {
             {exceptions.length === 0 ? (
               <p className="text-xs text-muted-foreground">No upcoming exceptions.</p>
             ) : (
-              <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1">
+              <div className="space-y-2 flex-1 overflow-y-auto min-h-0 pr-1">
                 {exceptions.slice(0, 6).map((ex) => (
                   <div
                     key={ex.id}
-                    className="flex items-center justify-between p-2 rounded-lg bg-muted/30"
+                    className="flex items-center justify-between gap-2 p-2 rounded-lg bg-muted/30"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                       <div className="w-9 h-9 rounded-lg bg-wj-green/10 flex items-center justify-center shrink-0">
                         <span className="text-xs font-bold text-wj-green">
                           {new Date(ex.exception_date).getDate()}
                         </span>
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-medium text-foreground truncate">{ex.reason}</p>
+                        <p className="text-xs sm:text-sm font-medium text-foreground truncate">{ex.reason}</p>
                         <p className="text-[10px] text-muted-foreground truncate">
                           {new Date(ex.exception_date).toLocaleDateString(locale, {
                             weekday: "short",
