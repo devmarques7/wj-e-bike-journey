@@ -337,7 +337,7 @@ export default function StaffSchedule() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
-            className="col-span-12 lg:col-span-4 lg:min-h-[560px] p-4 lg:p-5 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
+            className="col-span-12 lg:col-span-4 lg:min-h-[340px] p-3 lg:p-4 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
           >
             <div className="flex items-center gap-2 mb-3">
               <Activity className="h-4 w-4 text-wj-green" />
@@ -353,9 +353,9 @@ export default function StaffSchedule() {
                 No mechanic record found for your account.
               </div>
             ) : (
-              <div className="flex-1 flex flex-col gap-4">
-                <div className="flex items-center gap-3 p-3 rounded-2xl bg-muted/30">
-                  <div className="w-12 h-12 rounded-full bg-wj-green/20 text-wj-green text-sm font-bold flex items-center justify-center">
+              <div className="flex-1 flex flex-col gap-3">
+                <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-muted/30">
+                  <div className="w-10 h-10 rounded-full bg-wj-green/20 text-wj-green text-xs font-bold flex items-center justify-center">
                     {(me.full_name ?? me.email ?? "??")
                       .split(" ")
                       .map((s) => s[0])
@@ -375,29 +375,29 @@ export default function StaffSchedule() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="p-3 rounded-xl bg-muted/30">
+                  <div className="p-2 rounded-xl bg-muted/30">
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
                       Avg. Time
                     </p>
-                    <p className="text-lg font-light text-foreground mt-1">{avgDuration}m</p>
+                    <p className="text-base font-light text-foreground mt-0.5">{avgDuration}m</p>
                   </div>
-                  <div className="p-3 rounded-xl bg-muted/30">
+                  <div className="p-2 rounded-xl bg-muted/30">
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
                       Completed
                     </p>
-                    <p className="text-lg font-light text-foreground mt-1">{completed}</p>
+                    <p className="text-base font-light text-foreground mt-0.5">{completed}</p>
                   </div>
-                  <div className="p-3 rounded-xl bg-muted/30">
+                  <div className="p-2 rounded-xl bg-muted/30">
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
                       In progress
                     </p>
-                    <p className="text-lg font-light text-foreground mt-1">{inProgress}</p>
+                    <p className="text-base font-light text-foreground mt-0.5">{inProgress}</p>
                   </div>
-                  <div className="p-3 rounded-xl bg-muted/30">
+                  <div className="p-2 rounded-xl bg-muted/30">
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
                       Hours
                     </p>
-                    <p className="text-lg font-light text-foreground mt-1">{weeklyHours}h</p>
+                    <p className="text-base font-light text-foreground mt-0.5">{weeklyHours}h</p>
                   </div>
                 </div>
 
