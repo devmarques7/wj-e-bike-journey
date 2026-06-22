@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   AlertCircle,
   TrendingUp,
+  Info,
 } from "lucide-react";
 import {
   Dialog,
@@ -21,12 +22,18 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
-const DAY_LABELS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-const DAY_SHORT = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 const trim = (t: string | null | undefined) => (t ? t.slice(0, 5) : "");
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const ymd = (d: Date) => d.toISOString().slice(0, 10);
@@ -74,6 +81,7 @@ export default function StaffScheduleDialog({
   weeklyAppointments,
   weeklyCapacity,
 }: Props) {
+  const { t, i18n } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [draft, setDraft] = useState<Record<number, DraftRow>>(() => {
@@ -125,7 +133,7 @@ export default function StaffScheduleDialog({
       setAppts((apptRows ?? []) as StaffApptRow[]);
     } catch (e: any) {
       console.error(e);
-      toast.error(e.message ?? "Falha ao carregar dados do mecânico");
+      toast.error(e.message ?? t("staff_schedule_dialog.load_failed"));
     } finally {
       setLoading(false);
     }
@@ -163,10 +171,10 @@ export default function StaffScheduleDialog({
       }));
       const { error } = await supabase.from("staff_schedules").insert(rows);
       if (error) throw error;
-      toast.success("Horário do mecânico atualizado");
+      toast.success(t("staff_schedule_dialog.saved"));
       onOpenChange(false);
     } catch (e: any) {
-      toast.error(e.message ?? "Falha a guardar");
+      toast.error(e.message ?? t("staff_schedule_dialog.save_failed"));
     } finally {
       setSaving(false);
     }
@@ -200,10 +208,10 @@ export default function StaffScheduleDialog({
             <div>
               <DialogTitle className="text-foreground flex items-center gap-2">
                 {staffName}
-                <Badge variant="outline" className="text-[10px]">Mecânico</Badge>
+                <Badge variant="outline" className="text-[10px]">{t("staff_schedule_dialog.mechanic")}</Badge>
               </DialogTitle>
               <DialogDescription>
-                {staffEmail ?? "—"} · Gerir horário e ver carga de trabalho
+                {staffEmail ?? "—"} · {t("staff_schedule_dialog.header_desc")}
               </DialogDescription>
             </div>
             <Badge
@@ -216,7 +224,7 @@ export default function StaffScheduleDialog({
                     : "bg-wj-green/20 text-wj-green border-wj-green/30",
               )}
             >
-              {loadPct}% carga
+              {t("staff_schedule_dialog.load", { pct: loadPct })}
             </Badge>
           </div>
         </DialogHeader>
@@ -225,11 +233,11 @@ export default function StaffScheduleDialog({
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="workload" className="gap-2">
               <Activity className="h-4 w-4" />
-              Workload
+              {t("staff_schedule_dialog.tab_workload")}
             </TabsTrigger>
             <TabsTrigger value="schedule" className="gap-2">
               <Clock className="h-4 w-4" />
-              Horário
+              {t("staff_schedule_dialog.tab_schedule")}
             </TabsTrigger>
           </TabsList>
 
@@ -237,40 +245,40 @@ export default function StaffScheduleDialog({
           <TabsContent value="workload" className="space-y-4 mt-4">
             {loading ? (
               <div className="flex items-center justify-center py-10 text-muted-foreground gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" /> A carregar…
+                <Loader2 className="h-4 w-4 animate-spin" /> {t("staff_schedule_dialog.loading")}
               </div>
             ) : (
               <>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <MetricCard
                     icon={<CalendarIcon className="h-4 w-4" />}
-                    label="Esta semana"
+                    label={t("staff_schedule_dialog.metric_this_week")}
                     value={weeklyAppointments}
-                    sub={`de ${weeklyCapacity}`}
+                    sub={t("staff_schedule_dialog.metric_of", { n: weeklyCapacity })}
                   />
                   <MetricCard
                     icon={<CheckCircle2 className="h-4 w-4" />}
-                    label="Concluídos"
+                    label={t("staff_schedule_dialog.metric_completed")}
                     value={metrics.byStatus.completed ?? 0}
-                    sub="últimos 30d"
+                    sub={t("staff_schedule_dialog.metric_last_30d")}
                   />
                   <MetricCard
                     icon={<TrendingUp className="h-4 w-4" />}
-                    label="Duração média"
+                    label={t("staff_schedule_dialog.metric_avg_duration")}
                     value={metrics.avgDuration}
-                    sub="minutos"
+                    sub={t("staff_schedule_dialog.metric_minutes")}
                   />
                   <MetricCard
                     icon={<AlertCircle className="h-4 w-4" />}
-                    label="Próximos"
+                    label={t("staff_schedule_dialog.metric_upcoming")}
                     value={metrics.upcoming.length}
-                    sub="agendados"
+                    sub={t("staff_schedule_dialog.metric_scheduled")}
                   />
                 </div>
 
                 <div className="bg-muted/30 rounded-xl p-4">
                   <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3">
-                    Carga semanal
+                    {t("staff_schedule_dialog.weekly_load")}
                   </p>
                   <div className="h-2 bg-muted rounded-full overflow-hidden">
                     <motion.div
@@ -288,17 +296,17 @@ export default function StaffScheduleDialog({
                     />
                   </div>
                   <div className="mt-2 flex justify-between text-[11px] text-muted-foreground">
-                    <span>{weeklyAppointments} agendamentos</span>
-                    <span>{weeklyCapacity} capacidade</span>
+                    <span>{t("staff_schedule_dialog.appointments_count", { n: weeklyAppointments })}</span>
+                    <span>{t("staff_schedule_dialog.capacity_count", { n: weeklyCapacity })}</span>
                   </div>
                 </div>
 
                 <div className="bg-muted/30 rounded-xl p-4">
                   <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3">
-                    Próximos agendamentos
+                    {t("staff_schedule_dialog.upcoming_title")}
                   </p>
                   {metrics.upcoming.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">Sem agendamentos futuros.</p>
+                    <p className="text-xs text-muted-foreground">{t("staff_schedule_dialog.no_upcoming")}</p>
                   ) : (
                     <div className="space-y-1.5 max-h-56 overflow-y-auto">
                       {metrics.upcoming.slice(0, 10).map((a) => (
@@ -307,7 +315,7 @@ export default function StaffScheduleDialog({
                           className="flex items-center justify-between text-xs p-2 rounded-lg bg-background/40"
                         >
                           <span className="text-foreground">
-                            {new Date(a.scheduled_date).toLocaleDateString("pt-PT", {
+                            {new Date(a.scheduled_date).toLocaleDateString(i18n.language === "pt" ? "pt-PT" : "en-GB", {
                               weekday: "short",
                               day: "numeric",
                               month: "short",
@@ -329,14 +337,15 @@ export default function StaffScheduleDialog({
           {/* ---------------- Schedule ---------------- */}
           <TabsContent value="schedule" className="space-y-3 mt-4">
             <p className="text-xs text-muted-foreground">
-              Define os dias e horários de trabalho. Cada alteração cria uma nova versão a partir de hoje.
+              {t("staff_schedule_dialog.schedule_intro")}
             </p>
 
             {loading ? (
               <div className="flex items-center justify-center py-10 text-muted-foreground gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" /> A carregar…
+                <Loader2 className="h-4 w-4 animate-spin" /> {t("staff_schedule_dialog.loading")}
               </div>
             ) : (
+              <TooltipProvider delayDuration={200}>
               <div className="space-y-2">
                 {[1, 2, 3, 4, 5, 6, 0].map((dow) => {
                   const r = draft[dow];
@@ -353,7 +362,7 @@ export default function StaffScheduleDialog({
                         onCheckedChange={(v) => update(dow, { is_working: v })}
                       />
                       <span className="w-20 text-sm font-medium text-foreground">
-                        {DAY_SHORT[dow]}
+                        {t(`staff_schedule_dialog.days.${DAY_KEYS[dow]}`)}
                       </span>
                       {r.is_working ? (
                         <>
@@ -363,7 +372,7 @@ export default function StaffScheduleDialog({
                             onChange={(e) => update(dow, { start_time: e.target.value })}
                             className="bg-muted px-2 py-1 rounded text-xs text-foreground"
                           />
-                          <span className="text-muted-foreground text-xs">até</span>
+                          <span className="text-muted-foreground text-xs">{t("staff_schedule_dialog.until")}</span>
                           <input
                             type="time"
                             value={r.end_time}
@@ -371,8 +380,22 @@ export default function StaffScheduleDialog({
                             className="bg-muted px-2 py-1 rounded text-xs text-foreground"
                           />
                           <div className="flex items-center gap-2 ml-auto">
-                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                              Paralelo
+                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                              {t("staff_schedule_dialog.parallel")}
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    aria-label={t("staff_schedule_dialog.parallel")}
+                                    className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors"
+                                  >
+                                    <Info className="h-3 w-3" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="max-w-[220px] text-xs">
+                                  {t("staff_schedule_dialog.parallel_info")}
+                                </TooltipContent>
+                              </Tooltip>
                             </span>
                             <Input
                               type="number"
@@ -389,12 +412,13 @@ export default function StaffScheduleDialog({
                           </div>
                         </>
                       ) : (
-                        <span className="text-sm text-muted-foreground">Folga</span>
+                        <span className="text-sm text-muted-foreground">{t("staff_schedule_dialog.day_off")}</span>
                       )}
                     </div>
                   );
                 })}
               </div>
+              </TooltipProvider>
             )}
 
             <div className="flex justify-end gap-2 pt-2">
@@ -404,7 +428,7 @@ export default function StaffScheduleDialog({
                 onClick={() => onOpenChange(false)}
                 disabled={saving}
               >
-                Cancelar
+                {t("staff_schedule_dialog.cancel")}
               </Button>
               <Button
                 size="sm"
@@ -412,7 +436,7 @@ export default function StaffScheduleDialog({
                 onClick={handleSave}
                 disabled={saving || loading}
               >
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Guardar Horário"}
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : t("staff_schedule_dialog.save")}
               </Button>
             </div>
           </TabsContent>
