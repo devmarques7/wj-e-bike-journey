@@ -18,6 +18,7 @@ export default function ShiftTracker() {
     pause,
     resume,
     finish,
+    row,
   } = useShift();
   const constraintsRef = useRef(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -36,17 +37,25 @@ export default function ShiftTracker() {
   const textOpacity = useTransform(x, [0, maxDrag * 0.5], [1, 0]);
   const checkOpacity = useTransform(x, [maxDrag * 0.7, maxDrag], [0, 1]);
 
-  // Dynamic mesh gradient palette per theme
-  const shaderColors = theme === "dark"
-    ? ["#0a0a0a", "#0d2818", "#058c42", "#10b981", "#022c1a"]
-    : ["#f5f7f5", "#dff5e8", "#058c42", "#86efac", "#ecfdf5"];
-
   const formatTime = (seconds: number) => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
     return `${hrs.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
+
+  const formatClock = (iso: string | null | undefined) => {
+    if (!iso) return "—";
+    const d = new Date(iso);
+    return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+  };
+
+  const formatDuration = (minutes: number) => {
+    const h = Math.floor(minutes / 60);
+    const m = Math.floor(minutes % 60);
+    return `${h}h ${m.toString().padStart(2, "0")}m`;
+  };
+
 
   const handleDragEnd = () => {
     const currentX = x.get();
@@ -62,8 +71,16 @@ export default function ShiftTracker() {
   };
 
   // Map shared status into the visual states this card supports.
-  const visual: "idle" | "active" | "paused" = status === "completed" ? "idle" : status;
-  const isCompleted = status === "completed";
+  const visual: "idle" | "active" | "paused" | "completed" = status === "completed" ? "completed" : status;
+  const isCompleted = visual === "completed";
+
+  // Dynamic mesh gradient palette per theme
+  const shaderColors = isCompleted
+    ? ["#022c1a", "#058c42", "#10b981", "#86efac", "#ecfdf5"]
+    : theme === "dark"
+    ? ["#0a0a0a", "#0d2818", "#058c42", "#10b981", "#022c1a"]
+    : ["#f5f7f5", "#dff5e8", "#058c42", "#86efac", "#ecfdf5"];
+
 
   return (
     <div className="h-full relative group">
@@ -72,7 +89,7 @@ export default function ShiftTracker() {
         <motion.div
           className="absolute -inset-[100%] w-[300%] h-[300%]"
           style={{
-            background: visual === "active"
+            background: visual === "active" || visual === "completed"
               ? "conic-gradient(from 0deg at 50% 50%, transparent 0deg, transparent 60deg, hsl(var(--wj-green) / 0.8) 120deg, hsl(var(--wj-green)) 180deg, hsl(var(--wj-green) / 0.8) 240deg, transparent 300deg, transparent 360deg)"
               : visual === "paused"
               ? "conic-gradient(from 0deg at 50% 50%, transparent 0deg, transparent 60deg, hsl(45 100% 50% / 0.8) 120deg, hsl(45 100% 50%) 180deg, hsl(45 100% 50% / 0.8) 240deg, transparent 300deg, transparent 360deg)"
@@ -104,15 +121,29 @@ export default function ShiftTracker() {
         />
 
         {/* Overlay for legibility */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/40 to-background/10 dark:from-background/80 dark:via-background/30 dark:to-transparent" />
+        <div className={cn(
+          "absolute inset-0",
+          isCompleted
+            ? "bg-gradient-to-t from-wj-green/90 via-wj-green/50 to-wj-green/20 dark:from-wj-green/90 dark:via-wj-green/60 dark:to-wj-green/30"
+            : "bg-gradient-to-t from-background/90 via-background/40 to-background/10 dark:from-background/80 dark:via-background/30 dark:to-transparent"
+        )} />
         
         {/* Content */}
         <div className="relative z-10 h-full p-4 flex flex-col justify-between">
           <div>
-            <div className="w-9 h-9 rounded-xl bg-wj-green/20 flex items-center justify-center mb-3 border border-wj-green/30">
-              <Clock className="h-4 w-4 text-wj-green" />
+            <div className={cn(
+              "w-9 h-9 rounded-xl flex items-center justify-center mb-3 border",
+              isCompleted
+                ? "bg-white/20 border-white/30"
+                : "bg-wj-green/20 border-wj-green/30"
+            )}>
+              {isCompleted ? (
+                <CheckCircle className="h-4 w-4 text-white" />
+              ) : (
+                <Clock className="h-4 w-4 text-wj-green" />
+              )}
             </div>
-            <h3 className="text-sm font-semibold text-foreground mb-1">
+            <h3 className={cn("text-sm font-semibold mb-1", isCompleted ? "text-white" : "text-foreground")}>
               {isCompleted
                 ? "Shift Completed"
                 : visual === "idle"
@@ -121,7 +152,7 @@ export default function ShiftTracker() {
                 ? "Shift Active"
                 : "Shift Paused"}
             </h3>
-            <p className="text-[10px] text-muted-foreground leading-relaxed">
+            <p className={cn("text-[10px] leading-relaxed", isCompleted ? "text-white/80" : "text-muted-foreground")}>
               {isCompleted
                 ? "You've clocked out for today"
                 : visual === "idle"
@@ -173,15 +204,36 @@ export default function ShiftTracker() {
               <div className="text-center py-2">
                 <p className={cn(
                   "text-2xl font-mono font-bold",
-                  visual === "active"
+                  isCompleted
+                    ? "text-white"
+                    : visual === "active"
                     ? "text-wj-green"
-                    : isCompleted
-                    ? "text-sky-400"
                     : "text-amber-500"
                 )}>
                   {formatTime(elapsedSec)}
                 </p>
+                {isCompleted && (
+                  <p className="text-[10px] text-white/70 mt-1">Total worked today</p>
+                )}
               </div>
+
+              {/* Completed summary */}
+              {isCompleted && row && (
+                <div className="grid grid-cols-3 gap-2 rounded-xl bg-white/10 border border-white/20 p-2">
+                  <div className="text-center">
+                    <p className="text-[9px] uppercase tracking-wider text-white/60 mb-0.5">Clock in</p>
+                    <p className="text-xs font-semibold text-white tabular-nums">{formatClock(row.clock_in)}</p>
+                  </div>
+                  <div className="text-center border-l border-white/20">
+                    <p className="text-[9px] uppercase tracking-wider text-white/60 mb-0.5">Clock out</p>
+                    <p className="text-xs font-semibold text-white tabular-nums">{formatClock(row.clock_out)}</p>
+                  </div>
+                  <div className="text-center border-l border-white/20">
+                    <p className="text-[9px] uppercase tracking-wider text-white/60 mb-0.5">Total</p>
+                    <p className="text-xs font-semibold text-white tabular-nums">{formatDuration(row.worked_minutes)}</p>
+                  </div>
+                </div>
+              )}
 
               {/* Controls */}
               {!isCompleted && (
