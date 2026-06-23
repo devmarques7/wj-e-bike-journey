@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 
 // Privileges by tier
 const tierPrivileges = {
@@ -82,7 +82,7 @@ export default function MyWallet() {
   const nextTierData = nextTier ? tierPrivileges[nextTier] : null;
 
   return (
-    <DashboardLayout>
+    <RoleDashboardLayout>
       <div className="p-4 lg:p-6 max-w-7xl mx-auto space-y-6">
         {/* Back Button - Desktop */}
         <motion.div
@@ -364,6 +364,6 @@ export default function MyWallet() {
             </div>
           </motion.div>
         </div>
-      </DashboardLayout>
+      </RoleDashboardLayout>
     );
   }
