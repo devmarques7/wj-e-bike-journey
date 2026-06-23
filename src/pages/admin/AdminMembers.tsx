@@ -142,7 +142,7 @@ export default function AdminMembers() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ email: "", full_name: "", role: "customer" as Role });
+  const [form, setForm] = useState({ email: "", full_name: "", role: "staff" as Role });
   const [createdCreds, setCreatedCreds] = useState<{
     email: string;
     password: string;
