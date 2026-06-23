@@ -184,6 +184,13 @@ export default function BikeShowcase() {
         if (cpErr) throw cpErr;
         cp = created;
       }
+      // Enforce one active bike per user: deactivate any existing active bikes first
+      await supabase
+        .from("customer_bikes")
+        .update({ is_active: false })
+        .eq("customer_id", cp!.id)
+        .eq("is_active", true);
+
       const { data: bike, error } = await supabase
         .from("customer_bikes")
         .insert({
