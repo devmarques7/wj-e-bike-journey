@@ -31,6 +31,8 @@ import { cn } from "@/lib/utils";
 import { useSchedulingData } from "@/hooks/scheduling/useSchedulingData";
 import StaffScheduleDialog from "@/components/dashboard/scheduling/StaffScheduleDialog";
 import TeamWeekWorkloadCompact from "@/components/dashboard/scheduling/TeamWeekWorkloadCompact";
+import MyShiftWeekCompact from "@/components/dashboard/scheduling/MyShiftWeekCompact";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 const WEEKDAYS_HEAT_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
@@ -368,23 +370,45 @@ export default function StaffSchedule() {
             transition={{ delay: 0.12 }}
             className="col-span-12 lg:col-span-8 lg:min-h-[340px] p-3 lg:p-4 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
           >
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <h3 className="text-sm font-medium text-foreground">My Weekly Schedule</h3>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  Distribution of personal appointments across the week
-                </p>
-              </div>
-            </div>
-            <div className="flex-1 min-h-0">
-              {me ? (
-                <TeamWeekWorkloadCompact mechanics={[me]} />
-              ) : (
-                <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
-                  Your mechanic profile is not configured yet.
+            <Tabs defaultValue="appointments" className="flex-1 flex flex-col min-h-0">
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="min-w-0">
+                  <h3 className="text-sm font-medium text-foreground">My Weekly Schedule</h3>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Distribution of personal appointments and shift fulfillment
+                  </p>
                 </div>
-              )}
-            </div>
+                <TabsList className="h-8 bg-muted/40 border border-border/30">
+                  <TabsTrigger value="appointments" className="text-[11px] px-3 h-6">
+                    Appointments
+                  </TabsTrigger>
+                  <TabsTrigger value="shifts" className="text-[11px] px-3 h-6">
+                    Shifts
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+              <TabsContent value="appointments" className="flex-1 min-h-0 mt-0">
+                {me ? (
+                  <TeamWeekWorkloadCompact mechanics={[me]} />
+                ) : (
+                  <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
+                    Your mechanic profile is not configured yet.
+                  </div>
+                )}
+              </TabsContent>
+              <TabsContent value="shifts" className="flex-1 min-h-0 mt-0">
+                {mineUserId ? (
+                  <MyShiftWeekCompact
+                    userId={mineUserId}
+                    displayName={me?.full_name ?? me?.email ?? user?.email ?? "Me"}
+                  />
+                ) : (
+                  <div className="h-full flex items-center justify-center text-xs text-muted-foreground">
+                    Sign in to track your shifts.
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </motion.div>
 
           {/* My profile card */}
