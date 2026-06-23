@@ -1,19 +1,24 @@
-import { useState, useRef, useEffect } from "react";
+import { useRef } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { ArrowRight, Play, Pause, StopCircle, Clock, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { MeshGradient } from "@paper-design/shaders-react";
 import { useTheme } from "@/contexts/ThemeContext";
-
-type ShiftState = "idle" | "active" | "paused";
+import { useShift } from "@/hooks/useShift";
 
 export default function ShiftTracker() {
   const { theme } = useTheme();
-  const [shiftState, setShiftState] = useState<ShiftState>("idle");
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const {
+    status,
+    elapsedSec,
+    working,
+    start,
+    pause,
+    resume,
+    finish,
+  } = useShift();
   const constraintsRef = useRef(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
   
   const x = useMotionValue(0);
   const sliderWidth = 200;
@@ -34,24 +39,6 @@ export default function ShiftTracker() {
     ? ["#0a0a0a", "#0d2818", "#058c42", "#10b981", "#022c1a"]
     : ["#f5f7f5", "#dff5e8", "#058c42", "#86efac", "#ecfdf5"];
 
-  // Timer logic
-  useEffect(() => {
-    if (shiftState === "active") {
-      intervalRef.current = setInterval(() => {
-        setElapsedSeconds(prev => prev + 1);
-      }, 1000);
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    }
-
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [shiftState]);
-
   const formatTime = (seconds: number) => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
@@ -63,8 +50,8 @@ export default function ShiftTracker() {
     const currentX = x.get();
     if (currentX >= maxDrag * 0.8) {
       animate(x, maxDrag, { duration: 0.2 });
-      setTimeout(() => {
-        setShiftState("active");
+      setTimeout(async () => {
+        await start();
         animate(x, 0, { duration: 0 });
       }, 300);
     } else {
@@ -72,18 +59,9 @@ export default function ShiftTracker() {
     }
   };
 
-  const handlePause = () => {
-    setShiftState("paused");
-  };
-
-  const handleResume = () => {
-    setShiftState("active");
-  };
-
-  const handleEndShift = () => {
-    setShiftState("idle");
-    setElapsedSeconds(0);
-  };
+  // Map shared status into the visual states this card supports.
+  const visual: "idle" | "active" | "paused" = status === "completed" ? "idle" : status;
+  const isCompleted = status === "completed";
 
   return (
     <div className="h-full relative group">
@@ -92,13 +70,13 @@ export default function ShiftTracker() {
         <motion.div
           className="absolute -inset-[100%] w-[300%] h-[300%]"
           style={{
-            background: shiftState === "active"
+            background: visual === "active"
               ? "conic-gradient(from 0deg at 50% 50%, transparent 0deg, transparent 60deg, hsl(var(--wj-green) / 0.8) 120deg, hsl(var(--wj-green)) 180deg, hsl(var(--wj-green) / 0.8) 240deg, transparent 300deg, transparent 360deg)"
-              : shiftState === "paused"
+              : visual === "paused"
               ? "conic-gradient(from 0deg at 50% 50%, transparent 0deg, transparent 60deg, hsl(45 100% 50% / 0.8) 120deg, hsl(45 100% 50%) 180deg, hsl(45 100% 50% / 0.8) 240deg, transparent 300deg, transparent 360deg)"
               : "transparent",
           }}
-          animate={{ rotate: shiftState !== "idle" ? 360 : 0 }}
+          animate={{ rotate: visual !== "idle" ? 360 : 0 }}
           transition={{
             duration: 8,
             repeat: Infinity,
@@ -133,18 +111,26 @@ export default function ShiftTracker() {
               <Clock className="h-4 w-4 text-wj-green" />
             </div>
             <h3 className="text-sm font-semibold text-foreground mb-1">
-              {shiftState === "idle" ? "Start Shift" : shiftState === "active" ? "Shift Active" : "Shift Paused"}
+              {isCompleted
+                ? "Shift Completed"
+                : visual === "idle"
+                ? "Start Shift"
+                : visual === "active"
+                ? "Shift Active"
+                : "Shift Paused"}
             </h3>
             <p className="text-[10px] text-muted-foreground leading-relaxed">
-              {shiftState === "idle" 
-                ? "Swipe to clock in" 
-                : shiftState === "active"
+              {isCompleted
+                ? "You've clocked out for today"
+                : visual === "idle"
+                ? "Swipe to clock in"
+                : visual === "active"
                 ? "Tracking your work hours"
                 : "Timer paused"}
             </p>
           </div>
 
-          {shiftState === "idle" ? (
+          {visual === "idle" && !isCompleted ? (
             /* Swipe Slider */
             <motion.div
               ref={constraintsRef}
@@ -185,45 +171,54 @@ export default function ShiftTracker() {
               <div className="text-center py-2">
                 <p className={cn(
                   "text-2xl font-mono font-bold",
-                  shiftState === "active" ? "text-wj-green" : "text-amber-500"
+                  visual === "active"
+                    ? "text-wj-green"
+                    : isCompleted
+                    ? "text-sky-400"
+                    : "text-amber-500"
                 )}>
-                  {formatTime(elapsedSeconds)}
+                  {formatTime(elapsedSec)}
                 </p>
               </div>
 
               {/* Controls */}
-              <div className="flex gap-2">
-                {shiftState === "active" ? (
+              {!isCompleted && (
+                <div className="flex gap-2">
+                  {visual === "active" ? (
+                    <Button
+                      onClick={() => pause()}
+                      disabled={working}
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 h-9 text-xs border-amber-500/30 text-amber-500 hover:bg-amber-500/10"
+                    >
+                      <Pause className="h-3.5 w-3.5 mr-1.5" />
+                      Pause
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => resume()}
+                      disabled={working}
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 h-9 text-xs border-wj-green/30 text-wj-green hover:bg-wj-green/10"
+                    >
+                      <Play className="h-3.5 w-3.5 mr-1.5" />
+                      Resume
+                    </Button>
+                  )}
                   <Button
-                    onClick={handlePause}
+                    onClick={() => finish()}
+                    disabled={working}
                     variant="outline"
                     size="sm"
-                    className="flex-1 h-9 text-xs border-amber-500/30 text-amber-500 hover:bg-amber-500/10"
+                    className="flex-1 h-9 text-xs border-destructive/30 text-destructive hover:bg-destructive/10"
                   >
-                    <Pause className="h-3.5 w-3.5 mr-1.5" />
-                    Pause
+                    <StopCircle className="h-3.5 w-3.5 mr-1.5" />
+                    End
                   </Button>
-                ) : (
-                  <Button
-                    onClick={handleResume}
-                    variant="outline"
-                    size="sm"
-                    className="flex-1 h-9 text-xs border-wj-green/30 text-wj-green hover:bg-wj-green/10"
-                  >
-                    <Play className="h-3.5 w-3.5 mr-1.5" />
-                    Resume
-                  </Button>
-                )}
-                <Button
-                  onClick={handleEndShift}
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 h-9 text-xs border-destructive/30 text-destructive hover:bg-destructive/10"
-                >
-                  <StopCircle className="h-3.5 w-3.5 mr-1.5" />
-                  End
-                </Button>
-              </div>
+                </div>
+              )}
             </div>
           )}
         </div>
