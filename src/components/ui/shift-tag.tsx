@@ -98,6 +98,21 @@ export function ShiftTag() {
     return () => clearInterval(t);
   }, []);
 
+  // Collapse when clicking outside the pill / panel
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent | TouchEvent) => {
+      const root = elRef.current;
+      if (root && !root.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("touchstart", onDown);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("touchstart", onDown);
+    };
+  }, [open]);
+
   // Load today's shift row
   const reload = async () => {
     if (!userId) return;
