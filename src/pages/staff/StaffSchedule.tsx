@@ -312,15 +312,6 @@ export default function StaffSchedule() {
                   Distribution of personal appointments across the week
                 </p>
               </div>
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-xs gap-1.5 h-8 border-wj-green/30 text-wj-green hover:bg-wj-green/10 hover:text-wj-green hover:border-wj-green/50"
-                onClick={() => setMySchedOpen(true)}
-              >
-                <LayoutGrid className="h-3.5 w-3.5" />
-                Edit
-              </Button>
             </div>
             <div className="flex-1 min-h-0">
               {me ? (
