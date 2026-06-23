@@ -71,8 +71,16 @@ export default function ShiftTracker() {
   };
 
   // Map shared status into the visual states this card supports.
-  const visual: "idle" | "active" | "paused" = status === "completed" ? "idle" : status;
-  const isCompleted = status === "completed";
+  const visual: "idle" | "active" | "paused" | "completed" = status === "completed" ? "completed" : status;
+  const isCompleted = visual === "completed";
+
+  // Dynamic mesh gradient palette per theme
+  const shaderColors = isCompleted
+    ? ["#022c1a", "#058c42", "#10b981", "#86efac", "#ecfdf5"]
+    : theme === "dark"
+    ? ["#0a0a0a", "#0d2818", "#058c42", "#10b981", "#022c1a"]
+    : ["#f5f7f5", "#dff5e8", "#058c42", "#86efac", "#ecfdf5"];
+
 
   return (
     <div className="h-full relative group">
