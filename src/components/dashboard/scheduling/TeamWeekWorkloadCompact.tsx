@@ -244,7 +244,7 @@ export default function TeamWeekWorkloadCompact({ mechanics }: Props) {
                       className={cn(
                         "relative h-full min-h-[44px] sm:min-h-[36px] rounded-lg border flex items-center justify-center overflow-hidden",
                         off
-                          ? "bg-muted/20 border-border/20"
+                          ? "dark:bg-secondary/40 dark:border-secondary/30 bg-secondary/[0.15] border-secondary/20"
                           : "bg-muted/30 border-border/30",
                         isToday && "ring-1 ring-wj-green/40",
                       )}
