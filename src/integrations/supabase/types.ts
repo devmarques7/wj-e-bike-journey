@@ -1860,6 +1860,48 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_shifts: {
+        Row: {
+          clock_in: string | null
+          clock_out: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          scheduled_minutes: number
+          shift_date: string
+          status: string
+          updated_at: string
+          user_id: string
+          worked_minutes: number
+        }
+        Insert: {
+          clock_in?: string | null
+          clock_out?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          scheduled_minutes?: number
+          shift_date: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          worked_minutes?: number
+        }
+        Update: {
+          clock_in?: string | null
+          clock_out?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          scheduled_minutes?: number
+          shift_date?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          worked_minutes?: number
+        }
+        Relationships: []
+      }
       subscription_events: {
         Row: {
           created_at: string
