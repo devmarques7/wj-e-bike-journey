@@ -131,10 +131,19 @@ export default function ShiftTracker() {
         {/* Content */}
         <div className="relative z-10 h-full p-4 flex flex-col justify-between">
           <div>
-            <div className="w-9 h-9 rounded-xl bg-wj-green/20 flex items-center justify-center mb-3 border border-wj-green/30">
-              <Clock className="h-4 w-4 text-wj-green" />
+            <div className={cn(
+              "w-9 h-9 rounded-xl flex items-center justify-center mb-3 border",
+              isCompleted
+                ? "bg-white/20 border-white/30"
+                : "bg-wj-green/20 border-wj-green/30"
+            )}>
+              {isCompleted ? (
+                <CheckCircle className="h-4 w-4 text-white" />
+              ) : (
+                <Clock className="h-4 w-4 text-wj-green" />
+              )}
             </div>
-            <h3 className="text-sm font-semibold text-foreground mb-1">
+            <h3 className={cn("text-sm font-semibold mb-1", isCompleted ? "text-white" : "text-foreground")}>
               {isCompleted
                 ? "Shift Completed"
                 : visual === "idle"
@@ -143,7 +152,7 @@ export default function ShiftTracker() {
                 ? "Shift Active"
                 : "Shift Paused"}
             </h3>
-            <p className="text-[10px] text-muted-foreground leading-relaxed">
+            <p className={cn("text-[10px] leading-relaxed", isCompleted ? "text-white/80" : "text-muted-foreground")}>
               {isCompleted
                 ? "You've clocked out for today"
                 : visual === "idle"
