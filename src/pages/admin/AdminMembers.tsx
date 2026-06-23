@@ -189,26 +189,31 @@ export default function AdminMembers() {
         if (!prev || rank(r.role) > rank(prev)) rolesById.set(r.user_id, r.role);
       });
     }
+    const teamRoles = new Set<Role>(["admin", "staff"]);
     setMembers(
-      (profiles ?? []).map((p: any) => ({
-        ...p,
-        role: rolesById.get(p.user_id) ?? "customer",
-      })),
+      (profiles ?? ])
+        .map((p: any) => ({
+          ...p,
+          role: rolesById.get(p.user_id) ?? "customer",
+        }))
+        .filter((m: MemberRow) => teamRoles.has(m.role)),
     );
 
-    // Load invitations
+    // Load invitations — scope to team roles only
     const { data: invitesData } = await supabase
       .from("member_invitations")
       .select("id, email, role, status, created_at, expires_at, user_id")
       .order("created_at", { ascending: false });
     setInvites(
-      ((invitesData ?? []) as any[]).map((i) => ({
-        ...i,
-        status:
-          i.status === "pending" && new Date(i.expires_at).getTime() < Date.now()
-            ? "expired"
-            : i.status,
-      })),
+      ((invitesData ?? []) as any[])
+        .map((i) => ({
+          ...i,
+          status:
+            i.status === "pending" && new Date(i.expires_at).getTime() < Date.now()
+              ? "expired"
+              : i.status,
+        }))
+        .filter((i: InviteRow) => teamRoles.has(i.role)),
     );
     setLoading(false);
   };
