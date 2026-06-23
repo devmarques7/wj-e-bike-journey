@@ -15,6 +15,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import NotificationsBell from "@/components/dashboard/NotificationsBell";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { LocationTag } from "@/components/ui/location-tag";
+import { ShiftTag } from "@/components/ui/shift-tag";
 import { useDashboardNav } from "@/hooks/useDashboardNav";
 
 /**
@@ -106,7 +107,7 @@ export default function UnifiedDashboardHeader() {
 
         {/* Right: Status + User */}
         <div className="flex items-center gap-4">
-          <LocationTag />
+          {user?.role === "staff" ? <ShiftTag /> : <LocationTag />}
           <LanguageSwitcher />
           <ThemeToggle />
           <NotificationsBell />
