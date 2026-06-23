@@ -8,6 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "@/contexts/ThemeContext";
+import { cn } from "@/lib/utils";
+import { MeshGradient } from "@paper-design/shaders-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PhoneInput } from "@/components/PhoneInput";
 
@@ -24,6 +27,7 @@ const Auth = () => {
   const [phoneVerified, setPhoneVerified] = useState(false);
   
   const { login, setMockUser, user, isLoading: authLoading } = useAuth();
+  const { theme } = useTheme();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -404,28 +408,29 @@ const Auth = () => {
 
       {/* Right Panel - Visual */}
       <div className="hidden lg:flex flex-1 relative bg-secondary p-6">
-        {/* Inner container with video background */}
-        <div className="relative w-full h-full rounded-3xl overflow-hidden">
-          {/* Video Background */}
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="absolute inset-0 w-full h-full object-cover"
-          >
-            <source src="/videos/auth-background.mp4" type="video/mp4" />
-          </video>
-          
-          {/* Overlay gradient */}
+        {/* Inner container with ShiftTracker-style mesh gradient background */}
+        <div className="relative w-full h-full rounded-3xl overflow-hidden bg-background">
+          {/* Animated Mesh Gradient Background */}
+          <MeshGradient
+            colors={theme === "dark"
+              ? ["#0a0a0a", "#0d2818", "#058c42", "#10b981", "#022c1a"]
+              : ["#f5f7f5", "#dff5e8", "#058c42", "#86efac", "#ecfdf5"]}
+            speed={0.25}
+            distortion={1}
+            swirl={0.8}
+            className="absolute inset-0 w-full h-full"
+            style={{ opacity: theme === "dark" ? 0.85 : 0.7 }}
+          />
+
+          {/* Overlay gradient for legibility */}
           <div className="absolute inset-0 bg-gradient-to-br from-wj-forest/60 via-secondary/40 to-wj-deep/70" />
-          
+
           {/* Decorative blurs */}
           <div className="absolute inset-0 opacity-30">
             <div className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full bg-wj-green/30 blur-3xl" />
             <div className="absolute bottom-1/4 left-1/4 w-64 h-64 rounded-full bg-wj-green/20 blur-2xl" />
           </div>
-          
+
           {/* Content */}
           <div className="relative z-10 flex items-center justify-center w-full h-full p-12">
             <motion.div
