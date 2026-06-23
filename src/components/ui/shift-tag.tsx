@@ -5,28 +5,7 @@ import { createPortal } from "react-dom";
 import { GripVertical, Play, Pause, Square, Loader2, Activity } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
-
-type ShiftStatus = "idle" | "active" | "paused" | "completed";
-
-type ShiftRow = {
-  id: string;
-  shift_date: string;
-  clock_in: string | null;
-  clock_out: string | null;
-  worked_minutes: number;
-  scheduled_minutes: number;
-  status: string;
-};
-
-const ymd = (d: Date) => d.toISOString().slice(0, 10);
-const parseHM = (t: string | null) => {
-  if (!t) return 0;
-  const [h, m] = t.slice(0, 5).split(":").map(Number);
-  return (h ?? 0) * 60 + (m ?? 0);
-};
+import { useShift } from "@/hooks/useShift";
 const fmtHMS = (totalSec: number) => {
   const s = Math.max(0, Math.floor(totalSec));
   const h = Math.floor(s / 3600);
@@ -41,14 +20,18 @@ const fmtHMS = (totalSec: number) => {
  * timer. Click to expand and access Start / Resume / Pause / Finish actions.
  */
 export function ShiftTag() {
-  const { user } = useAuth();
-  const userId = user?.id ?? "";
-
-  const [row, setRow] = useState<ShiftRow | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [working, setWorking] = useState(false);
+  const {
+    userId,
+    loading,
+    working,
+    status,
+    elapsedSec,
+    start: handleStart,
+    pause: handlePause,
+    resume: handleResume,
+    finish: handleFinishAction,
+  } = useShift();
   const [open, setOpen] = useState(false);
-  const [now, setNow] = useState(Date.now());
 
   const elRef = useRef<HTMLDivElement>(null);
   const [bounds, setBounds] = useState({ left: 0, top: 0, right: 0, bottom: 0 });
@@ -92,12 +75,6 @@ export function ShiftTag() {
     return () => window.removeEventListener("resize", compute);
   }, []);
 
-  // Live ticker
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
-
   // Collapse when clicking outside the pill / panel
   useEffect(() => {
     if (!open) return;
@@ -113,44 +90,6 @@ export function ShiftTag() {
     };
   }, [open]);
 
-  // Load today's shift row
-  const reload = async () => {
-    if (!userId) return;
-    const today = ymd(new Date());
-    const { data } = await supabase
-      .from("staff_shifts")
-      .select("id, shift_date, clock_in, clock_out, worked_minutes, scheduled_minutes, status")
-      .eq("user_id", userId)
-      .eq("shift_date", today)
-      .maybeSingle();
-    setRow((data as ShiftRow | null) ?? null);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    if (!userId) return;
-    setLoading(true);
-    reload();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
-
-  const status: ShiftStatus = useMemo(() => {
-    if (!row) return "idle";
-    if (row.status === "active") return "active";
-    if (row.status === "paused") return "paused";
-    if (row.status === "completed" || row.clock_out) return "completed";
-    return "idle";
-  }, [row]);
-
-  // Live elapsed seconds = worked_minutes*60 + (active segment if any)
-  const elapsedSec = useMemo(() => {
-    const base = (row?.worked_minutes ?? 0) * 60;
-    if (status === "active" && row?.clock_in) {
-      return base + Math.max(0, Math.floor((now - new Date(row.clock_in).getTime()) / 1000));
-    }
-    return base;
-  }, [row, now, status]);
-
   const dotClass = {
     idle: "bg-muted-foreground/50",
     active: "bg-wj-green",
@@ -165,125 +104,10 @@ export function ShiftTag() {
     completed: "Completed",
   }[status];
 
-  // --- Actions ---
-  async function getScheduledMinutesForToday() {
-    const today = ymd(new Date());
-    const dow = new Date().getDay();
-    const { data } = await supabase
-      .from("staff_schedules")
-      .select("day_of_week, is_working, start_time, end_time")
-      .eq("staff_id", userId)
-      .lte("valid_from", today)
-      .or(`valid_until.is.null,valid_until.gte.${today}`);
-    const sch = (data ?? []).find((s: any) => s.day_of_week === dow);
-    if (!sch || !sch.is_working) return 0;
-    return Math.max(0, parseHM(sch.end_time) - parseHM(sch.start_time));
-  }
-
-  async function handleStart() {
-    if (!userId || working) return;
-    setWorking(true);
-    try {
-      const today = ymd(new Date());
-      const scheduled = await getScheduledMinutesForToday();
-      const { data, error } = await supabase
-        .from("staff_shifts")
-        .insert({
-          user_id: userId,
-          shift_date: today,
-          clock_in: new Date().toISOString(),
-          worked_minutes: 0,
-          scheduled_minutes: scheduled,
-          status: "active",
-        })
-        .select("id, shift_date, clock_in, clock_out, worked_minutes, scheduled_minutes, status")
-        .single();
-      if (error) throw error;
-      setRow(data as ShiftRow);
-      toast.success("Shift started");
-    } catch (e: any) {
-      toast.error(e.message ?? "Failed to start shift");
-    } finally {
-      setWorking(false);
-    }
-  }
-
-  async function handleResume() {
-    if (!row || working) return;
-    setWorking(true);
-    try {
-      const { data, error } = await supabase
-        .from("staff_shifts")
-        .update({ clock_in: new Date().toISOString(), status: "active" })
-        .eq("id", row.id)
-        .select("id, shift_date, clock_in, clock_out, worked_minutes, scheduled_minutes, status")
-        .single();
-      if (error) throw error;
-      setRow(data as ShiftRow);
-      toast.success("Shift resumed");
-    } catch (e: any) {
-      toast.error(e.message ?? "Failed to resume");
-    } finally {
-      setWorking(false);
-    }
-  }
-
-  async function handlePause() {
-    if (!row || working || status !== "active") return;
-    setWorking(true);
-    try {
-      const added = row.clock_in
-        ? Math.max(0, Math.floor((Date.now() - new Date(row.clock_in).getTime()) / 60000))
-        : 0;
-      const { data, error } = await supabase
-        .from("staff_shifts")
-        .update({
-          worked_minutes: (row.worked_minutes ?? 0) + added,
-          clock_in: null,
-          status: "paused",
-        })
-        .eq("id", row.id)
-        .select("id, shift_date, clock_in, clock_out, worked_minutes, scheduled_minutes, status")
-        .single();
-      if (error) throw error;
-      setRow(data as ShiftRow);
-      toast.success("Shift paused");
-    } catch (e: any) {
-      toast.error(e.message ?? "Failed to pause");
-    } finally {
-      setWorking(false);
-    }
-  }
-
-  async function handleFinish() {
-    if (!row || working) return;
-    setWorking(true);
-    try {
-      const added =
-        status === "active" && row.clock_in
-          ? Math.max(0, Math.floor((Date.now() - new Date(row.clock_in).getTime()) / 60000))
-          : 0;
-      const { data, error } = await supabase
-        .from("staff_shifts")
-        .update({
-          worked_minutes: (row.worked_minutes ?? 0) + added,
-          clock_out: new Date().toISOString(),
-          clock_in: null,
-          status: "completed",
-        })
-        .eq("id", row.id)
-        .select("id, shift_date, clock_in, clock_out, worked_minutes, scheduled_minutes, status")
-        .single();
-      if (error) throw error;
-      setRow(data as ShiftRow);
-      toast.success("Shift finished");
-      setOpen(false);
-    } catch (e: any) {
-      toast.error(e.message ?? "Failed to finish");
-    } finally {
-      setWorking(false);
-    }
-  }
+  const handleFinish = async () => {
+    await handleFinishAction();
+    setOpen(false);
+  };
 
   if (typeof document === "undefined") return null;
   if (!userId) return null;
