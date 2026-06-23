@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import ServiceAIAssistant from "@/components/dashboard/ServiceAIAssistant";
 import ServiceAppointmentsList from "@/components/dashboard/ServiceAppointmentsList";
 import ServiceCalendarCompact from "@/components/dashboard/ServiceCalendarCompact";
@@ -22,7 +22,7 @@ export default function ServiceDashboard() {
   }
 
   return (
-    <DashboardLayout>
+    <RoleDashboardLayout>
       <div className="p-4 lg:p-6 space-y-6">
         {/* AI Assistant Section - Above the Grid */}
         <motion.div
@@ -55,6 +55,6 @@ export default function ServiceDashboard() {
         {/* Service Actions Grid - Below */}
         <ServiceActionsGrid />
       </div>
-    </DashboardLayout>
+    </RoleDashboardLayout>
   );
 }

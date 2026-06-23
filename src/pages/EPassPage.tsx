@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Navigate } from "react-router-dom";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import BikeShowcase from "@/components/dashboard/BikeShowcase";
 import MemberPassCard from "@/components/dashboard/MemberPassCard";
 import { useAuth } from "@/contexts/AuthContext";
@@ -41,7 +41,7 @@ export default function EPassPage() {
   ];
 
   return (
-    <DashboardLayout>
+    <RoleDashboardLayout>
       <div className="p-4 lg:p-6 space-y-6">
         {/* Page Header */}
         <motion.div
@@ -94,6 +94,6 @@ export default function EPassPage() {
           </motion.div>
         ))}
       </div>
-    </DashboardLayout>
+    </RoleDashboardLayout>
   );
 }
