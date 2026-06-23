@@ -57,11 +57,16 @@ export default function StaffSchedule() {
   };
 
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { theme } = useTheme();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [mySchedOpen, setMySchedOpen] = useState(false);
   const [heatMonth, setHeatMonth] = useState(new Date().getMonth());
   const [heatYear, setHeatYear] = useState(new Date().getFullYear());
   const [monthCounts, setMonthCounts] = useState<Record<string, number>>({});
+
+  const shaderColors = theme === "dark"
+    ? ["#0a0a0a", "#0d2818", "#058c42", "#10b981", "#022c1a"]
+    : ["#f5f7f5", "#dff5e8", "#058c42", "#86efac", "#ecfdf5"];
 
   const dateStr = (selectedDate ?? new Date()).toISOString().slice(0, 10);
   const {
