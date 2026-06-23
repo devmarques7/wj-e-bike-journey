@@ -169,11 +169,11 @@ export default function StaffSchedule() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="flex items-center justify-between flex-wrap gap-3"
+          className="flex items-start sm:items-center justify-between gap-3"
         >
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <CalendarDays className="h-5 w-5 text-wj-green" />
+              <CalendarDays className="h-5 w-5 text-wj-green shrink-0" />
               <h1 className="text-xl sm:text-2xl font-light text-foreground">Manage</h1>
             </div>
             <p className="text-sm text-muted-foreground mt-1">
@@ -184,7 +184,7 @@ export default function StaffSchedule() {
             variant="outline"
             size="sm"
             onClick={() => setMySchedOpen(true)}
-            className="gap-2"
+            className="gap-2 shrink-0"
           >
             <Settings className="h-4 w-4" />
             <span className="hidden sm:inline">My Working Hours</span>
