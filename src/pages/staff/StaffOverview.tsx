@@ -113,6 +113,11 @@ export default function StaffOverview() {
           ))}
         </KPICarousel>
 
+        {/* Mobile: ShiftTracker sits alone right below the KPIs */}
+        <div className="lg:hidden min-h-[200px]">
+          <ShiftTracker />
+        </div>
+
         {/* Main Content Grid - 12 Columns */}
         <div className="grid grid-cols-12 gap-4 lg:gap-6 h-full">
           {/* Appointments / tasks table - 8 columns (same as Admin Workshop) */}
@@ -122,8 +127,8 @@ export default function StaffOverview() {
 
           {/* Right Sidebar - 4 columns (stacked) */}
           <div className="col-span-12 lg:col-span-4 flex flex-col gap-4 lg:gap-6 h-full">
-            {/* Shift Tracker */}
-            <div className="min-h-[200px] flex-1">
+            {/* Shift Tracker - desktop only; mobile instance lives above the grid */}
+            <div className="hidden lg:block min-h-[200px] flex-1">
               <ShiftTracker />
             </div>
 
