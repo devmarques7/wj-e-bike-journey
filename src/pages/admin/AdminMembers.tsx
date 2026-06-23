@@ -142,7 +142,7 @@ export default function AdminMembers() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ email: "", full_name: "", role: "customer" as Role });
+  const [form, setForm] = useState({ email: "", full_name: "", role: "staff" as Role });
   const [createdCreds, setCreatedCreds] = useState<{
     email: string;
     password: string;
@@ -189,26 +189,31 @@ export default function AdminMembers() {
         if (!prev || rank(r.role) > rank(prev)) rolesById.set(r.user_id, r.role);
       });
     }
+    const teamRoles = new Set<Role>(["admin", "staff"]);
     setMembers(
-      (profiles ?? []).map((p: any) => ({
-        ...p,
-        role: rolesById.get(p.user_id) ?? "customer",
-      })),
+      (profiles ?? [])
+        .map((p: any) => ({
+          ...p,
+          role: rolesById.get(p.user_id) ?? "customer",
+        }))
+        .filter((m: MemberRow) => teamRoles.has(m.role)),
     );
 
-    // Load invitations
+    // Load invitations — scope to team roles only
     const { data: invitesData } = await supabase
       .from("member_invitations")
       .select("id, email, role, status, created_at, expires_at, user_id")
       .order("created_at", { ascending: false });
     setInvites(
-      ((invitesData ?? []) as any[]).map((i) => ({
-        ...i,
-        status:
-          i.status === "pending" && new Date(i.expires_at).getTime() < Date.now()
-            ? "expired"
-            : i.status,
-      })),
+      ((invitesData ?? []) as any[])
+        .map((i) => ({
+          ...i,
+          status:
+            i.status === "pending" && new Date(i.expires_at).getTime() < Date.now()
+              ? "expired"
+              : i.status,
+        }))
+        .filter((i: InviteRow) => teamRoles.has(i.role)),
     );
     setLoading(false);
   };
@@ -246,7 +251,7 @@ export default function AdminMembers() {
       password: (data as any).temp_password,
       setup_link: (data as any).setup_link ?? null,
     });
-    setForm({ email: "", full_name: "", role: "customer" });
+    setForm({ email: "", full_name: "", role: "staff" });
     await loadMembers();
     setCreating(false);
   };
@@ -946,7 +951,6 @@ export default function AdminMembers() {
                 <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v as Role })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="customer">Customer</SelectItem>
                     <SelectItem value="staff">Staff</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>
@@ -994,7 +998,6 @@ export default function AdminMembers() {
                 <Select value={editRole} onValueChange={(v) => setEditRole(v as Role)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="customer">Customer</SelectItem>
                     <SelectItem value="staff">Staff</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>
