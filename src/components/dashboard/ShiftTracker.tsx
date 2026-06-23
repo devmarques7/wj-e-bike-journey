@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { ArrowRight, Play, Pause, StopCircle, Clock, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { MeshGradient } from "@paper-design/shaders-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useShift } from "@/hooks/useShift";
+import { FinishShiftDialog } from "@/components/dashboard/FinishShiftDialog";
 
 export default function ShiftTracker() {
   const { theme } = useTheme();
@@ -19,6 +20,7 @@ export default function ShiftTracker() {
     finish,
   } = useShift();
   const constraintsRef = useRef(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   
   const x = useMotionValue(0);
   const sliderWidth = 200;
@@ -208,7 +210,7 @@ export default function ShiftTracker() {
                     </Button>
                   )}
                   <Button
-                    onClick={() => finish()}
+                    onClick={() => setConfirmOpen(true)}
                     disabled={working}
                     variant="outline"
                     size="sm"
@@ -223,6 +225,12 @@ export default function ShiftTracker() {
           )}
         </div>
       </motion.div>
+      <FinishShiftDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        onConfirm={finish}
+        working={working}
+      />
     </div>
   );
 }
