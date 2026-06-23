@@ -89,7 +89,7 @@ export default function ShiftTracker() {
         <motion.div
           className="absolute -inset-[100%] w-[300%] h-[300%]"
           style={{
-            background: visual === "active"
+            background: visual === "active" || visual === "completed"
               ? "conic-gradient(from 0deg at 50% 50%, transparent 0deg, transparent 60deg, hsl(var(--wj-green) / 0.8) 120deg, hsl(var(--wj-green)) 180deg, hsl(var(--wj-green) / 0.8) 240deg, transparent 300deg, transparent 360deg)"
               : visual === "paused"
               ? "conic-gradient(from 0deg at 50% 50%, transparent 0deg, transparent 60deg, hsl(45 100% 50% / 0.8) 120deg, hsl(45 100% 50%) 180deg, hsl(45 100% 50% / 0.8) 240deg, transparent 300deg, transparent 360deg)"
