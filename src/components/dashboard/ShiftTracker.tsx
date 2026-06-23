@@ -204,15 +204,36 @@ export default function ShiftTracker() {
               <div className="text-center py-2">
                 <p className={cn(
                   "text-2xl font-mono font-bold",
-                  visual === "active"
+                  isCompleted
+                    ? "text-white"
+                    : visual === "active"
                     ? "text-wj-green"
-                    : isCompleted
-                    ? "text-sky-400"
                     : "text-amber-500"
                 )}>
                   {formatTime(elapsedSec)}
                 </p>
+                {isCompleted && (
+                  <p className="text-[10px] text-white/70 mt-1">Total worked today</p>
+                )}
               </div>
+
+              {/* Completed summary */}
+              {isCompleted && row && (
+                <div className="grid grid-cols-3 gap-2 rounded-xl bg-white/10 border border-white/20 p-2">
+                  <div className="text-center">
+                    <p className="text-[9px] uppercase tracking-wider text-white/60 mb-0.5">Clock in</p>
+                    <p className="text-xs font-semibold text-white tabular-nums">{formatClock(row.clock_in)}</p>
+                  </div>
+                  <div className="text-center border-l border-white/20">
+                    <p className="text-[9px] uppercase tracking-wider text-white/60 mb-0.5">Clock out</p>
+                    <p className="text-xs font-semibold text-white tabular-nums">{formatClock(row.clock_out)}</p>
+                  </div>
+                  <div className="text-center border-l border-white/20">
+                    <p className="text-[9px] uppercase tracking-wider text-white/60 mb-0.5">Total</p>
+                    <p className="text-xs font-semibold text-white tabular-nums">{formatDuration(row.worked_minutes)}</p>
+                  </div>
+                </div>
+              )}
 
               {/* Controls */}
               {!isCompleted && (
