@@ -18,6 +18,7 @@ export default function ShiftTracker() {
     pause,
     resume,
     finish,
+    row,
   } = useShift();
   const constraintsRef = useRef(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -36,17 +37,25 @@ export default function ShiftTracker() {
   const textOpacity = useTransform(x, [0, maxDrag * 0.5], [1, 0]);
   const checkOpacity = useTransform(x, [maxDrag * 0.7, maxDrag], [0, 1]);
 
-  // Dynamic mesh gradient palette per theme
-  const shaderColors = theme === "dark"
-    ? ["#0a0a0a", "#0d2818", "#058c42", "#10b981", "#022c1a"]
-    : ["#f5f7f5", "#dff5e8", "#058c42", "#86efac", "#ecfdf5"];
-
   const formatTime = (seconds: number) => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
     return `${hrs.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
+
+  const formatClock = (iso: string | null | undefined) => {
+    if (!iso) return "—";
+    const d = new Date(iso);
+    return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+  };
+
+  const formatDuration = (minutes: number) => {
+    const h = Math.floor(minutes / 60);
+    const m = Math.floor(minutes % 60);
+    return `${h}h ${m.toString().padStart(2, "0")}m`;
+  };
+
 
   const handleDragEnd = () => {
     const currentX = x.get();
