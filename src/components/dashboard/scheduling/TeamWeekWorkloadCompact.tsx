@@ -184,7 +184,7 @@ export default function TeamWeekWorkloadCompact({ mechanics }: Props) {
       ) : (
         <div className="flex-1 flex flex-col gap-2 min-h-0">
           {/* Day header */}
-          <div className="grid grid-cols-[minmax(70px,1fr)_repeat(7,minmax(0,1fr))] gap-1 items-end">
+          <div className="grid grid-cols-[36px_repeat(7,minmax(0,1fr))] sm:grid-cols-[minmax(70px,1fr)_repeat(7,minmax(0,1fr))] gap-1 sm:gap-1.5 items-end">
             <div />
             {days.map((d) => {
               const isToday = ymd(d) === todayISO;
@@ -194,7 +194,7 @@ export default function TeamWeekWorkloadCompact({ mechanics }: Props) {
                 <div
                   key={d.toISOString()}
                   className={cn(
-                    "text-center py-1 rounded-md text-[9px] uppercase tracking-wider",
+                    "text-center py-1 rounded-md text-[10px] uppercase tracking-wider",
                     isToday
                       ? "bg-wj-green/15 text-wj-green font-semibold"
                       : wknd
@@ -202,10 +202,10 @@ export default function TeamWeekWorkloadCompact({ mechanics }: Props) {
                         : "text-muted-foreground",
                   )}
                 >
-                  <div className="hidden sm:block">
+                  <div className="leading-none">
                     {d.toLocaleDateString(locale, { weekday: "narrow" })}
                   </div>
-                  <div className="text-[11px] font-medium text-foreground mt-0.5">{d.getDate()}</div>
+                  <div className="text-[11px] sm:text-xs font-medium text-foreground mt-0.5">{d.getDate()}</div>
                 </div>
               );
             })}
@@ -223,10 +223,10 @@ export default function TeamWeekWorkloadCompact({ mechanics }: Props) {
             return (
               <div
                 key={m.user_id}
-                className="grid grid-cols-[minmax(70px,1fr)_repeat(7,minmax(0,1fr))] gap-1 items-stretch flex-1 min-h-[44px]"
+                className="grid grid-cols-[36px_repeat(7,minmax(0,1fr))] sm:grid-cols-[minmax(70px,1fr)_repeat(7,minmax(0,1fr))] gap-1 sm:gap-1.5 items-stretch flex-1 min-h-[52px] sm:min-h-[44px]"
               >
-                <div className="flex items-center gap-1.5 min-w-0 pr-1 h-full">
-                  <div className="w-6 h-6 rounded-full bg-wj-green/20 text-wj-green text-[9px] font-bold flex items-center justify-center shrink-0">
+                <div className="flex items-center justify-center sm:justify-start gap-1.5 min-w-0 sm:pr-1 h-full">
+                  <div className="w-7 h-7 sm:w-6 sm:h-6 rounded-full bg-wj-green/20 text-wj-green text-[10px] sm:text-[9px] font-bold flex items-center justify-center shrink-0">
                     {initials}
                   </div>
                   <span className="text-[11px] text-foreground truncate hidden sm:inline">
@@ -242,7 +242,7 @@ export default function TeamWeekWorkloadCompact({ mechanics }: Props) {
                     <div
                       key={d.toISOString()}
                       className={cn(
-                        "relative h-full min-h-[36px] rounded-md border flex items-center justify-center overflow-hidden",
+                        "relative h-full min-h-[44px] sm:min-h-[36px] rounded-lg border flex items-center justify-center overflow-hidden",
                         off
                           ? "bg-muted/20 border-border/20"
                           : "bg-muted/30 border-border/30",
@@ -255,7 +255,7 @@ export default function TeamWeekWorkloadCompact({ mechanics }: Props) {
                       }
                     >
                       {off ? (
-                        <CalendarOff className="h-3 w-3 text-muted-foreground/60" />
+                        <CalendarOff className="h-3.5 w-3.5 text-muted-foreground/60" />
                       ) : (
                         <>
                           <div
@@ -269,7 +269,7 @@ export default function TeamWeekWorkloadCompact({ mechanics }: Props) {
                             )}
                             style={{ height: `${Math.max(pct, 4)}%` }}
                           />
-                          <span className="relative text-[10px] font-medium text-foreground">
+                          <span className="relative text-[11px] sm:text-[10px] font-semibold text-foreground tabular-nums">
                             {pct}%
                           </span>
                         </>
