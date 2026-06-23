@@ -251,7 +251,7 @@ export default function AdminMembers() {
       password: (data as any).temp_password,
       setup_link: (data as any).setup_link ?? null,
     });
-    setForm({ email: "", full_name: "", role: "customer" });
+    setForm({ email: "", full_name: "", role: "staff" });
     await loadMembers();
     setCreating(false);
   };
