@@ -8,40 +8,13 @@ import ShiftTracker from "@/components/dashboard/ShiftTracker";
 import StaffWorkloadMeter from "@/components/dashboard/StaffWorkloadMeter";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
-
-const kpiData = [
-  {
-    label: "Tasks Completed",
-    value: "12",
-    change: "+3 today",
-    trend: "up" as const,
-    icon: Wrench,
-  },
-  {
-    label: "Appointments Today",
-    value: "5",
-    change: "2 remaining",
-    trend: "neutral" as const,
-    icon: Calendar,
-  },
-  {
-    label: "Avg. Rating",
-    value: "4.8",
-    change: "+0.2 this week",
-    trend: "up" as const,
-    icon: Star,
-  },
-  {
-    label: "Avg. Service Time",
-    value: "52m",
-    change: "-8m vs target",
-    trend: "up" as const,
-    icon: Clock,
-  },
-];
+import { useShift } from "@/hooks/useShift";
+import { useStaffOverviewStats } from "@/hooks/staff/useStaffOverviewStats";
 
 export default function StaffOverview() {
   const { user, isAuthenticated, isLoading } = useAuth();
+  const stats = useStaffOverviewStats(user?.id);
+  const { elapsedSec, status: shiftStatus } = useShift();
 
   if (isLoading) return null;
   if (!isAuthenticated) {
@@ -51,6 +24,69 @@ export default function StaffOverview() {
   if (user?.role !== "staff") {
     return <Navigate to="/dashboard" replace />;
   }
+
+  const todayDelta = stats.tasksCompletedToday - stats.tasksCompletedYesterday;
+  const serviceDelta =
+    stats.avgServiceMinutes != null
+      ? stats.avgServiceMinutes - stats.avgServiceTargetMinutes
+      : null;
+  const shiftHours = Math.floor(elapsedSec / 3600);
+  const shiftMins = Math.floor((elapsedSec % 3600) / 60);
+  const shiftLabel =
+    shiftStatus === "idle"
+      ? "Shift not started"
+      : `Today ${shiftHours}h ${shiftMins}m`;
+
+  const kpiData = [
+    {
+      label: "Tasks Completed",
+      value: String(stats.tasksCompletedToday),
+      change:
+        todayDelta === 0
+          ? "Same as yesterday"
+          : `${todayDelta > 0 ? "+" : ""}${todayDelta} vs yesterday`,
+      trend: (todayDelta >= 0 ? "up" : "down") as "up" | "down" | "neutral",
+      icon: Wrench,
+    },
+    {
+      label: "Appointments Today",
+      value: String(stats.appointmentsToday),
+      change: `${stats.appointmentsRemaining} remaining`,
+      trend: "neutral" as const,
+      icon: Calendar,
+    },
+    {
+      label: "Current Shift",
+      value: shiftLabel,
+      change:
+        shiftStatus === "active"
+          ? "Clocked in"
+          : shiftStatus === "paused"
+          ? "On break"
+          : shiftStatus === "completed"
+          ? "Clocked out"
+          : "Swipe to clock in",
+      trend: (shiftStatus === "active" ? "up" : "neutral") as
+        | "up"
+        | "down"
+        | "neutral",
+      icon: Star,
+    },
+    {
+      label: "Avg. Service Time",
+      value:
+        stats.avgServiceMinutes != null ? `${stats.avgServiceMinutes}m` : "—",
+      change:
+        serviceDelta == null
+          ? "No data yet"
+          : `${serviceDelta > 0 ? "+" : ""}${serviceDelta}m vs target`,
+      trend: (serviceDelta != null && serviceDelta <= 0 ? "up" : "down") as
+        | "up"
+        | "down"
+        | "neutral",
+      icon: Clock,
+    },
+  ];
 
   return (
     <RoleDashboardLayout>
@@ -81,7 +117,7 @@ export default function StaffOverview() {
         <div className="grid grid-cols-12 gap-4 lg:gap-6 h-full">
           {/* Appointments / tasks table - 8 columns (same as Admin Workshop) */}
           <div className="col-span-12 lg:col-span-8 h-full min-h-[500px]">
-            <AppointmentsTableCard />
+            <AppointmentsTableCard mineOnlyMechanicId={user?.id} />
           </div>
 
           {/* Right Sidebar - 4 columns (stacked) */}
@@ -93,11 +129,11 @@ export default function StaffOverview() {
 
             {/* Workload Meter (preserved & relocated into unified layout) */}
             <StaffWorkloadMeter
-              currentLoad={75}
-              weeklyHours={32}
-              targetHours={40}
-              completedToday={2}
-              totalToday={5}
+              currentLoad={stats.currentLoadPct}
+              weeklyHours={stats.weeklyHours}
+              targetHours={stats.targetHours || 40}
+              completedToday={stats.completedToday}
+              totalToday={stats.totalToday}
             />
           </div>
         </div>
