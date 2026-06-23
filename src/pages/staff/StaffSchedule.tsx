@@ -17,10 +17,12 @@ import {
 } from "lucide-react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { MeshGradient } from "@paper-design/shaders-react";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import StaffKPICard from "@/components/dashboard/StaffKPICard";
 import KPICarousel from "@/components/dashboard/KPICarousel";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -55,11 +57,16 @@ export default function StaffSchedule() {
   };
 
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { theme } = useTheme();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [mySchedOpen, setMySchedOpen] = useState(false);
   const [heatMonth, setHeatMonth] = useState(new Date().getMonth());
   const [heatYear, setHeatYear] = useState(new Date().getFullYear());
   const [monthCounts, setMonthCounts] = useState<Record<string, number>>({});
+
+  const shaderColors = theme === "dark"
+    ? ["#0a0a0a", "#0d2818", "#058c42", "#10b981", "#022c1a"]
+    : ["#f5f7f5", "#dff5e8", "#058c42", "#86efac", "#ecfdf5"];
 
   const dateStr = (selectedDate ?? new Date()).toISOString().slice(0, 10);
   const {
@@ -329,72 +336,83 @@ export default function StaffSchedule() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
-            className="col-span-12 lg:col-span-4 lg:min-h-[340px] p-3 lg:p-4 bg-background/60 backdrop-blur-md border border-border/30 rounded-3xl flex flex-col"
+            className="relative col-span-12 lg:col-span-4 lg:min-h-[340px] rounded-3xl overflow-hidden bg-background border border-border/30 flex flex-col"
           >
-            <div className="flex items-center gap-2 mb-3">
-              <Activity className="h-4 w-4 text-wj-green" />
-              <h3 className="text-sm font-medium text-foreground">My Profile</h3>
+            <MeshGradient
+              colors={shaderColors}
+              speed={0.25}
+              distortion={1}
+              swirl={0.8}
+              className="absolute inset-0 w-full h-full"
+              style={{ opacity: theme === "dark" ? 0.85 : 0.7 }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/40 to-background/10 dark:from-background/80 dark:via-background/30 dark:to-transparent" />
+
+            <div className="relative z-10 p-3 lg:p-4 flex flex-col h-full">
+              <div className="flex items-center gap-2 mb-3">
+                <Activity className="h-4 w-4 text-wj-green" />
+                <h3 className="text-sm font-medium text-foreground">My Profile</h3>
+              </div>
+
+              {loading ? (
+                <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+                </div>
+              ) : !me ? (
+                <div className="flex-1 flex items-center justify-center text-center text-xs text-muted-foreground">
+                  No mechanic record found for your account.
+                </div>
+              ) : (
+                <div className="flex-1 flex flex-col gap-3">
+                  <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-muted/30">
+                    <div className="w-10 h-10 rounded-full bg-wj-green/20 text-wj-green text-xs font-bold flex items-center justify-center">
+                      {(me.full_name ?? me.email ?? "??")
+                        .split(" ")
+                        .map((s) => s[0])
+                        .join("")
+                        .slice(0, 2)
+                        .toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {me.full_name ?? me.email}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground truncate">{me.email}</p>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] shrink-0">
+                      {me.weekly_appointments}/{me.weekly_capacity}
+                    </Badge>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="p-2 rounded-xl bg-muted/30">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        Avg. Time
+                      </p>
+                      <p className="text-base font-light text-foreground mt-0.5">{avgDuration}m</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-muted/30">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        Completed
+                      </p>
+                      <p className="text-base font-light text-foreground mt-0.5">{completed}</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-muted/30">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        In progress
+                      </p>
+                      <p className="text-base font-light text-foreground mt-0.5">{inProgress}</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-muted/30">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        Hours
+                      </p>
+                      <p className="text-base font-light text-foreground mt-0.5">{weeklyHours}h</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-
-            {loading ? (
-              <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" /> Loading…
-              </div>
-            ) : !me ? (
-              <div className="flex-1 flex items-center justify-center text-center text-xs text-muted-foreground">
-                No mechanic record found for your account.
-              </div>
-            ) : (
-              <div className="flex-1 flex flex-col gap-3">
-                <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-muted/30">
-                  <div className="w-10 h-10 rounded-full bg-wj-green/20 text-wj-green text-xs font-bold flex items-center justify-center">
-                    {(me.full_name ?? me.email ?? "??")
-                      .split(" ")
-                      .map((s) => s[0])
-                      .join("")
-                      .slice(0, 2)
-                      .toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">
-                      {me.full_name ?? me.email}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground truncate">{me.email}</p>
-                  </div>
-                  <Badge variant="outline" className="text-[10px] shrink-0">
-                    {me.weekly_appointments}/{me.weekly_capacity}
-                  </Badge>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="p-2 rounded-xl bg-muted/30">
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                      Avg. Time
-                    </p>
-                    <p className="text-base font-light text-foreground mt-0.5">{avgDuration}m</p>
-                  </div>
-                  <div className="p-2 rounded-xl bg-muted/30">
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                      Completed
-                    </p>
-                    <p className="text-base font-light text-foreground mt-0.5">{completed}</p>
-                  </div>
-                  <div className="p-2 rounded-xl bg-muted/30">
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                      In progress
-                    </p>
-                    <p className="text-base font-light text-foreground mt-0.5">{inProgress}</p>
-                  </div>
-                  <div className="p-2 rounded-xl bg-muted/30">
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                      Hours
-                    </p>
-                    <p className="text-base font-light text-foreground mt-0.5">{weeklyHours}h</p>
-                  </div>
-                </div>
-
-              </div>
-            )}
           </motion.div>
 
           {/* Row 3 — Personal Heatmap (own appointments) */}
