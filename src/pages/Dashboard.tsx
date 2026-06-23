@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import BikeShowcase from "@/components/dashboard/BikeShowcase";
 import ServiceRequestCard from "@/components/dashboard/ServiceRequestCard";
 import WalletCard from "@/components/dashboard/WalletCard";
@@ -30,7 +30,7 @@ export default function Dashboard() {
   }
 
   return (
-    <DashboardLayout>
+    <RoleDashboardLayout>
       <div className="p-4 lg:p-6 space-y-6">
         {/* 12 Column Grid Layout */}
         <div className="grid grid-cols-12 gap-4 lg:gap-6">
@@ -64,6 +64,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-    </DashboardLayout>
+    </RoleDashboardLayout>
   );
 }
