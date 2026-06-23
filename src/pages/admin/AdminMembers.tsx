@@ -191,7 +191,7 @@ export default function AdminMembers() {
     }
     const teamRoles = new Set<Role>(["admin", "staff"]);
     setMembers(
-      (profiles ?? ])
+      (profiles ?? [])
         .map((p: any) => ({
           ...p,
           role: rolesById.get(p.user_id) ?? "customer",
