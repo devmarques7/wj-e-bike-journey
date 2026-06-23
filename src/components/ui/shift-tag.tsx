@@ -6,6 +6,7 @@ import { GripVertical, Play, Pause, Square, Loader2, Activity } from "lucide-rea
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useShift } from "@/hooks/useShift";
+import { FinishShiftDialog } from "@/components/dashboard/FinishShiftDialog";
 const fmtHMS = (totalSec: number) => {
   const s = Math.max(0, Math.floor(totalSec));
   const h = Math.floor(s / 3600);
@@ -32,6 +33,7 @@ export function ShiftTag() {
     finish: handleFinishAction,
   } = useShift();
   const [open, setOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const elRef = useRef<HTMLDivElement>(null);
   const [bounds, setBounds] = useState({ left: 0, top: 0, right: 0, bottom: 0 });
@@ -80,6 +82,9 @@ export function ShiftTag() {
     if (!open) return;
     const onDown = (e: MouseEvent | TouchEvent) => {
       const root = elRef.current;
+      const target = e.target as HTMLElement | null;
+      // Ignore clicks inside the confirm dialog (it portals to body)
+      if (target?.closest("[role='alertdialog']")) return;
       if (root && !root.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener("mousedown", onDown);
@@ -105,8 +110,7 @@ export function ShiftTag() {
   }[status];
 
   const handleFinish = async () => {
-    await handleFinishAction();
-    setOpen(false);
+    setConfirmOpen(true);
   };
 
   if (typeof document === "undefined") return null;
@@ -227,6 +231,15 @@ export function ShiftTag() {
           </motion.div>
         )}
       </AnimatePresence>
+      <FinishShiftDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        onConfirm={async () => {
+          await handleFinishAction();
+          setOpen(false);
+        }}
+        working={working}
+      />
     </motion.div>,
     document.body,
   );
