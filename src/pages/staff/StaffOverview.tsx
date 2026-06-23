@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Wrench, Calendar, Star, Clock } from "lucide-react";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import StaffKPICard from "@/components/dashboard/StaffKPICard";
+import KPICarousel from "@/components/dashboard/KPICarousel";
 import AppointmentsTableCard from "@/components/dashboard/scheduling/AppointmentsTableCard";
 import ShiftTracker from "@/components/dashboard/ShiftTracker";
 import StaffWorkloadMeter from "@/components/dashboard/StaffWorkloadMeter";
@@ -69,14 +70,12 @@ export default function StaffOverview() {
           </p>
         </motion.div>
 
-        {/* KPI Cards - 12 Column Grid (3 each) */}
-        <div className="grid grid-cols-12 gap-4 lg:gap-6">
+        {/* KPI Cards - carousel on mobile, grid on desktop */}
+        <KPICarousel>
           {kpiData.map((kpi, index) => (
-            <div key={kpi.label} className="col-span-6 lg:col-span-3">
-              <StaffKPICard {...kpi} index={index} />
-            </div>
+            <StaffKPICard key={kpi.label} {...kpi} index={index} />
           ))}
-        </div>
+        </KPICarousel>
 
         {/* Main Content Grid - 12 Columns */}
         <div className="grid grid-cols-12 gap-4 lg:gap-6 h-full">

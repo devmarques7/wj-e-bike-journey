@@ -19,6 +19,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import StaffKPICard from "@/components/dashboard/StaffKPICard";
+import KPICarousel from "@/components/dashboard/KPICarousel";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -190,12 +191,12 @@ export default function StaffSchedule() {
           </Button>
         </motion.div>
 
-        {/* KPI Row */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+        {/* KPI Row - carousel on mobile, grid on desktop */}
+        <KPICarousel>
           {kpiData.map((kpi, index) => (
             <StaffKPICard key={kpi.label} {...kpi} index={index} />
           ))}
-        </div>
+        </KPICarousel>
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-12 gap-4 lg:gap-5">
