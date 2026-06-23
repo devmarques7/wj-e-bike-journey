@@ -63,6 +63,10 @@ export default function StaffSchedule() {
   const [heatMonth, setHeatMonth] = useState(new Date().getMonth());
   const [heatYear, setHeatYear] = useState(new Date().getFullYear());
   const [monthCounts, setMonthCounts] = useState<Record<string, number>>({});
+  const [weeklySchedule, setWeeklySchedule] = useState<
+    { day_of_week: number; is_working: boolean; start_time: string | null; end_time: string | null }[]
+  >([]);
+  const [scheduleVersion, setScheduleVersion] = useState(0);
 
   const shaderColors = theme === "dark"
     ? ["#0a0a0a", "#0d2818", "#058c42", "#10b981", "#022c1a"]
@@ -81,6 +85,22 @@ export default function StaffSchedule() {
     () => mechanics.find((m) => m.user_id === mineUserId) ?? null,
     [mechanics, mineUserId],
   );
+
+  // Load my working hours (staff_schedules) to derive real weekly availability
+  useEffect(() => {
+    if (!mineUserId) return;
+    const today = new Date().toISOString().slice(0, 10);
+    (async () => {
+      const { data, error } = await supabase
+        .from("staff_schedules")
+        .select("day_of_week, is_working, start_time, end_time")
+        .eq("staff_id", mineUserId)
+        .lte("valid_from", today)
+        .or(`valid_until.is.null,valid_until.gte.${today}`);
+      if (error) return;
+      setWeeklySchedule((data ?? []) as any);
+    })();
+  }, [mineUserId, scheduleVersion]);
 
   // Personal monthly heatmap (own appointments only)
   useEffect(() => {
@@ -113,21 +133,55 @@ export default function StaffSchedule() {
   const mineAppts = appointments.filter((a) => a.assigned_mechanic_id === mineUserId);
   const dayList = mineAppts.filter((a) => a.scheduled_date === dateStr);
 
-  const weeklyCapacity = me?.weekly_capacity ?? 40;
-  const weeklyAppointments = me?.weekly_appointments ?? mineAppts.length;
+  // --- Weekly availability from my working hours ---
+  const parseHM = (t: string | null) => {
+    if (!t) return 0;
+    const [h, m] = t.slice(0, 5).split(":").map(Number);
+    return (h ?? 0) + (m ?? 0) / 60;
+  };
+  const availableHoursPerDay: Record<number, number> = {};
+  weeklySchedule.forEach((r) => {
+    if (!r.is_working) return;
+    const hrs = Math.max(0, parseHM(r.end_time) - parseHM(r.start_time));
+    availableHoursPerDay[r.day_of_week] = hrs;
+  });
+  const weeklyAvailableHours = Math.round(
+    Object.values(availableHoursPerDay).reduce((a, b) => a + b, 0),
+  );
+  const workingDays = Object.values(availableHoursPerDay).filter((h) => h > 0).length;
+
+  // Current week range (Mon..Sun)
+  const now = new Date();
+  const startOfWeek = new Date(now);
+  const dow = (now.getDay() + 6) % 7; // Mon=0
+  startOfWeek.setDate(now.getDate() - dow);
+  startOfWeek.setHours(0, 0, 0, 0);
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  const inThisWeek = (d: string) => {
+    const x = new Date(d + "T00:00:00");
+    return x >= startOfWeek && x <= endOfWeek;
+  };
+  const weekAppts = mineAppts.filter((a) => inThisWeek(a.scheduled_date));
+
+  const weeklyAppointments = weekAppts.length;
+  const weeklyCapacity = weeklyAvailableHours > 0 ? weeklyAvailableHours : (me?.weekly_capacity ?? 40);
+
+  const weeklyUsedHours =
+    weekAppts.reduce((acc, a) => acc + (a.duration_minutes ?? 0), 0) / 60;
   const workloadPercentage = Math.min(
     100,
-    Math.round((weeklyAppointments / Math.max(1, weeklyCapacity)) * 100),
+    Math.round((weeklyUsedHours / Math.max(1, weeklyCapacity)) * 100),
   );
 
-  const completed = mineAppts.filter((a) => a.status === "completed").length;
-  const inProgress = mineAppts.filter((a) => a.status === "in_progress").length;
+  const completed = weekAppts.filter((a) => a.status === "completed").length;
+  const inProgress = weekAppts.filter((a) => a.status === "in_progress").length;
   const weeklyHours = Math.round(
-    mineAppts
+    weekAppts
       .filter((a) => a.status === "completed" || a.status === "in_progress")
       .reduce((acc, a) => acc + (a.duration_minutes ?? 0), 0) / 60,
   );
-  const durs = mineAppts.filter((a) => a.duration_minutes);
+  const durs = weekAppts.filter((a) => a.duration_minutes);
   const avgDuration = durs.length
     ? Math.round(durs.reduce((acc, a) => acc + (a.duration_minutes ?? 0), 0) / durs.length)
     : 0;
@@ -135,16 +189,16 @@ export default function StaffSchedule() {
   const kpiData = [
     {
       label: "My Appointments",
-      value: String(mineAppts.length),
-      change: `${weeklyAppointments}/${weeklyCapacity} this week`,
+      value: String(weeklyAppointments),
+      change: `${weeklyAppointments} this week`,
       trend: "neutral" as const,
       icon: CalendarDays,
     },
     {
       label: "Weekly Hours",
       value: `${weeklyHours}h`,
-      change: `target 40h`,
-      trend: weeklyHours >= 32 ? ("up" as const) : ("neutral" as const),
+      change: `of ${weeklyCapacity}h available`,
+      trend: weeklyCapacity > 0 && weeklyHours >= weeklyCapacity * 0.8 ? ("up" as const) : ("neutral" as const),
       icon: Clock,
     },
     {
@@ -250,8 +304,10 @@ export default function StaffSchedule() {
             </div>
 
             <div className="flex justify-between mt-2 text-[11px] text-muted-foreground">
-              <span>{weeklyAppointments} appointments this week</span>
-              <span>capacity {weeklyCapacity}</span>
+              <span>
+                {Math.round(weeklyUsedHours * 10) / 10}h used · {weeklyAppointments} appointments
+              </span>
+              <span>capacity {weeklyCapacity}h</span>
             </div>
           </motion.div>
 
@@ -380,11 +436,22 @@ export default function StaffSchedule() {
                       <p className="text-[11px] text-muted-foreground truncate">{me.email}</p>
                     </div>
                     <Badge variant="outline" className="text-[10px] shrink-0">
-                      {me.weekly_appointments}/{me.weekly_capacity}
+                      {weeklyAppointments}/{weeklyCapacity}h
                     </Badge>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
+                    <div className="col-span-2 p-2.5 rounded-xl bg-wj-green/10 border border-wj-green/20">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        Availability this week
+                      </p>
+                      <p className="text-base font-light text-foreground mt-0.5">
+                        {weeklyAvailableHours}h
+                        <span className="text-[10px] text-muted-foreground ml-1">
+                          · {workingDays} day{workingDays === 1 ? "" : "s"}
+                        </span>
+                      </p>
+                    </div>
                     <div className="p-2 rounded-xl bg-muted/30">
                       <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
                         Avg. Time
@@ -610,12 +677,15 @@ export default function StaffSchedule() {
       {me && (
         <StaffScheduleDialog
           open={mySchedOpen}
-          onOpenChange={setMySchedOpen}
+          onOpenChange={(v) => {
+            setMySchedOpen(v);
+            if (!v) setScheduleVersion((n) => n + 1);
+          }}
           staffId={me.user_id}
           staffName={me.full_name ?? me.email ?? "Me"}
           staffEmail={me.email}
-          weeklyAppointments={me.weekly_appointments}
-          weeklyCapacity={me.weekly_capacity}
+          weeklyAppointments={weeklyAppointments}
+          weeklyCapacity={weeklyCapacity}
         />
       )}
     </RoleDashboardLayout>
