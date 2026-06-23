@@ -998,7 +998,6 @@ export default function AdminMembers() {
                 <Select value={editRole} onValueChange={(v) => setEditRole(v as Role)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="customer">Customer</SelectItem>
                     <SelectItem value="staff">Staff</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>
