@@ -27,6 +27,7 @@ const Auth = () => {
   const [phoneVerified, setPhoneVerified] = useState(false);
   
   const { login, setMockUser, user, isLoading: authLoading } = useAuth();
+  const { theme } = useTheme();
   const navigate = useNavigate();
   const { toast } = useToast();
 
