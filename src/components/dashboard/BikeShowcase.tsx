@@ -455,7 +455,7 @@ export default function BikeShowcase() {
         <div className="mt-6 pt-4 border-t border-border/30 flex items-center justify-between pointer-events-auto">
           <div>
             <p className="text-xs text-muted-foreground font-mono">
-              {user?.bikeId || "V8-2024-NL-00156"}
+              {registeredBike?.serial || registeredBike?.model || user?.bikeId || "V8-2024-NL-00156"}
             </p>
           </div>
 
