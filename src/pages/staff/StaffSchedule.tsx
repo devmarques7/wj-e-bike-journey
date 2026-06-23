@@ -393,14 +393,6 @@ export default function StaffSchedule() {
                   </div>
                 </div>
 
-                <Button
-                  size="sm"
-                  className="mt-auto bg-wj-green hover:bg-wj-green/90 text-black gap-2"
-                  onClick={() => setMySchedOpen(true)}
-                >
-                  <Settings className="h-3.5 w-3.5" />
-                  Edit my working hours
-                </Button>
               </div>
             )}
           </motion.div>
