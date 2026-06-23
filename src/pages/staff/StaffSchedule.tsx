@@ -17,10 +17,12 @@ import {
 } from "lucide-react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { MeshGradient } from "@paper-design/shaders-react";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import StaffKPICard from "@/components/dashboard/StaffKPICard";
 import KPICarousel from "@/components/dashboard/KPICarousel";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
