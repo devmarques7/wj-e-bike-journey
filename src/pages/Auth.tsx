@@ -409,26 +409,31 @@ const Auth = () => {
       {/* Right Panel - Visual */}
       <div className="hidden lg:flex flex-1 relative bg-secondary p-6">
         {/* Inner container with ShiftTracker-style mesh gradient background */}
-        <div className="relative w-full h-full rounded-3xl overflow-hidden bg-background">
+        <div className="relative w-full h-full rounded-3xl overflow-hidden bg-slate-50 dark:bg-background">
           {/* Animated Mesh Gradient Background */}
           <MeshGradient
             colors={theme === "dark"
               ? ["#0a0a0a", "#0d2818", "#058c42", "#10b981", "#022c1a"]
-              : ["#f5f7f5", "#dff5e8", "#058c42", "#86efac", "#ecfdf5"]}
+              : ["#f8fafc", "#f1f5f9", "#e2e8f0", "#cbd5e1", "#94a3b8"]}
             speed={0.25}
             distortion={1}
             swirl={0.8}
             className="absolute inset-0 w-full h-full"
-            style={{ opacity: theme === "dark" ? 0.85 : 0.7 }}
+            style={{ opacity: theme === "dark" ? 0.85 : 0.5 }}
           />
 
           {/* Overlay gradient for legibility */}
-          <div className="absolute inset-0 bg-gradient-to-br from-wj-forest/60 via-secondary/40 to-wj-deep/70" />
+          <div className={cn(
+            "absolute inset-0",
+            theme === "dark"
+              ? "bg-gradient-to-br from-wj-forest/60 via-secondary/40 to-wj-deep/70"
+              : "bg-gradient-to-br from-white/40 via-slate-50/30 to-slate-200/40"
+          )} />
 
           {/* Decorative blurs */}
           <div className="absolute inset-0 opacity-30">
-            <div className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full bg-wj-green/30 blur-3xl" />
-            <div className="absolute bottom-1/4 left-1/4 w-64 h-64 rounded-full bg-wj-green/20 blur-2xl" />
+            <div className={cn("absolute top-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl", theme === "dark" ? "bg-wj-green/30" : "bg-wj-green/10")} />
+            <div className={cn("absolute bottom-1/4 left-1/4 w-64 h-64 rounded-full blur-2xl", theme === "dark" ? "bg-wj-green/20" : "bg-wj-green/5")} />
           </div>
 
           {/* Content */}
@@ -439,12 +444,12 @@ const Auth = () => {
               transition={{ duration: 0.8, delay: 0.4 }}
               className="text-center"
             >
-              <h2 className="text-display-lg font-light text-white/90 mb-4">
+              <h2 className={cn("text-display-lg font-light mb-4", theme === "dark" ? "text-white/90" : "text-slate-800")}>
                 Your E-Bike
                 <br />
                 <span className="text-wj-green">Journey</span>
               </h2>
-              <p className="text-white/60 max-w-md mx-auto">
+              <p className={cn("max-w-md mx-auto", theme === "dark" ? "text-white/60" : "text-slate-500")}>
                 Track maintenance, book services, and unlock exclusive member benefits
               </p>
             </motion.div>
