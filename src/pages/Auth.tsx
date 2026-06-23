@@ -8,6 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "@/contexts/ThemeContext";
+import { cn } from "@/lib/utils";
+import { MeshGradient } from "@paper-design/shaders-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PhoneInput } from "@/components/PhoneInput";
 
