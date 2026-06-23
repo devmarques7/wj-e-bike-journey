@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
+import KPICarousel from "@/components/dashboard/KPICarousel";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -293,13 +294,11 @@ export default function AdminWorkshop() {
         </motion.div>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-12 gap-4 lg:gap-6">
+        <KPICarousel>
           {workshopKPIs.map((kpi, index) => (
-            <div key={kpi.label} className="col-span-6 lg:col-span-3">
-              <AdminKPICard {...kpi} index={index} />
-            </div>
+            <AdminKPICard key={kpi.label} {...kpi} index={index} />
           ))}
-        </div>
+        </KPICarousel>
 
         {/* Quality Control sequence */}
         <QualityControlPreviewCard onEdit={() => setQcOpen(true)} />

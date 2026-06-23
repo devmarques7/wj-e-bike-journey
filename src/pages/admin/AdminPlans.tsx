@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { CreditCard, TrendingUp, Users, Euro, CheckCircle2, XCircle, Clock, Award, Settings2, Layers } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
+import KPICarousel from "@/components/dashboard/KPICarousel";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate, useNavigate, Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
@@ -222,13 +223,11 @@ export default function AdminPlans() {
           </Button>
         </motion.div>
 
-        <div className="grid grid-cols-12 gap-4 lg:gap-6">
+        <KPICarousel>
           {kpiCards.map((kpi, index) => (
-            <div key={kpi.label} className="col-span-6 lg:col-span-3">
-              <AdminKPICard {...kpi} index={index} />
-            </div>
+            <AdminKPICard key={kpi.label} {...kpi} index={index} />
           ))}
-        </div>
+        </KPICarousel>
 
         <div className="grid grid-cols-12 gap-4 lg:gap-6 items-stretch">
           <div className="col-span-12 lg:col-span-8 flex">

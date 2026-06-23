@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { CreditCard, Users, CalendarCheck, Wrench, ShoppingCart, ArrowRight } from "lucide-react";
 import AdminDashboardLayout from "@/components/dashboard/AdminDashboardLayout";
 import AdminKPICard from "@/components/dashboard/AdminKPICard";
+import KPICarousel from "@/components/dashboard/KPICarousel";
 import AdminSalesRanking from "@/components/dashboard/AdminSalesRanking";
 import AdminMemberSegments from "@/components/dashboard/AdminMemberSegments";
 import AdminAlerts from "@/components/dashboard/AdminAlerts";
@@ -87,14 +88,12 @@ export default function AdminOverview() {
           </p>
         </motion.div>
 
-        {/* KPI Cards - 12 Column Grid (3 each) */}
-        <div className="grid grid-cols-12 gap-4 lg:gap-6">
+        {/* KPI Cards - carousel on mobile, grid on desktop */}
+        <KPICarousel>
           {kpiData.map((kpi, index) => (
-            <div key={kpi.label} className="col-span-6 lg:col-span-3">
-              <AdminKPICard {...kpi} index={index} />
-            </div>
+            <AdminKPICard key={kpi.label} {...kpi} index={index} />
           ))}
-        </div>
+        </KPICarousel>
 
         {/* Main Content Grid - 12 Columns */}
         <div className="grid grid-cols-12 gap-4 lg:gap-6">
