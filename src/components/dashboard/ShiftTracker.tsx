@@ -121,7 +121,12 @@ export default function ShiftTracker() {
         />
 
         {/* Overlay for legibility */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/40 to-background/10 dark:from-background/80 dark:via-background/30 dark:to-transparent" />
+        <div className={cn(
+          "absolute inset-0",
+          isCompleted
+            ? "bg-gradient-to-t from-wj-green/90 via-wj-green/50 to-wj-green/20 dark:from-wj-green/90 dark:via-wj-green/60 dark:to-wj-green/30"
+            : "bg-gradient-to-t from-background/90 via-background/40 to-background/10 dark:from-background/80 dark:via-background/30 dark:to-transparent"
+        )} />
         
         {/* Content */}
         <div className="relative z-10 h-full p-4 flex flex-col justify-between">
