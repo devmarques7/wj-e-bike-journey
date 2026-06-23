@@ -304,8 +304,10 @@ export default function StaffSchedule() {
             </div>
 
             <div className="flex justify-between mt-2 text-[11px] text-muted-foreground">
-              <span>{weeklyAppointments} appointments this week</span>
-              <span>capacity {weeklyCapacity}</span>
+              <span>
+                {Math.round(weeklyUsedHours * 10) / 10}h used · {weeklyAppointments} appointments
+              </span>
+              <span>capacity {weeklyCapacity}h</span>
             </div>
           </motion.div>
 
@@ -434,11 +436,22 @@ export default function StaffSchedule() {
                       <p className="text-[11px] text-muted-foreground truncate">{me.email}</p>
                     </div>
                     <Badge variant="outline" className="text-[10px] shrink-0">
-                      {me.weekly_appointments}/{me.weekly_capacity}
+                      {weeklyAppointments}/{weeklyCapacity}h
                     </Badge>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
+                    <div className="col-span-2 p-2.5 rounded-xl bg-wj-green/10 border border-wj-green/20">
+                      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                        Availability this week
+                      </p>
+                      <p className="text-base font-light text-foreground mt-0.5">
+                        {weeklyAvailableHours}h
+                        <span className="text-[10px] text-muted-foreground ml-1">
+                          · {workingDays} day{workingDays === 1 ? "" : "s"}
+                        </span>
+                      </p>
+                    </div>
                     <div className="p-2 rounded-xl bg-muted/30">
                       <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
                         Avg. Time
@@ -664,12 +677,15 @@ export default function StaffSchedule() {
       {me && (
         <StaffScheduleDialog
           open={mySchedOpen}
-          onOpenChange={setMySchedOpen}
+          onOpenChange={(v) => {
+            setMySchedOpen(v);
+            if (!v) setScheduleVersion((n) => n + 1);
+          }}
           staffId={me.user_id}
           staffName={me.full_name ?? me.email ?? "Me"}
           staffEmail={me.email}
-          weeklyAppointments={me.weekly_appointments}
-          weeklyCapacity={me.weekly_capacity}
+          weeklyAppointments={weeklyAppointments}
+          weeklyCapacity={weeklyCapacity}
         />
       )}
     </RoleDashboardLayout>
