@@ -504,8 +504,34 @@ export default function BikeShowcase() {
           <h2 className="text-lg font-semibold text-foreground tracking-tight">My Bike</h2>
           <p className="text-[11px] text-muted-foreground/70 font-light">Your ride at a glance</p>
         </div>
-        <div className="p-2 rounded-full bg-background/20 backdrop-blur-sm">
-          <Bike className="h-4 w-4 text-wj-green" />
+        <div className="flex items-center gap-2">
+          {isRealUser && registeredBikes.length > 1 && (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-background/30 backdrop-blur-sm border border-border/40">
+              {registeredBikes.map((b, i) => (
+                <button
+                  key={b.id}
+                  onClick={() => setActiveBikeIndex(i)}
+                  title={b.model}
+                  className={`h-2 w-2 rounded-full transition-all ${
+                    i === activeBikeIndex ? "bg-wj-green scale-110" : "bg-muted-foreground/40 hover:bg-muted-foreground/70"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+          {isRealUser && (
+            <button
+              onClick={() => setPickerOpen(true)}
+              className="p-2 rounded-full bg-background/30 backdrop-blur-sm border border-border/40 hover:bg-wj-green/20 hover:border-wj-green/40 transition-colors"
+              aria-label="Register another bike"
+              title="Register another bike"
+            >
+              <Plus className="h-4 w-4 text-wj-green" strokeWidth={2} />
+            </button>
+          )}
+          <div className="p-2 rounded-full bg-background/20 backdrop-blur-sm">
+            <Bike className="h-4 w-4 text-wj-green" />
+          </div>
         </div>
       </div>
       {/* Carousel Container */}
