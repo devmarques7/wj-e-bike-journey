@@ -746,5 +746,7 @@ export default function BikeShowcase() {
         </div>
       </div>
     </motion.div>
+    {pickerDialog}
+    </>
   );
 }
