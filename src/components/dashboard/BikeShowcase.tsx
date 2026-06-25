@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import useEmblaCarousel from "embla-carousel-react";
-import { Bike, Plus, Check, Loader2, Search } from "lucide-react";
+import { Bike, Plus, Check, Loader2, Search, ArrowLeft, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -103,6 +103,11 @@ export default function BikeShowcase() {
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [search, setSearch] = useState("");
   const [registeringId, setRegisteringId] = useState<string | null>(null);
+  const [step, setStep] = useState<"search" | "serial">("search");
+  const [selectedProduct, setSelectedProduct] = useState<{ id: string; name: string; color_hex: string | null } | null>(null);
+  const [serial, setSerial] = useState("");
+  const [serialError, setSerialError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const isRealUser = !!user && !user.isDemo && user.role === "customer";
 
@@ -165,10 +170,46 @@ export default function BikeShowcase() {
       });
   }, [pickerOpen, bikeProducts.length]);
 
-  const handleRegister = async (product: { id: string; name: string; color_hex: string | null }) => {
-    if (!user) return;
-    setRegisteringId(product.id);
+  // Reset wizard whenever the dialog is closed
+  useEffect(() => {
+    if (!pickerOpen) {
+      setStep("search");
+      setSelectedProduct(null);
+      setSerial("");
+      setSerialError(null);
+      setSearch("");
+    }
+  }, [pickerOpen]);
+
+  const handlePickProduct = (product: { id: string; name: string; color_hex: string | null }) => {
+    setSelectedProduct(product);
+    setSerial("");
+    setSerialError(null);
+    setStep("serial");
+  };
+
+  const handleConfirmRegister = async () => {
+    if (!user || !selectedProduct) return;
+    const trimmed = serial.trim().toUpperCase();
+    if (trimmed.length < 4) {
+      setSerialError("Enter the full serial number printed on your bike frame.");
+      return;
+    }
+    setSerialError(null);
+    setSubmitting(true);
+    setRegisteringId(selectedProduct.id);
     try {
+      // Reject if this serial is already registered to any account
+      const { data: existing, error: existingErr } = await supabase
+        .from("customer_bikes")
+        .select("id")
+        .eq("serial", trimmed)
+        .maybeSingle();
+      if (existingErr && existingErr.code !== "PGRST116") throw existingErr;
+      if (existing) {
+        setSerialError("This serial number is already registered. Contact support if you believe this is an error.");
+        return;
+      }
       // Ensure customer_profile exists
       let { data: cp } = await supabase
         .from("customer_profiles")
@@ -195,8 +236,9 @@ export default function BikeShowcase() {
         .from("customer_bikes")
         .insert({
           customer_id: cp!.id,
-          model: product.name,
-          color: product.color_hex,
+          model: selectedProduct.name,
+          color: selectedProduct.color_hex,
+          serial: trimmed,
           is_active: true,
         })
         .select("id, model, serial, color")
@@ -204,10 +246,16 @@ export default function BikeShowcase() {
       if (error) throw error;
       setRegisteredBike(bike);
       setPickerOpen(false);
-      toast.success(`${product.name} registered to your account`);
+      toast.success(`${selectedProduct.name} registered to your account`);
     } catch (e: any) {
-      toast.error(e?.message || "Failed to register bike");
+      const msg = e?.message || "Failed to register bike";
+      if (msg.toLowerCase().includes("unique") || msg.toLowerCase().includes("duplicate")) {
+        setSerialError("This serial number is already registered.");
+      } else {
+        toast.error(msg);
+      }
     } finally {
+      setSubmitting(false);
       setRegisteringId(null);
     }
   };
@@ -323,56 +371,123 @@ export default function BikeShowcase() {
         <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
           <DialogContent className="max-w-lg max-h-[80vh] flex flex-col">
             <DialogHeader>
-              <DialogTitle>Select your bike</DialogTitle>
+              <DialogTitle>
+                {step === "search" ? "Select your bike" : "Confirm your serial"}
+              </DialogTitle>
               <DialogDescription>
-                Pick the WJ model you own — it will be linked to your account.
+                {step === "search"
+                  ? "Search and pick the WJ model you own."
+                  : "Each bike has a unique serial number printed on its frame. Enter it to link this exact bike to your account."}
               </DialogDescription>
             </DialogHeader>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search models…"
-                className="pl-9"
-              />
-            </div>
-            <div className="flex-1 overflow-y-auto -mx-1 px-1 space-y-1.5">
-              {loadingProducts ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            {step === "search" ? (
+              <>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search models…"
+                    className="pl-9"
+                    autoFocus
+                  />
                 </div>
-              ) : filteredProducts.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-12">
-                  No bikes found.
-                </p>
-              ) : (
-                filteredProducts.map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => handleRegister(p)}
-                    disabled={registeringId !== null}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl border border-border/50 hover:border-wj-green/60 hover:bg-wj-green/5 transition-colors text-left disabled:opacity-50"
-                  >
-                    <span
-                      className="w-9 h-9 rounded-full border border-border/60 shrink-0"
-                      style={{ background: p.color_hex || "hsl(var(--muted))" }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{p.name}</p>
-                      <p className="text-[11px] text-muted-foreground">
-                        € {Number(p.base_price).toLocaleString("en-NL", { minimumFractionDigits: 0 })}
-                      </p>
+                <div className="flex-1 overflow-y-auto -mx-1 px-1 space-y-1.5">
+                  {loadingProducts ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                     </div>
-                    {registeringId === p.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin text-wj-green" />
+                  ) : filteredProducts.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-12">
+                      No bikes found.
+                    </p>
+                  ) : (
+                    filteredProducts.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => handlePickProduct(p)}
+                        className="w-full flex items-center gap-3 p-3 rounded-xl border border-border/50 hover:border-wj-green/60 hover:bg-wj-green/5 transition-colors text-left"
+                      >
+                        <span
+                          className="w-9 h-9 rounded-full border border-border/60 shrink-0"
+                          style={{ background: p.color_hex || "hsl(var(--muted))" }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{p.name}</p>
+                          <p className="text-[11px] text-muted-foreground">
+                            € {Number(p.base_price).toLocaleString("en-NL", { minimumFractionDigits: 0 })}
+                          </p>
+                        </div>
+                        <Check className="h-4 w-4 text-muted-foreground/40" />
+                      </button>
+                    ))
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="flex-1 flex flex-col gap-4">
+                <div className="flex items-center gap-3 p-3 rounded-xl border border-wj-green/40 bg-wj-green/5">
+                  <span
+                    className="w-10 h-10 rounded-full border border-border/60 shrink-0"
+                    style={{ background: selectedProduct?.color_hex || "hsl(var(--muted))" }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{selectedProduct?.name}</p>
+                    <p className="text-[11px] text-muted-foreground">Selected model</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-foreground/80 uppercase tracking-wider">
+                    Serial number
+                  </label>
+                  <Input
+                    value={serial}
+                    onChange={(e) => {
+                      setSerial(e.target.value);
+                      if (serialError) setSerialError(null);
+                    }}
+                    placeholder="e.g. WJ-V8-2024-NL-00156"
+                    className="font-mono uppercase tracking-wider"
+                    autoFocus
+                    disabled={submitting}
+                  />
+                  {serialError ? (
+                    <p className="text-xs text-destructive">{serialError}</p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <ShieldCheck className="h-3 w-3 text-wj-green" />
+                      Find this number engraved on the frame or printed under the saddle.
+                    </p>
+                  )}
+                </div>
+
+                <div className="mt-auto flex items-center gap-2 pt-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setStep("search")}
+                    disabled={submitting}
+                    className="gap-1.5"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={handleConfirmRegister}
+                    disabled={submitting || serial.trim().length < 4}
+                    className="flex-1 bg-wj-green hover:bg-wj-green/90"
+                  >
+                    {submitting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <Check className="h-4 w-4 text-muted-foreground/40" />
+                      "Register this bike"
                     )}
-                  </button>
-                ))
-              )}
-            </div>
+                  </Button>
+                </div>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </>
