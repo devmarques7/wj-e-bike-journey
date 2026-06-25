@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import useEmblaCarousel from "embla-carousel-react";
-import { Bike, Plus, Check, Loader2, Search } from "lucide-react";
+import { Bike, Plus, Check, Loader2, Search, ArrowLeft, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -103,6 +103,11 @@ export default function BikeShowcase() {
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [search, setSearch] = useState("");
   const [registeringId, setRegisteringId] = useState<string | null>(null);
+  const [step, setStep] = useState<"search" | "serial">("search");
+  const [selectedProduct, setSelectedProduct] = useState<{ id: string; name: string; color_hex: string | null } | null>(null);
+  const [serial, setSerial] = useState("");
+  const [serialError, setSerialError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const isRealUser = !!user && !user.isDemo && user.role === "customer";
 
@@ -165,10 +170,46 @@ export default function BikeShowcase() {
       });
   }, [pickerOpen, bikeProducts.length]);
 
-  const handleRegister = async (product: { id: string; name: string; color_hex: string | null }) => {
-    if (!user) return;
-    setRegisteringId(product.id);
+  // Reset wizard whenever the dialog is closed
+  useEffect(() => {
+    if (!pickerOpen) {
+      setStep("search");
+      setSelectedProduct(null);
+      setSerial("");
+      setSerialError(null);
+      setSearch("");
+    }
+  }, [pickerOpen]);
+
+  const handlePickProduct = (product: { id: string; name: string; color_hex: string | null }) => {
+    setSelectedProduct(product);
+    setSerial("");
+    setSerialError(null);
+    setStep("serial");
+  };
+
+  const handleConfirmRegister = async () => {
+    if (!user || !selectedProduct) return;
+    const trimmed = serial.trim().toUpperCase();
+    if (trimmed.length < 4) {
+      setSerialError("Enter the full serial number printed on your bike frame.");
+      return;
+    }
+    setSerialError(null);
+    setSubmitting(true);
+    setRegisteringId(selectedProduct.id);
     try {
+      // Reject if this serial is already registered to any account
+      const { data: existing, error: existingErr } = await supabase
+        .from("customer_bikes")
+        .select("id")
+        .eq("serial", trimmed)
+        .maybeSingle();
+      if (existingErr && existingErr.code !== "PGRST116") throw existingErr;
+      if (existing) {
+        setSerialError("This serial number is already registered. Contact support if you believe this is an error.");
+        return;
+      }
       // Ensure customer_profile exists
       let { data: cp } = await supabase
         .from("customer_profiles")
@@ -195,8 +236,9 @@ export default function BikeShowcase() {
         .from("customer_bikes")
         .insert({
           customer_id: cp!.id,
-          model: product.name,
-          color: product.color_hex,
+          model: selectedProduct.name,
+          color: selectedProduct.color_hex,
+          serial: trimmed,
           is_active: true,
         })
         .select("id, model, serial, color")
@@ -204,10 +246,16 @@ export default function BikeShowcase() {
       if (error) throw error;
       setRegisteredBike(bike);
       setPickerOpen(false);
-      toast.success(`${product.name} registered to your account`);
+      toast.success(`${selectedProduct.name} registered to your account`);
     } catch (e: any) {
-      toast.error(e?.message || "Failed to register bike");
+      const msg = e?.message || "Failed to register bike";
+      if (msg.toLowerCase().includes("unique") || msg.toLowerCase().includes("duplicate")) {
+        setSerialError("This serial number is already registered.");
+      } else {
+        toast.error(msg);
+      }
     } finally {
+      setSubmitting(false);
       setRegisteringId(null);
     }
   };
