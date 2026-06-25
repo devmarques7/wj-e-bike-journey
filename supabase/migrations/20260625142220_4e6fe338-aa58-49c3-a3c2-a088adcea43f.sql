@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS public.customer_bikes_one_active_per_customer;
