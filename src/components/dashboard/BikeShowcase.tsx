@@ -96,7 +96,8 @@ export default function BikeShowcase() {
   const { user } = useAuth();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [imagesLoaded, setImagesLoaded] = useState(false);
-  const [registeredBike, setRegisteredBike] = useState<{ id: string; model: string; serial: string | null; color: string | null } | null>(null);
+  const [registeredBikes, setRegisteredBikes] = useState<Array<{ id: string; model: string; serial: string | null; color: string | null }>>([]);
+  const [activeBikeIndex, setActiveBikeIndex] = useState(0);
   const [loadingBike, setLoadingBike] = useState(true);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [bikeProducts, setBikeProducts] = useState<Array<{ id: string; name: string; slug: string; base_price: number; color_hex: string | null }>>([]);
@@ -128,21 +129,20 @@ export default function BikeShowcase() {
         .maybeSingle();
       if (!cp?.id) {
         if (!cancelled) {
-          setRegisteredBike(null);
+          setRegisteredBikes([]);
           setLoadingBike(false);
         }
         return;
       }
-      const { data: bike } = await supabase
+      const { data: bikes } = await supabase
         .from("customer_bikes")
         .select("id, model, serial, color")
         .eq("customer_id", cp.id)
         .eq("is_active", true)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .order("created_at", { ascending: false });
       if (!cancelled) {
-        setRegisteredBike(bike ?? null);
+        setRegisteredBikes(bikes ?? []);
+        setActiveBikeIndex(0);
         setLoadingBike(false);
       }
     }
@@ -225,13 +225,6 @@ export default function BikeShowcase() {
         if (cpErr) throw cpErr;
         cp = created;
       }
-      // Enforce one active bike per user: deactivate any existing active bikes first
-      await supabase
-        .from("customer_bikes")
-        .update({ is_active: false })
-        .eq("customer_id", cp!.id)
-        .eq("is_active", true);
-
       const { data: bike, error } = await supabase
         .from("customer_bikes")
         .insert({
@@ -244,7 +237,11 @@ export default function BikeShowcase() {
         .select("id, model, serial, color")
         .single();
       if (error) throw error;
-      setRegisteredBike(bike);
+      setRegisteredBikes((prev) => {
+        const next = [bike, ...prev];
+        setActiveBikeIndex(0);
+        return next;
+      });
       setPickerOpen(false);
       toast.success(`${selectedProduct.name} registered to your account`);
     } catch (e: any) {
@@ -262,7 +259,8 @@ export default function BikeShowcase() {
 
   // A bike is considered present if (a) a real customer has a customer_bikes row,
   // or (b) a demo/mock user has bikeId set on their profile.
-  const hasBike = isRealUser ? !!registeredBike : !!user?.bikeId;
+  const registeredBike = registeredBikes[activeBikeIndex] ?? null;
+  const hasBike = isRealUser ? registeredBikes.length > 0 : !!user?.bikeId;
 
   const filteredProducts = bikeProducts.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
