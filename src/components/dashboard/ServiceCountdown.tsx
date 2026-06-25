@@ -471,15 +471,7 @@ function BikeServiceCard({
 
       {/* Footer slider */}
       <div>
-        {needsSetup ? (
-          <button
-            onClick={onSetup}
-            className="w-full h-14 rounded-full bg-wj-green text-background text-xs font-semibold shadow-lg shadow-wj-green/30 hover:bg-wj-green/90 transition-colors flex items-center justify-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            Set up service schedule
-          </button>
-        ) : (
+        {!needsSetup && (
           <motion.div
             style={{ backgroundColor }}
             className="relative h-14 rounded-full border border-wj-green/30 overflow-hidden"
@@ -511,6 +503,7 @@ function BikeServiceCard({
           </motion.div>
         )}
       </div>
+
     </div>
   );
 }
