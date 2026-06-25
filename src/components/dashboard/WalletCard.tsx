@@ -1,24 +1,81 @@
 import { motion } from "framer-motion";
-import { ChevronRight, Wallet as WalletIcon } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
-import { useRef, useEffect } from "react";
-import EmptyState from "./EmptyState";
+import { useRef, useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function WalletCard() {
   const { user } = useAuth();
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const hasMembership = !!user?.tier;
-  
-  // Card data based on tier
-  const cardData = {
+  // Card visuals per plan slug (free is the default fallback for every member)
+  const cardData: Record<string, { tier: string; number: string; color: string }> = {
+    free:  { tier: "FREE",  number: "4532 •••• •••• 0000", color: "from-emerald-400 to-emerald-600" },
     light: { tier: "LIGHT", number: "4532 •••• •••• 8901", color: "from-zinc-400 to-zinc-600" },
-    plus: { tier: "PLUS", number: "4532 •••• •••• 2847", color: "from-blue-400 to-blue-600" },
+    plus:  { tier: "PLUS",  number: "4532 •••• •••• 2847", color: "from-blue-400 to-blue-600" },
     black: { tier: "BLACK", number: "4532 •••• •••• 1562", color: "from-amber-400 to-amber-600" },
   };
 
-  const data = hasMembership ? cardData[user!.tier as keyof typeof cardData] : null;
+  // For demo users (light/plus/black mocks) use the tier directly.
+  // For real users, resolve plan from subscription → plan_versions → plans.slug,
+  // and provision a default Free subscription if none exists yet.
+  const [resolvedSlug, setResolvedSlug] = useState<string | null>(
+    user?.tier ?? null
+  );
+
+  useEffect(() => {
+    if (!user || user.isDemo) {
+      setResolvedSlug(user?.tier ?? null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      // 1. Look up the user's most recent subscription
+      const { data: subs } = await supabase
+        .from("subscriptions")
+        .select("id, plan_version_id, status, plan_versions:plan_version_id(plan_id, plans:plan_id(slug))")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      const existing: any = subs?.[0];
+      if (existing?.plan_versions?.plans?.slug) {
+        if (!cancelled) setResolvedSlug(existing.plan_versions.plans.slug);
+        return;
+      }
+
+      // 2. No subscription → provision the default Free plan automatically
+      const { data: defaultPlan } = await supabase
+        .from("plans")
+        .select("id, slug, plan_versions:plan_versions(id, status)")
+        .eq("is_default", true)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      const activeVersion = (defaultPlan as any)?.plan_versions?.find(
+        (v: any) => v.status === "active"
+      );
+
+      if (defaultPlan && activeVersion) {
+        await supabase.from("subscriptions").insert({
+          user_id: user.id,
+          plan_version_id: activeVersion.id,
+          status: "active",
+          payment_method: "cash",
+        });
+        if (!cancelled) setResolvedSlug((defaultPlan as any).slug || "free");
+      } else if (!cancelled) {
+        setResolvedSlug("free");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, user?.isDemo, user?.tier]);
+
+  const slug = (resolvedSlug || "free").toLowerCase();
+  const data = cardData[slug] ?? cardData.free;
 
   useEffect(() => {
     const video = videoRef.current;
@@ -38,23 +95,6 @@ export default function WalletCard() {
     video.addEventListener("timeupdate", handleTimeUpdate);
     return () => video.removeEventListener("timeupdate", handleTimeUpdate);
   }, []);
-
-  if (!hasMembership || !data) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="h-full rounded-3xl overflow-hidden relative border border-border/40 bg-card/30 backdrop-blur-md min-h-[180px] flex items-center justify-center"
-      >
-        <EmptyState
-          icon={WalletIcon}
-          title="No active membership"
-          description="Join WJ Vision to unlock your member card."
-        />
-      </motion.div>
-    );
-  }
 
   return (
     <motion.div

@@ -511,6 +511,7 @@ export type Database = {
           next_service_at: string | null
           purchased_at: string | null
           serial: string | null
+          services_completed: number
           updated_at: string
         }
         Insert: {
@@ -526,6 +527,7 @@ export type Database = {
           next_service_at?: string | null
           purchased_at?: string | null
           serial?: string | null
+          services_completed?: number
           updated_at?: string
         }
         Update: {
@@ -541,6 +543,7 @@ export type Database = {
           next_service_at?: string | null
           purchased_at?: string | null
           serial?: string | null
+          services_completed?: number
           updated_at?: string
         }
         Relationships: [
