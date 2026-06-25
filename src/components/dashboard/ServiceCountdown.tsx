@@ -471,35 +471,45 @@ function BikeServiceCard({
 
       {/* Footer slider */}
       <div>
-        <motion.div
-          style={{ backgroundColor }}
-          className="relative h-14 rounded-full border border-wj-green/30 overflow-hidden"
-        >
-          <motion.div
-            style={{ opacity: textOpacity }}
-            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+        {needsSetup ? (
+          <button
+            onClick={onSetup}
+            className="w-full h-14 rounded-full bg-wj-green text-background text-xs font-semibold shadow-lg shadow-wj-green/30 hover:bg-wj-green/90 transition-colors flex items-center justify-center gap-2"
           >
-            <span className="text-xs text-wj-green/70 font-medium tracking-wide">
-              Slide to book service →
-            </span>
-          </motion.div>
+            <Plus className="h-4 w-4" />
+            Set up service schedule
+          </button>
+        ) : (
           <motion.div
-            style={{ opacity: checkOpacity }}
-            className="absolute inset-0 flex items-center justify-center pointer-events-none"
+            style={{ backgroundColor }}
+            className="relative h-14 rounded-full border border-wj-green/30 overflow-hidden"
           >
-            <CheckCircle className="h-5 w-5 text-wj-green" />
+            <motion.div
+              style={{ opacity: textOpacity }}
+              className="absolute inset-0 flex items-center justify-center pointer-events-none"
+            >
+              <span className="text-xs text-wj-green/70 font-medium tracking-wide">
+                Slide to book service →
+              </span>
+            </motion.div>
+            <motion.div
+              style={{ opacity: checkOpacity }}
+              className="absolute inset-0 flex items-center justify-center pointer-events-none"
+            >
+              <CheckCircle className="h-5 w-5 text-wj-green" />
+            </motion.div>
+            <motion.div
+              drag="x"
+              dragConstraints={{ left: 0, right: maxDrag }}
+              dragElastic={0}
+              onDragEnd={handleDragEnd}
+              style={{ x }}
+              className="absolute left-1 top-1 bottom-1 w-12 rounded-full bg-wj-green flex items-center justify-center cursor-grab active:cursor-grabbing shadow-lg shadow-wj-green/30"
+            >
+              <ArrowRight className="h-5 w-5 text-background" />
+            </motion.div>
           </motion.div>
-          <motion.div
-            drag="x"
-            dragConstraints={{ left: 0, right: maxDrag }}
-            dragElastic={0}
-            onDragEnd={handleDragEnd}
-            style={{ x }}
-            className="absolute left-1 top-1 bottom-1 w-12 rounded-full bg-wj-green flex items-center justify-center cursor-grab active:cursor-grabbing shadow-lg shadow-wj-green/30"
-          >
-            <ArrowRight className="h-5 w-5 text-background" />
-          </motion.div>
-        </motion.div>
+        )}
       </div>
     </div>
   );
