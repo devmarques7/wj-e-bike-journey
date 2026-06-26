@@ -268,11 +268,14 @@ export default function MyWallet() {
                 </div>
               </div>
 
-              <div className="max-h-[400px] overflow-y-auto">
+              <div className="max-h-[400px] min-h-[240px] overflow-y-auto">
                 {history.length === 0 ? (
-                  <div className="p-10 text-center text-sm text-muted-foreground">
-                    {loading ? "Loading…" : "No completed services yet. Points will appear here after your first revision."}
-                  </div>
+                  <EmptyState
+                    icon={Calendar}
+                    title={loading ? "Loading…" : "No completed services yet"}
+                    description={loading ? "Fetching your service history…" : "Points will appear here after your first revision."}
+                    className="h-full max-h-[400px]"
+                  />
                 ) : (
                   <Table>
                     <TableHeader>
