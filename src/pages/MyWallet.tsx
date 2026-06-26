@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowLeft, Crown, Shield, Wrench, Clock, Gift, Sparkles, TrendingUp, Check } from "lucide-react";
+import { Crown, Shield, Wrench, Clock, Gift, Sparkles, TrendingUp, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
