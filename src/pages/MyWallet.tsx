@@ -152,18 +152,6 @@ export default function MyWallet() {
   return (
     <RoleDashboardLayout>
       <div className="p-4 lg:p-6 space-y-6">
-        {/* Back link */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="hidden lg:block"
-        >
-          <Link to="/dashboard" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm">
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Dashboard</span>
-          </Link>
-        </motion.div>
-
         {/* Page header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
