@@ -1,11 +1,12 @@
 import { motion } from "framer-motion";
-import { Crown, Shield, Wrench, Clock, Gift, Sparkles, TrendingUp, Check } from "lucide-react";
+import { Crown, Shield, Wrench, Clock, Gift, Sparkles, TrendingUp, Check, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
+import EmptyState from "@/components/dashboard/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
 
 type PointEntry = {
