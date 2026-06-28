@@ -375,6 +375,31 @@ export default function PlanFormModal({
               ))}
             </div>
           </div>
+
+          <div className="col-span-2 rounded-lg border border-border/40 bg-muted/20 p-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="pr-4">
+                <Label className="text-xs">Urgent service included</Label>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  All plans include access to urgent service. Set a per-visit fee for lower tiers (e.g. €100 for Free).
+                </p>
+              </div>
+              <Switch checked={urgentIncluded} onCheckedChange={setUrgentIncluded} />
+            </div>
+            {urgentIncluded && (
+              <div>
+                <Label className="text-xs">Urgent service fee (€ / visit)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  value={urgentFee}
+                  onChange={(e) => setUrgentFee(Number(e.target.value))}
+                  placeholder="0 = free for this plan"
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex justify-end gap-2 mt-4">
