@@ -401,7 +401,7 @@ export default function MyWallet() {
         <div className="grid grid-cols-12 gap-4 lg:gap-6">
           {/* Points History - 8 cols */}
           <div className="col-span-12 lg:col-span-8">
-            <div className="rounded-3xl border border-border/50 bg-card overflow-hidden">
+            <div className="h-full rounded-3xl border border-border/50 bg-card overflow-hidden flex flex-col">
               <div className="p-6 border-b border-border/50">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -420,13 +420,13 @@ export default function MyWallet() {
                 </div>
               </div>
 
-              <div className="max-h-[400px] min-h-[240px] overflow-y-auto">
+              <div className="flex-1 min-h-[240px] overflow-y-auto">
                 {history.length === 0 ? (
                   <EmptyState
                     icon={Calendar}
                     title={loading ? t("e_pass.history.loading_title") : t("e_pass.history.empty_title")}
                     description={loading ? t("e_pass.history.loading_desc") : t("e_pass.history.empty_desc")}
-                    className="h-full max-h-[400px]"
+                    className="h-full"
                   />
                 ) : (
                   <Table>
@@ -464,6 +464,16 @@ export default function MyWallet() {
                     </TableBody>
                   </Table>
                 )}
+              </div>
+
+              <div className="p-4 border-t border-border/50">
+                <Button
+                  onClick={() => navigate("/dashboard")}
+                  className="w-full gradient-wj text-white hover:opacity-90"
+                >
+                  <Calendar className="h-4 w-4 mr-2" />
+                  {t("e_pass.schedule_now")}
+                </Button>
               </div>
             </div>
           </div>
