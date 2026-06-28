@@ -1,10 +1,20 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
-import { ArrowRight, Bike, CheckCircle, Lock } from "lucide-react";
+import { ArrowRight, Bike, CheckCircle, Lock, AlertTriangle, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import EmptyState from "./EmptyState";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
 
 export default function ServiceRequestCard() {
   const navigate = useNavigate();
@@ -14,6 +24,12 @@ export default function ServiceRequestCard() {
   const [planLoading, setPlanLoading] = useState(true);
   const [hasUrgentService, setHasUrgentService] = useState(false);
   const [planName, setPlanName] = useState<string>("");
+  const [urgentFee, setUrgentFee] = useState<number>(0);
+  const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
+  const [planTier, setPlanTier] = useState<number>(0);
+  const [emergencyServiceId, setEmergencyServiceId] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const constraintsRef = useRef(null);
   
@@ -42,7 +58,8 @@ export default function ServiceRequestCard() {
     if (user.isDemo) {
       const tier = (user.tier || "free").toLowerCase();
       setPlanName(tier.toUpperCase());
-      setHasUrgentService(tier === "plus" || tier === "black");
+      setHasUrgentService(true); // All plans now include urgent service (with fee for lower tiers)
+      setUrgentFee(tier === "plus" || tier === "black" ? 0 : 100);
       setPlanLoading(false);
       return;
     }
@@ -50,22 +67,22 @@ export default function ServiceRequestCard() {
     (async () => {
       const { data } = await supabase
         .from("subscriptions")
-        .select("plan_versions:plan_version_id(features, plans:plan_id(slug, name, tier_level))")
+        .select("id, plan_versions:plan_version_id(features, urgent_service_included, urgent_service_fee, plans:plan_id(slug, name, tier_level))")
         .eq("user_id", user.id)
         .eq("status", "active")
         .order("created_at", { ascending: false })
         .limit(1);
       const row: any = data?.[0];
       const plan = row?.plan_versions?.plans;
-      const features: string[] = Array.isArray(row?.plan_versions?.features)
-        ? row.plan_versions.features
-        : [];
       const tier = Number(plan?.tier_level ?? 0);
-      const keywords = /(urgent|priority|unlimited|same-day|concierge|24\/7)/i;
-      const enabled = tier >= 2 || features.some((f) => keywords.test(String(f)));
+      const included = row?.plan_versions?.urgent_service_included !== false;
+      const fee = Number(row?.plan_versions?.urgent_service_fee ?? 0);
       if (!cancelled) {
         setPlanName(plan?.name || (plan?.slug ? String(plan.slug).toUpperCase() : "FREE"));
-        setHasUrgentService(enabled);
+        setHasUrgentService(included);
+        setUrgentFee(fee);
+        setSubscriptionId(row?.id ?? null);
+        setPlanTier(tier);
         setPlanLoading(false);
       }
     })();
@@ -73,6 +90,21 @@ export default function ServiceRequestCard() {
       cancelled = true;
     };
   }, [user?.id, user?.isDemo, user?.tier]);
+
+  // Load emergency service type once
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("service_types")
+        .select("id")
+        .eq("is_active", true)
+        .or("slug.eq.emergency,is_emergency.eq.true")
+        .limit(1);
+      if (!cancelled) setEmergencyServiceId(data?.[0]?.id ?? null);
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // Smooth video loop transition with fade
   useEffect(() => {
@@ -118,12 +150,63 @@ export default function ServiceRequestCard() {
     const currentX = x.get();
     if (currentX >= maxDrag * 0.8) {
       animate(x, maxDrag, { duration: 0.2 });
-      setIsCompleted(true);
-      setTimeout(() => {
-        navigate("/urgent-service");
-      }, 500);
+      setConfirmOpen(true);
     } else {
       animate(x, 0, { duration: 0.3, type: "spring", stiffness: 400, damping: 30 });
+    }
+  };
+
+  const resetSlider = () => {
+    setIsCompleted(false);
+    animate(x, 0, { duration: 0.3 });
+  };
+
+  const submitUrgentRequest = async () => {
+    if (!user) return;
+    setSubmitting(true);
+    try {
+      const fee = urgentFee || 0;
+      const today = new Date();
+      const dateStr = today.toISOString().slice(0, 10);
+      const hh = String(today.getHours()).padStart(2, "0");
+      const mm = String(today.getMinutes()).padStart(2, "0");
+      const startTime = `${hh}:${mm}:00`;
+
+      const { error } = await supabase.from("appointments").insert({
+        user_id: user.id,
+        service_type_id: emergencyServiceId,
+        subscription_id: subscriptionId,
+        subscription_plan_level: planTier,
+        is_covered_by_plan: fee === 0,
+        extra_charge_eur: fee,
+        scheduled_date: dateStr,
+        scheduled_start_time: startTime,
+        duration_minutes: 60,
+        status: "pending",
+        priority: "urgent",
+        priority_score: 100,
+        booked_via: "urgent_request",
+        notes: "Urgent service requested from dashboard",
+      } as any);
+      if (error) throw error;
+      setIsCompleted(true);
+      toast({
+        title: "Urgent request sent",
+        description: fee > 0
+          ? `Our team will contact you shortly. A €${fee.toFixed(2)} fee applies.`
+          : "Our team will contact you shortly.",
+      });
+      setConfirmOpen(false);
+      setTimeout(() => navigate("/urgent-service"), 600);
+    } catch (e: any) {
+      toast({
+        title: "Could not send request",
+        description: e?.message ?? "Please try again.",
+        variant: "destructive",
+      });
+      resetSlider();
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -261,6 +344,57 @@ export default function ServiceRequestCard() {
           </div>
         </div>
       </motion.div>
+
+      <Dialog
+        open={confirmOpen}
+        onOpenChange={(o) => {
+          setConfirmOpen(o);
+          if (!o && !isCompleted) resetSlider();
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="w-12 h-12 rounded-2xl bg-wj-green/15 border border-wj-green/30 flex items-center justify-center mb-2">
+              <AlertTriangle className="h-6 w-6 text-wj-green" />
+            </div>
+            <DialogTitle>Confirm urgent request</DialogTitle>
+            <DialogDescription>
+              Our team will be notified immediately and contact you to arrange assistance.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="rounded-2xl border border-border/60 bg-muted/30 p-4 space-y-2 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Plan</span>
+              <span className="font-medium text-foreground">{planName || "—"}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Urgent fee</span>
+              <span className="font-semibold text-foreground">
+                {urgentFee > 0 ? `€${urgentFee.toFixed(2)}` : "Included"}
+              </span>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              onClick={() => { setConfirmOpen(false); resetSlider(); }}
+              disabled={submitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={submitUrgentRequest}
+              disabled={submitting}
+              className="bg-wj-green hover:bg-wj-green/90 text-background"
+            >
+              {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Confirm request
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
