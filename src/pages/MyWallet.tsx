@@ -193,9 +193,9 @@ export default function MyWallet() {
           <p className="text-sm text-muted-foreground mt-1">{t("e_pass.subtitle")}</p>
         </motion.div>
 
-        {/* Featured member card (w-full) */}
-        <div className="w-full">
-          <div className="relative">
+        {/* Featured member card */}
+        <div className="w-full flex justify-center">
+          <div className="relative w-full lg:max-w-3xl">
             {/* Ghost stacked card (peek behind) */}
             <button
               type="button"
@@ -211,7 +211,7 @@ export default function MyWallet() {
 
             {/* Featured card */}
             <div
-              className="relative aspect-[1.6/1] cursor-pointer"
+              className="relative aspect-[1.6/1] sm:aspect-[1.75/1] cursor-pointer"
               style={{ perspective: "1200px" }}
               onClick={() => setIsFlipped((v) => !v)}
               role="button"
@@ -239,30 +239,30 @@ export default function MyWallet() {
                     <div className="absolute top-4 right-4 w-32 h-32 rounded-full bg-wj-green blur-3xl" />
                     <div className="absolute bottom-4 left-4 w-24 h-24 rounded-full bg-wj-green blur-2xl" />
                   </div>
-                  <div className="relative z-10 h-full p-6 flex flex-col justify-between">
+                  <div className="relative z-10 h-full p-4 sm:p-5 lg:p-6 flex flex-col justify-between">
                     <div className="flex items-start justify-between">
                       <div>
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-medium">{t("e_pass.member_card")}</p>
-                        <h3 className="text-lg font-bold text-foreground tracking-tight">WJ Vision</h3>
+                        <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-medium">{t("e_pass.member_card")}</p>
+                        <h3 className="text-base sm:text-lg font-bold text-foreground tracking-tight">WJ Vision</h3>
                       </div>
-                      <div className={`px-3 py-1 rounded-full bg-gradient-to-r ${styles.gradient} text-xs font-bold uppercase tracking-wider text-white`}>
+                      <div className={`px-3 py-1 rounded-full bg-gradient-to-r ${styles.gradient} text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white`}>
                         {currentPlan?.name ?? "Free"}
                       </div>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-muted-foreground text-[10px] uppercase tracking-widest">{t("e_pass.card_number")}</p>
-                      <p className="text-foreground text-lg font-mono tracking-[0.15em]">
+                      <p className="text-muted-foreground text-[9px] sm:text-[10px] uppercase tracking-widest">{t("e_pass.card_number")}</p>
+                      <p className="text-foreground text-sm sm:text-base lg:text-lg font-mono tracking-[0.1em] sm:tracking-[0.15em]">
                         4532 •••• •••• {(user?.id || "0000").replace(/-/g, "").slice(-4).toUpperCase()}
                       </p>
                     </div>
                     <div className="flex items-end justify-between">
                       <div>
-                        <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-0.5">{t("e_pass.member")}</p>
-                        <p className="text-foreground text-sm font-medium">{user?.name || "Guest"}</p>
+                        <p className="text-muted-foreground text-[9px] sm:text-[10px] uppercase tracking-widest mb-0.5">{t("e_pass.member")}</p>
+                        <p className="text-foreground text-xs sm:text-sm font-medium">{user?.name || "Guest"}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-0.5">{t("e_pass.total_points")}</p>
-                        <p className="text-wj-green text-lg font-bold">{totalPoints.toLocaleString()}</p>
+                        <p className="text-muted-foreground text-[9px] sm:text-[10px] uppercase tracking-widest mb-0.5">{t("e_pass.total_points")}</p>
+                        <p className="text-wj-green text-base sm:text-lg font-bold">{totalPoints.toLocaleString()}</p>
                       </div>
                     </div>
                   </div>
@@ -282,27 +282,28 @@ export default function MyWallet() {
                     <div className="absolute top-4 left-4 w-32 h-32 rounded-full bg-wj-green blur-3xl" />
                     <div className="absolute bottom-4 right-4 w-24 h-24 rounded-full bg-wj-green blur-2xl" />
                   </div>
-                  <div className="relative z-10 h-full p-5 flex items-center gap-5">
-                    <div className="rounded-2xl bg-background p-2 shadow-xl shrink-0">
+                  <div className="relative z-10 h-full p-3 sm:p-4 lg:p-5 flex items-center gap-3 sm:gap-5">
+                    <div className="rounded-2xl bg-background p-1.5 sm:p-2 shadow-xl shrink-0">
                       <StyledEPassQR
                         data={`https://wjbikes.nl/epass/${activeBikeId}`}
-                        size={140}
+                        size={120}
+                        className="!w-20 !h-20 sm:!w-28 sm:!h-28 lg:!w-[140px] lg:!h-[140px]"
                       />
                     </div>
-                    <div className="flex-1 min-w-0 space-y-3">
+                    <div className="flex-1 min-w-0 space-y-2 sm:space-y-3">
                       <div>
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-medium">{t("e_pass.bike")}</p>
-                        <h3 className="text-base font-bold text-foreground tracking-tight truncate">{activeBikeName}</h3>
+                        <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-medium">{t("e_pass.bike")}</p>
+                        <h3 className="text-sm sm:text-base font-bold text-foreground tracking-tight truncate">{activeBikeName}</h3>
                       </div>
                       <div>
-                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-0.5">{t("e_pass.serial")}</p>
-                        <p className="text-foreground text-sm font-mono tracking-wider truncate">{activeBikeSerial}</p>
+                        <p className="text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground mb-0.5">{t("e_pass.serial")}</p>
+                        <p className="text-foreground text-xs sm:text-sm font-mono tracking-wider truncate">{activeBikeSerial}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-0.5">{t("e_pass.owner")}</p>
-                        <p className="text-foreground text-sm font-medium truncate">{user?.name || "Guest"}</p>
+                        <p className="text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground mb-0.5">{t("e_pass.owner")}</p>
+                        <p className="text-foreground text-xs sm:text-sm font-medium truncate">{user?.name || "Guest"}</p>
                       </div>
-                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground pt-1">{t("e_pass.tap_to_flip")}</p>
+                      <p className="text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground pt-1">{t("e_pass.tap_to_flip")}</p>
                     </div>
                   </div>
                 </div>
