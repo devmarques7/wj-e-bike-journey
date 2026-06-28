@@ -822,6 +822,7 @@ const en = {
     overdue: "Overdue",
     today: "Today",
     schedule_now: "Schedule maintenance now",
+    schedule_now_short: "Schedule now",
     transactions: "Maintenance history",
     transactions_sub: "Earn points with every completed service",
     privileges: "{{plan}} Member Privileges",
