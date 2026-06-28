@@ -26,6 +26,8 @@ export type PlanVersion = {
   status: "draft" | "active" | "archived";
   effective_from: string;
   stripe_price_id: string | null;
+  urgent_service_included?: boolean;
+  urgent_service_fee?: number;
 };
 
 export type PlanWithActiveVersion = Plan & { activeVersion: PlanVersion | null; activeSubs: number };
@@ -131,6 +133,8 @@ export async function createPlanVersion(input: {
   p_trial_days?: number;
   p_features?: string[];
   p_activate?: boolean;
+  p_urgent_service_included?: boolean;
+  p_urgent_service_fee?: number;
 }) {
   return supabase.rpc("fn_create_plan_version", {
     p_plan_id: input.p_plan_id,
@@ -140,6 +144,8 @@ export async function createPlanVersion(input: {
     p_trial_days: input.p_trial_days ?? 0,
     p_features: (input.p_features ?? []) as any,
     p_activate: input.p_activate ?? true,
+    p_urgent_service_included: input.p_urgent_service_included ?? true,
+    p_urgent_service_fee: input.p_urgent_service_fee ?? 0,
   });
 }
 
