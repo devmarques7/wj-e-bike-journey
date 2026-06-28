@@ -424,7 +424,7 @@ export default function MyWallet() {
           <div className="col-span-12 lg:col-span-8">
             <div className="h-full rounded-3xl border border-border/50 bg-card overflow-hidden flex flex-col">
               <div className="p-6 border-b border-border/50">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center">
                       <Wrench className="h-5 w-5 text-wj-green" />
@@ -434,9 +434,19 @@ export default function MyWallet() {
                       <p className="text-xs text-muted-foreground">{t("e_pass.transactions_sub")}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 text-wj-green">
-                    <TrendingUp className="h-4 w-4" />
-                    <span className="text-sm font-bold">+{totalPoints} pts</span>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 text-wj-green">
+                      <TrendingUp className="h-4 w-4" />
+                      <span className="text-sm font-bold">+{totalPoints} pts</span>
+                    </div>
+                    <Button
+                      onClick={() => navigate("/dashboard")}
+                      className="hidden sm:flex gradient-wj text-white hover:opacity-90"
+                      size="sm"
+                    >
+                      <Calendar className="h-4 w-4 mr-2" />
+                      {t("e_pass.schedule_now")}
+                    </Button>
                   </div>
                 </div>
               </div>
