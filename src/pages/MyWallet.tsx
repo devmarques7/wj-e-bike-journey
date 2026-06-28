@@ -282,27 +282,28 @@ export default function MyWallet() {
                     <div className="absolute top-4 left-4 w-32 h-32 rounded-full bg-wj-green blur-3xl" />
                     <div className="absolute bottom-4 right-4 w-24 h-24 rounded-full bg-wj-green blur-2xl" />
                   </div>
-                  <div className="relative z-10 h-full p-5 flex items-center gap-5">
-                    <div className="rounded-2xl bg-background p-2 shadow-xl shrink-0">
+                  <div className="relative z-10 h-full p-3 sm:p-4 lg:p-5 flex items-center gap-3 sm:gap-5">
+                    <div className="rounded-2xl bg-background p-1.5 sm:p-2 shadow-xl shrink-0">
                       <StyledEPassQR
                         data={`https://wjbikes.nl/epass/${activeBikeId}`}
-                        size={140}
+                        size={120}
+                        className="!w-20 !h-20 sm:!w-28 sm:!h-28 lg:!w-[140px] lg:!h-[140px]"
                       />
                     </div>
-                    <div className="flex-1 min-w-0 space-y-3">
+                    <div className="flex-1 min-w-0 space-y-2 sm:space-y-3">
                       <div>
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-medium">{t("e_pass.bike")}</p>
-                        <h3 className="text-base font-bold text-foreground tracking-tight truncate">{activeBikeName}</h3>
+                        <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-medium">{t("e_pass.bike")}</p>
+                        <h3 className="text-sm sm:text-base font-bold text-foreground tracking-tight truncate">{activeBikeName}</h3>
                       </div>
                       <div>
-                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-0.5">{t("e_pass.serial")}</p>
-                        <p className="text-foreground text-sm font-mono tracking-wider truncate">{activeBikeSerial}</p>
+                        <p className="text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground mb-0.5">{t("e_pass.serial")}</p>
+                        <p className="text-foreground text-xs sm:text-sm font-mono tracking-wider truncate">{activeBikeSerial}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-0.5">{t("e_pass.owner")}</p>
-                        <p className="text-foreground text-sm font-medium truncate">{user?.name || "Guest"}</p>
+                        <p className="text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground mb-0.5">{t("e_pass.owner")}</p>
+                        <p className="text-foreground text-xs sm:text-sm font-medium truncate">{user?.name || "Guest"}</p>
                       </div>
-                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground pt-1">{t("e_pass.tap_to_flip")}</p>
+                      <p className="text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground pt-1">{t("e_pass.tap_to_flip")}</p>
                     </div>
                   </div>
                 </div>
