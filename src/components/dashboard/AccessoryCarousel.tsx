@@ -1,18 +1,77 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingCart, Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { accessories } from "@/data/accessories";
+import { accessories, type Accessory } from "@/data/accessories";
 import { useCart } from "@/contexts/CartContext";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
-// Get featured accessories for the carousel
-const carouselAccessories = accessories.slice(0, 6);
+type ActiveBike = { id: string; model: string | null; color: string | null };
+
+function pickRecommendations(bike: ActiveBike | null): Accessory[] {
+  if (!bike) return accessories.slice(0, 6);
+  const bikeColor = (bike.color || "").toLowerCase();
+  const bikeModel = (bike.model || "").toLowerCase();
+
+  const scored = accessories.map((a) => {
+    let score = 0;
+    if (bikeColor && a.colors.some((c) => c.name.toLowerCase().includes(bikeColor) || bikeColor.includes(c.name.toLowerCase().split(" ").pop() || ""))) score += 5;
+    if (bikeModel.includes("cargo") || bikeModel.includes("family")) {
+      if (a.category === "storage" || a.category === "safety") score += 3;
+    }
+    if (bikeModel.includes("city") || bikeModel.includes("urban") || bikeModel.includes("metro") || bikeModel.includes("commuter")) {
+      if (a.category === "tech" || a.category === "safety") score += 3;
+    }
+    if (bikeModel.includes("sport") || bikeModel.includes("speed") || bikeModel.includes("gravel")) {
+      if (a.category === "safety" || a.category === "comfort") score += 3;
+    }
+    if (a.isBestseller) score += 2;
+    if (a.isFeatured) score += 1;
+    if (a.isNew) score += 1;
+    return { a, score };
+  });
+  return scored.sort((x, y) => y.score - x.score).slice(0, 6).map((s) => s.a);
+}
 
 export default function AccessoryCarousel() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [favorites, setFavorites] = useState<string[]>([]);
   const { addItem } = useCart();
+  const { user } = useAuth();
+  const [activeBike, setActiveBike] = useState<ActiveBike | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadBike() {
+      if (!user?.id) return;
+      const { data: cp } = await supabase
+        .from("customer_profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!cp?.id) return;
+      const { data: bikes } = await supabase
+        .from("customer_bikes")
+        .select("id, model, color")
+        .eq("customer_id", cp.id)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      if (!cancelled && bikes && bikes.length > 0) {
+        setActiveBike(bikes[0] as ActiveBike);
+      }
+    }
+    loadBike();
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  const carouselAccessories = useMemo(() => pickRecommendations(activeBike), [activeBike]);
+
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [carouselAccessories]);
 
   // Auto-rotate carousel every 7 seconds
   useEffect(() => {
@@ -20,9 +79,10 @@ export default function AccessoryCarousel() {
       setCurrentIndex((prev) => (prev + 1) % carouselAccessories.length);
     }, 7000);
     return () => clearInterval(interval);
-  }, []);
+  }, [carouselAccessories.length]);
 
   const currentAccessory = carouselAccessories[currentIndex];
+  if (!currentAccessory) return null;
 
   const handleAddToCart = () => {
     addItem({
