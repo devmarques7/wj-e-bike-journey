@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import EmptyState from "@/components/dashboard/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
+import StyledEPassQR from "@/components/dashboard/StyledEPassQR";
 
 type PointEntry = {
   id: string;
@@ -40,6 +41,7 @@ const TIER_ORDER = ["free", "light", "plus", "black"];
 export default function MyWallet() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [isFlipped, setIsFlipped] = useState(false);
   const [currentPlan, setCurrentPlan] = useState<PlanInfo | null>(null);
   const [nextPlan, setNextPlan] = useState<PlanInfo | null>(null);
   const [memberSince, setMemberSince] = useState<string | null>(null);
@@ -168,13 +170,31 @@ export default function MyWallet() {
         <div className="grid grid-cols-12 gap-4 lg:gap-6">
           {/* Member Card - 5 cols */}
           <div className="col-span-12 lg:col-span-5">
-            <div className="relative aspect-[1.6/1] rounded-3xl overflow-hidden bg-gradient-to-br from-background to-secondary border border-border/50">
-              <div className="absolute inset-0 opacity-10">
-                <div className="absolute top-4 right-4 w-32 h-32 rounded-full bg-wj-green blur-3xl" />
-                <div className="absolute bottom-4 left-4 w-24 h-24 rounded-full bg-wj-green blur-2xl" />
-              </div>
+            <div
+              className="relative aspect-[1.6/1] cursor-pointer"
+              style={{ perspective: "1200px" }}
+              onClick={() => setIsFlipped((v) => !v)}
+              role="button"
+              aria-label="Flip member card"
+            >
+              <div
+                className="relative w-full h-full transition-transform duration-700"
+                style={{
+                  transformStyle: "preserve-3d",
+                  transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
+                }}
+              >
+                {/* FRONT */}
+                <div
+                  className="absolute inset-0 rounded-3xl overflow-hidden bg-gradient-to-br from-background to-secondary border border-border/50"
+                  style={{ backfaceVisibility: "hidden" }}
+                >
+                  <div className="absolute inset-0 opacity-10">
+                    <div className="absolute top-4 right-4 w-32 h-32 rounded-full bg-wj-green blur-3xl" />
+                    <div className="absolute bottom-4 left-4 w-24 h-24 rounded-full bg-wj-green blur-2xl" />
+                  </div>
 
-              <div className="relative z-10 h-full p-6 flex flex-col justify-between">
+                  <div className="relative z-10 h-full p-6 flex flex-col justify-between">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-medium">Member Card</p>
@@ -200,6 +220,49 @@ export default function MyWallet() {
                   <div className="text-right">
                     <p className="text-muted-foreground text-[10px] uppercase tracking-widest mb-0.5">Total Points</p>
                     <p className="text-wj-green text-lg font-bold">{totalPoints.toLocaleString()}</p>
+                  </div>
+                </div>
+                  </div>
+                </div>
+
+                {/* BACK */}
+                <div
+                  className="absolute inset-0 rounded-3xl overflow-hidden bg-gradient-to-br from-background to-secondary border border-border/50"
+                  style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+                >
+                  <div className="absolute inset-0 opacity-10">
+                    <div className="absolute top-4 left-4 w-32 h-32 rounded-full bg-wj-green blur-3xl" />
+                    <div className="absolute bottom-4 right-4 w-24 h-24 rounded-full bg-wj-green blur-2xl" />
+                  </div>
+
+                  <div className="relative z-10 h-full p-5 flex items-center gap-5">
+                    <div className="rounded-2xl bg-background p-2 shadow-xl shrink-0">
+                      <StyledEPassQR
+                        data={`https://wjbikes.nl/epass/${user?.bikeId || user?.id || "unknown"}`}
+                        size={140}
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0 space-y-3">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-medium">Bike</p>
+                        <h3 className="text-base font-bold text-foreground tracking-tight truncate">
+                          {user?.bikeName || "No bike registered"}
+                        </h3>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-0.5">Serial</p>
+                        <p className="text-foreground text-sm font-mono tracking-wider truncate">
+                          {user?.bikeId || "—"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-0.5">Owner</p>
+                        <p className="text-foreground text-sm font-medium truncate">{user?.name || "Guest"}</p>
+                      </div>
+                      <p className="text-[10px] uppercase tracking-widest text-muted-foreground pt-1">
+                        Scan QR · Tap to flip
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
