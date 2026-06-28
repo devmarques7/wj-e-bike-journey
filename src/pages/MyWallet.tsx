@@ -441,11 +441,12 @@ export default function MyWallet() {
                     </div>
                     <Button
                       onClick={() => navigate("/dashboard")}
-                      className="hidden sm:flex gradient-wj text-white hover:opacity-90"
+                      className="flex gradient-wj text-white hover:opacity-90"
                       size="sm"
                     >
                       <Calendar className="h-4 w-4 mr-2" />
-                      {t("e_pass.schedule_now")}
+                      <span className="hidden sm:inline">{t("e_pass.schedule_now")}</span>
+                      <span className="sm:hidden">{t("e_pass.schedule_now_short")}</span>
                     </Button>
                   </div>
                 </div>
