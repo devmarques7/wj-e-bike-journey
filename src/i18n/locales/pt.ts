@@ -840,5 +840,10 @@ const pt = {
       loading_desc: "A obter o seu histórico de serviços…",
     },
   },
+  accessory_carousel: {
+    add_to_cart: "Adicionar ao carrinho",
+    schedule_maintenance: "Agendar manutenção",
+    schedule_maintenance_short: "Agendar",
+  },
 };
 export default pt;
