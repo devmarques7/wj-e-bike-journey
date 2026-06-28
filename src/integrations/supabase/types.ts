@@ -1183,6 +1183,8 @@ export type Database = {
           status: Database["public"]["Enums"]["plan_version_status_enum"]
           stripe_price_id: string | null
           trial_days: number
+          urgent_service_fee: number
+          urgent_service_included: boolean
           version_number: number
         }
         Insert: {
@@ -1197,6 +1199,8 @@ export type Database = {
           status?: Database["public"]["Enums"]["plan_version_status_enum"]
           stripe_price_id?: string | null
           trial_days?: number
+          urgent_service_fee?: number
+          urgent_service_included?: boolean
           version_number: number
         }
         Update: {
@@ -1211,6 +1215,8 @@ export type Database = {
           status?: Database["public"]["Enums"]["plan_version_status_enum"]
           stripe_price_id?: string | null
           trial_days?: number
+          urgent_service_fee?: number
+          urgent_service_included?: boolean
           version_number?: number
         }
         Relationships: [
@@ -2313,6 +2319,8 @@ export type Database = {
           status: Database["public"]["Enums"]["plan_version_status_enum"]
           stripe_price_id: string | null
           trial_days: number
+          urgent_service_fee: number
+          urgent_service_included: boolean
           version_number: number
         }
         SetofOptions: {
