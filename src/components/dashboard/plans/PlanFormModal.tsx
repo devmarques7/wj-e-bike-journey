@@ -42,6 +42,8 @@ export default function PlanFormModal({
   const [newFeature, setNewFeature] = useState("");
   const [isDefault, setIsDefault] = useState(false);
   const [unlimitedTrial, setUnlimitedTrial] = useState(false);
+  const [urgentIncluded, setUrgentIncluded] = useState(true);
+  const [urgentFee, setUrgentFee] = useState(0);
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState<"single" | "bulk">("single");
   const [bulkText, setBulkText] = useState("");
@@ -181,10 +183,14 @@ export default function PlanFormModal({
       setTrial(td === -1 ? 0 : td);
       setFeatures(plan.activeVersion?.features ?? []);
       setIsDefault(Boolean((plan as any).is_default));
+      setUrgentIncluded(plan.activeVersion?.urgent_service_included ?? true);
+      setUrgentFee(Number(plan.activeVersion?.urgent_service_fee ?? 0));
     } else {
       setName(""); setSlug(""); setTier(1); setDescription(""); setColor("#058c42");
       setPrice(0); setInterval("monthly"); setTrial(0); setFeatures([]);
       setIsDefault(false); setUnlimitedTrial(false);
+      setUrgentIncluded(true);
+      setUrgentFee(0);
     }
   }, [plan, open]);
 
@@ -209,7 +215,9 @@ export default function PlanFormModal({
         Number(plan.activeVersion.price) !== Number(price) ||
         plan.activeVersion.interval !== interval ||
         plan.activeVersion.trial_days !== effectiveTrial ||
-        JSON.stringify(plan.activeVersion.features) !== JSON.stringify(features);
+        JSON.stringify(plan.activeVersion.features) !== JSON.stringify(features) ||
+        Boolean(plan.activeVersion.urgent_service_included) !== urgentIncluded ||
+        Number(plan.activeVersion.urgent_service_fee ?? 0) !== Number(urgentFee);
       if (priceChanged && planId) {
         const { error } = await createPlanVersion({
           p_plan_id: planId,
@@ -218,6 +226,8 @@ export default function PlanFormModal({
           p_trial_days: effectiveTrial,
           p_features: features,
           p_activate: true,
+          p_urgent_service_included: urgentIncluded,
+          p_urgent_service_fee: urgentIncluded ? Number(urgentFee) : 0,
         });
         if (error) throw error;
       }

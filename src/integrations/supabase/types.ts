@@ -2297,39 +2297,75 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      fn_create_plan_version: {
-        Args: {
-          p_activate?: boolean
-          p_currency?: string
-          p_features?: Json
-          p_interval?: Database["public"]["Enums"]["plan_interval_enum"]
-          p_plan_id: string
-          p_price: number
-          p_trial_days?: number
-        }
-        Returns: {
-          created_at: string
-          currency: string
-          effective_from: string
-          features: Json
-          id: string
-          interval: Database["public"]["Enums"]["plan_interval_enum"]
-          plan_id: string
-          price: number
-          status: Database["public"]["Enums"]["plan_version_status_enum"]
-          stripe_price_id: string | null
-          trial_days: number
-          urgent_service_fee: number
-          urgent_service_included: boolean
-          version_number: number
-        }
-        SetofOptions: {
-          from: "*"
-          to: "plan_versions"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
+      fn_create_plan_version:
+        | {
+            Args: {
+              p_activate?: boolean
+              p_currency?: string
+              p_features?: Json
+              p_interval?: Database["public"]["Enums"]["plan_interval_enum"]
+              p_plan_id: string
+              p_price: number
+              p_trial_days?: number
+            }
+            Returns: {
+              created_at: string
+              currency: string
+              effective_from: string
+              features: Json
+              id: string
+              interval: Database["public"]["Enums"]["plan_interval_enum"]
+              plan_id: string
+              price: number
+              status: Database["public"]["Enums"]["plan_version_status_enum"]
+              stripe_price_id: string | null
+              trial_days: number
+              urgent_service_fee: number
+              urgent_service_included: boolean
+              version_number: number
+            }
+            SetofOptions: {
+              from: "*"
+              to: "plan_versions"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: {
+              p_activate?: boolean
+              p_currency?: string
+              p_features?: Json
+              p_interval?: Database["public"]["Enums"]["plan_interval_enum"]
+              p_plan_id: string
+              p_price: number
+              p_trial_days?: number
+              p_urgent_service_fee?: number
+              p_urgent_service_included?: boolean
+            }
+            Returns: {
+              created_at: string
+              currency: string
+              effective_from: string
+              features: Json
+              id: string
+              interval: Database["public"]["Enums"]["plan_interval_enum"]
+              plan_id: string
+              price: number
+              status: Database["public"]["Enums"]["plan_version_status_enum"]
+              stripe_price_id: string | null
+              trial_days: number
+              urgent_service_fee: number
+              urgent_service_included: boolean
+              version_number: number
+            }
+            SetofOptions: {
+              from: "*"
+              to: "plan_versions"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
       fn_log_customer_note: {
         Args: {
           p_content: string
