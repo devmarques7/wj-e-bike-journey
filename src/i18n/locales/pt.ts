@@ -824,6 +824,7 @@ const pt = {
     member_since: "Membro desde {{when}}",
     upgrade_title: "Atualize o seu Plano",
     upgrade_sub: "Desbloqueie mais benefícios",
+    upgrade_btn: "Atualizar",
     upgrade_cta: "Atualizar para {{plan}}",
     top_tier_title: "Está no topo!",
     top_tier_sub: "Tem o nível de adesão mais alto com todos os benefícios.",

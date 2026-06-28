@@ -833,6 +833,7 @@ const en = {
     member_since: "Member since {{when}}",
     upgrade_title: "Upgrade Your Plan",
     upgrade_sub: "Unlock more benefits",
+    upgrade_btn: "Upgrade",
     upgrade_cta: "Upgrade to {{plan}}",
     top_tier_title: "You're at the top!",
     top_tier_sub: "You have the highest membership tier with all benefits unlocked.",
