@@ -537,43 +537,6 @@ export default function MyWallet() {
 
           {/* Plan side panel - 4 cols */}
           <div className="col-span-12 lg:col-span-4 space-y-6">
-            {/* Current Plan */}
-            <div className="rounded-3xl border border-border/50 bg-card p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center">
-                  <Shield className="h-5 w-5 text-wj-green" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground">{t("e_pass.current_plan")}</h3>
-                  <p className="text-xs text-muted-foreground">{t("e_pass.current_plan_sub")}</p>
-                </div>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-wj-green/10 to-transparent border border-wj-green/20 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className={`px-3 py-1 rounded-full bg-gradient-to-r ${styles.gradient} text-xs font-bold uppercase tracking-wider text-white`}>
-                    {currentPlan?.name ?? "Free"}
-                  </span>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-xl font-bold text-foreground">{priceLabel}</span>
-                    <span className="text-xs text-muted-foreground">{periodLabel}</span>
-                  </div>
-                </div>
-                {currentPlan?.description && (
-                  <p className="text-xs text-muted-foreground">{currentPlan.description}</p>
-                )}
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Clock className="h-3 w-3" />
-                  <span>
-                    {t("e_pass.member_since", {
-                      when: memberSince
-                        ? new Date(memberSince).toLocaleDateString("en-GB", { month: "short", year: "numeric" })
-                        : "—",
-                    })}
-                  </span>
-                </div>
-              </div>
-            </div>
 
             {/* Upgrade Section */}
             {nextPlan && nextStyles && (
