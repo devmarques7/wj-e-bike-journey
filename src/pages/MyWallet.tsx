@@ -596,7 +596,7 @@ export default function MyWallet() {
 
       {/* Showcase Modal */}
       <Dialog open={showcaseOpen} onOpenChange={setShowcaseOpen}>
-        <DialogContent className="max-w-3xl p-0 overflow-hidden bg-card border-border/60">
+        <DialogContent className="max-w-3xl p-0 overflow-hidden bg-card border-border/60 top-20 translate-y-0">
           <div className="p-6 pb-4 border-b border-border/40">
             <DialogHeader>
               <DialogTitle className="text-xl font-light">{t("e_pass.showcase_title")}</DialogTitle>
@@ -606,7 +606,7 @@ export default function MyWallet() {
 
           <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
             {/* Stacked card showcase */}
-            <div className="relative max-w-md mx-auto">
+            <div className="relative w-full">
               {/* Ghost card behind */}
               <button
                 type="button"
