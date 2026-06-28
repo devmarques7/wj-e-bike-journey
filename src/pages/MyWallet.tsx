@@ -193,9 +193,9 @@ export default function MyWallet() {
           <p className="text-sm text-muted-foreground mt-1">{t("e_pass.subtitle")}</p>
         </motion.div>
 
-        {/* Featured member card (w-full) */}
-        <div className="w-full">
-          <div className="relative">
+        {/* Featured member card */}
+        <div className="w-full flex justify-center">
+          <div className="relative w-full lg:max-w-3xl">
             {/* Ghost stacked card (peek behind) */}
             <button
               type="button"
@@ -211,7 +211,7 @@ export default function MyWallet() {
 
             {/* Featured card */}
             <div
-              className="relative aspect-[1.6/1] cursor-pointer"
+              className="relative aspect-[1.6/1] sm:aspect-[1.75/1] cursor-pointer"
               style={{ perspective: "1200px" }}
               onClick={() => setIsFlipped((v) => !v)}
               role="button"
