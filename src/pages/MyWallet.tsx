@@ -326,35 +326,53 @@ export default function MyWallet() {
               </div>
             )}
           </div>
-        </div>
+          </div>
 
-        {/* Quick stats row */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="rounded-2xl border border-border/50 bg-card/60 p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center">
-              <TrendingUp className="h-5 w-5 text-wj-green" />
+          {/* Right column — Plan details + actions */}
+          <div className="space-y-4">
+            {/* Current plan details */}
+            <div className="rounded-3xl border border-border/50 bg-card p-5 lg:p-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("e_pass.current_plan_sub")}</p>
+                  <h3 className="text-lg font-bold text-foreground mt-0.5">{currentPlan?.name ?? "Free"}</h3>
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{currentPlan?.description ?? t("e_pass.no_benefits")}</p>
+                </div>
+                <div className={`px-3 py-1 rounded-full bg-gradient-to-r ${styles.gradient} text-xs font-bold uppercase tracking-wider text-white shrink-0`}>
+                  {currentPlan?.name ?? "Free"}
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("e_pass.total_points")}</p>
-              <p className="text-lg font-bold text-foreground">{totalPoints.toLocaleString()}</p>
+
+            {/* Quick actions */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="rounded-2xl border border-border/50 bg-card/60 p-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center">
+                  <TrendingUp className="h-5 w-5 text-wj-green" />
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("e_pass.total_points")}</p>
+                  <p className="text-lg font-bold text-foreground">{totalPoints.toLocaleString()}</p>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-border/50 bg-card/60 p-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center">
+                  <Clock className="h-5 w-5 text-wj-green" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("e_pass.next_maintenance")}</p>
+                  <p className="text-sm font-semibold text-foreground truncate">{nextMaintenanceLabel}</p>
+                </div>
+              </div>
+              <Button
+                onClick={() => navigate("/dashboard")}
+                className="h-full min-h-[68px] rounded-2xl gradient-wj text-white hover:opacity-90 sm:col-span-2"
+              >
+                <Calendar className="h-4 w-4 mr-2" />
+                {t("e_pass.schedule_now")}
+              </Button>
             </div>
           </div>
-          <div className="rounded-2xl border border-border/50 bg-card/60 p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center">
-              <Clock className="h-5 w-5 text-wj-green" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("e_pass.next_maintenance")}</p>
-              <p className="text-sm font-semibold text-foreground truncate">{nextMaintenanceLabel}</p>
-            </div>
-          </div>
-          <Button
-            onClick={() => navigate("/dashboard")}
-            className="h-full min-h-[68px] rounded-2xl gradient-wj text-white hover:opacity-90"
-          >
-            <Calendar className="h-4 w-4 mr-2" />
-            {t("e_pass.schedule_now")}
-          </Button>
         </div>
 
         {/* History table container (w-full) */}
