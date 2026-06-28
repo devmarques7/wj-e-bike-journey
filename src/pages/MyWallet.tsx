@@ -193,9 +193,11 @@ export default function MyWallet() {
           <p className="text-sm text-muted-foreground mt-1">{t("e_pass.subtitle")}</p>
         </motion.div>
 
-        {/* Featured member card */}
-        <div className="w-full flex justify-center">
-          <div className="relative w-full lg:max-w-3xl">
+        {/* Main grid: featured card + plan/actions */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          {/* Left column — Featured member card */}
+          <div className="w-full flex justify-center">
+            <div className="relative w-full lg:max-w-3xl">
             {/* Ghost stacked card (peek behind) */}
             <button
               type="button"
