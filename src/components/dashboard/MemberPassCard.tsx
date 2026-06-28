@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Crown, Sparkles, Star, Wifi } from "lucide-react";
 import { useAuth, MemberTier } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
-import qrCodeOverlay from "@/assets/qr-code-overlay.png";
+import StyledEPassQR from "@/components/dashboard/StyledEPassQR";
 
 interface MemberPassCardProps {
   bikeId?: string;
@@ -187,13 +187,14 @@ export default function MemberPassCard({ bikeId, bikeName, purchaseDate }: Membe
           </video>
           <div className="absolute inset-0 bg-black/40" />
 
-          {/* QR Code Overlay - Image Layer on Top */}
+          {/* Live, theme-aware E-Pass QR code */}
           <div className="absolute inset-0 flex items-center justify-center z-10">
-            <img 
-              src={qrCodeOverlay} 
-              alt="QR Code" 
-              className="w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 object-contain"
-            />
+            <div className="rounded-2xl bg-background p-2 sm:p-3 shadow-xl">
+              <StyledEPassQR
+                data={`https://wjbikes.nl/epass/${displayBikeId}`}
+                size={176}
+              />
+            </div>
           </div>
 
           {/* Footer Text */}
