@@ -361,7 +361,7 @@ export default function MyWallet() {
           {/* Privileges - 7 cols */}
           <div className="col-span-12 lg:col-span-7">
             <div className="h-full rounded-3xl border border-border/50 bg-card p-6 flex flex-col">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center">
                     <Crown className="h-5 w-5 text-wj-green" />
@@ -379,6 +379,31 @@ export default function MyWallet() {
                     </Button>
                   </Link>
                 )}
+              </div>
+
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-wj-green/10 to-transparent border border-wj-green/20 mb-6">
+                <div className="flex items-center justify-between">
+                  <span className={`px-3 py-1 rounded-full bg-gradient-to-r ${styles.gradient} text-xs font-bold uppercase tracking-wider text-white`}>
+                    {currentPlan?.name ?? "Free"}
+                  </span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-xl font-bold text-foreground">{priceLabel}</span>
+                    <span className="text-xs text-muted-foreground">{periodLabel}</span>
+                  </div>
+                </div>
+                {currentPlan?.description && (
+                  <p className="text-xs text-muted-foreground mt-3">{currentPlan.description}</p>
+                )}
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mt-3">
+                  <Clock className="h-3 w-3" />
+                  <span>
+                    {t("e_pass.member_since", {
+                      when: memberSince
+                        ? new Date(memberSince).toLocaleDateString("en-GB", { month: "short", year: "numeric" })
+                        : "—",
+                    })}
+                  </span>
+                </div>
               </div>
 
               <div className="flex-1">
