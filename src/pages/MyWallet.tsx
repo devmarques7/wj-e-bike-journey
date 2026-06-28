@@ -380,21 +380,15 @@ export default function MyWallet() {
                     <p className="text-xs text-muted-foreground">{t("e_pass.transactions_sub")}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2 text-wj-green">
-                    <TrendingUp className="h-4 w-4" />
-                    <span className="text-sm font-bold">+{totalPoints} pts</span>
-                  </div>
-                  <Button
-                    onClick={() => navigate("/dashboard")}
-                    className="flex gradient-wj text-white hover:opacity-90"
-                    size="sm"
-                  >
-                    <Calendar className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">{t("e_pass.schedule_now")}</span>
-                    <span className="sm:hidden">{t("e_pass.schedule_now_short")}</span>
-                  </Button>
-                </div>
+                <Button
+                  onClick={() => navigate("/dashboard")}
+                  className="flex gradient-wj text-white hover:opacity-90"
+                  size="sm"
+                >
+                  <Calendar className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">{t("e_pass.schedule_now")}</span>
+                  <span className="sm:hidden">{t("e_pass.schedule_now_short")}</span>
+                </Button>
               </div>
             </div>
 
