@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Wrench, Clock, TrendingUp, Calendar, Plus } from "lucide-react";
+import { Wrench, Clock, Calendar, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -345,16 +345,7 @@ export default function MyWallet() {
             </div>
 
             {/* Quick actions */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="rounded-2xl border border-border/50 bg-card/60 p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center">
-                  <TrendingUp className="h-5 w-5 text-wj-green" />
-                </div>
-                <div>
-                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("e_pass.total_points")}</p>
-                  <p className="text-lg font-bold text-foreground">{totalPoints.toLocaleString()}</p>
-                </div>
-              </div>
+            <div className="grid grid-cols-1 gap-3">
               <div className="rounded-2xl border border-border/50 bg-card/60 p-4 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center">
                   <Clock className="h-5 w-5 text-wj-green" />
@@ -366,7 +357,7 @@ export default function MyWallet() {
               </div>
               <Button
                 onClick={() => navigate("/dashboard")}
-                className="h-full min-h-[68px] rounded-2xl gradient-wj text-white hover:opacity-90 sm:col-span-2"
+                className="h-full min-h-[68px] rounded-2xl gradient-wj text-white hover:opacity-90"
               >
                 <Calendar className="h-4 w-4 mr-2" />
                 {t("e_pass.schedule_now")}
@@ -389,21 +380,15 @@ export default function MyWallet() {
                     <p className="text-xs text-muted-foreground">{t("e_pass.transactions_sub")}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2 text-wj-green">
-                    <TrendingUp className="h-4 w-4" />
-                    <span className="text-sm font-bold">+{totalPoints} pts</span>
-                  </div>
-                  <Button
-                    onClick={() => navigate("/dashboard")}
-                    className="flex gradient-wj text-white hover:opacity-90"
-                    size="sm"
-                  >
-                    <Calendar className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">{t("e_pass.schedule_now")}</span>
-                    <span className="sm:hidden">{t("e_pass.schedule_now_short")}</span>
-                  </Button>
-                </div>
+                <Button
+                  onClick={() => navigate("/dashboard")}
+                  className="flex gradient-wj text-white hover:opacity-90"
+                  size="sm"
+                >
+                  <Calendar className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">{t("e_pass.schedule_now")}</span>
+                  <span className="sm:hidden">{t("e_pass.schedule_now_short")}</span>
+                </Button>
               </div>
             </div>
 
