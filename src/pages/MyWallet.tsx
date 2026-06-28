@@ -160,7 +160,7 @@ export default function MyWallet() {
           transition={{ duration: 0.3 }}
           className="mb-2"
         >
-          <h1 className="text-xl sm:text-2xl font-light text-foreground">My Wallet</h1>
+          <h1 className="text-xl sm:text-2xl font-light text-foreground">E-Pass</h1>
           <p className="text-sm text-muted-foreground mt-1">Manage your membership and track your rewards</p>
         </motion.div>
 

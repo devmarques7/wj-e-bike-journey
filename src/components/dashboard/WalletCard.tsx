@@ -145,7 +145,7 @@ export default function WalletCard() {
             <p className="text-white text-xs font-medium truncate max-w-[120px]">{user?.name || "Guest"}</p>
           </div>
           
-          <Link to="/dashboard/wallet">
+          <Link to="/dashboard/e-pass">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}

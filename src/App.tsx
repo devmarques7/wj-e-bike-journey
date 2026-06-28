@@ -88,7 +88,8 @@ const App = () => (
               {/* Member Dashboard Routes */}
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/dashboard/wallet" element={<MyWallet />} />
-              <Route path="/dashboard/v-id" element={<EPassPage />} />
+              <Route path="/dashboard/e-pass" element={<MyWallet />} />
+              <Route path="/dashboard/v-id" element={<MyWallet />} />
               <Route path="/dashboard/service" element={<ServiceDashboard />} />
               <Route path="/dashboard/*" element={<Dashboard />} />
               

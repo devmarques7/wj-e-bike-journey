@@ -44,7 +44,7 @@ const CUSTOMER_CONFIG: DashboardNavConfig = {
   settingsHref: "/dashboard/settings",
   primary: [
     { icon: LayoutDashboard, label: "Overview",  href: "/dashboard" },
-    { icon: CreditCard,      label: "V-ID",      href: "/dashboard/v-id" },
+    { icon: CreditCard,      label: "E-Pass",    href: "/dashboard/e-pass" },
     { icon: Bike,            label: "Bike",      href: "/dashboard/bike" },
     { icon: Wrench,          label: "Service",   href: "/dashboard/service" },
     { icon: Heart,           label: "Favorites", href: "/dashboard/favorites" },
