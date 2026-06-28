@@ -849,5 +849,10 @@ const en = {
       loading_desc: "Fetching your service history…",
     },
   },
+  accessory_carousel: {
+    add_to_cart: "Add to Cart",
+    schedule_maintenance: "Schedule maintenance",
+    schedule_maintenance_short: "Schedule",
+  },
 };
 export default en;
