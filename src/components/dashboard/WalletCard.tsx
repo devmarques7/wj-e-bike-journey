@@ -137,22 +137,11 @@ export default function WalletCard() {
         </div>
 
         {/* Footer */}
-        <div className="flex items-end justify-between">
+        <div className="flex items-end">
           <div>
             <p className="text-white/40 text-[9px] uppercase tracking-widest mb-0.5">Member</p>
             <p className="text-white text-xs font-medium truncate max-w-[120px]">{user?.name || "Guest"}</p>
           </div>
-          
-          <Link to="/dashboard/e-pass">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white text-xs font-medium hover:bg-white/20 transition-all"
-            >
-              My Wallet
-              <ChevronRight className="h-3 w-3" />
-            </motion.button>
-          </Link>
         </div>
       </div>
     </motion.div>
