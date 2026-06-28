@@ -144,8 +144,14 @@ export default function AccessoryCarousel() {
       <div className="relative z-10 h-full flex flex-col justify-between p-5">
         {/* Top Section */}
         <div className="flex items-start justify-between">
-          {/* Badge */}
-          <AnimatePresence mode="wait">
+          <div className="flex flex-col gap-2 items-start">
+            {activeBike?.model && (
+              <span className="px-2.5 py-1 rounded-full bg-background/50 backdrop-blur-md text-[10px] font-medium uppercase tracking-wider text-foreground/80 border border-border/40">
+                For your {activeBike.model}
+              </span>
+            )}
+            {/* Badge */}
+            <AnimatePresence mode="wait">
             {(currentAccessory.isNew || currentAccessory.isBestseller) && (
               <motion.span
                 key={currentAccessory.id + "-badge"}
@@ -157,7 +163,8 @@ export default function AccessoryCarousel() {
                 {currentAccessory.isNew ? "New" : "Bestseller"}
               </motion.span>
             )}
-          </AnimatePresence>
+            </AnimatePresence>
+          </div>
 
           {/* Favorite Button */}
           <button
