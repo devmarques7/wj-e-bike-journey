@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Crown, Shield, Wrench, Clock, Gift, Sparkles, TrendingUp, Check, Calendar, Plus, Maximize2, QrCode } from "lucide-react";
+import { Crown, Wrench, Clock, Gift, Sparkles, TrendingUp, Check, Calendar, Plus, Maximize2, QrCode } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
