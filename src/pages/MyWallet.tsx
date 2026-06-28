@@ -360,38 +360,59 @@ export default function MyWallet() {
 
           {/* Privileges - 7 cols */}
           <div className="col-span-12 lg:col-span-7">
-            <div className="h-full rounded-3xl border border-border/50 bg-card p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center">
-                  <Crown className="h-5 w-5 text-wj-green" />
+            <div className="h-full rounded-3xl border border-border/50 bg-card p-6 flex flex-col">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center">
+                    <Crown className="h-5 w-5 text-wj-green" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground">{t("e_pass.privileges", { plan: currentPlan?.name ?? "Free" })}</h3>
+                    <p className="text-xs text-muted-foreground">{currentPlan?.description ?? t("e_pass.privileges_sub")}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground">{t("e_pass.privileges", { plan: currentPlan?.name ?? "Free" })}</h3>
-                  <p className="text-xs text-muted-foreground">{currentPlan?.description ?? t("e_pass.privileges_sub")}</p>
-                </div>
+                {nextPlan && nextStyles && (
+                  <Link to="/dashboard/plans" className="hidden sm:block">
+                    <Button className="gradient-wj text-white hover:opacity-90">
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      {t("e_pass.upgrade_btn")}
+                    </Button>
+                  </Link>
+                )}
               </div>
 
-              {currentPlan?.features?.length ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {currentPlan.features.map((feat, i) => (
-                    <motion.div
-                      key={`${feat}-${i}`}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.05 * i }}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-wj-green/5 border border-wj-green/20"
-                    >
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center bg-wj-green/20">
-                        <Check className="h-3.5 w-3.5 text-wj-green" />
-                      </div>
-                      <span className="text-sm text-foreground">{feat}</span>
-                    </motion.div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  {loading ? t("e_pass.loading_plan") : t("e_pass.no_benefits")}
-                </p>
+              <div className="flex-1">
+                {currentPlan?.features?.length ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {currentPlan.features.map((feat, i) => (
+                      <motion.div
+                        key={`${feat}-${i}`}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.05 * i }}
+                        className="flex items-center gap-3 p-3 rounded-xl bg-wj-green/5 border border-wj-green/20"
+                      >
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center bg-wj-green/20">
+                          <Check className="h-3.5 w-3.5 text-wj-green" />
+                        </div>
+                        <span className="text-sm text-foreground">{feat}</span>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    {loading ? t("e_pass.loading_plan") : t("e_pass.no_benefits")}
+                  </p>
+                )}
+              </div>
+
+              {nextPlan && nextStyles && (
+                <Link to="/dashboard/plans" className="block sm:hidden mt-4">
+                  <Button className="w-full gradient-wj text-white hover:opacity-90">
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    {t("e_pass.upgrade_btn", { plan: nextPlan.name })}
+                  </Button>
+                </Link>
               )}
             </div>
           </div>
