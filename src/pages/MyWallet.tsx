@@ -606,7 +606,7 @@ export default function MyWallet() {
 
           <div className="p-6 space-y-6 max-h-[80vh] overflow-y-auto">
             {/* Stacked card showcase */}
-            <div className="relative max-w-md mx-auto">
+            <div className="relative w-full">
               {/* Ghost card behind */}
               <button
                 type="button"
