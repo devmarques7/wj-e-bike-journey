@@ -186,8 +186,14 @@ export default function MyWallet() {
               >
                 {/* FRONT */}
                 <div
-                  className="absolute inset-0 rounded-3xl overflow-hidden bg-gradient-to-br from-background to-secondary border border-border/50"
-                  style={{ backfaceVisibility: "hidden" }}
+                  className="absolute inset-0 rounded-3xl overflow-hidden bg-gradient-to-br from-background to-secondary border border-border/50 transition-opacity duration-300"
+                  style={{
+                    backfaceVisibility: "hidden",
+                    WebkitBackfaceVisibility: "hidden",
+                    transform: "translateZ(1px)",
+                    opacity: isFlipped ? 0 : 1,
+                    pointerEvents: isFlipped ? "none" : "auto",
+                  }}
                 >
                   <div className="absolute inset-0 opacity-10">
                     <div className="absolute top-4 right-4 w-32 h-32 rounded-full bg-wj-green blur-3xl" />
@@ -227,8 +233,14 @@ export default function MyWallet() {
 
                 {/* BACK */}
                 <div
-                  className="absolute inset-0 rounded-3xl overflow-hidden bg-gradient-to-br from-background to-secondary border border-border/50"
-                  style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+                  className="absolute inset-0 rounded-3xl overflow-hidden bg-gradient-to-br from-background to-secondary border border-border/50 transition-opacity duration-300"
+                  style={{
+                    backfaceVisibility: "hidden",
+                    WebkitBackfaceVisibility: "hidden",
+                    transform: "rotateY(180deg) translateZ(1px)",
+                    opacity: isFlipped ? 1 : 0,
+                    pointerEvents: isFlipped ? "auto" : "none",
+                  }}
                 >
                   <div className="absolute inset-0 opacity-10">
                     <div className="absolute top-4 left-4 w-32 h-32 rounded-full bg-wj-green blur-3xl" />
