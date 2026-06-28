@@ -813,6 +813,7 @@ const pt = {
     overdue: "Em atraso",
     today: "Hoje",
     schedule_now: "Agendar manutenção agora",
+    schedule_now_short: "Agendar agora",
     transactions: "Histórico de manutenção",
     transactions_sub: "Ganhe pontos a cada serviço concluído",
     privileges: "Benefícios do Membro {{plan}}",
