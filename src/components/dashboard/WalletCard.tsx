@@ -1,7 +1,5 @@
 import { motion } from "framer-motion";
-import { ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Link } from "react-router-dom";
 import { useRef, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
