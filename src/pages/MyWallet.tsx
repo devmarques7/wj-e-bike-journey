@@ -382,8 +382,8 @@ export default function MyWallet() {
             </div>
 
             {/* Quick actions */}
-            <div className="grid grid-cols-1 gap-3">
-              <div className="rounded-2xl border border-border/50 bg-card/60 p-4 flex items-center gap-3">
+            <div className="flex-1 flex flex-col gap-3 min-h-0">
+              <div className="flex-1 min-h-0 rounded-2xl border border-border/50 bg-card/60 p-4 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-wj-green/10 flex items-center justify-center">
                   <Clock className="h-5 w-5 text-wj-green" />
                 </div>
@@ -394,7 +394,7 @@ export default function MyWallet() {
               </div>
               <Button
                 onClick={() => navigate("/dashboard")}
-                className="h-full min-h-[68px] rounded-2xl gradient-wj text-white hover:opacity-90"
+                className="flex-1 min-h-0 rounded-2xl gradient-wj text-white hover:opacity-90"
               >
                 <Calendar className="h-4 w-4 mr-2" />
                 {t("e_pass.schedule_now")}
