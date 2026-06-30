@@ -99,12 +99,12 @@ export default function BikePickerDialog({
     setSerialError(null);
     setSubmitting(true);
     try {
-      const { data: existing } = await supabase
-        .from("customer_bikes")
-        .select("id")
-        .eq("serial", trimmed)
-        .maybeSingle();
-      if (existing) {
+      // Server-side check (security definer) — sees across all users without
+      // leaking other customers' bikes through RLS.
+      const { data: available, error: rpcErr } = await supabase
+        .rpc("is_bike_serial_available", { _serial: trimmed });
+      if (rpcErr) throw rpcErr;
+      if (available === false) {
         setSerialError(t("bike_showcase.picker.serial_exists", { defaultValue: "This serial number is already registered. Contact support if you believe this is an error." }));
         return;
       }
@@ -130,10 +130,18 @@ export default function BikePickerDialog({
           color: selectedProduct.color_hex,
           serial: trimmed,
           is_active: true,
+          purchased_at: new Date().toISOString().slice(0, 10),
         })
         .select("id, model, serial, color")
         .single();
-      if (error) throw error;
+      if (error) {
+        // 23505 = unique_violation (race with another user)
+        if ((error as any).code === "23505") {
+          setSerialError(t("bike_showcase.picker.serial_exists", { defaultValue: "This serial number is already registered." }));
+          return;
+        }
+        throw error;
+      }
       onRegistered?.(bike as LinkedBike);
       onOpenChange(false);
       toast.success(t("bike_showcase.picker.registered", { name: selectedProduct.name, defaultValue: `{{name}} registered to your account` }));
