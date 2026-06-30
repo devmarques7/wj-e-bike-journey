@@ -302,7 +302,7 @@ export default function MyWallet() {
                     </div>
 
                     {/* RIGHT: stacked member details, label above value */}
-                    <div className="flex flex-col justify-center items-start text-left gap-3 sm:gap-4 min-w-0 py-2">
+                    <div className="flex flex-col justify-end items-start text-left gap-3 sm:gap-4 min-w-0 py-2">
                       {user?.email && (
                         <div className="min-w-0 max-w-[180px]">
                           <p className="text-[8px] sm:text-[9px] uppercase tracking-widest text-muted-foreground mb-0.5">{t("e_pass.email", { defaultValue: "Email" })}</p>
