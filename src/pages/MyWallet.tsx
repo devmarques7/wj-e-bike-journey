@@ -291,7 +291,7 @@ export default function MyWallet() {
                         <StyledEPassQR
                           data={`https://wjbikes.nl/epass/${activeBikeId}`}
                           size={320}
-                          className="!w-full !h-full [&_svg]:max-w-full [&_svg]:max-h-full"
+                          className="!w-full !h-full flex items-center justify-center [&_svg]:max-w-full [&_svg]:max-h-full"
                           overrides={{ backgroundColor: "transparent" }}
                         />
                       </div>
