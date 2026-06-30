@@ -364,7 +364,7 @@ export default function MyWallet() {
                     onClick={() => navigate("/membership-plans")}
                     className="rounded-full gradient-wj text-white hover:opacity-90 text-xs font-semibold px-4 py-1 h-7"
                   >
-                    {t("e_pass.upgrade", { defaultValue: "Upgrade" })}
+                    {t("e_pass.upgrade_btn", { defaultValue: "Upgrade" })}
                   </Button>
                 </div>
               </div>
