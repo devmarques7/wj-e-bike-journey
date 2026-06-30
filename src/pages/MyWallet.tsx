@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Wrench, Clock, Calendar, Plus } from "lucide-react";
+import { Wrench, Clock, Calendar, Plus, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -329,17 +329,30 @@ export default function MyWallet() {
           {/* Right column — Plan details + actions */}
           <div className="h-full flex flex-col gap-4">
             {/* Current plan details */}
-            <div className="flex-1 rounded-3xl border border-border/50 bg-card p-5 lg:p-6">
-              <div className="flex items-start justify-between gap-4 h-full">
-                <div className="min-w-0 flex flex-col h-full">
+            <div className="flex-1 rounded-3xl border border-border/50 bg-card p-5 lg:p-6 flex flex-col">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
                   <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("e_pass.current_plan_sub")}</p>
                   <h3 className="text-lg font-bold text-foreground mt-0.5">{currentPlan?.name ?? "Free"}</h3>
-                  <p className="text-sm text-muted-foreground mt-1 line-clamp-4">{currentPlan?.description ?? t("e_pass.no_benefits")}</p>
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{currentPlan?.description ?? t("e_pass.no_benefits")}</p>
                 </div>
                 <div className={`px-3 py-1 rounded-full bg-gradient-to-r ${styles.gradient} text-xs font-bold uppercase tracking-wider text-white shrink-0 h-fit`}>
                   {currentPlan?.name ?? "Free"}
                 </div>
               </div>
+
+              {currentPlan?.features && currentPlan.features.length > 0 ? (
+                <ul className="mt-4 space-y-2 flex-1 overflow-y-auto pr-1">
+                  {currentPlan.features.map((f, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-foreground/90">
+                      <Check className="h-4 w-4 text-wj-green shrink-0 mt-0.5" />
+                      <span className="leading-snug">{f}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-4 text-xs text-muted-foreground">{t("e_pass.no_benefits")}</p>
+              )}
             </div>
 
             {/* Quick actions */}
