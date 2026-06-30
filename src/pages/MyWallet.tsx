@@ -287,11 +287,11 @@ export default function MyWallet() {
                   <div className="relative z-10 h-full p-4 sm:p-5 lg:p-6 flex flex-col items-center justify-between">
                     {/* QR code — main focus */}
                     <div className="flex-1 flex items-center justify-center w-full min-h-0">
-                      <div className="w-full h-full max-w-[92%] max-h-[85%] rounded-2xl sm:rounded-3xl p-2 sm:p-3 lg:p-4 flex items-center justify-center">
+                      <div className="w-full h-full max-w-[92%] max-h-[80%] rounded-2xl sm:rounded-3xl p-2 sm:p-3 lg:p-4 flex items-center justify-center overflow-hidden box-border">
                         <StyledEPassQR
                           data={`https://wjbikes.nl/epass/${activeBikeId}`}
                           size={320}
-                          className="!w-full !h-full"
+                          className="!w-full !h-full [&_svg]:max-w-full [&_svg]:max-h-full"
                           overrides={{ backgroundColor: "transparent" }}
                         />
                       </div>
