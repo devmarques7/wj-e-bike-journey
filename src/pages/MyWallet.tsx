@@ -284,26 +284,42 @@ export default function MyWallet() {
                     <div className="absolute top-4 left-4 w-32 h-32 rounded-full bg-wj-green blur-3xl" />
                     <div className="absolute bottom-4 right-4 w-24 h-24 rounded-full bg-wj-green blur-2xl" />
                   </div>
-                  <div className="relative z-10 h-full p-4 sm:p-5 lg:p-6 flex flex-col items-center justify-between">
-                    {/* QR code — main focus */}
-                    <div className="flex-1 flex items-center justify-center w-full min-h-0">
-                      <div className="w-full h-full max-w-[92%] max-h-[80%] rounded-2xl sm:rounded-3xl p-2 sm:p-3 lg:p-4 flex items-center justify-center overflow-hidden box-border">
+                  <div className="relative z-10 h-full p-4 sm:p-5 lg:p-6 grid grid-cols-[1fr_auto] gap-4 sm:gap-6">
+                    {/* LEFT: accent + QR pinned to bottom */}
+                    <div className="flex flex-col justify-between min-w-0">
+                      <span className="text-wj-green text-xl sm:text-2xl leading-none select-none">✶</span>
+                      <div className="w-[120px] h-[120px] sm:w-[150px] sm:h-[150px] lg:w-[180px] lg:h-[180px] flex items-center justify-center overflow-hidden">
                         <StyledEPassQR
                           data={`https://wjbikes.nl/epass/${activeBikeId}`}
-                          size={320}
+                          size={200}
                           className="!w-full !h-full flex items-center justify-center [&_svg]:max-w-full [&_svg]:max-h-full"
                           overrides={{ backgroundColor: "transparent" }}
                         />
                       </div>
                     </div>
 
-                    {/* Compact info strip */}
-                    <div className="w-full mt-3 sm:mt-4 grid grid-cols-[1fr_auto] gap-3 items-end text-[10px] sm:text-xs">
-                      <div className="min-w-0 space-y-0.5">
-                        <p className="text-muted-foreground uppercase tracking-widest">{activeBikeName}</p>
-                        <p className="text-foreground font-mono tracking-wider truncate">{activeBikeSerial}</p>
+                    {/* RIGHT: stacked member details, label above value */}
+                    <div className="flex flex-col justify-center items-center text-center gap-3 sm:gap-4 min-w-0 py-2">
+                      {user?.email && (
+                        <div className="min-w-0 max-w-[180px]">
+                          <p className="text-[8px] sm:text-[9px] uppercase tracking-widest text-muted-foreground mb-0.5">{t("e_pass.email", { defaultValue: "Email" })}</p>
+                          <p className="text-foreground text-[11px] sm:text-xs font-medium truncate">{user.email}</p>
+                        </div>
+                      )}
+                      <div className="min-w-0 max-w-[180px]">
+                        <p className="text-[8px] sm:text-[9px] uppercase tracking-widest text-muted-foreground mb-0.5">{t("e_pass.member", { defaultValue: "Owner" })}</p>
+                        <p className="text-foreground text-sm sm:text-base font-semibold truncate">{user?.name || "Guest"}</p>
                       </div>
-                      <p className="text-muted-foreground uppercase tracking-widest text-right shrink-0">{t("e_pass.tap_to_flip")}</p>
+                      <div className="min-w-0 max-w-[180px]">
+                        <p className="text-[8px] sm:text-[9px] uppercase tracking-widest text-muted-foreground mb-0.5">{t("e_pass.bike", { defaultValue: "Bike" })}</p>
+                        <p className="text-foreground text-[11px] sm:text-xs font-medium truncate">{activeBikeName}</p>
+                      </div>
+                      {activeBikeSerial && (
+                        <div className="min-w-0 max-w-[180px]">
+                          <p className="text-[8px] sm:text-[9px] uppercase tracking-widest text-muted-foreground mb-0.5">{t("e_pass.serial", { defaultValue: "Serial" })}</p>
+                          <p className="text-foreground text-[11px] sm:text-xs font-mono tracking-wider truncate">{activeBikeSerial}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
