@@ -392,13 +392,6 @@ export default function MyWallet() {
                   <p className="text-sm font-semibold text-foreground truncate">{nextMaintenanceLabel}</p>
                 </div>
               </div>
-              <Button
-                onClick={() => navigate("/dashboard")}
-                className="flex-1 min-h-0 rounded-2xl gradient-wj text-white hover:opacity-90"
-              >
-                <Calendar className="h-4 w-4 mr-2" />
-                {t("e_pass.schedule_now")}
-              </Button>
             </div>
           </div>
         </div>
