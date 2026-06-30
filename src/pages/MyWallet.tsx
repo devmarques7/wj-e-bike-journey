@@ -193,7 +193,7 @@ export default function MyWallet() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6 lg:items-stretch">
           {/* Left column — Featured member card */}
           <div className="w-full pt-10">
-            <div className="relative w-full">
+            <div className="relative w-full group">
             {/* Ghost stacked card (peek above, behind the main card) */}
             <button
               type="button"
