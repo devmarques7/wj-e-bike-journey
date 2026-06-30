@@ -194,7 +194,7 @@ export default function MyWallet() {
         </motion.div>
 
         {/* Main grid: featured card + plan/actions */}
-        <div className="grid grid-cols-1 lg:grid-cols-[3fr_1fr] gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6 items-start">
           {/* Left column — Featured member card */}
           <div className="w-full">
             <div className="relative w-full">
