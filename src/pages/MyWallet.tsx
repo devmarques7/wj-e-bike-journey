@@ -209,7 +209,7 @@ export default function MyWallet() {
                   key={bike.id}
                   type="button"
                   onClick={(e) => { e.stopPropagation(); setActiveBikeIdx(i); setIsFlipped(false); }}
-                  className={`absolute left-3 right-3 aspect-[1.6/1] rounded-3xl overflow-hidden bg-gradient-to-br from-background to-secondary border border-border/60 shadow-xl transition-all duration-300 origin-top text-left hover:-translate-y-2 hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)] hover:border-wj-green/60`}
+                  className={`absolute left-0 right-0 aspect-[1.6/1] rounded-3xl overflow-hidden bg-gradient-to-br from-background to-secondary border border-border/60 shadow-xl transition-all duration-300 origin-top text-left hover:-translate-y-2 hover:shadow-[0_25px_60px_-12px_rgba(5,140,66,0.45)] hover:border-wj-green/60`}
                   style={{ top: `-${peek}px`, zIndex: 10 + depth }}
                   title={bike.model || bike.serial}
                 >
