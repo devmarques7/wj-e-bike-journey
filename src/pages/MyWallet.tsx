@@ -10,6 +10,7 @@ import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import EmptyState from "@/components/dashboard/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
 import StyledEPassQR from "@/components/dashboard/StyledEPassQR";
+import BikePickerDialog, { LinkedBike } from "@/components/dashboard/BikePickerDialog";
 
 type PointEntry = {
   id: string;
@@ -30,12 +31,6 @@ type PlanInfo = {
   description: string | null;
 };
 
-type LinkedBike = {
-  id: string;
-  model: string | null;
-  serial: string | null;
-  color: string | null;
-};
 
 const cardStyles: Record<string, { gradient: string }> = {
   free:  { gradient: "from-emerald-400 to-emerald-600" },
@@ -54,6 +49,7 @@ export default function MyWallet() {
   const [activeBikeIdx, setActiveBikeIdx] = useState(0);
   const [currentPlan, setCurrentPlan] = useState<PlanInfo | null>(null);
   const [history, setHistory] = useState<PointEntry[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -177,7 +173,7 @@ export default function MyWallet() {
   const activeBikeId = activeBike?.id || (user as any)?.bikeId || user?.id || "unknown";
   const activeBikeName = activeBike?.model || (user as any)?.bikeName || t("e_pass.no_bike");
   const activeBikeSerial = activeBike?.serial || (user as any)?.bikeId || "—";
-  const canLinkAnother = linkedBikes.length >= 1;
+  const canLinkAnother = linkedBikes.length < 5;
 
   return (
     <RoleDashboardLayout>
@@ -196,24 +192,26 @@ export default function MyWallet() {
         {/* Main grid: featured card + plan/actions */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6 lg:items-stretch">
           {/* Left column — Featured member card */}
-          <div className="w-full">
+          <div className="w-full pt-10">
             <div className="relative w-full">
-            {/* Ghost stacked card (peek behind) */}
+            {/* Ghost stacked card (peek above) */}
             <button
               type="button"
-              onClick={() => navigate("/dashboard")}
+              onClick={() => setPickerOpen(true)}
               disabled={!canLinkAnother}
-              title={canLinkAnother ? t("e_pass.link_another") : t("e_pass.no_other_bike")}
-              className="absolute -top-3 left-3 right-3 aspect-[1.6/1] rounded-3xl border-2 border-dashed border-border/50 bg-card/30 backdrop-blur-sm -z-10 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-wj-green hover:border-wj-green/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              title={canLinkAnother ? t("e_pass.add_bike_hint") : t("e_pass.no_other_bike")}
+              className="absolute -top-10 left-4 right-4 aspect-[1.6/1] rounded-3xl border-2 border-dashed border-border/50 bg-card/60 backdrop-blur-md z-20 flex flex-col items-center justify-center gap-2 text-muted-foreground transition-all duration-300 hover:-translate-y-2 hover:scale-[1.03] hover:border-wj-green hover:bg-wj-green/10 hover:text-wj-green hover:shadow-[0_20px_50px_-12px_rgba(5,140,66,0.45)] active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:scale-100 disabled:hover:border-border/50 disabled:hover:text-muted-foreground disabled:hover:shadow-none disabled:hover:bg-card/60"
               style={{ transform: "rotate(-2deg)" }}
             >
-              <Plus className="h-6 w-6" />
-              <span className="text-[11px] uppercase tracking-widest">{t("e_pass.link_another")}</span>
+              <div className="p-2.5 rounded-full bg-wj-green/10 border border-wj-green/30 transition-colors group-hover:bg-wj-green/20">
+                <Plus className="h-6 w-6" />
+              </div>
+              <span className="text-[11px] uppercase tracking-widest">{t("e_pass.add_bike_hint")}</span>
             </button>
 
             {/* Featured card */}
             <div
-              className="relative aspect-[1.6/1] sm:aspect-[1.75/1] cursor-pointer"
+              className="relative z-10 aspect-[1.6/1] sm:aspect-[1.75/1] cursor-pointer"
               style={{ perspective: "1200px" }}
               onClick={() => setIsFlipped((v) => !v)}
               role="button"
@@ -479,6 +477,17 @@ export default function MyWallet() {
           </div>
         </div>
       </div>
+
+      <BikePickerDialog
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        onRegistered={(bike) => {
+          setLinkedBikes((prev) => [bike, ...prev]);
+          setActiveBikeIdx(0);
+          // Flip card back to front so user sees the new bike
+          setIsFlipped(false);
+        }}
+      />
     </RoleDashboardLayout>
   );
 }
