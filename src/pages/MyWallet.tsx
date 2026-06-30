@@ -32,11 +32,11 @@ type PlanInfo = {
 };
 
 
-const cardStyles: Record<string, { gradient: string }> = {
-  free:  { gradient: "from-emerald-400 to-emerald-600" },
-  light: { gradient: "from-zinc-400 to-zinc-600" },
-  plus:  { gradient: "from-blue-400 to-blue-600" },
-  black: { gradient: "from-amber-400 to-amber-600" },
+const cardStyles: Record<string, { border: string; text: string }> = {
+  free:  { border: "border-emerald-400", text: "text-emerald-300" },
+  light: { border: "border-zinc-400", text: "text-zinc-300" },
+  plus:  { border: "border-blue-400", text: "text-blue-300" },
+  black: { border: "border-amber-400", text: "text-amber-300" },
 };
 
 export default function MyWallet() {
@@ -354,7 +354,7 @@ export default function MyWallet() {
                   <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{currentPlan?.description ?? t("e_pass.no_benefits")}</p>
                 </div>
                 <div className="flex flex-row items-center gap-2 shrink-0 h-fit">
-                  <div className={`px-3 py-1 rounded-full bg-gradient-to-r ${styles.gradient} text-xs font-bold uppercase tracking-wider text-white shrink-0 h-fit`}>
+                  <div className={`px-3 py-1 rounded-full border-2 bg-transparent ${styles.border} ${styles.text} text-xs font-bold uppercase tracking-wider shrink-0 h-fit`}>
                     {currentPlan?.name ?? "Free"}
                   </div>
                   <Button
