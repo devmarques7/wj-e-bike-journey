@@ -353,7 +353,7 @@ export default function MyWallet() {
                   <h3 className="text-lg font-bold text-foreground mt-0.5">{currentPlan?.name ?? "Free"}</h3>
                   <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{currentPlan?.description ?? t("e_pass.no_benefits")}</p>
                 </div>
-                <div className="flex flex-col items-end gap-2">
+                <div className="flex flex-row items-center gap-2 shrink-0 h-fit">
                   <div className={`px-3 py-1 rounded-full bg-gradient-to-r ${styles.gradient} text-xs font-bold uppercase tracking-wider text-white shrink-0 h-fit`}>
                     {currentPlan?.name ?? "Free"}
                   </div>
