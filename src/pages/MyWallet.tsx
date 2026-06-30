@@ -10,6 +10,7 @@ import RoleDashboardLayout from "@/components/dashboard/RoleDashboardLayout";
 import EmptyState from "@/components/dashboard/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
 import StyledEPassQR from "@/components/dashboard/StyledEPassQR";
+import BikePickerDialog, { LinkedBike } from "@/components/dashboard/BikePickerDialog";
 
 type PointEntry = {
   id: string;
@@ -30,12 +31,6 @@ type PlanInfo = {
   description: string | null;
 };
 
-type LinkedBike = {
-  id: string;
-  model: string | null;
-  serial: string | null;
-  color: string | null;
-};
 
 const cardStyles: Record<string, { gradient: string }> = {
   free:  { gradient: "from-emerald-400 to-emerald-600" },
@@ -54,6 +49,7 @@ export default function MyWallet() {
   const [activeBikeIdx, setActiveBikeIdx] = useState(0);
   const [currentPlan, setCurrentPlan] = useState<PlanInfo | null>(null);
   const [history, setHistory] = useState<PointEntry[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -177,7 +173,7 @@ export default function MyWallet() {
   const activeBikeId = activeBike?.id || (user as any)?.bikeId || user?.id || "unknown";
   const activeBikeName = activeBike?.model || (user as any)?.bikeName || t("e_pass.no_bike");
   const activeBikeSerial = activeBike?.serial || (user as any)?.bikeId || "—";
-  const canLinkAnother = linkedBikes.length >= 1;
+  const canLinkAnother = linkedBikes.length < 5;
 
   return (
     <RoleDashboardLayout>
@@ -201,14 +197,16 @@ export default function MyWallet() {
             {/* Ghost stacked card (peek behind) */}
             <button
               type="button"
-              onClick={() => navigate("/dashboard")}
+              onClick={() => setPickerOpen(true)}
               disabled={!canLinkAnother}
-              title={canLinkAnother ? t("e_pass.link_another") : t("e_pass.no_other_bike")}
-              className="absolute -top-3 left-3 right-3 aspect-[1.6/1] rounded-3xl border-2 border-dashed border-border/50 bg-card/30 backdrop-blur-sm -z-10 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-wj-green hover:border-wj-green/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              title={canLinkAnother ? t("e_pass.add_bike_hint") : t("e_pass.no_other_bike")}
+              className="absolute -top-3 left-3 right-3 aspect-[1.6/1] rounded-3xl border-2 border-dashed border-border/50 bg-card/30 backdrop-blur-sm -z-10 flex flex-col items-center justify-center gap-2 text-muted-foreground transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:border-wj-green/70 hover:bg-wj-green/5 hover:text-wj-green hover:shadow-[0_12px_40px_-12px_rgba(5,140,66,0.35)] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:scale-100 disabled:hover:border-border/50 disabled:hover:text-muted-foreground disabled:hover:shadow-none"
               style={{ transform: "rotate(-2deg)" }}
             >
-              <Plus className="h-6 w-6" />
-              <span className="text-[11px] uppercase tracking-widest">{t("e_pass.link_another")}</span>
+              <div className="p-2 rounded-full bg-wj-green/10 border border-wj-green/30 transition-colors group-hover:bg-wj-green/20">
+                <Plus className="h-6 w-6" />
+              </div>
+              <span className="text-[11px] uppercase tracking-widest">{t("e_pass.add_bike_hint")}</span>
             </button>
 
             {/* Featured card */}
