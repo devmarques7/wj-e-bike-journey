@@ -2466,6 +2466,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_bike_serial_available: { Args: { _serial: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "staff" | "customer" | "guest"
