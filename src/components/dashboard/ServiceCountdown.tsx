@@ -18,6 +18,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
 const SERVICE_CYCLE_DAYS = 90; // 3 months
@@ -57,6 +65,15 @@ export default function ServiceCountdown() {
   const [formLastService, setFormLastService] = useState("");
   const [formServicesCount, setFormServicesCount] = useState("0");
   const [saving, setSaving] = useState(false);
+
+  // Booking dialog state
+  const [bookingBike, setBookingBike] = useState<Bike | null>(null);
+  const [serviceTypes, setServiceTypes] = useState<{ id: string; name: string; duration_minutes: number }[]>([]);
+  const [bookServiceTypeId, setBookServiceTypeId] = useState<string>("");
+  const [bookDate, setBookDate] = useState<string>("");
+  const [bookTime, setBookTime] = useState<string>("10:00");
+  const [bookNotes, setBookNotes] = useState<string>("");
+  const [booking, setBooking] = useState(false);
 
   const isDemo = !!user?.isDemo;
   const isRealUser = !!user && !isDemo;
@@ -150,6 +167,60 @@ export default function ServiceCountdown() {
     loadBikes();
   };
 
+  const openBooking = async (bike: Bike) => {
+    setBookingBike(bike);
+    setBookDate(toISODate(addDays(new Date(), 1)));
+    setBookTime("10:00");
+    setBookNotes("");
+    setBookServiceTypeId("");
+    const { data } = await supabase
+      .from("service_types")
+      .select("id, name, name_en, duration_minutes, display_order")
+      .eq("is_active", true)
+      .eq("is_emergency", false)
+      .order("display_order", { ascending: true });
+    const list = (data ?? []).map((s: any) => ({
+      id: s.id,
+      name: s.name_en || s.name,
+      duration_minutes: s.duration_minutes,
+    }));
+    setServiceTypes(list);
+    if (list[0]) setBookServiceTypeId(list[0].id);
+  };
+
+  const handleConfirmBooking = async () => {
+    if (!bookingBike || !user?.id) return;
+    if (!bookServiceTypeId || !bookDate || !bookTime) {
+      toast.error("Please fill service, date and time.");
+      return;
+    }
+    setBooking(true);
+    const st = serviceTypes.find((s) => s.id === bookServiceTypeId);
+    const duration = st?.duration_minutes ?? 60;
+    const [hh, mm] = bookTime.split(":").map((n) => parseInt(n, 10));
+    const endMinutes = hh * 60 + mm + duration;
+    const endHH = String(Math.floor(endMinutes / 60) % 24).padStart(2, "0");
+    const endMM = String(endMinutes % 60).padStart(2, "0");
+
+    const { error } = await supabase.from("appointments").insert({
+      user_id: user.id,
+      service_type_id: bookServiceTypeId,
+      scheduled_date: bookDate,
+      scheduled_start_time: `${bookTime}:00`,
+      scheduled_end_time: `${endHH}:${endMM}:00`,
+      duration_minutes: duration,
+      notes: bookNotes ? `[${bookingBike.model}] ${bookNotes}` : `[${bookingBike.model}]`,
+      booked_via: "service_countdown_slider",
+    });
+    setBooking(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Service booked");
+    setBookingBike(null);
+  };
+
   // ---------- Empty state (no bikes registered) ----------
   if (!isRealUser || loading || bikes.length === 0) {
     if (loading) {
@@ -228,7 +299,7 @@ export default function ServiceCountdown() {
             key={active.id}
             bike={active}
             onSetup={() => openSetup(active)}
-            onBook={() => navigate("/dashboard/service-booking")}
+            onBook={() => openBooking(active)}
           />
         </div>
       </motion.div>
@@ -285,6 +356,76 @@ export default function ServiceCountdown() {
             </Button>
             <Button onClick={handleSaveSetup} disabled={saving} className="bg-wj-green hover:bg-wj-green/90">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save schedule"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Booking dialog */}
+      <Dialog open={!!bookingBike} onOpenChange={(open) => !open && setBookingBike(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Book service · {bookingBike?.model}</DialogTitle>
+            <DialogDescription>
+              Schedule the next maintenance for your bike. We'll confirm by email.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label>Service type</Label>
+              <Select value={bookServiceTypeId} onValueChange={setBookServiceTypeId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a service" />
+                </SelectTrigger>
+                <SelectContent>
+                  {serviceTypes.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name} · {s.duration_minutes}min
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="bookDate">Date</Label>
+                <Input
+                  id="bookDate"
+                  type="date"
+                  min={toISODate(new Date())}
+                  value={bookDate}
+                  onChange={(e) => setBookDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="bookTime">Time</Label>
+                <Input
+                  id="bookTime"
+                  type="time"
+                  value={bookTime}
+                  onChange={(e) => setBookTime(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="bookNotes">Notes (optional)</Label>
+              <Textarea
+                id="bookNotes"
+                rows={3}
+                placeholder="Describe any issue or request…"
+                value={bookNotes}
+                onChange={(e) => setBookNotes(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setBookingBike(null)} disabled={booking}>
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmBooking} disabled={booking} className="bg-wj-green hover:bg-wj-green/90">
+              {booking ? <Loader2 className="h-4 w-4 animate-spin" /> : "Confirm booking"}
             </Button>
           </DialogFooter>
         </DialogContent>
