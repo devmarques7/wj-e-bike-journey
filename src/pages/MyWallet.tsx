@@ -287,7 +287,10 @@ export default function MyWallet() {
                   <div className="relative z-10 h-full p-4 sm:p-5 lg:p-6 grid grid-cols-[1fr_auto] gap-4 sm:gap-6">
                     {/* LEFT: accent + QR pinned to bottom */}
                     <div className="flex flex-col justify-between min-w-0">
-                      <span className="text-wj-green text-xl sm:text-2xl leading-none select-none">✶</span>
+                      <div className="flex flex-col items-start leading-none select-none">
+                        <span className="text-[9px] sm:text-[10px] text-wj-green/80 tracking-[0.2em] uppercase font-medium">E-Pass</span>
+                        <span className="text-xl sm:text-2xl font-bold text-wj-green tracking-tight">WJ</span>
+                      </div>
                       <div className="w-[120px] h-[120px] sm:w-[150px] sm:h-[150px] lg:w-[180px] lg:h-[180px] flex items-center justify-center overflow-hidden">
                         <StyledEPassQR
                           data={`https://wjbikes.nl/epass/${activeBikeId}`}
