@@ -32,11 +32,11 @@ type PlanInfo = {
 };
 
 
-const cardStyles: Record<string, { border: string; text: string }> = {
-  free:  { border: "border-emerald-400", text: "text-emerald-300" },
-  light: { border: "border-zinc-400", text: "text-zinc-300" },
-  plus:  { border: "border-blue-400", text: "text-blue-300" },
-  black: { border: "border-amber-400", text: "text-amber-300" },
+const cardStyles: Record<string, { gradient: string; border: string; text: string }> = {
+  free:  { gradient: "from-emerald-400 to-emerald-600", border: "border-emerald-400", text: "text-emerald-300" },
+  light: { gradient: "from-zinc-400 to-zinc-600", border: "border-zinc-400", text: "text-zinc-300" },
+  plus:  { gradient: "from-blue-400 to-blue-600", border: "border-blue-400", text: "text-blue-300" },
+  black: { gradient: "from-amber-400 to-amber-600", border: "border-amber-400", text: "text-amber-300" },
 };
 
 export default function MyWallet() {
