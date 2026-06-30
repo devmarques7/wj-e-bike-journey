@@ -194,7 +194,7 @@ export default function MyWallet() {
         </motion.div>
 
         {/* Main grid: featured card + plan/actions */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6 lg:items-stretch">
           {/* Left column — Featured member card */}
           <div className="w-full">
             <div className="relative w-full">
@@ -329,16 +329,16 @@ export default function MyWallet() {
           </div>
 
           {/* Right column — Plan details + actions */}
-          <div className="space-y-4">
+          <div className="h-full flex flex-col gap-4">
             {/* Current plan details */}
-            <div className="rounded-3xl border border-border/50 bg-card p-5 lg:p-6">
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
+            <div className="flex-1 rounded-3xl border border-border/50 bg-card p-5 lg:p-6">
+              <div className="flex items-start justify-between gap-4 h-full">
+                <div className="min-w-0 flex flex-col h-full">
                   <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("e_pass.current_plan_sub")}</p>
                   <h3 className="text-lg font-bold text-foreground mt-0.5">{currentPlan?.name ?? "Free"}</h3>
-                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{currentPlan?.description ?? t("e_pass.no_benefits")}</p>
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-4">{currentPlan?.description ?? t("e_pass.no_benefits")}</p>
                 </div>
-                <div className={`px-3 py-1 rounded-full bg-gradient-to-r ${styles.gradient} text-xs font-bold uppercase tracking-wider text-white shrink-0`}>
+                <div className={`px-3 py-1 rounded-full bg-gradient-to-r ${styles.gradient} text-xs font-bold uppercase tracking-wider text-white shrink-0 h-fit`}>
                   {currentPlan?.name ?? "Free"}
                 </div>
               </div>
