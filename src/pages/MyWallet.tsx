@@ -193,14 +193,14 @@ export default function MyWallet() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6 lg:items-stretch">
           {/* Left column — Featured member card */}
           <div className="w-full pt-10">
-            <div className="relative w-full">
+            <div className="relative w-full group">
             {/* Ghost stacked card (peek above, behind the main card) */}
             <button
               type="button"
               onClick={() => setPickerOpen(true)}
               disabled={!canLinkAnother}
               title={canLinkAnother ? t("e_pass.add_bike_hint") : t("e_pass.no_other_bike")}
-              className="absolute -top-10 left-4 right-4 aspect-[1.6/1] rounded-3xl border-2 border-dashed border-border/50 bg-card/60 backdrop-blur-md z-10 flex flex-col items-center justify-center gap-2 text-muted-foreground transition-all duration-300 hover:-translate-y-2 hover:scale-[1.03] hover:border-wj-green hover:bg-wj-green/10 hover:text-wj-green hover:shadow-[0_20px_50px_-12px_rgba(5,140,66,0.45)] active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:scale-100 disabled:hover:border-border/50 disabled:hover:text-muted-foreground disabled:hover:shadow-none disabled:hover:bg-card/60"
+              className="absolute -top-10 left-4 right-4 aspect-[1.6/1] rounded-3xl border-2 border-dashed border-border/50 bg-card/60 backdrop-blur-md z-10 flex flex-col items-center justify-center gap-2 text-muted-foreground transition-all duration-300 origin-top group-hover:-translate-y-6 group-hover:scale-[1.08] group-hover:border-wj-green group-hover:bg-wj-green/10 group-hover:text-wj-green group-hover:shadow-[0_35px_70px_-12px_rgba(5,140,66,0.55)] active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed disabled:group-hover:translate-y-0 disabled:group-hover:scale-100 disabled:group-hover:border-border/50 disabled:group-hover:text-muted-foreground disabled:group-hover:shadow-none disabled:group-hover:bg-card/60"
               style={{ transform: "rotate(-2deg)" }}
             >
               <div className="p-2.5 rounded-full bg-wj-green/10 border border-wj-green/30 transition-colors group-hover:bg-wj-green/20">
