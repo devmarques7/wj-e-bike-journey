@@ -194,13 +194,13 @@ export default function MyWallet() {
           {/* Left column — Featured member card */}
           <div className="w-full pt-10">
             <div className="relative w-full">
-            {/* Ghost stacked card (peek above) */}
+            {/* Ghost stacked card (peek above, behind the main card) */}
             <button
               type="button"
               onClick={() => setPickerOpen(true)}
               disabled={!canLinkAnother}
               title={canLinkAnother ? t("e_pass.add_bike_hint") : t("e_pass.no_other_bike")}
-              className="absolute -top-10 left-4 right-4 aspect-[1.6/1] rounded-3xl border-2 border-dashed border-border/50 bg-card/60 backdrop-blur-md z-20 flex flex-col items-center justify-center gap-2 text-muted-foreground transition-all duration-300 hover:-translate-y-2 hover:scale-[1.03] hover:border-wj-green hover:bg-wj-green/10 hover:text-wj-green hover:shadow-[0_20px_50px_-12px_rgba(5,140,66,0.45)] active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:scale-100 disabled:hover:border-border/50 disabled:hover:text-muted-foreground disabled:hover:shadow-none disabled:hover:bg-card/60"
+              className="absolute -top-10 left-4 right-4 aspect-[1.6/1] rounded-3xl border-2 border-dashed border-border/50 bg-card/60 backdrop-blur-md z-10 flex flex-col items-center justify-center gap-2 text-muted-foreground transition-all duration-300 hover:-translate-y-2 hover:scale-[1.03] hover:border-wj-green hover:bg-wj-green/10 hover:text-wj-green hover:shadow-[0_20px_50px_-12px_rgba(5,140,66,0.45)] active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:scale-100 disabled:hover:border-border/50 disabled:hover:text-muted-foreground disabled:hover:shadow-none disabled:hover:bg-card/60"
               style={{ transform: "rotate(-2deg)" }}
             >
               <div className="p-2.5 rounded-full bg-wj-green/10 border border-wj-green/30 transition-colors group-hover:bg-wj-green/20">
@@ -209,9 +209,9 @@ export default function MyWallet() {
               <span className="text-[11px] uppercase tracking-widest">{t("e_pass.add_bike_hint")}</span>
             </button>
 
-            {/* Featured card */}
+            {/* Featured card — always in front */}
             <div
-              className="relative z-10 aspect-[1.6/1] sm:aspect-[1.75/1] cursor-pointer"
+              className="relative z-20 aspect-[1.6/1] sm:aspect-[1.75/1] cursor-pointer"
               style={{ perspective: "1200px" }}
               onClick={() => setIsFlipped((v) => !v)}
               role="button"
