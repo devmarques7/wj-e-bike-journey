@@ -477,6 +477,17 @@ export default function MyWallet() {
           </div>
         </div>
       </div>
+
+      <BikePickerDialog
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        onRegistered={(bike) => {
+          setLinkedBikes((prev) => [bike, ...prev]);
+          setActiveBikeIdx(0);
+          // Flip card back to front so user sees the new bike
+          setIsFlipped(false);
+        }}
+      />
     </RoleDashboardLayout>
   );
 }
