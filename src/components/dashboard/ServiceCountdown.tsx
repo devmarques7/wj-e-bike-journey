@@ -449,9 +449,24 @@ function BikeServiceCard({
   const needsSetup = !bike.last_service_at || !bike.next_service_at;
 
   const x = useMotionValue(0);
-  const sliderWidth = 240;
-  const thumbWidth = 56;
-  const maxDrag = sliderWidth - thumbWidth - 8;
+  const sliderTrackRef = useRef<HTMLDivElement>(null);
+  const thumbWidth = 48; // matches w-12
+  const [maxDrag, setMaxDrag] = useState(200);
+
+  useEffect(() => {
+    const el = sliderTrackRef.current;
+    if (!el) return;
+    const measure = () => {
+      const w = el.getBoundingClientRect().width;
+      // 4px padding each side (left-1/top-1/bottom-1 = 0.25rem)
+      setMaxDrag(Math.max(40, w - thumbWidth - 8));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const backgroundColor = useTransform(
     x,
     [0, maxDrag],
@@ -614,6 +629,7 @@ function BikeServiceCard({
       <div>
         {!needsSetup && (
           <motion.div
+            ref={sliderTrackRef}
             style={{ backgroundColor }}
             className="relative h-14 rounded-full border border-wj-green/30 overflow-hidden"
           >
